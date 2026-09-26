@@ -28,15 +28,15 @@ An addon for [Simple Voice Chat](https://modrinth.com/plugin/simple-voice-chat) 
 
 ## Quick start
 
-**Which file:** Fabric, Quilt and NeoForge 26.x get the full addon. Paper, Purpur and Spigot servers get the plugin. Forge, and NeoForge before 26.x, get a lite version with the distance curve only. The exact file for your version is in [Versions and files](#versions-and-files).
+**Which file:** Fabric, Quilt and NeoForge 26.x get the full addon. Paper, Purpur, Folia and Spigot servers get the plugin. Forge, and NeoForge before 26.x, get a lite version with the distance curve only. The exact file for your version is in [Versions and files](#versions-and-files).
 
 **Player**
 1. Install [Simple Voice Chat](https://modrinth.com/plugin/simple-voice-chat) and, on Fabric, [Fabric API](https://modrinth.com/mod/fabric-api).
 2. Put the addon's `.jar` into `.minecraft/mods/`.
-3. In game press `V` → **Voice Physics…** (also in Mod Menu, or on your own key in *Controls*). Changes are heard at once; *Cancel* undoes them.
+3. In game press `V` → **Voice Physics…**, or type `/voicephysics` (also in Mod Menu, or on your own key in *Controls*). Changes are heard at once; *Cancel* undoes them.
 
 **Server**
-1. Fabric or NeoForge 26.x: put the same `.jar` into `mods/`. Paper, Purpur or Spigot: put `voice-physics-bukkit-*.jar` into `plugins/`. Simple Voice Chat must be installed.
+1. Fabric or NeoForge 26.x: put the same `.jar` into `mods/`. Paper, Purpur, Folia or Spigot: put `voice-physics-bukkit-*.jar` into `plugins/`. Simple Voice Chat must be installed.
 2. Start the server once. Walls for players without the addon are already on.
 3. Set up the rest with `/vcd` in game, on the *Server* tab of the settings screen, or in the [settings file](#server-file). The file is re-read without a restart.
 
@@ -59,7 +59,7 @@ These need the addon on your client and work on any server with Simple Voice Cha
 
 ### Walls
 - A voice behind a wall is quieter and duller; the thicker the wall, the more.
-- Materials differ: wool and metal block more than stone, glass and leaves less. Open doors, slabs, fences and carpets let sound past. Every material's weight can be changed on the *Materials* tab.
+- Materials differ: wool and metal block more than stone, glass and leaves less. Open doors, slabs, fences and carpets let sound past. Every material's weight can be changed on the *Walls* tab, under *Materials*.
 - Players side by side in a narrow tunnel hear each other clearly.
 
 ### Round corners
@@ -78,7 +78,7 @@ These need the addon on your client and work on any server with Simple Voice Cha
 ### HUD
 - A small panel in a screen corner: who is talking, how far away, from which side, and whether they whisper, are behind a wall or round a corner.
 - While you talk: how many players hear you and how many cannot (no voice chat, sound off). In a Simple Voice Chat group it counts the group (needs the addon on the server).
-- Modes: off, while someone talks, always. Size, background, a compact one-line mode. A key cycles the modes.
+- Modes: off, while someone talks, always. Size, corner, background, a compact one-line mode, with a preview on the *HUD* tab. A key cycles the modes.
 
 ### Monitor and radar
 - Everyone within voice range, talking or not: distance, direction, how loud they reach you and how much the walls take.
@@ -88,12 +88,12 @@ These need the addon on your client and work on any server with Simple Voice Cha
 
 ### Also
 - **Profile codes:** copy all your sound settings as one line and send it to a friend, who pastes it.
-- **Colorblind colors** for the HUD, monitor and radar, on the *Monitor* tab.
+- **Colorblind colors** for the HUD, monitor and radar, on the *HUD* tab.
 - **Seven languages:** English, Russian, Ukrainian, German, Spanish, Brazilian Portuguese, Chinese (Simplified).
 
 ## For servers
 
-Available in the Fabric and NeoForge 26.x mods and as a plugin for Paper, Purpur, Spigot and Bukkit.
+Available in the Fabric and NeoForge 26.x mods and as a plugin for Paper, Purpur, Folia, Spigot and Bukkit.
 
 - **Walls for everyone.** Players without the addon also hear voices muffled through walls. Load is capped: above 24 voices at once (adjustable) the rest pass unfiltered, and on any error the original audio is sent, so voice chat never goes silent.
 - **Sound zones.** Draw a box in game with `/vcd zone`, use a whole world, or a WorldGuard region on Paper. A zone can:
@@ -101,6 +101,8 @@ Available in the Fabric and NeoForge 26.x mods and as a plugin for Paper, Purpur
   - be *isolated*: no voice gets in or out;
   - set its own wall strength, a constant echo (a cathedral) or none;
   - show a message on entering.
+
+  `/vcd zone show <name>` draws a box's borders with particles.
 - **Game rules.** Sneaking players carry less far. Dead players are silent until they respawn. Spectators are heard only by spectators. An item in hand, such as a goat horn, works as a megaphone. You choose which rules also apply inside Simple Voice Chat groups.
 - **One sound for everyone.** Offer the server's sound profile with a button, or enforce it while players are on the server (fair PvP and events). Lock all of it or only some parts: curve, walls, materials, effects.
 - **No seeing through walls.** Turn off the monitor, the radar and nearby players in the HUD.
@@ -127,18 +129,18 @@ With the addon on both sides the client muffles walls itself and the server skip
 
 | Loader | Minecraft | File | Java | Simple Voice Chat |
 |---|---|---|---|---|
-| **Fabric / Quilt** | 1.20 – 1.20.1 | `voice-physics-fabric-2.1.0+mc1.20.1.jar` | 17+ | 2.4.0+ |
-| **Fabric / Quilt** | 1.20.2 – 1.20.4 | `voice-physics-fabric-2.1.0+mc1.20.2-1.20.4.jar` | 17+ | 2.4.0+ |
-| **Fabric / Quilt** | 1.20.5 – 1.20.6 | `voice-physics-fabric-2.1.0+mc1.20.5-1.20.6.jar` | 21+ | 2.5.0+ |
-| **Fabric / Quilt** | 1.21 – 1.21.11 | `voice-physics-fabric-2.1.0+mc1.21.x.jar` | 21+ | 2.5.0+ |
-| **Fabric** | 26.1 – 26.3 | `voice-physics-fabric-2.1.0+mc26.x.jar` | 25+ | 2.6.0+ |
-| **NeoForge** | 26.1 – 26.3 | `voice-physics-neoforge-2.1.0+mc26.x.jar` | 25+ | 2.6.0+ |
-| **Paper / Purpur / Spigot / Bukkit** | 1.20.1 – 26.3 | `voice-physics-bukkit-2.1.0.jar` | 17+ | Bukkit version |
-| Forge (lite) | 1.20.1 | `voice-physics-forge-2.1.0+mc1.20.1.jar` | 17+ | 2.4.0+ |
-| NeoForge / Forge (lite) | 1.20.2 – 1.20.4 | `voice-physics-{neoforge,forge}-2.1.0+mc1.20.2-1.20.4.jar` | 17+ | 2.4.0+ |
-| NeoForge / Forge (lite) | 1.20.5 – 1.20.6 | `voice-physics-{neoforge,forge}-2.1.0+mc1.20.5-1.20.6.jar` | 21+ | 2.5.0+ |
-| NeoForge / Forge (lite) | 1.21 – 1.21.11 | `voice-physics-{neoforge,forge}-2.1.0+mc1.21.x.jar` | 21+ | 2.5.0+ |
-| Forge (lite) | 26.1 – 26.3 | `voice-physics-forge-2.1.0+mc26.x.jar` | 25+ | 2.6.0+ |
+| **Fabric / Quilt** | 1.20 – 1.20.1 | `voice-physics-fabric-2.2.0+mc1.20.1.jar` | 17+ | 2.4.0+ |
+| **Fabric / Quilt** | 1.20.2 – 1.20.4 | `voice-physics-fabric-2.2.0+mc1.20.2-1.20.4.jar` | 17+ | 2.4.0+ |
+| **Fabric / Quilt** | 1.20.5 – 1.20.6 | `voice-physics-fabric-2.2.0+mc1.20.5-1.20.6.jar` | 21+ | 2.5.0+ |
+| **Fabric / Quilt** | 1.21 – 1.21.11 | `voice-physics-fabric-2.2.0+mc1.21.x.jar` | 21+ | 2.5.0+ |
+| **Fabric** | 26.1 – 26.3 | `voice-physics-fabric-2.2.0+mc26.x.jar` | 25+ | 2.6.0+ |
+| **NeoForge** | 26.1 – 26.3 | `voice-physics-neoforge-2.2.0+mc26.x.jar` | 25+ | 2.6.0+ |
+| **Paper / Purpur / Folia / Spigot / Bukkit** | 1.20.1 – 26.3 | `voice-physics-bukkit-2.2.0.jar` | 17+ | Bukkit version |
+| Forge (lite) | 1.20.1 | `voice-physics-forge-2.2.0+mc1.20.1.jar` | 17+ | 2.4.0+ |
+| NeoForge / Forge (lite) | 1.20.2 – 1.20.4 | `voice-physics-{neoforge,forge}-2.2.0+mc1.20.2-1.20.4.jar` | 17+ | 2.4.0+ |
+| NeoForge / Forge (lite) | 1.20.5 – 1.20.6 | `voice-physics-{neoforge,forge}-2.2.0+mc1.20.5-1.20.6.jar` | 21+ | 2.5.0+ |
+| NeoForge / Forge (lite) | 1.21 – 1.21.11 | `voice-physics-{neoforge,forge}-2.2.0+mc1.21.x.jar` | 21+ | 2.5.0+ |
+| Forge (lite) | 26.1 – 26.3 | `voice-physics-forge-2.2.0+mc26.x.jar` | 25+ | 2.6.0+ |
 
 - **Fabric** and **NeoForge 26.x** are the full addon, for the client and the server. Fabric needs [Fabric API](https://modrinth.com/mod/fabric-api); [Mod Menu](https://modrinth.com/mod/modmenu) is optional.
 - **The plugin** is the server side only. Players can join with the addon, without it, or without mods at all.
@@ -168,6 +170,7 @@ With the addon on both sides the client muffles walls itself and the server skip
 | `/vcd zones` | List zones |
 | `/vcd zone pos1` / `pos2`, `/vcd zone create <name> [radius]` | Make a box zone from two corners, or around you |
 | `/vcd zone set <name> <setting> <value\|default>` | `mode`, `preset`, `voice_range`, `whisper_range`, `range_multiplier`, `walls`, `echo`, `isolated`, `message`, `priority` |
+| `/vcd zone show <name>\|off` | Draw a box zone's borders with particles for 30 seconds (only you see them) |
 | `/vcd zone delete <name>`, `/vcd zone info` | Remove a zone; which zone you are in |
 | `/vcd rule sneak 0.1-1\|dead on\|off\|spectators on\|off\|megaphone <item>\|megaphone_range 1-10` | Game rules |
 | `/vcd group dead\|spectators\|zones\|open_range on\|off` | Rules inside Simple Voice Chat groups |
@@ -194,7 +197,7 @@ Everything here can also be set in game. Every key in the files has a comment in
 | `whisper_multiplier` | 0.5 – 2 | 1.0 | How fast whispers fade, relative to voices |
 | `occlusion_enabled` | true / false | true | Walls muffle voices |
 | `occlusion_strength` | 0 – 1 | 0.6 | How strongly |
-| `material.<id>` | 0 – 3 | see the *Materials* tab | How much one block muffles; stone = 1 |
+| `material.<id>` | 0 – 3 | see *Walls* → *Materials* | How much one block muffles; stone = 1 |
 | `reverb_enabled` | true / false | true | Echo |
 | `reverb_strength` | 0 – 1 | 0.6 | Echo strength |
 | `underwater_enabled` | true / false | true | Dull voices under water |
