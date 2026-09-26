@@ -108,7 +108,7 @@ public class AudioDistancePlugin implements VoicechatPlugin {
         }
         // The client config is loaded by the client entrypoint or on the first voice frame,
         // so dedicated servers never create it.
-        DistanceConfig.LOGGER.info("VoiceChat Audio Distance plugin initialized");
+        DistanceConfig.LOGGER.info("Voice Physics initialized");
     }
 
     @Override

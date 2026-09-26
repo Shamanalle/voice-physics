@@ -8,14 +8,22 @@ import net.minecraft.network.chat.Component;
 import java.util.function.Consumer;
 
 /**
- * Small client behaviours shared by every version: the first-join hint and the HUD toggle key.
+ * Small client behaviours shared by every version: the first-join hint, the HUD toggle key, short
+ * HUD notices and the {@code /voicephysics} command.
  */
 public final class ClientHints {
+
+    /** The client command that opens the settings screen. */
+    public static final String COMMAND = "voicephysics";
 
     /** Wait this long in the world before the hint, so it is not lost among the join messages. */
     private static final int WELCOME_DELAY_TICKS = 100;
 
     private static int ticksInWorld;
+    /** Set by the command; the screen opens on the next tick, after the chat screen has closed. */
+    private static volatile boolean openRequested;
+    /** The "server hides nearby players" notice was shown since the monitor was last allowed. */
+    private static boolean toldMonitorOff;
 
     private ClientHints() {
     }
@@ -40,11 +48,50 @@ public final class ClientHints {
         Component message = openKey != null && !openKey.isUnbound()
                 ? Component.translatable("message.vc-audio-distance.welcome.key", openKey.getTranslatedKeyMessage())
                 : Component.translatable("message.vc-audio-distance.welcome.button");
-        chat.accept(message);
+        chat.accept(withOpenLink(message));
+    }
+
+    /** {@code message}, then a clickable "[Open settings]" that runs {@code /voicephysics}. */
+    public static Component withOpenLink(Component message) {
+        Component link = com.kasper.vcdistance.server.ChatLink.command(
+                Component.translatable("message.vc-audio-distance.open"), "/" + COMMAND);
+        return Component.empty().append(message).append(Component.literal(" ")).append(link);
+    }
+
+    /** The chat message about a server's own sound profile; a suggested one comes with the link to apply it. */
+    public static Component serverProfileMessage(boolean enforced) {
+        Component message = Component.translatable("message.vc-audio-distance.server_profile." + (enforced ? "enforce" : "suggest"));
+        return enforced ? message : withOpenLink(message);
+    }
+
+    /** Called by the {@code /voicephysics} command: open the settings on the next tick. */
+    public static void requestOpen() {
+        openRequested = true;
+    }
+
+    /** @return {@code true} once after {@link #requestOpen}, when no other screen is open */
+    public static boolean consumeOpenRequest(boolean screenOpen) {
+        if (!openRequested || screenOpen) {
+            return false;
+        }
+        openRequested = false;
+        return true;
+    }
+
+    /** Short HUD notices: sound zones, and the server hiding nearby players. Called every client tick. */
+    public static void tickNotices() {
+        tickZoneNotice();
+        DistanceConfig config = AudioDistancePlugin.CONFIG;
+        if (AudioDistancePlugin.LINK.isMonitorAllowed()) {
+            toldMonitorOff = false;
+        } else if (!toldMonitorOff && config.getHudMode() != com.kasper.vcdistance.HudMode.OFF) {
+            toldMonitorOff = true;
+            HudOverlay.flash(Component.translatable("gui.vc-audio-distance.hud.hidden"));
+        }
     }
 
     /** Shows the sound zone the server just put the player in (or that they left it). */
-    public static void tickZoneNotice() {
+    private static void tickZoneNotice() {
         com.kasper.vcdistance.ServerLink.ZoneNotice zone = AudioDistancePlugin.LINK.consumeZoneNotice();
         if (zone != null) {
             HudOverlay.flash(zone.name().isEmpty()

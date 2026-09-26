@@ -211,7 +211,7 @@ Everything here can also be set in game. Every key in the files has a comment in
 
 ### Server file
 
-`config/vc-audio-distance-server.properties` on Fabric and NeoForge, `plugins/VoicechatAudioDistance/vc-audio-distance-server.properties` on Paper. Changes apply within 2 seconds. The voice and whisper range itself is set in Simple Voice Chat (`max_voice_distance`, `whisper_distance`).
+`config/vc-audio-distance-server.properties` on Fabric and NeoForge, `plugins/VoicePhysics/vc-audio-distance-server.properties` on Paper (before 2.2.0 `plugins/VoicechatAudioDistance/`, moved automatically). Changes apply within 2 seconds. The voice and whisper range itself is set in Simple Voice Chat (`max_voice_distance`, `whisper_distance`).
 
 <details>
 <summary>Walls</summary>

@@ -88,13 +88,32 @@ public enum Preset {
 
     /** Sets the curve and walls for a server whose voice range is {@code range} blocks. */
     public void apply(DistanceConfig config, double range) {
+        apply(config, range, true);
+    }
+
+    /**
+     * Sets the curve, and the walls when {@code walls} is true (the server may lock the walls but
+     * leave the curve to the player).
+     */
+    public void apply(DistanceConfig config, double range, boolean walls) {
         config.setModel(model);
         config.setAttenuationFactor(rolloff);
         config.setMinVolumeFraction(minVolume);
         config.setOpenalReferenceRatio(referenceFor(range));
         config.setWhisperMultiplier(whisper);
-        config.setOcclusionEnabled(occlusion);
-        config.setOcclusionStrength(strength);
+        if (walls) {
+            config.setOcclusionEnabled(occlusion);
+            config.setOcclusionStrength(strength);
+        }
+    }
+
+    /** True when the curve (not the walls) sounds like this preset. */
+    public boolean matchesCurve(DistanceConfig config, double range) {
+        return config.getModel() == model
+                && near(config.getAttenuationFactor(), rolloff)
+                && near(config.getMinVolumeFraction(), minVolume)
+                && near(config.getOpenalReferenceRatio(), referenceFor(range))
+                && near(config.getWhisperMultiplier(), whisper);
     }
 
     /**

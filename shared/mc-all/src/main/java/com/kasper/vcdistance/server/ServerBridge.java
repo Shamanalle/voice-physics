@@ -5,6 +5,7 @@ import com.kasper.vcdistance.AudioDistancePlugin;
 import com.kasper.vcdistance.ServerHooks;
 import com.kasper.vcdistance.ServerPlayers;
 import com.kasper.vcdistance.Zone;
+import com.kasper.vcdistance.ZoneOutlines;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
@@ -40,8 +41,17 @@ public final class ServerBridge {
         return String.valueOf(BuiltInRegistries.ITEM.getKey(stack.getItem()));
     }
 
-    /** Server tick: refreshes the players for the voice rules and carries out the addon requirement. */
+    /**
+     * Server tick: draws zone borders an admin asked to see, refreshes the players for the voice rules
+     * and carries out the addon requirement.
+     */
     public static void tick(MinecraftServer server) {
+        ZoneOutlines.tick((id, world, points) -> {
+            ServerPlayer p = server.getPlayerList().getPlayer(id);
+            if (p != null && Zone.sameWorld(ServerZones.dimensionId(String.valueOf(p.level().dimension())), world)) {
+                ParticleSender.endRods(p, points);
+            }
+        });
         if (!ServerHooks.refreshDue()) {
             return;
         }

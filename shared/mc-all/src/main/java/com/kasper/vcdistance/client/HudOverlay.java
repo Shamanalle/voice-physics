@@ -39,8 +39,6 @@ public final class HudOverlay {
     private static long lastSelfTalkNanos = Long.MIN_VALUE;
     private static boolean lastSelfWhisper;
     private static boolean loggedFailure;
-    private static int lastScreenW;
-    private static int lastScreenH;
 
     /** One HUD line: a colored mark (filled, or hollow for a quiet voice; 0 = none) and the text. */
     private record Line(Component text, int dotColor, int textColor, boolean hollow) {
@@ -58,8 +56,6 @@ public final class HudOverlay {
      * @param hidden    F1 or another reason to draw no HUD
      */
     public static void paint(Canvas c, int screenW, int screenH, boolean inWorld, boolean hidden) {
-        lastScreenW = screenW;
-        lastScreenH = screenH;
         try {
             if (inWorld && !hidden) {
                 paintUnsafe(c, screenW, screenH);
@@ -156,13 +152,23 @@ public final class HudOverlay {
     }
 
     private static void draw(Canvas c, List<Line> lines, int screenW, int screenH, DistanceConfig prefs) {
+        drawIn(c, lines, 0, 0, screenW, screenH, true, prefs);
+    }
+
+    /**
+     * Draws the panel in a corner of the area {@code x, y, w, h}.
+     *
+     * @param inGame keep clear of vanilla's hotbar and effect icons (the whole screen is the area)
+     */
+    private static void drawIn(Canvas c, List<Line> lines, int x, int y, int w, int h, boolean inGame, DistanceConfig prefs) {
         if (lines.isEmpty()) {
             return;
         }
         float scale = (float) prefs.getHudScale();
         boolean scaled = Math.abs(scale - 1.0F) > 0.01F && c.pushScale(scale);
         try {
-            drawScaled(c, lines, scaled ? scale : 1.0F, prefs);
+            float s = scaled ? scale : 1.0F;
+            drawScaled(c, lines, Math.round(x / s), Math.round(y / s), Math.round(w / s), Math.round(h / s), s, inGame, prefs);
         } finally {
             if (scaled) {
                 c.popScale();
@@ -171,9 +177,8 @@ public final class HudOverlay {
     }
 
     /** Lays the panel out in scaled units ({@code screen / scale}); vanilla's own HUD stays where it is. */
-    private static void drawScaled(Canvas c, List<Line> lines, float scale, DistanceConfig prefs) {
-        int screenW = Math.round(lastScreenW / scale);
-        int screenH = Math.round(lastScreenH / scale);
+    private static void drawScaled(Canvas c, List<Line> lines, int areaX, int areaY, int areaW, int areaH, float scale,
+                                   boolean inGame, DistanceConfig prefs) {
         int w = 0;
         for (Line l : lines) {
             w = Math.max(w, c.width(l.text()) + (l.dotColor() != 0 ? 7 : 0));
@@ -181,10 +186,10 @@ public final class HudOverlay {
         w += PAD * 2;
         int h = lines.size() * LINE + PAD * 2 - 2;
         HudCorner corner = prefs.getHudCorner();
-        int x = corner.isRight() ? screenW - MARGIN - w : MARGIN;
+        int x = corner.isRight() ? areaX + areaW - MARGIN - w : areaX + MARGIN;
         // Keep clear of the hotbar and chat at the bottom, and of the effect icons at the top right
-        int y = corner.isBottom() ? screenH - MARGIN - h - Math.round(42 / scale)
-                : MARGIN + (corner.isRight() ? Math.round(effectIconsHeight() / scale) : 0);
+        int y = corner.isBottom() ? areaY + areaH - MARGIN - h - (inGame ? Math.round(42 / scale) : 0)
+                : areaY + MARGIN + (inGame && corner.isRight() ? Math.round(effectIconsHeight() / scale) : 0);
         int alpha = (int) Math.round(prefs.getHudBackground() * 255.0);
         if (alpha > 0) {
             c.frame(x, y, x + w, y + h, Palette.withAlpha(0x101418, alpha), Palette.withAlpha(0xFFFFFF, alpha * 2 / 3));
@@ -272,22 +277,38 @@ public final class HudOverlay {
         return Component.translatable(K + key, args);
     }
 
-    /** For the settings screen: the HUD mode label. */
+    /** For the settings screen and the HUD key: the HUD mode label. */
     static Component modeLabel(HudMode mode) {
         return Component.translatable(K + "mode", Component.translatable(mode.getTranslationKey()));
     }
 
     static Component cornerLabel(HudCorner corner) {
-        return Component.translatable(K + "corner", Component.translatable(corner.getTranslationKey()));
+        return Component.translatable(K + "corner", Component.empty().append(Component.literal(corner.getArrow() + " "))
+                .append(Component.translatable(corner.getTranslationKey())));
     }
 
-    /** Short labels for the monitor's narrow buttons; the tooltips explain them. */
-    static Component shortModeLabel(HudMode mode) {
-        return Component.translatable(K + "mode.short", Component.translatable(mode.getTranslationKey()));
-    }
-
-    static Component shortCornerLabel(HudCorner corner) {
-        return Component.translatable(K + "corner.short", corner.getArrow() + " ",
-                Component.translatable(corner.getTranslationKey()));
+    /**
+     * For the settings screen: made-up voices in the area {@code x1, y1 - x2, y2}, drawn with the
+     * current corner, size, background, compact mode and colors.
+     */
+    static void paintPreview(Canvas c, int x1, int y1, int x2, int y2) {
+        DistanceConfig prefs = AudioDistancePlugin.CONFIG;
+        Palette.useColorblind(prefs.isColorblind());
+        List<Line> lines = new ArrayList<>();
+        Component alex = Component.literal("Alex ").append(Component.translatable("gui.vc-audio-distance.blocks", 6))
+                .append(Component.literal(" ↗"));
+        if (prefs.isHudCompact()) {
+            lines.add(new Line(Component.empty().append(alex).append(Component.literal("  ")).append(hud("more", 2)),
+                    Palette.GOOD, Palette.TEXT));
+        } else {
+            lines.add(new Line(alex, Palette.GOOD, Palette.TEXT));
+            lines.add(new Line(Component.literal("Steve ").append(Component.translatable("gui.vc-audio-distance.blocks", 14))
+                    .append(Component.literal(" ← · ")).append(hud("walls")), Palette.GOOD, Palette.MUFFLED));
+            lines.add(new Line(Component.literal("Sam ").append(Component.translatable("gui.vc-audio-distance.blocks", 3))
+                    .append(Component.literal(" ↓ · ")).append(Component.translatable("gui.vc-audio-distance.monitor.whisper")),
+                    Palette.withAlpha(Palette.TEXT_MUTED, 0xC0), Palette.WHISPER, true));
+        }
+        lines.add(new Line(hud("hears", Component.literal("2")), Palette.GOOD, Palette.TEXT));
+        drawIn(c, lines, x1, y1, x2 - x1, y2 - y1, false, prefs);
     }
 }

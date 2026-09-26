@@ -211,7 +211,7 @@
 
 ### Файл сервера
 
-`config/vc-audio-distance-server.properties` на Fabric и NeoForge, `plugins/VoicechatAudioDistance/vc-audio-distance-server.properties` на Paper. Изменения применяются в течение 2 секунд. Сама дальность голоса и шёпота задаётся в Simple Voice Chat (`max_voice_distance`, `whisper_distance`).
+`config/vc-audio-distance-server.properties` на Fabric и NeoForge, `plugins/VoicePhysics/vc-audio-distance-server.properties` на Paper (до 2.2.0 — `plugins/VoicechatAudioDistance/`, папка переносится сама). Изменения применяются в течение 2 секунд. Сама дальность голоса и шёпота задаётся в Simple Voice Chat (`max_voice_distance`, `whisper_distance`).
 
 <details>
 <summary>Стены</summary>

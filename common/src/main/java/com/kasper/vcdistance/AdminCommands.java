@@ -25,7 +25,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * /vcd group dead|spectators|zones|open_range on|off  rules for Simple Voice Chat groups
  * /vcd monitor on|off                          monitor, radar and nearby players in the HUD
  * /vcd zones                                   every zone
- * /vcd zone pos1|pos2 | create &lt;name&gt; [radius] | set &lt;name&gt; &lt;setting&gt; &lt;value&gt; | delete &lt;name&gt; | info
+ * /vcd zone pos1|pos2 | create &lt;name&gt; [radius] | set &lt;name&gt; &lt;setting&gt; &lt;value&gt; | show &lt;name&gt;|off | delete &lt;name&gt; | info
  * /vcd rule sneak|dead|spectators|megaphone|megaphone_range &lt;value&gt;
  * /vcd require off|suggest|warn|kick [min version]
  * /vcd debug &lt;player&gt;                          what a player hears, and why not
@@ -50,7 +50,7 @@ public final class AdminCommands {
             "rule", "group", "require", "debug", "help"};
     static final String[] MODES = {"off", "suggest", "enforce"};
     static final String[] PRESETS = {"vanilla", "realistic", "clear", "stealth", "custom", "export", "import"};
-    static final String[] ZONE_ACTIONS = {"pos1", "pos2", "create", "set", "delete", "info", "list"};
+    static final String[] ZONE_ACTIONS = {"pos1", "pos2", "create", "set", "show", "delete", "info", "list"};
     static final String[] ZONE_SETTINGS = {"mode", "preset", "voice_range", "whisper_range", "range_multiplier", "walls",
             "echo", "isolated", "message", "priority"};
     static final String[] RULES = {"sneak", "dead", "spectators", "megaphone", "megaphone_range"};
@@ -387,8 +387,31 @@ public final class AdminCommands {
                 Zone z = settings.zoneOf(me);
                 out.add(z == null ? m.get("zone.nowhere", me.world()) : m.get("zone.here", describe(z, m)));
             }
+            case "show" -> {
+                if (me == null) {
+                    out.add(m.get("zone.need_player"));
+                    return;
+                }
+                String target = args.length > 2 ? args[2] : "";
+                if (target.equalsIgnoreCase("off")) {
+                    ZoneOutlines.hide(me.id());
+                    out.add(m.get("zone.show_off"));
+                    return;
+                }
+                Zone z = settings.findZone(target);
+                if (z == null) {
+                    out.add(m.get("zone.unknown", target));
+                } else if (z.box() == null) {
+                    out.add(m.get("zone.show_box"));
+                } else if (!Zone.sameWorld(z.box().world(), me.world())) {
+                    out.add(m.get("zone.show_world", z.name(), z.box().world()));
+                } else {
+                    ZoneOutlines.show(me.id(), z.box());
+                    out.add(m.get("zone.shown", z.name()));
+                }
+            }
             case "list", "" -> zones(settings, m, out);
-            default -> out.add(m.get("usage", "/vcd zone pos1|pos2|create|set|delete|info|list"));
+            default -> out.add(m.get("usage", "/vcd zone pos1|pos2|create|set|show|delete|info|list"));
         }
     }
 
