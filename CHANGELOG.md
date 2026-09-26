@@ -6,6 +6,28 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 *Все заметные изменения проекта описываются в этом файле. Каждая версия описана сначала на английском, затем на русском.*
 
+## [2.3.0] - 2026-09-27
+
+### English
+
+#### Added
+- Full Forge version for 1.20.1: walls, echo, corners, the HUD, the monitor, the settings screen and the server side.
+- Full NeoForge version for 1.21 – 1.21.1.
+- Every release is first started on real Fabric, Forge, NeoForge, Paper and Folia servers.
+
+#### Changed
+- On Modrinth and CurseForge the Fabric, Forge and NeoForge files are separate where each has its own build.
+
+### Русский
+
+#### Добавлено
+- Полная версия для Forge 1.20.1: стены, эхо, углы, HUD, монитор, экран настроек и серверная часть.
+- Полная версия для NeoForge 1.21 – 1.21.1.
+- Каждый релиз сначала запускается на настоящих серверах Fabric, Forge, NeoForge, Paper и Folia.
+
+#### Изменено
+- На Modrinth и CurseForge файлы для Fabric, Forge и NeoForge разделены там, где у каждого своя сборка.
+
 ## [2.2.0] - 2026-09-26
 
 ### English

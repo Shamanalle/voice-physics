@@ -44,9 +44,10 @@ Players **without the addon** also hear voices muffled through walls.
 | You play on | File |
 |---|---|
 | Fabric, Quilt | full, needs [Fabric API](https://modrinth.com/mod/fabric-api) |
-| NeoForge 26.x | full |
+| Forge 1.20.1 | full |
+| NeoForge 1.21 – 1.21.1, 26.x | full |
 | Paper, Purpur, Folia, Spigot | plugin (server only) |
-| Forge, NeoForge before 26.x | lite: distance only |
+| Other Forge and NeoForge versions | lite: distance only |
 
 Minecraft 1.20 – 1.20.6, 1.21 – 1.21.11 and 26.1 – 26.3.
 
@@ -101,9 +102,10 @@ Minecraft 1.20 – 1.20.6, 1.21 – 1.21.11 and 26.1 – 26.3.
 | Вы играете на | Файл |
 |---|---|
 | Fabric, Quilt | полный, нужен [Fabric API](https://modrinth.com/mod/fabric-api) |
-| NeoForge 26.x | полный |
+| Forge 1.20.1 | полный |
+| NeoForge 1.21 – 1.21.1, 26.x | полный |
 | Paper, Purpur, Folia, Spigot | плагин (только сервер) |
-| Forge, NeoForge до 26.x | облегчённый: только дистанция |
+| Остальные версии Forge и NeoForge | облегчённый: только дистанция |
 
 Minecraft 1.20 – 1.20.6, 1.21 – 1.21.11 и 26.1 – 26.3.
 
