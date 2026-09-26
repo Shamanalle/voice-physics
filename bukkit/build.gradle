@@ -50,11 +50,28 @@ processResources {
 }
 
 jar {
-    // The common code goes into the plugin jar; client assets (translations, icon) are not needed
+    // The common code goes into the plugin jar, with the language files: /vcd replies and messages to
+    // players come from them. The icon is for the client only.
     from(project(':common').sourceSets.main.output) {
-        exclude 'assets/**'
+        exclude 'assets/vc-audio-distance/icon.png'
     }
 }
+
+// Guards the jar against losing the texts again: without them every server message is a bare key
+tasks.register('checkPluginJar') {
+    def jarFile = tasks.named('jar').flatMap { it.archiveFile }
+    inputs.file jarFile
+    doLast {
+        def names = new java.util.zip.ZipFile(jarFile.get().asFile).withCloseable { zip -> zip.entries().collect { it.name } }
+        for (String required : ['plugin.yml', 'assets/vc-audio-distance/lang/en_us.json', 'assets/vc-audio-distance/lang/ru_ru.json',
+                                'com/kasper/vcdistance/ServerText.class']) {
+            if (!names.contains(required)) {
+                throw new GradleException("The plugin jar lacks " + required)
+            }
+        }
+    }
+}
+tasks.named('build') { dependsOn 'checkPluginJar' }
 
 // The Paper API the plugin is checked against by .github/workflows/compat-bukkit.yml: the plugin jar,
 // built against bukkit_api_version, must link against every later Paper release the same way.

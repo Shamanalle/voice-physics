@@ -11,7 +11,7 @@ import java.util.Properties;
 
 /**
  * Server-side settings, stored in {@code config/vc-audio-distance-server.properties} (Fabric) or
- * {@code plugins/VoicechatAudioDistance/} (Bukkit). The file is re-read automatically when it
+ * {@code plugins/VoicePhysics/} (Bukkit). The file is re-read automatically when it
  * changes on disk, and is written for people: three sections with a comment on every key.
  * <ol>
  *     <li>Walls: strength and material weights, the same for every player.</li>
@@ -260,11 +260,11 @@ public final class ServerSettings {
 
     public synchronized void save() {
         ConfigWriter w = new ConfigWriter()
-                .title("VoiceChat Audio Distance - server settings",
+                .title("Voice Physics - server settings",
                         "Changes are applied within 2 seconds, no restart needed.",
                         "The voice and whisper range are set in Simple Voice Chat: max_voice_distance, whisper_distance.",
                         "",
-                        "VoiceChat Audio Distance - настройки сервера",
+                        "Voice Physics - настройки сервера",
                         "Изменения применяются в течение 2 секунд, перезапуск не нужен.",
                         "Дальность голоса и шёпота задаётся в Simple Voice Chat: max_voice_distance, whisper_distance.")
                 .comment("Format version, do not change. / Версия формата, не меняйте.")

@@ -377,6 +377,45 @@ public final class DistanceConfig {
         resetMaterials();
     }
 
+    /** Restores the defaults of one part of the sound settings. */
+    public void resetPart(Part part) {
+        switch (part) {
+            case CURVE -> {
+                model = DEFAULT_MODEL;
+                attenuationFactor = DEFAULT_ATTENUATION_FACTOR;
+                minVolumeFraction = DEFAULT_MIN_VOLUME_FRACTION;
+                openalReferenceRatio = DEFAULT_OPENAL_REFERENCE_RATIO;
+                whisperMultiplier = DEFAULT_WHISPER_MULTIPLIER;
+                presetId = "";
+                presetRange = 0.0;
+            }
+            case WALLS -> {
+                occlusionEnabled = DEFAULT_OCCLUSION_ENABLED;
+                occlusionStrength = DEFAULT_OCCLUSION_STRENGTH;
+            }
+            case MATERIALS -> resetMaterials();
+            case EFFECTS -> {
+                reverbEnabled = DEFAULT_REVERB_ENABLED;
+                reverbStrength = DEFAULT_REVERB_STRENGTH;
+                underwaterEnabled = DEFAULT_UNDERWATER_ENABLED;
+                weatherEnabled = DEFAULT_WEATHER_ENABLED;
+                diffractionEnabled = DEFAULT_DIFFRACTION_ENABLED;
+            }
+        }
+        changed();
+    }
+
+    /** Restores the HUD's defaults: mode, corner, size, background, compact and colors. */
+    public void resetHud() {
+        hudMode = DEFAULT_HUD_MODE;
+        hudCorner = DEFAULT_HUD_CORNER;
+        hudScale = DEFAULT_HUD_SCALE;
+        hudBackground = DEFAULT_HUD_BACKGROUND;
+        hudCompact = false;
+        colorblind = false;
+        changed();
+    }
+
     public DistanceConfig copy() {
         DistanceConfig c = new DistanceConfig(path);
         c.copyFrom(this);
@@ -610,11 +649,11 @@ public final class DistanceConfig {
 
     public synchronized void save() {
         ConfigWriter w = new ConfigWriter()
-                .title("VoiceChat Audio Distance - client settings",
+                .title("Voice Physics - client settings",
                         "Easier to change in game: voice chat settings (V) -> \"Voice Physics...\".",
                         "The voice and whisper range itself is set by the server (Simple Voice Chat).",
                         "",
-                        "VoiceChat Audio Distance - настройки клиента",
+                        "Voice Physics - настройки клиента",
                         "Удобнее менять в игре: настройки голосового чата (V) -> «Voice Physics…».",
                         "Сама дальность голоса и шёпота задаётся на сервере (Simple Voice Chat).")
                 .comment("Format version, do not change. / Версия формата, не меняйте.")

@@ -10,6 +10,7 @@ import com.mojang.blaze3d.platform.InputConstants;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
@@ -60,16 +61,23 @@ public class AudioDistanceClient implements ClientModInitializer {
             DistanceConfig.LOGGER.warn("Could not add the voice HUD: {}", t.toString());
         }
 
+        // /voicephysics opens the settings (also from the clickable link in chat)
+        ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) ->
+                dispatcher.register(ClientHints.openCommand()));
+
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             ticker.tick();
             tickServerLink(client);
+            if (ClientHints.consumeOpenRequest(ScreenSwitch.current(client) != null)) {
+                ScreenSwitch.open(client, new AudioDistanceScreen(null));
+            }
             while (OPEN_SETTINGS_KEY.consumeClick()) {
                 ScreenSwitch.open(client, new AudioDistanceScreen(ScreenSwitch.current(client)));
             }
             while (TOGGLE_HUD_KEY.consumeClick()) {
                 ClientHints.cycleHud();
             }
-            ClientHints.tickZoneNotice();
+            ClientHints.tickNotices();
             ClientHints.tickWelcome(client.player != null && client.level != null, OPEN_SETTINGS_KEY,
                     message -> client.player.sendSystemMessage(message));
         });
@@ -89,8 +97,7 @@ public class AudioDistanceClient implements ClientModInitializer {
                 helloSent = ModClientNetworking.trySendHello(BuildInfo.version());
             }
             if (client.player != null && AudioDistancePlugin.LINK.consumeNotice()) {
-                String mode = AudioDistancePlugin.LINK.isEnforced() ? "enforce" : "suggest";
-                client.player.sendSystemMessage(Component.translatable("message.vc-audio-distance.server_profile." + mode));
+                client.player.sendSystemMessage(ClientHints.serverProfileMessage(AudioDistancePlugin.LINK.isEnforced()));
             }
         } catch (Throwable t) {
             DistanceConfig.LOGGER.debug("Server link tick failed: {}", t.toString());

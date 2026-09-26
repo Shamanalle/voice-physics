@@ -10,3 +10,8 @@ type org/bukkit/Sound
 # abstract. The call is invokeinterface either way, and a default method resolves the same, so the
 # clickable link in the addon requirement message (bukkit/.../ChatLink.java) keeps working.
 method net/kyori/adventure/text/TextComponent$Builder.build()Lnet/kyori/adventure/text/BuildableComponent;
+
+# Paper 1.21.9+ gives Player.spawnParticle(Particle, x, y, z, count, dx, dy, dz, extra) a default body
+# instead of leaving it abstract. The call is invokeinterface either way and a default method resolves
+# the same, so zone borders (/vcd zone show, bukkit/.../AudioDistanceBukkit.java) keep working.
+method org/bukkit/entity/Player.spawnParticle(Lorg/bukkit/Particle;DDDIDDDD)V
