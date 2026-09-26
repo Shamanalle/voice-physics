@@ -6,6 +6,54 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 *Все заметные изменения проекта описываются в этом файле. Каждая версия описана сначала на английском, затем на русском.*
 
+## [2.2.0] - 2026-09-26
+
+### English
+
+#### Added
+- The settings screen scrolls, so nothing is cut off in small windows or with a large interface size.
+- HUD tab with a live preview of the HUD.
+- `/voicephysics` opens the settings. The first-join hint and the server profile message have a clickable link to them.
+- `/vcd zone show <name>` and a *Show* button on the Server tab draw a box zone's borders with particles for 30 seconds.
+- The server plugin runs on Folia.
+- A short HUD notice when the server hides nearby players.
+
+#### Changed
+- Materials are on the Walls tab, in a section that opens.
+- The profile code is in the footer and works from every tab.
+- *Reset* resets only the open tab.
+- Settings the server locks show a padlock and say why.
+- A preset no longer changes walls the server locks.
+- Plain words instead of dB, kHz and ms per tick; shorter tooltips.
+- Server tab: settings in sections, the zone you are in is marked, deleting a zone asks for a second click.
+- The server plugin is called VoicePhysics. Its settings folder moves from `plugins/VoicechatAudioDistance` by itself.
+
+#### Fixed
+- The server plugin showed text keys instead of messages, for example in `/vcd` replies.
+
+### Русский
+
+#### Добавлено
+- Экран настроек прокручивается: в маленьком окне и при крупном интерфейсе ничего не обрезается.
+- Вкладка «HUD» с живым предпросмотром.
+- `/voicephysics` открывает настройки. В подсказке при первом входе и в сообщении о профиле сервера есть ссылка на них.
+- `/vcd zone show <имя>` и кнопка «Показать» на вкладке «Сервер» рисуют границы зоны-бокса частицами на 30 секунд.
+- Серверный плагин работает на Folia.
+- Короткое уведомление в HUD, когда сервер скрывает игроков рядом.
+
+#### Изменено
+- Материалы перенесены на вкладку «Стены», в раскрывающийся раздел.
+- Код профиля — в нижней панели и работает с любой вкладки.
+- «Сбросить» сбрасывает только открытую вкладку.
+- Заблокированные сервером настройки отмечены замком и объясняют почему.
+- Пресет больше не меняет стены, если сервер их заблокировал.
+- Понятные слова вместо дБ, кГц и мс за тик; подсказки короче.
+- Вкладка «Сервер»: настройки по разделам, зона, в которой вы стоите, отмечена, удаление зоны просит второй клик.
+- Серверный плагин называется VoicePhysics. Папка настроек сама переносится из `plugins/VoicechatAudioDistance`.
+
+#### Исправлено
+- Серверный плагин показывал ключи текстов вместо сообщений, например в ответах `/vcd`.
+
 ## [2.1.0] - 2026-09-26
 
 ### English

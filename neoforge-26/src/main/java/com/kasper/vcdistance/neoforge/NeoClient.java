@@ -23,6 +23,7 @@ import net.minecraft.resources.Identifier;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.client.event.RegisterClientCommandsEvent;
 import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
 import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
 import net.neoforged.neoforge.client.event.ScreenEvent;
@@ -75,6 +76,8 @@ final class NeoClient {
                 }));
 
         NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post e) -> tick(Minecraft.getInstance()));
+        // /voicephysics opens the settings (also from the clickable link in chat)
+        NeoForge.EVENT_BUS.addListener((RegisterClientCommandsEvent e) -> e.getDispatcher().register(ClientHints.openCommand()));
         NeoForge.EVENT_BUS.addListener((ScreenEvent.Init.Post e) -> {
             if (!SvcSettingsButton.isSvcSettings(e.getScreen())) {
                 return;
@@ -91,13 +94,16 @@ final class NeoClient {
     private static void tick(Minecraft client) {
         ticker.tick();
         tickServerLink(client);
+        if (ClientHints.consumeOpenRequest(ScreenSwitch.current(client) != null)) {
+            ScreenSwitch.open(client, new AudioDistanceScreen(null));
+        }
         while (OPEN_SETTINGS_KEY.consumeClick()) {
             ScreenSwitch.open(client, new AudioDistanceScreen(ScreenSwitch.current(client)));
         }
         while (TOGGLE_HUD_KEY.consumeClick()) {
             ClientHints.cycleHud();
         }
-        ClientHints.tickZoneNotice();
+        ClientHints.tickNotices();
         ClientHints.tickWelcome(client.player != null && client.level != null, OPEN_SETTINGS_KEY,
                 message -> client.player.sendSystemMessage(message));
     }
@@ -116,8 +122,7 @@ final class NeoClient {
                 helloSent = true;
             }
             if (client.player != null && AudioDistancePlugin.LINK.consumeNotice()) {
-                String mode = AudioDistancePlugin.LINK.isEnforced() ? "enforce" : "suggest";
-                client.player.sendSystemMessage(Component.translatable("message.vc-audio-distance.server_profile." + mode));
+                client.player.sendSystemMessage(ClientHints.serverProfileMessage(AudioDistancePlugin.LINK.isEnforced()));
             }
         } catch (Throwable t) {
             DistanceConfig.LOGGER.debug("Server link tick failed: {}", t.toString());

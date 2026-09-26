@@ -63,6 +63,8 @@ public final class ServerWalls {
     private static final long PRUNE_INTERVAL_NANOS = TimeUnit.SECONDS.toNanos(2);
     private static final long TRACE_INTERVAL_NANOS = TimeUnit.MILLISECONDS.toNanos(100);
     private static final int MAX_TRACES_PER_TICK = 48;
+    /** Per listener and tick, when each player's walls are measured on their own thread (Folia). */
+    private static final int MAX_TRACES_PER_LISTENER = 8;
 
     private final PerfMeter perf = new PerfMeter();
 
@@ -540,23 +542,52 @@ public final class ServerWalls {
             if (budget <= 0) {
                 break;
             }
-            if (now - pair.lastSeenNanos > ACTIVE_NANOS || now - pair.lastTraceNanos < TRACE_INTERVAL_NANOS) {
-                continue;
+            if (trace(pair, provider, now)) {
+                budget--;
             }
-            Object listener = pair.listenerPlayer;
-            Object level = pair.listenerLevel;
-            if (listener == null || level == null) {
-                continue;
-            }
-            try {
-                pair.thickness = provider.thickness(listener, level, pair.speakerEntity, pair.x, pair.y, pair.z);
-            } catch (Throwable t) {
-                pair.thickness = Double.NaN;
-                logFailure(t);
-            }
-            pair.lastTraceNanos = now;
-            budget--;
         }
+    }
+
+    /**
+     * For servers that tick each region on its own thread (Folia): measures only the walls between
+     * {@code listener} and the voices they hear, on that player's thread. The load meter is left
+     * alone, since several threads would share it.
+     */
+    public void tickListener(UUID listener, ThicknessProvider provider) {
+        worldAvailable = true;
+        if (!settings.isServerWalls() || !settings.profile().isOcclusionEnabled()) {
+            return;
+        }
+        long now = System.nanoTime();
+        int budget = MAX_TRACES_PER_LISTENER;
+        for (Pair pair : pairs.values()) {
+            if (budget <= 0) {
+                break;
+            }
+            if (listener.equals(pair.listener) && trace(pair, provider, now)) {
+                budget--;
+            }
+        }
+    }
+
+    /** Measures the pair's walls when it is active and due. @return whether it was measured */
+    private boolean trace(Pair pair, ThicknessProvider provider, long now) {
+        if (now - pair.lastSeenNanos > ACTIVE_NANOS || now - pair.lastTraceNanos < TRACE_INTERVAL_NANOS) {
+            return false;
+        }
+        Object listener = pair.listenerPlayer;
+        Object level = pair.listenerLevel;
+        if (listener == null || level == null) {
+            return false;
+        }
+        try {
+            pair.thickness = provider.thickness(listener, level, pair.speakerEntity, pair.x, pair.y, pair.z);
+        } catch (Throwable t) {
+            pair.thickness = Double.NaN;
+            logFailure(t);
+        }
+        pair.lastTraceNanos = now;
+        return true;
     }
 
     // -------------------------------------------------------------------------

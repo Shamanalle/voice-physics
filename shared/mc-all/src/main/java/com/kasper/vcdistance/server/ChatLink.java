@@ -13,7 +13,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Chat text whose links open in the browser when clicked.
+ * Chat text whose links open in the browser when clicked, and text that runs a command.
  * <p>
  * The click event changed shape in 1.21.5 (a class with an action and a value became a record per
  * action), and one jar serves both sides of that change under obfuscated names, so the event is
@@ -50,16 +50,46 @@ public final class ChatLink {
         return out;
     }
 
+    /**
+     * {@code text} that runs {@code command} (with its slash) when clicked, or {@code text} unchanged
+     * when this version's click event could not be made.
+     */
+    public static Component command(Component text, String command) {
+        ClickEvent click = failed ? null : make("run_command", command);
+        if (click == null) {
+            return text;
+        }
+        return Component.empty().append(text).withStyle(Style.EMPTY.withClickEvent(click).withUnderlined(true));
+    }
+
     private static ClickEvent openUrl(String url) {
+        ClickEvent click = make("open_url", url);
+        if (click == null) {
+            failed = true;
+        }
+        return click;
+    }
+
+    /** A click event of the action serialized as {@code action} ("open_url", "run_command") with {@code value}. */
+    private static ClickEvent make(String action, String value) {
         try {
             if (ClickEvent.class.isInterface()) {
-                // 1.21.5 and newer: ClickEvent.OpenUrl(URI)
+                // 1.21.5 and newer: a record per action, e.g. ClickEvent.OpenUrl(URI), ClickEvent.RunCommand(String)
                 for (Class<?> nested : ClickEvent.class.getDeclaredClasses()) {
                     RecordComponent[] parts = nested.isRecord() ? nested.getRecordComponents() : null;
-                    if (parts != null && parts.length == 1 && parts[0].getType() == URI.class) {
-                        Constructor<?> c = nested.getDeclaredConstructor(URI.class);
-                        c.setAccessible(true);
-                        return (ClickEvent) c.newInstance(URI.create(url));
+                    if (parts == null || parts.length != 1) {
+                        continue;
+                    }
+                    Object arg = parts[0].getType() == URI.class ? URI.create(value)
+                            : parts[0].getType() == String.class ? value : null;
+                    if (arg == null) {
+                        continue;
+                    }
+                    Constructor<?> c = nested.getDeclaredConstructor(parts[0].getType());
+                    c.setAccessible(true);
+                    Object event = c.newInstance(arg);
+                    if (hasAction(event, action)) {
+                        return (ClickEvent) event;
                     }
                 }
             } else {
@@ -67,10 +97,10 @@ public final class ChatLink {
                 for (Constructor<?> c : ClickEvent.class.getDeclaredConstructors()) {
                     Class<?>[] types = c.getParameterTypes();
                     if (types.length == 2 && types[0].isEnum() && types[1] == String.class) {
-                        Object action = actionNamed(types[0], "open_url");
-                        if (action != null) {
+                        Object constant = actionNamed(types[0], action);
+                        if (constant != null) {
                             c.setAccessible(true);
-                            return (ClickEvent) c.newInstance(action, url);
+                            return (ClickEvent) c.newInstance(constant, value);
                         }
                     }
                 }
@@ -78,8 +108,24 @@ public final class ChatLink {
         } catch (Throwable ignored) {
             // falls through to plain text
         }
-        failed = true;
         return null;
+    }
+
+    /** Whether the event's action (the enum any no-argument method returns) is {@code action}. */
+    private static boolean hasAction(Object event, String action) {
+        for (Method method : event.getClass().getMethods()) {
+            if (method.getParameterCount() == 0 && method.getReturnType().isEnum()) {
+                try {
+                    Object constant = method.invoke(event);
+                    if (constant instanceof Enum<?> e && actionNamed(e.getDeclaringClass(), action) == constant) {
+                        return true;
+                    }
+                } catch (Throwable ignored) {
+                    // not this one
+                }
+            }
+        }
+        return false;
     }
 
     /** The enum constant whose serialized name (any no-argument String method) is {@code name}. */

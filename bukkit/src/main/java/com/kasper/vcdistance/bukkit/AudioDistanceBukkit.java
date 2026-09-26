@@ -7,6 +7,7 @@ import com.kasper.vcdistance.ModEnvironment;
 import com.kasper.vcdistance.ServerHooks;
 import com.kasper.vcdistance.ServerPlayers;
 import com.kasper.vcdistance.Zone;
+import com.kasper.vcdistance.ZoneOutlines;
 import com.kasper.vcdistance.ZoneTracker;
 import de.maxhenkel.voicechat.api.BukkitVoicechatService;
 import de.maxhenkel.voicechat.api.VoicechatApi;
@@ -14,6 +15,7 @@ import de.maxhenkel.voicechat.api.VoicechatPlugin;
 import de.maxhenkel.voicechat.api.events.EventRegistration;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
+import org.bukkit.Particle;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.PluginCommand;
@@ -26,15 +28,20 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.io.File;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Server side of the addon for Bukkit, Spigot, Paper and Purpur. Does the same as the Fabric server
- * side: muffles voices through walls for players without the addon and sends players who have it
- * the server's sound profile and the voice chat state of the players near them. The client half works with this plugin exactly as with a Fabric
- * server, because both speak the same {@link LinkProtocol} over the same channels.
+ * Server side of the addon for Bukkit, Spigot, Paper, Purpur and Folia. Does the same as the Fabric
+ * server side: muffles voices through walls for players without the addon and sends players who have
+ * it the server's sound profile and the voice chat state of the players near them. The client half
+ * works with this plugin exactly as with a Fabric server, because both speak the same
+ * {@link LinkProtocol} over the same channels.
  */
 public final class AudioDistanceBukkit extends JavaPlugin implements Listener {
 
@@ -46,15 +53,36 @@ public final class AudioDistanceBukkit extends JavaPlugin implements Listener {
     static final String ADMIN_PERMISSION = "vcd.admin";
 
     private static final int RELOAD_CHECK_TICKS = 40;
+    /** The plugin's name before 2.2.0, and so its old settings folder. */
+    private static final String OLD_NAME = "VoicechatAudioDistance";
 
-    private final BukkitThickness thickness = new BukkitThickness();
     private final ZoneTracker zones = new ZoneTracker();
+    /** Folia: each player as their own thread last saw them, for the voice rules. */
+    private final Map<UUID, ServerPlayers.Info> infos = new ConcurrentHashMap<>();
+    private Scheduling scheduling;
+    private BukkitThickness thickness;
     private int ticks;
 
     @Override
     public void onLoad() {
+        moveOldSettings();
         // Settings live in plugins/<name>/ instead of the loader's config directory
         ModEnvironment.setConfigDir(getDataFolder().toPath());
+    }
+
+    /** The plugin was called VoicechatAudioDistance before 2.2.0: its settings folder moves along once. */
+    private void moveOldSettings() {
+        File folder = getDataFolder();
+        File old = new File(folder.getParentFile(), OLD_NAME);
+        if (!folder.exists() && old.isDirectory()) {
+            try {
+                Files.move(old.toPath(), folder.toPath());
+                getLogger().info("Moved the settings from plugins/" + OLD_NAME + " to plugins/" + folder.getName());
+            } catch (Exception e) {
+                getLogger().warning("Could not move plugins/" + OLD_NAME + " to plugins/" + folder.getName()
+                        + "; move it by hand to keep the settings: " + e);
+            }
+        }
     }
 
     @Override
@@ -65,6 +93,8 @@ public final class AudioDistanceBukkit extends JavaPlugin implements Listener {
             getServer().getPluginManager().disablePlugin(this);
             return;
         }
+        scheduling = Scheduling.create(this);
+        thickness = new BukkitThickness(scheduling.isRegionized());
         AudioDistancePlugin.ensureServerSettings();
         service.registerPlugin(new ServerPlugin());
 
@@ -76,7 +106,13 @@ public final class AudioDistanceBukkit extends JavaPlugin implements Listener {
         getServer().getMessenger().registerIncomingPluginChannel(this, ADMIN_CHANNEL,
                 (channel, player, message) -> onAdmin(player, message));
         getServer().getPluginManager().registerEvents(this, this);
-        getServer().getScheduler().runTaskTimer(this, this::tick, 1L, 1L);
+        scheduling.everyTick(this::tick);
+        for (Player player : getServer().getOnlinePlayers()) {
+            startPlayerTick(player);
+        }
+        if (scheduling.isRegionized()) {
+            getLogger().info("Running on Folia: each player's walls are measured on their own region's thread");
+        }
         PluginCommand command = getCommand(AdminCommands.NAME);
         if (command != null) {
             AdminCommand handler = new AdminCommand();
@@ -87,7 +123,11 @@ public final class AudioDistanceBukkit extends JavaPlugin implements Listener {
 
     @Override
     public void onDisable() {
-        getServer().getScheduler().cancelTasks(this);
+        if (scheduling != null) {
+            scheduling.cancelAll();
+        }
+        ZoneOutlines.clear();
+        infos.clear();
         getServer().getMessenger().unregisterIncomingPluginChannel(this);
         getServer().getMessenger().unregisterOutgoingPluginChannel(this);
         AudioDistancePlugin.SERVER_WALLS.clear();
@@ -95,29 +135,75 @@ public final class AudioDistanceBukkit extends JavaPlugin implements Listener {
         zones.clear();
     }
 
-    /** Main thread, every tick: measures walls, sends nearby voice states and picks up edited settings. */
+    /**
+     * Every tick (the main thread, or Folia's global region): measures walls, sends nearby voice
+     * states, draws zone borders and picks up edited settings. On Folia the parts that touch a player
+     * or the blocks around them run in {@link #startPlayerTick} instead.
+     */
     private void tick() {
-        AudioDistancePlugin.SERVER_WALLS.tick(thickness);
+        if (!scheduling.isRegionized()) {
+            AudioDistancePlugin.SERVER_WALLS.tick(thickness);
+        }
         refreshPlayers();
         ++ticks;
-        if (ticks % AudioDistancePlugin.NEARBY_INTERVAL_TICKS == 0) {
+        if (!scheduling.isRegionized() && ticks % AudioDistancePlugin.NEARBY_INTERVAL_TICKS == 0) {
             for (Player player : getServer().getOnlinePlayers()) {
-                if (!AudioDistancePlugin.SERVER_WALLS.hasAddon(player.getUniqueId())) {
-                    continue;
-                }
-                if (player.getListeningPluginChannels().contains(NEARBY_CHANNEL)) {
-                    sendNearby(player);
-                }
-                // Walked into another world or region with its own profile
-                Zone zone = zoneOf(player);
-                if (zones.changed(player.getUniqueId(), zone)) {
-                    sendProfile(player, zone);
-                }
+                sendNearbyAndZone(player);
             }
         }
+        ZoneOutlines.tick((id, world, points) -> {
+            Player p = getServer().getPlayer(id);
+            if (p != null) {
+                scheduling.onPlayer(p, () -> drawOutline(p, world, points));
+            }
+        });
         if (ticks % RELOAD_CHECK_TICKS == 0 && AudioDistancePlugin.SERVER_SETTINGS.reloadIfChanged()) {
             BlockAcoustics.clearCache();
             resendProfiles();
+        }
+    }
+
+    /** Folia: a player's own share of the tick, on the thread that owns them. */
+    private void startPlayerTick(Player player) {
+        int[] count = {0};
+        UUID id = player.getUniqueId();
+        scheduling.everyPlayerTick(player, () -> {
+            int n = ++count[0];
+            if (n % 5 == 0) {
+                try {
+                    infos.put(id, info(player));
+                } catch (Throwable ignored) {
+                    // half-way through joining or leaving
+                }
+            }
+            AudioDistancePlugin.SERVER_WALLS.tickListener(id, thickness);
+            if (n % AudioDistancePlugin.NEARBY_INTERVAL_TICKS == 0) {
+                sendNearbyAndZone(player);
+            }
+        });
+    }
+
+    /** For a player with the addon: the voice chat state of the players nearby, and a new profile on entering a zone. */
+    private void sendNearbyAndZone(Player player) {
+        if (!AudioDistancePlugin.SERVER_WALLS.hasAddon(player.getUniqueId())) {
+            return;
+        }
+        if (player.getListeningPluginChannels().contains(NEARBY_CHANNEL)) {
+            sendNearby(player);
+        }
+        // Walked into another world or region with its own profile
+        Zone zone = zoneOf(player);
+        if (zones.changed(player.getUniqueId(), zone)) {
+            sendProfile(player, zone);
+        }
+    }
+
+    private static void drawOutline(Player player, String world, List<double[]> points) {
+        if (!Zone.sameWorld(player.getWorld().getName(), world)) {
+            return;
+        }
+        for (double[] p : points) {
+            player.spawnParticle(Particle.END_ROD, p[0], p[1], p[2], 1, 0.0, 0.0, 0.0, 0.0);
         }
     }
 
@@ -127,11 +213,17 @@ public final class AudioDistanceBukkit extends JavaPlugin implements Listener {
             return;
         }
         List<ServerPlayers.Info> online = new ArrayList<>();
-        for (Player p : getServer().getOnlinePlayers()) {
-            try {
-                online.add(info(p));
-            } catch (Throwable ignored) {
-                // A player half-way through joining or leaving
+        if (scheduling.isRegionized()) {
+            // Each player's own thread keeps their entry fresh; drop those who left
+            infos.keySet().removeIf(id -> getServer().getPlayer(id) == null);
+            online.addAll(infos.values());
+        } else {
+            for (Player p : getServer().getOnlinePlayers()) {
+                try {
+                    online.add(info(p));
+                } catch (Throwable ignored) {
+                    // A player half-way through joining or leaving
+                }
             }
         }
         ServerHooks.refresh(online, new ServerHooks.Platform() {
@@ -139,11 +231,13 @@ public final class AudioDistanceBukkit extends JavaPlugin implements Listener {
             public void message(UUID player, String text) {
                 Player p = getServer().getPlayer(player);
                 if (p != null) {
-                    try {
-                        ChatLink.send(p, text);
-                    } catch (LinkageError e) {
-                        p.sendMessage(text); // Spigot: no Adventure, the link stays plain text
-                    }
+                    scheduling.onPlayer(p, () -> {
+                        try {
+                            ChatLink.send(p, text);
+                        } catch (LinkageError e) {
+                            p.sendMessage(text); // Spigot: no Adventure, the link stays plain text
+                        }
+                    });
                 }
             }
 
@@ -152,7 +246,7 @@ public final class AudioDistanceBukkit extends JavaPlugin implements Listener {
             public void kick(UUID player, String text) {
                 Player p = getServer().getPlayer(player);
                 if (p != null) {
-                    p.kickPlayer(text);
+                    scheduling.onPlayer(p, () -> p.kickPlayer(text));
                 }
             }
         });
@@ -218,9 +312,11 @@ public final class AudioDistanceBukkit extends JavaPlugin implements Listener {
     private void resendProfiles() {
         for (Player player : getServer().getOnlinePlayers()) {
             if (AudioDistancePlugin.SERVER_WALLS.hasAddon(player.getUniqueId())) {
-                Zone zone = zoneOf(player);
-                zones.set(player.getUniqueId(), zone);
-                sendProfile(player, zone);
+                scheduling.onPlayer(player, () -> {
+                    Zone zone = zoneOf(player);
+                    zones.set(player.getUniqueId(), zone);
+                    sendProfile(player, zone);
+                });
             }
         }
     }
@@ -249,12 +345,15 @@ public final class AudioDistanceBukkit extends JavaPlugin implements Listener {
     @EventHandler
     public void onJoin(PlayerJoinEvent event) {
         ServerHooks.joined(event.getPlayer().getUniqueId());
+        startPlayerTick(event.getPlayer());
     }
 
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
         ServerHooks.left(event.getPlayer().getUniqueId());
         zones.forget(event.getPlayer().getUniqueId());
+        infos.remove(event.getPlayer().getUniqueId());
+        ZoneOutlines.hide(event.getPlayer().getUniqueId());
     }
 
     /** What /vcd needs from the server, for a command run by {@code sender} ({@code null}: the console). */

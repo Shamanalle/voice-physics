@@ -250,4 +250,50 @@ public class DistanceConfigTest {
         assertEquals(DistanceConfig.WHISPER_MIN, c.getWhisperMultiplier());
         assertEquals(DistanceConfig.STRENGTH_MIN, c.getOcclusionStrength());
     }
+    @Test
+    @DisplayName("Resetting one part leaves the others alone")
+    void resetPart() {
+        DistanceConfig c = new DistanceConfig(dir.resolve("vc.properties"));
+        c.setAttenuationFactor(0.3);
+        c.setOcclusionStrength(0.9);
+        c.setMaterialWeight(AcousticMaterial.WOOL, 2.5);
+        c.setReverbStrength(0.2);
+        c.setHudScale(1.4);
+
+        c.resetPart(DistanceConfig.Part.WALLS);
+        assertEquals(DistanceConfig.DEFAULT_OCCLUSION_STRENGTH, c.getOcclusionStrength(), 1e-9);
+        assertEquals(0.3, c.getAttenuationFactor(), 1e-9);
+        assertEquals(2.5, c.getMaterialWeight(AcousticMaterial.WOOL), 1e-9);
+
+        c.resetPart(DistanceConfig.Part.CURVE);
+        assertEquals(DistanceConfig.DEFAULT_ATTENUATION_FACTOR, c.getAttenuationFactor(), 1e-9);
+        assertEquals(0.2, c.getReverbStrength(), 1e-9);
+
+        c.resetPart(DistanceConfig.Part.MATERIALS);
+        assertEquals(AcousticMaterial.WOOL.getDefaultWeight(), c.getMaterialWeight(AcousticMaterial.WOOL), 1e-9);
+
+        c.resetPart(DistanceConfig.Part.EFFECTS);
+        assertEquals(DistanceConfig.DEFAULT_REVERB_STRENGTH, c.getReverbStrength(), 1e-9);
+        assertEquals(1.4, c.getHudScale(), 1e-9);
+
+        c.setHudCompact(true);
+        c.setHudMode(HudMode.ALWAYS);
+        c.resetHud();
+        assertEquals(DistanceConfig.DEFAULT_HUD_SCALE, c.getHudScale(), 1e-9);
+        assertEquals(DistanceConfig.DEFAULT_HUD_MODE, c.getHudMode());
+        assertFalse(c.isHudCompact());
+    }
+
+    @Test
+    @DisplayName("A preset can set the curve and leave the walls alone")
+    void presetWithoutWalls() {
+        DistanceConfig c = new DistanceConfig(dir.resolve("vc.properties"));
+        c.setOcclusionEnabled(false);
+        Preset.ATMOSPHERIC.apply(c, 48.0, false);
+        assertFalse(c.isOcclusionEnabled());
+        assertTrue(Preset.ATMOSPHERIC.matchesCurve(c, 48.0));
+        Preset.ATMOSPHERIC.apply(c, 48.0, true);
+        assertTrue(c.isOcclusionEnabled());
+        assertTrue(Preset.ATMOSPHERIC.matches(c, 48.0));
+    }
 }

@@ -153,7 +153,7 @@ public record Zone(String kind, String name, ServerSettings.ProfileMode mode, St
     }
 
     /** "minecraft:the_nether" and "the_nether" are the same world. */
-    static boolean sameWorld(String a, String b) {
+    public static boolean sameWorld(String a, String b) {
         String x = normalize(a);
         String y = normalize(b);
         return x.equals(y) || strip(x).equals(strip(y));

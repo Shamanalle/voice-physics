@@ -1,18 +1,19 @@
-name: VoicechatAudioDistance
+name: VoicePhysics
 version: '${version}'
 main: com.kasper.vcdistance.bukkit.AudioDistanceBukkit
 api-version: '1.20'
+folia-supported: true
 depend: [voicechat]
 softdepend: [WorldGuard]
 author: Shamanalle
 website: https://github.com/Shamanalle/voice-physics
 description: >-
-  Server side of VoiceChat Audio Distance for Simple Voice Chat. Muffles voices through walls
-  for players without the addon and shares the server's sound profile with players who have it.
+  Voice Physics for Simple Voice Chat: walls muffle voices even for players without the addon,
+  sound zones and game rules, and the server's sound profile for players who have the addon.
 commands:
   vcd:
-    description: Voice Physics - status and settings of the voice addon
-    usage: /vcd [status|reload|profile|preset|walls|serverwalls|zones|help]
+    description: Voice Physics - status and settings
+    usage: /vcd help
     permission: vcd.admin
 permissions:
   vcd.admin:

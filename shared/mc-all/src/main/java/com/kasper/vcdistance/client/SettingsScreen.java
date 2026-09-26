@@ -7,15 +7,15 @@ import com.kasper.vcdistance.AudioPhysics;
 import com.kasper.vcdistance.Bearing;
 import com.kasper.vcdistance.DistanceConfig;
 import com.kasper.vcdistance.EnvironmentEffects;
-import com.kasper.vcdistance.ListenerEnvironment;
-import com.kasper.vcdistance.RoomEstimate;
-import com.kasper.vcdistance.SoundBlend;
 import com.kasper.vcdistance.HudMode;
 import com.kasper.vcdistance.LinkProtocol;
+import com.kasper.vcdistance.ListenerEnvironment;
 import com.kasper.vcdistance.NearbyPlayers;
 import com.kasper.vcdistance.OcclusionModel;
 import com.kasper.vcdistance.Preset;
 import com.kasper.vcdistance.ProfileCode;
+import com.kasper.vcdistance.RoomEstimate;
+import com.kasper.vcdistance.SoundBlend;
 import com.kasper.vcdistance.SpeakerRegistry;
 import com.kasper.vcdistance.VoiceState;
 import net.minecraft.client.gui.components.AbstractWidget;
@@ -25,15 +25,19 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
 import java.util.ArrayList;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 /**
  * Settings screen, shared by every Minecraft version.
  * <p>
- * Four tabs: the distance curve with a live graph, wall muffling with an audible preview, per-material
- * absorption, and a live monitor of the players within voice range and the voices you are hearing. Every change is heard
- * immediately; "Done" (or Esc) saves, "Cancel" restores what was there when the screen opened.
+ * Tabs: the distance curve with a live graph, walls (with a preview and the materials), effects
+ * (echo, water, rain, corners), the HUD with a preview, a live monitor of the players within voice
+ * range, and the server's settings for admins. The part below the tabs scrolls, so nothing is left
+ * out on small windows. Every change is heard immediately; "Done" (or Esc) saves, "Cancel" restores
+ * what was there when the screen opened.
  * <p>
  * Version subclasses only forward rendering through a {@link Canvas} and switch screens.
  */
@@ -43,10 +47,14 @@ public abstract class SettingsScreen extends Screen {
     private static final int MAX_WIDTH = 420;
     private static final int ROW = 24;
     private static final int GAP = 4;
+    /** Pixels per step of the mouse wheel. */
+    private static final int SCROLL_STEP = 18;
 
     private static Tab lastTab = Tab.DISTANCE;
     /** Monitor as a list (false) or a radar seen from above (true); kept while the game runs. */
     private static boolean radarView;
+    /** The materials section of the Walls tab is open; kept while the game runs. */
+    private static boolean materialsOpen;
 
     /** Walk-away preview: where the voice is at each step, as a share of the range. */
     private static final double[] PREVIEW_STEPS = {0.05, 0.25, 0.45, 0.65, 0.85, 1.0};
@@ -55,8 +63,8 @@ public abstract class SettingsScreen extends Screen {
     public enum Tab {
         DISTANCE("tab.distance"),
         WALLS("tab.walls"),
-        MATERIALS("tab.materials"),
         EFFECTS("tab.effects"),
+        HUD("tab.hud"),
         MONITOR("tab.monitor"),
         /** Only for server admins, when the server has the addon. */
         SERVER("tab.server");
@@ -84,6 +92,10 @@ public abstract class SettingsScreen extends Screen {
             new Example("stone3", AcousticMaterial.STONE, 3)
     };
 
+    /** A section title on the Server tab, at a content y. */
+    private record Heading(Component text, int y) {
+    }
+
     protected final Screen parent;
     private final DistanceConfig config = AudioDistancePlugin.CONFIG;
     private final DistanceConfig snapshot;
@@ -91,39 +103,56 @@ public abstract class SettingsScreen extends Screen {
 
     private int left;
     private int right;
+    private int tabsBottom;
+    /** The scrolling band between the tabs and the footer, in screen rows. */
+    private int viewTop;
+    private int viewBottom;
+    private int footerY;
+    /** Content coordinates: equal to screen rows when nothing is scrolled. */
     private int contentTop;
-    private int contentBottom;
+    private int contentEnd;
+    private int scroll;
+    private int maxScroll;
+
+    private int graphHeaderY;
     private int graphTop;
     private int graphBottom;
+    /** Where a status banner goes on the Walls and Effects tabs. */
+    private int statusY;
     private int panelTop;
+    private int panelBottom;
+    private int materialsHintY = -1;
+    private int noZonesY = -1;
+    private final List<Heading> headings = new ArrayList<>();
 
+    /** Widgets below the tabs, with the content y they were laid out at. */
+    private final List<AbstractWidget> scrolled = new ArrayList<>();
+    private final List<Integer> scrolledY = new ArrayList<>();
+    /** Widgets that change a part of the sound settings the server may lock. */
+    private final Map<AbstractWidget, DistanceConfig.Part> editParts = new IdentityHashMap<>();
+    private final List<AbstractWidget> lockedWidgets = new ArrayList<>();
     private final List<Button> presetButtons = new ArrayList<>();
     private final List<Preset> presetOrder = new ArrayList<>();
-    /** x1, x2, bottom of each preset button, to mark the one that matches the current sound. */
-    private final List<int[]> presetBounds = new ArrayList<>();
-    private int activeTabX1;
-    private int activeTabX2;
-    private int tabsBottom;
+    private Button activeTabButton;
     private RangeSlider strengthSlider;
     private RangeSlider reverbSlider;
-    /** Widgets that change settings; disabled while the server enforces its profile. */
-    private final List<AbstractWidget> editWidgets = new ArrayList<>();
     private boolean serverChip;
     /** Current walk-away preview step, or -1 when it is not playing. */
     private int previewStep = -1;
     private int previewTicks;
     private Button listenButton;
+    /** The footer shows Copy / Paste / Back for the profile code instead of the usual buttons. */
+    private boolean codeMode;
     private Button copyButton;
     private Button pasteButton;
     /** Short-lived result shown on the profile code buttons ("copied", "pasted", "not a code"). */
     private String copyFeedback;
     private String pasteFeedback;
     private int codeFeedbackTicks;
-    /** Server tab: the zone picked in the list, and the last reply shown. */
+    /** Server tab: the zone picked in the list, a zone whose Delete was clicked once, the last reply seen. */
     private static String selectedZone;
+    private static String confirmDelete;
     private int seenAdminReplies = -1;
-    private int serverListTop;
-    private int monitorTop;
 
     protected SettingsScreen(Screen parent) {
         super(Component.translatable(K + "title"));
@@ -152,16 +181,22 @@ public abstract class SettingsScreen extends Screen {
 
     @Override
     protected void init() {
+        scrolled.clear();
+        scrolledY.clear();
+        editParts.clear();
+        lockedWidgets.clear();
         presetButtons.clear();
         presetOrder.clear();
-        presetBounds.clear();
-        editWidgets.clear();
+        headings.clear();
         strengthSlider = null;
         reverbSlider = null;
         listenButton = null;
         copyButton = null;
         pasteButton = null;
+        activeTabButton = null;
         serverChip = false;
+        materialsHintY = -1;
+        noZonesY = -1;
 
         int w = Math.min(this.width - 16, MAX_WIDTH);
         left = (this.width - w) / 2;
@@ -178,55 +213,192 @@ public abstract class SettingsScreen extends Screen {
             Tab t = tabs[i];
             int x = i == tabs.length - 1 ? right - tabW : left + i * (tabW + GAP);
             Button b = Button.builder(tr(t.key), btn -> switchTab(t)).bounds(x, 22, tabW, 20).build();
-            b.active = t != tab;
             addRenderableWidget(b);
             if (t == tab) {
-                activeTabX1 = x;
-                activeTabX2 = x + tabW;
+                activeTabButton = b;
             }
         }
         tabsBottom = 22 + 20;
-        contentTop = tabsBottom + 8;
+        viewTop = tabsBottom + 5;
+        footerY = this.height - 26;
+        viewBottom = footerY - 5;
+        contentTop = viewTop + 3;
+        contentEnd = contentTop;
 
-        int footerY = this.height - 26;
-        contentBottom = footerY - 6;
-        int fw = (w - GAP * 2) / 3;
-        edit(Button.builder(tr("reset"), b -> {
-            config.applyDefaults();
-            rebuild();
-        }).bounds(left, footerY, fw, 20).tooltip(tip("reset.tooltip")).build());
-        addRenderableWidget(Button.builder(tr("cancel"), b -> cancel())
-                .bounds(left + fw + GAP, footerY, fw, 20).tooltip(tip("cancel.tooltip")).build());
-        addRenderableWidget(Button.builder(tr("done"), b -> saveAndClose())
-                .bounds(right - fw, footerY, fw, 20).build());
-
+        initFooter(w);
         switch (tab) {
             case DISTANCE -> initDistance();
             case WALLS -> initWalls();
-            case MATERIALS -> initMaterials();
             case EFFECTS -> initEffects();
+            case HUD -> initHud();
             case MONITOR -> initMonitor();
             case SERVER -> initServer();
         }
-
         initServerChip(w);
-        DistanceConfig.Part part = lockedPartOf(tab);
-        if (part != null && AudioDistancePlugin.LINK.isLocked(part)) {
-            for (AbstractWidget widget : editWidgets) {
+        applyLocks();
+
+        maxScroll = Math.max(0, contentEnd + 4 - viewBottom);
+        scroll = Math.max(0, Math.min(scroll, maxScroll));
+        applyScroll();
+    }
+
+    /** The bottom of a panel that starts at {@code top}: at least {@code natural} tall, or down to the footer. */
+    private int stretch(int top, int natural) {
+        return Math.max(top + natural, viewBottom - 3);
+    }
+
+    /** Adds a widget below the tabs: it scrolls with the content. */
+    private <T extends AbstractWidget> T content(T widget) {
+        scrolled.add(widget);
+        scrolledY.add(widget.getY());
+        addRenderableWidget(widget);
+        return widget;
+    }
+
+    /** Adds a widget that changes {@code part}: it is locked while the server enforces that part. */
+    private <T extends AbstractWidget> T edit(T widget, DistanceConfig.Part part) {
+        editParts.put(widget, part);
+        return content(widget);
+    }
+
+    private void applyLocks() {
+        for (Map.Entry<AbstractWidget, DistanceConfig.Part> e : editParts.entrySet()) {
+            if (AudioDistancePlugin.LINK.isLocked(e.getValue())) {
+                AbstractWidget widget = e.getKey();
                 widget.active = false;
+                widget.setTooltip(tip("locked.tooltip"));
+                lockedWidgets.add(widget);
             }
         }
     }
 
-    /** The part of the sound settings a tab changes, which the server may lock; {@code null} for the others. */
-    private static DistanceConfig.Part lockedPartOf(Tab tab) {
+    private void applyScroll() {
+        for (int i = 0; i < scrolled.size(); i++) {
+            AbstractWidget widget = scrolled.get(i);
+            int y = scrolledY.get(i) - scroll;
+            widget.setY(y);
+            // A widget cut by the edge of the band is hidden until it scrolls fully into view
+            widget.visible = y >= viewTop && y + widget.getHeight() <= viewBottom;
+        }
+    }
+
+    /** Mouse wheel, Minecraft 1.20.2 and newer. Not annotated: the signature differs in 1.20.1. */
+    public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
+        return scrollBy(mouseY, scrollY);
+    }
+
+    /** Mouse wheel, Minecraft 1.20.1. */
+    public boolean mouseScrolled(double mouseX, double mouseY, double amount) {
+        return scrollBy(mouseY, amount);
+    }
+
+    private boolean scrollBy(double mouseY, double amount) {
+        if (maxScroll <= 0 || mouseY < viewTop || mouseY >= viewBottom || amount == 0.0) {
+            return false;
+        }
+        int next = Math.max(0, Math.min(maxScroll, scroll - (int) Math.round(amount * SCROLL_STEP)));
+        if (next != scroll) {
+            scroll = next;
+            applyScroll();
+        }
+        return true;
+    }
+
+    // ---- Footer -------------------------------------------------------------
+
+    /** Reset the tab, profile code, Cancel, Done; on the Server tab only Done (changes apply at once there). */
+    private void initFooter(int w) {
+        List<Button> buttons = new ArrayList<>();
+        if (tab != Tab.SERVER) {
+            if (codeMode) {
+                copyButton = Button.builder(tr(copyFeedback != null ? copyFeedback : "code.copy"), b -> copyCode())
+                        .tooltip(tip("code.copy.tooltip")).build();
+                pasteButton = Button.builder(tr(pasteFeedback != null ? pasteFeedback : "code.paste"), b -> pasteCode())
+                        .tooltip(tip("code.paste.tooltip")).build();
+                if (anyLocked()) {
+                    pasteButton.active = false;
+                    pasteButton.setTooltip(tip("locked.tooltip"));
+                }
+                buttons.add(copyButton);
+                buttons.add(pasteButton);
+                buttons.add(Button.builder(tr("code.back"), b -> {
+                    codeMode = false;
+                    rebuild();
+                }).build());
+            } else {
+                String resetKey = switch (tab) {
+                    case DISTANCE -> "reset.distance.tooltip";
+                    case WALLS -> "reset.walls.tooltip";
+                    case EFFECTS -> "reset.effects.tooltip";
+                    case HUD -> "reset.hud.tooltip";
+                    default -> null;
+                };
+                if (resetKey != null) {
+                    Button reset = Button.builder(tr("reset.tab"), b -> resetTab()).tooltip(tip(resetKey)).build();
+                    reset.active = canResetTab();
+                    buttons.add(reset);
+                }
+                buttons.add(Button.builder(tr("code"), b -> {
+                    codeMode = true;
+                    rebuild();
+                }).tooltip(tip("code.tooltip")).build());
+                buttons.add(Button.builder(tr("cancel"), b -> cancel()).tooltip(tip("cancel.tooltip")).build());
+            }
+        }
+        buttons.add(Button.builder(tr("done"), b -> saveAndClose()).tooltip(tip("done.tooltip")).build());
+
+        // On the Server tab Done keeps the width of a four-button row; the server's reply goes left of it
+        int slots = tab == Tab.SERVER ? 4 : buttons.size();
+        int bw = (w - GAP * (slots - 1)) / slots;
+        int x = right - bw * buttons.size() - GAP * (buttons.size() - 1);
+        for (Button b : buttons) {
+            b.setX(x);
+            b.setY(footerY);
+            b.setWidth(bw);
+            addRenderableWidget(b);
+            x += bw + GAP;
+        }
+    }
+
+    private static boolean anyLocked() {
+        for (DistanceConfig.Part part : DistanceConfig.Part.values()) {
+            if (AudioDistancePlugin.LINK.isLocked(part)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean canResetTab() {
         return switch (tab) {
-            case DISTANCE -> DistanceConfig.Part.CURVE;
-            case WALLS -> DistanceConfig.Part.WALLS;
-            case MATERIALS -> DistanceConfig.Part.MATERIALS;
-            case EFFECTS -> DistanceConfig.Part.EFFECTS;
-            default -> null;
+            case DISTANCE -> !AudioDistancePlugin.LINK.isLocked(DistanceConfig.Part.CURVE);
+            case WALLS -> !AudioDistancePlugin.LINK.isLocked(DistanceConfig.Part.WALLS)
+                    || !AudioDistancePlugin.LINK.isLocked(DistanceConfig.Part.MATERIALS);
+            case EFFECTS -> !AudioDistancePlugin.LINK.isLocked(DistanceConfig.Part.EFFECTS);
+            default -> true;
         };
+    }
+
+    /** Resets what the current tab shows, leaving the parts the server locks alone. */
+    private void resetTab() {
+        switch (tab) {
+            case DISTANCE -> resetUnlocked(DistanceConfig.Part.CURVE);
+            case WALLS -> {
+                resetUnlocked(DistanceConfig.Part.WALLS);
+                resetUnlocked(DistanceConfig.Part.MATERIALS);
+            }
+            case EFFECTS -> resetUnlocked(DistanceConfig.Part.EFFECTS);
+            case HUD -> config.resetHud();
+            default -> {
+            }
+        }
+        rebuild();
+    }
+
+    private void resetUnlocked(DistanceConfig.Part part) {
+        if (!AudioDistancePlugin.LINK.isLocked(part)) {
+            config.resetPart(part);
+        }
     }
 
     /** Top-right corner: what the server offers, when it has the addon. */
@@ -246,21 +418,18 @@ public abstract class SettingsScreen extends Screen {
         }
     }
 
-    private <T extends AbstractWidget> T edit(T widget) {
-        editWidgets.add(widget);
-        addRenderableWidget(widget);
-        return widget;
-    }
-
     /** What is heard right now: the server's profile while it is enforced, otherwise the player's settings. */
     private static DistanceConfig shown() {
         return AudioDistancePlugin.config();
     }
 
+    // ---- Distance -----------------------------------------------------------
+
     private void initDistance() {
         int w = right - left;
         int colW = (w - GAP) / 2;
         int col2 = right - colW;
+        int y = contentTop;
 
         Preset[] presets = Preset.values();
         int pw = (w - GAP * (presets.length - 1)) / presets.length;
@@ -269,72 +438,67 @@ public abstract class SettingsScreen extends Screen {
             int x = i == presets.length - 1 ? right - pw : left + i * (pw + GAP);
             Button b = Button.builder(Component.translatable(p.getTranslationKey()), btn -> {
                 double range = AudioDistancePlugin.getServerMaxDistance();
-                p.apply(config, range);
+                // A preset sets the curve and the walls, but never walls the server locks
+                p.apply(config, range, !AudioDistancePlugin.LINK.isLocked(DistanceConfig.Part.WALLS));
                 config.setChosenPreset(p, range);
                 rebuild();
-            }).bounds(x, contentTop, pw, 20).tooltip(Tooltip.create(Component.translatable(p.getTooltipKey()))).build();
+            }).bounds(x, y, pw, 20).tooltip(Tooltip.create(Component.translatable(p.getTooltipKey()))).build();
             presetButtons.add(b);
             presetOrder.add(p);
-            presetBounds.add(new int[]{x, x + pw, contentTop + 20});
-            edit(b);
+            edit(b, DistanceConfig.Part.CURVE);
         }
-        refreshPresetButtons();
+        y += ROW;
 
-        // The graph keeps a readable shape instead of filling tall windows; the sliders follow it
-        graphTop = contentTop + ROW + 2;
-        int room = contentBottom - graphTop - 6 - (ROW * 4 - GAP);
-        graphBottom = graphTop + Math.min(room, Math.max(120, w * 2 / 5));
+        // Header strip above the graph: the summary and legend, and Listen (allowed while the server
+        // enforces its profile). One width for both labels so it does not jump when it toggles.
+        graphHeaderY = y;
+        int lw = Math.max(this.font.width(tr("listen")), this.font.width(tr("listen.stop"))) + 16;
+        listenButton = content(Button.builder(previewStep >= 0 ? tr("listen.stop") : tr("listen"), b -> togglePreview())
+                .bounds(right - lw, y, lw, 20).tooltip(tip("listen.tooltip")).build());
+        graphTop = y + 22;
+
+        // The graph keeps a readable shape; on short windows it shrinks down to a minimum and the tab scrolls
+        int preferred = Math.max(120, w * 2 / 5);
+        int room = viewBottom - graphTop - 6 - (ROW * 3 - GAP) - 3;
+        graphBottom = graphTop + Math.max(100, Math.min(room, preferred));
         int rows = graphBottom + 6;
-
-        // Not an edit widget: listening is allowed while the server enforces its profile.
-        // It sits in the header strip above the graph panel, with one width for both labels so it
-        // does not jump when it toggles.
-        int lw = Math.max(this.font.width(tr("listen")), this.font.width(tr("listen.stop"))) + 12;
-        listenButton = Button.builder(previewStep >= 0 ? tr("listen.stop") : tr("listen"), b -> togglePreview())
-                .bounds(right - lw, graphTop, lw, 14).tooltip(tip("listen.tooltip")).build();
-        addRenderableWidget(listenButton);
 
         edit(Button.builder(modelLabel(), b -> {
             config.setModel(config.getModel().next());
             b.setMessage(modelLabel());
             b.setTooltip(Tooltip.create(Component.translatable(config.getModel().getTooltipKey())));
-        }).bounds(left, rows, colW, 20).tooltip(Tooltip.create(Component.translatable(shown().getModel().getTooltipKey()))).build());
+        }).bounds(left, rows, colW, 20).tooltip(Tooltip.create(Component.translatable(shown().getModel().getTooltipKey()))).build(),
+                DistanceConfig.Part.CURVE);
 
         edit(withTip(new RangeSlider(col2, rows, colW, 20,
                 DistanceConfig.ROLLOFF_MIN, DistanceConfig.ROLLOFF_MAX, 0.01,
                 () -> shown().getAttenuationFactor(), config::setAttenuationFactor,
-                v -> tr("falloff", pct(v))), "falloff.tooltip"));
+                v -> tr("falloff", pct(v))), "falloff.tooltip"), DistanceConfig.Part.CURVE);
 
         edit(withTip(new RangeSlider(left, rows + ROW, colW, 20,
                 DistanceConfig.REFERENCE_MIN, DistanceConfig.REFERENCE_MAX, 0.01,
                 () -> shown().getOpenalReferenceRatio(), config::setOpenalReferenceRatio,
-                v -> tr("reference", blocks(v * AudioDistancePlugin.getServerMaxDistance()))), "reference.tooltip"));
+                v -> tr("reference", blocks(v * AudioDistancePlugin.getServerMaxDistance()))), "reference.tooltip"),
+                DistanceConfig.Part.CURVE);
 
         edit(withTip(new RangeSlider(col2, rows + ROW, colW, 20,
                 DistanceConfig.MIN_VOLUME_MIN, DistanceConfig.MIN_VOLUME_MAX, 0.01,
                 () -> shown().getMinVolumeFraction(), config::setMinVolumeFraction,
-                v -> tr("floor", pct(v))), "floor.tooltip"));
+                v -> tr("floor", pct(v))), "floor.tooltip"), DistanceConfig.Part.CURVE);
 
         edit(withTip(new RangeSlider(left, rows + ROW * 2, w, 20,
                 DistanceConfig.WHISPER_MIN, DistanceConfig.WHISPER_MAX, 0.05,
                 () -> shown().getWhisperMultiplier(), config::setWhisperMultiplier,
-                v -> tr("whisper", String.format(Locale.ROOT, "×%.2f", v))), "whisper.tooltip"));
-
-        // Share the profile as a line of text. Copying works while a server enforces its profile
-        // (it copies the server's), pasting does not.
-        int codeY = rows + ROW * 3;
-        if (codeY + 20 <= contentBottom) {
-            copyButton = Button.builder(tr(copyFeedback != null ? copyFeedback : "code.copy"), b -> copyCode())
-                    .bounds(left, codeY, colW, 20).tooltip(tip("code.copy.tooltip")).build();
-            addRenderableWidget(copyButton);
-            pasteButton = edit(Button.builder(tr(pasteFeedback != null ? pasteFeedback : "code.paste"), b -> pasteCode())
-                    .bounds(col2, codeY, colW, 20).tooltip(tip("code.paste.tooltip")).build());
-        }
+                v -> tr("whisper", pct(v))), "whisper.tooltip"), DistanceConfig.Part.CURVE);
+        contentEnd = rows + ROW * 2 + 20;
     }
+
+    // ---- Walls --------------------------------------------------------------
 
     private void initWalls() {
         int w = right - left;
         int colW = (w - GAP) / 2;
+        int y = contentTop;
 
         edit(Button.builder(wallsLabel(), b -> {
             config.setOcclusionEnabled(!config.isOcclusionEnabled());
@@ -342,126 +506,162 @@ public abstract class SettingsScreen extends Screen {
             if (strengthSlider != null) {
                 strengthSlider.active = config.isOcclusionEnabled();
             }
-        }).bounds(left, contentTop, colW, 20).tooltip(tip("walls.toggle.tooltip")).build());
+        }).bounds(left, y, colW, 20).tooltip(tip("walls.toggle.tooltip")).build(), DistanceConfig.Part.WALLS);
 
-        strengthSlider = new RangeSlider(right - colW, contentTop, colW, 20,
+        strengthSlider = new RangeSlider(right - colW, y, colW, 20,
                 DistanceConfig.STRENGTH_MIN, DistanceConfig.STRENGTH_MAX, 0.01,
                 () -> shown().getOcclusionStrength(), config::setOcclusionStrength,
                 v -> tr("strength", pct(v)));
         strengthSlider.active = shown().isOcclusionEnabled();
-        edit(withTip(strengthSlider, "strength.tooltip"));
+        edit(withTip(strengthSlider, "strength.tooltip"), DistanceConfig.Part.WALLS);
+        y += ROW;
 
-        panelTop = contentTop + ROW + 2;
+        statusY = y;
+        if (hasStatusBanner()) {
+            y += 30;
+        }
+        panelTop = y;
+        panelBottom = y + 20 + EXAMPLES.length * 14 + 18;
+        y = panelBottom + 6;
+
+        // Materials: a section that opens under the preview
+        content(Button.builder(Component.literal(materialsOpen ? "▾ " : "▸ ").append(tr("materials.section")), b -> {
+            materialsOpen = !materialsOpen;
+            rebuild();
+        }).bounds(left, y, w, 20).tooltip(tip("materials.hint")).build());
+        y += ROW;
+        if (materialsOpen) {
+            materialsHintY = y;
+            y += 14;
+            AcousticMaterial[] materials = AcousticMaterial.values();
+            // Materials fill the grid; the reset button takes the cell after the last one
+            int cells = materials.length + 1;
+            int cols = (w - GAP * 2) / 3 >= 120 ? 3 : 2;
+            int cellW = (w - GAP * (cols - 1)) / cols;
+            for (int i = 0; i < cells; i++) {
+                int col = i % cols;
+                int x = col == cols - 1 ? right - cellW : left + col * (cellW + GAP);
+                int cy = y + (i / cols) * ROW;
+                if (i == materials.length) {
+                    edit(Button.builder(tr("materials.reset"), b -> {
+                        config.resetMaterials();
+                        rebuild();
+                    }).bounds(x, cy, cellW, 20).tooltip(tip("materials.reset.tooltip")).build(), DistanceConfig.Part.MATERIALS);
+                    break;
+                }
+                AcousticMaterial m = materials[i];
+                RangeSlider slider = new RangeSlider(x, cy, cellW, 20, 0.0, AcousticMaterial.MAX_WEIGHT, 0.05,
+                        () -> shown().getMaterialWeight(m), v -> config.setMaterialWeight(m, v),
+                        v -> tr("material.value", Component.translatable(m.getTranslationKey()), pct(v)));
+                slider.setTooltip(Tooltip.create(Component.translatable(m.getTooltipKey())));
+                edit(slider, DistanceConfig.Part.MATERIALS);
+            }
+            y += ((cells + cols - 1) / cols) * ROW;
+        }
+        contentEnd = y - GAP;
     }
 
-    private void initMaterials() {
-        int w = right - left;
-        int top = contentTop + 25;
-        AcousticMaterial[] materials = AcousticMaterial.values();
-        // Materials fill the grid; the reset button takes the cell after the last one
-        int cells = materials.length + 1;
-        int cols = 2;
-        if (top + ((cells + 1) / 2) * ROW - GAP > contentBottom && (w - GAP * 2) / 3 >= 110) {
-            cols = 3;
-        }
-        int colW = (w - GAP * (cols - 1)) / cols;
-        for (int i = 0; i < cells; i++) {
-            int col = i % cols;
-            int x = col == cols - 1 ? right - colW : left + col * (colW + GAP);
-            int y = top + (i / cols) * ROW;
-            if (y + 20 > contentBottom) {
-                break;
-            }
-            if (i == materials.length) {
-                edit(Button.builder(tr("materials.reset"), b -> {
-                    config.resetMaterials();
-                    rebuild();
-                }).bounds(x, y, colW, 20).build());
-                break;
-            }
-            AcousticMaterial m = materials[i];
-            RangeSlider slider = new RangeSlider(x, y, colW, 20, 0.0, AcousticMaterial.MAX_WEIGHT, 0.05,
-                    () -> shown().getMaterialWeight(m), v -> config.setMaterialWeight(m, v),
-                    v -> tr("material.value", Component.translatable(m.getTranslationKey()), pct(v)));
-            slider.setTooltip(Tooltip.create(Component.translatable(m.getTooltipKey())));
-            edit(slider);
-        }
+    private static boolean hasStatusBanner() {
+        AudioDistancePlugin.OcclusionStatus status = AudioDistancePlugin.occlusionStatus();
+        return status == AudioDistancePlugin.OcclusionStatus.SOUND_PHYSICS || status == AudioDistancePlugin.OcclusionStatus.UNAVAILABLE;
     }
+
+    // ---- Effects ------------------------------------------------------------
 
     private void initEffects() {
         int w = right - left;
         int colW = (w - GAP) / 2;
+        int y = contentTop;
         edit(Button.builder(onOff("effects.reverb", shown().isReverbEnabled()), b -> {
             config.setReverbEnabled(!config.isReverbEnabled());
             b.setMessage(onOff("effects.reverb", config.isReverbEnabled()));
             if (reverbSlider != null) {
                 reverbSlider.active = config.isReverbEnabled();
             }
-        }).bounds(left, contentTop, colW, 20).tooltip(tip("effects.reverb.tooltip")).build());
-        reverbSlider = new RangeSlider(right - colW, contentTop, colW, 20,
+        }).bounds(left, y, colW, 20).tooltip(tip("effects.reverb.tooltip")).build(), DistanceConfig.Part.EFFECTS);
+        reverbSlider = new RangeSlider(right - colW, y, colW, 20,
                 DistanceConfig.REVERB_MIN, DistanceConfig.REVERB_MAX, 0.01,
                 () -> shown().getReverbStrength(), config::setReverbStrength,
                 v -> tr("effects.reverb.strength", pct(v)));
         reverbSlider.active = shown().isReverbEnabled();
-        edit(withTip(reverbSlider, "effects.reverb.strength.tooltip"));
+        edit(withTip(reverbSlider, "effects.reverb.strength.tooltip"), DistanceConfig.Part.EFFECTS);
 
         edit(Button.builder(onOff("effects.water", shown().isUnderwaterEnabled()), b -> {
             config.setUnderwaterEnabled(!config.isUnderwaterEnabled());
             b.setMessage(onOff("effects.water", config.isUnderwaterEnabled()));
-        }).bounds(left, contentTop + ROW, colW, 20).tooltip(tip("effects.water.tooltip")).build());
+        }).bounds(left, y + ROW, colW, 20).tooltip(tip("effects.water.tooltip")).build(), DistanceConfig.Part.EFFECTS);
         edit(Button.builder(onOff("effects.weather", shown().isWeatherEnabled()), b -> {
             config.setWeatherEnabled(!config.isWeatherEnabled());
             b.setMessage(onOff("effects.weather", config.isWeatherEnabled()));
-        }).bounds(right - colW, contentTop + ROW, colW, 20).tooltip(tip("effects.weather.tooltip")).build());
+        }).bounds(right - colW, y + ROW, colW, 20).tooltip(tip("effects.weather.tooltip")).build(), DistanceConfig.Part.EFFECTS);
         edit(Button.builder(onOff("effects.corners", shown().isDiffractionEnabled()), b -> {
             config.setDiffractionEnabled(!config.isDiffractionEnabled());
             b.setMessage(onOff("effects.corners", config.isDiffractionEnabled()));
-        }).bounds(left, contentTop + ROW * 2, colW, 20).tooltip(tip("effects.corners.tooltip")).build());
-        panelTop = contentTop + ROW * 3 + 2;
+        }).bounds(left, y + ROW * 2, colW, 20).tooltip(tip("effects.corners.tooltip")).build(), DistanceConfig.Part.EFFECTS);
+
+        statusY = y + ROW * 3 + 2;
+        panelTop = statusY + (hasStatusBanner() ? 30 : 0);
+        panelBottom = stretch(panelTop, 140);
+        contentEnd = panelBottom;
     }
 
     private static Component onOff(String key, boolean on) {
         return tr(key, tr(on ? "on" : "off"));
     }
 
-    private void initMonitor() {
-        int w = right - left;
-        int bw = (w - GAP * 2) / 3;
-        DistanceConfig prefs = config;
-        addRenderableWidget(Button.builder(HudOverlay.shortModeLabel(prefs.getHudMode()), b -> {
-            prefs.setHudMode(prefs.getHudMode().next());
-            b.setMessage(HudOverlay.shortModeLabel(prefs.getHudMode()));
-        }).bounds(left, contentTop, bw, 20).tooltip(tip("hud.mode.tooltip")).build());
-        addRenderableWidget(Button.builder(HudOverlay.shortCornerLabel(prefs.getHudCorner()), b -> {
-            prefs.setHudCorner(prefs.getHudCorner().next());
-            b.setMessage(HudOverlay.shortCornerLabel(prefs.getHudCorner()));
-        }).bounds(left + bw + GAP, contentTop, bw, 20).tooltip(tip("hud.corner.tooltip")).build());
-        addRenderableWidget(Button.builder(viewLabel(), b -> {
-            radarView = !radarView;
-            b.setMessage(viewLabel());
-        }).bounds(right - bw, contentTop, bw, 20).tooltip(tip("monitor.view.tooltip")).build());
+    // ---- HUD ----------------------------------------------------------------
 
-        // HUD look: size, background, compact, colors
-        int qw = (w - GAP * 3) / 4;
-        int row2 = contentTop + ROW;
-        addRenderableWidget(withTip(new RangeSlider(left, row2, qw, 20,
+    /** The HUD's look, with made-up voices in a preview; never locked by the server. */
+    private void initHud() {
+        int w = right - left;
+        int colW = (w - GAP) / 2;
+        int col2 = right - colW;
+        int y = contentTop;
+        DistanceConfig prefs = config;
+        content(Button.builder(HudOverlay.modeLabel(prefs.getHudMode()), b -> {
+            prefs.setHudMode(prefs.getHudMode().next());
+            b.setMessage(HudOverlay.modeLabel(prefs.getHudMode()));
+        }).bounds(left, y, colW, 20).tooltip(tip("hud.mode.tooltip")).build());
+        content(Button.builder(HudOverlay.cornerLabel(prefs.getHudCorner()), b -> {
+            prefs.setHudCorner(prefs.getHudCorner().next());
+            b.setMessage(HudOverlay.cornerLabel(prefs.getHudCorner()));
+        }).bounds(col2, y, colW, 20).tooltip(tip("hud.corner.tooltip")).build());
+
+        content(withTip(new RangeSlider(left, y + ROW, colW, 20,
                 DistanceConfig.HUD_SCALE_MIN, DistanceConfig.HUD_SCALE_MAX, 0.05,
                 prefs::getHudScale, prefs::setHudScale, v -> tr("hud.scale", pct(v))), "hud.scale.tooltip"));
-        addRenderableWidget(withTip(new RangeSlider(left + qw + GAP, row2, qw, 20, 0.0, 1.0, 0.05,
+        content(withTip(new RangeSlider(col2, y + ROW, colW, 20, 0.0, 1.0, 0.05,
                 prefs::getHudBackground, prefs::setHudBackground, v -> tr("hud.background", pct(v))), "hud.background.tooltip"));
-        addRenderableWidget(Button.builder(onOff("hud.compact", prefs.isHudCompact()), b -> {
+
+        content(Button.builder(onOff("hud.compact", prefs.isHudCompact()), b -> {
             prefs.setHudCompact(!prefs.isHudCompact());
             b.setMessage(onOff("hud.compact", prefs.isHudCompact()));
-        }).bounds(left + (qw + GAP) * 2, row2, qw, 20).tooltip(tip("hud.compact.tooltip")).build());
-        addRenderableWidget(Button.builder(colorsLabel(), b -> {
+        }).bounds(left, y + ROW * 2, colW, 20).tooltip(tip("hud.compact.tooltip")).build());
+        content(Button.builder(colorsLabel(), b -> {
             prefs.setColorblind(!prefs.isColorblind());
             b.setMessage(colorsLabel());
-        }).bounds(right - qw, row2, qw, 20).tooltip(tip("colors.tooltip")).build());
-        monitorTop = contentTop + ROW * 2 + 2;
+        }).bounds(col2, y + ROW * 2, colW, 20).tooltip(tip("colors.tooltip")).build());
+
+        panelTop = y + ROW * 3 + 2;
+        panelBottom = stretch(panelTop, 110);
+        contentEnd = panelBottom;
     }
 
     private Component colorsLabel() {
         return tr("colors", tr(config.isColorblind() ? "colors.colorblind" : "colors.normal"));
+    }
+
+    // ---- Monitor ------------------------------------------------------------
+
+    private void initMonitor() {
+        int colW = (right - left - GAP) / 2;
+        content(Button.builder(viewLabel(), b -> {
+            radarView = !radarView;
+            b.setMessage(viewLabel());
+        }).bounds(left, contentTop, colW, 20).tooltip(tip("monitor.view.tooltip")).build());
+        panelTop = contentTop + ROW + 2;
+        panelBottom = stretch(panelTop, 170);
+        contentEnd = panelBottom;
     }
 
     private static Component viewLabel() {
@@ -480,6 +680,8 @@ public abstract class SettingsScreen extends Screen {
     private static final String[] ZONE_WALLS = {"-", "0", "0.5", "1"};
     private static final String[] ZONE_ECHO = {"-", "off", "0.5", "0.9"};
     private static final String MEGAPHONE = "minecraft:goat_horn";
+    /** What {@code /vcd lock} cycles through on the Server tab. */
+    private static final String[] SERVER_LOCKS = {"all", "curve,walls", "curve", "none"};
 
     private static java.util.Properties serverState() {
         LinkProtocol.AdminReply reply = AudioDistancePlugin.LINK.adminReply();
@@ -523,8 +725,14 @@ public abstract class SettingsScreen extends Screen {
         if (tooltip != null) {
             b.setTooltip(tip(tooltip));
         }
-        addRenderableWidget(b);
-        return b;
+        return content(b);
+    }
+
+    /** A toggle: "on" or "off" sent after {@code command}. */
+    private Button serverToggle(String key, java.util.Properties st, String property, String fallback, int x, int y, int w,
+                                String command) {
+        boolean on = "true".equalsIgnoreCase(st.getProperty(property, fallback));
+        return serverButton(tr(key, tr(on ? "on" : "off")), key + ".tooltip", x, y, w, command + (on ? " off" : " on"));
     }
 
     private static Component presetName(String name) {
@@ -537,9 +745,6 @@ public abstract class SettingsScreen extends Screen {
         };
     }
 
-    /** What {@code /vcd lock} cycles through on the Server tab. */
-    private static final String[] SERVER_LOCKS = {"all", "curve,walls", "curve", "none"};
-
     private static Component lockedName(String locked) {
         return switch (locked) {
             case "all" -> tr("server.locked.all");
@@ -550,9 +755,10 @@ public abstract class SettingsScreen extends Screen {
         };
     }
 
-    private static Component yesNo(String bool) {
-        boolean on = Boolean.parseBoolean(bool);
-        return tr(on ? "on" : "off");
+    /** A section title, then the section's first row. */
+    private int heading(String key, int y) {
+        headings.add(new Heading(tr(key), y));
+        return y + 13;
     }
 
     private void initServer() {
@@ -563,77 +769,79 @@ public abstract class SettingsScreen extends Screen {
         int x3 = right - third;
         int y = contentTop;
         if (st == null) {
-            serverListTop = y;
+            contentEnd = contentTop + 40;
             return;
         }
+
+        // Profile: how it reaches players, which sound, what they cannot change
+        y = heading("server.section.profile", y);
         String mode = st.getProperty("profile_mode", "off");
         String preset = st.getProperty("profile_preset", "custom");
-        String walls = st.getProperty("walls_strength", "0");
+        String locked = st.getProperty("profile_locked", "all");
         serverButton(tr("server.profile", tr("server.mode." + mode)), "server.profile.tooltip", left, y, third,
                 "profile " + next(SERVER_MODES, mode));
         serverButton(tr("server.preset", presetName(preset)), "server.preset.tooltip", x2, y, third,
                 "preset " + next(SERVER_PRESETS, preset));
-        // Walls in 5% steps: − and + either side of the value
-        int wallsPct = (int) Math.round(parse(walls) * 100.0);
+        serverButton(tr("server.locked", lockedName(locked)), "server.locked.tooltip", x3, y, third,
+                "lock " + next(SERVER_LOCKS, locked));
+        y += ROW + 4;
+
+        // Walls: − and + in 5% steps either side of the value
+        y = heading("server.section.walls", y);
+        int wallsPct = (int) Math.round(parse(st.getProperty("walls_strength", "0")) * 100.0);
         int down = Math.max(0, (wallsPct + 4) / 5 * 5 - 5);
         int up = Math.min(100, wallsPct / 5 * 5 + 5);
-        serverButton(Component.literal("−"), "server.walls.tooltip", x3, y, 20, down == 0 ? "walls off" : "walls " + down)
+        serverButton(Component.literal("−"), "server.walls.tooltip", left, y, 20, down == 0 ? "walls off" : "walls " + down)
                 .active = wallsPct > 0;
         serverButton(tr("server.walls", wallsPct == 0 ? tr("off") : Component.literal(wallsPct + "%")), "server.walls.tooltip",
-                x3 + 22, y, third - 44, "walls " + up).active = wallsPct < 100;
-        serverButton(Component.literal("+"), "server.walls.tooltip", right - 20, y, 20, "walls " + up)
+                left + 22, y, third - 44, "walls " + up).active = wallsPct < 100;
+        serverButton(Component.literal("+"), "server.walls.tooltip", left + third - 20, y, 20, "walls " + up)
                 .active = wallsPct < 100;
+        serverToggle("server.server_walls", st, "server_walls", "false", x2, y, third, "serverwalls");
+        serverToggle("server.monitor", st, "allow_monitor", "true", x3, y, third, "monitor");
+        y += ROW + 4;
 
-        y += ROW;
-        boolean serverWalls = "true".equalsIgnoreCase(st.getProperty("server_walls"));
-        String require = st.getProperty("require_addon", "off");
-        String megaphone = st.getProperty("megaphone_item", "");
-        serverButton(tr("server.server_walls", yesNo(String.valueOf(serverWalls))), "server.server_walls.tooltip", left, y, third,
-                "serverwalls " + (serverWalls ? "off" : "on"));
-        serverButton(tr("server.require", tr("server.require." + require)), "server.require.tooltip", x2, y, third,
-                "require " + next(SERVER_REQUIRE, require));
-        serverButton(tr("server.megaphone", megaphone.isEmpty() ? tr("off") : Component.translatable("item.minecraft.goat_horn")),
-                "server.megaphone.tooltip", x3, y, third, "rule megaphone " + (megaphone.isEmpty() ? MEGAPHONE : "off"));
-
-        y += ROW;
+        // Game rules
+        y = heading("server.section.rules", y);
         String sneak = st.getProperty("sneak_range_multiplier", "1");
-        String dead = st.getProperty("dead_players_silent", "false");
-        String spectators = st.getProperty("spectators_hear_only_spectators", "false");
         serverButton(tr("server.sneak", pct(parse(sneak))), "server.sneak.tooltip", left, y, third,
                 "rule sneak " + next(SERVER_SNEAK, sneak));
-        serverButton(tr("server.dead", yesNo(dead)), "server.dead.tooltip", x2, y, third,
-                "rule dead " + ("true".equalsIgnoreCase(dead) ? "off" : "on"));
-        serverButton(tr("server.spectators", yesNo(spectators)), "server.spectators.tooltip", x3, y, third,
-                "rule spectators " + ("true".equalsIgnoreCase(spectators) ? "off" : "on"));
-
+        serverToggle("server.dead", st, "dead_players_silent", "false", x2, y, third, "rule dead");
+        serverToggle("server.spectators", st, "spectators_hear_only_spectators", "false", x3, y, third, "rule spectators");
         y += ROW;
-        String locked = st.getProperty("profile_locked", "all");
-        String monitor = st.getProperty("allow_monitor", "true");
-        serverButton(tr("server.locked", lockedName(locked)), "server.locked.tooltip", left, y, third,
-                "lock " + next(SERVER_LOCKS, locked));
-        serverButton(tr("server.monitor", yesNo(monitor)), "server.monitor.tooltip", x2, y, third,
-                "monitor " + ("true".equalsIgnoreCase(monitor) ? "off" : "on"));
-        String openRange = st.getProperty("open_group_range", "true");
-        serverButton(tr("server.group.open_range", yesNo(openRange)), "server.group.open_range.tooltip", x3, y, third,
-                "group open_range " + ("true".equalsIgnoreCase(openRange) ? "off" : "on"));
+        String megaphone = st.getProperty("megaphone_item", "");
+        serverButton(tr("server.megaphone", megaphone.isEmpty() ? tr("off") : Component.translatable("item.minecraft.goat_horn")),
+                "server.megaphone.tooltip", left, y, third, "rule megaphone " + (megaphone.isEmpty() ? MEGAPHONE : "off"));
+        y += ROW + 4;
 
         // Rules inside Simple Voice Chat groups
+        y = heading("server.section.groups", y);
+        serverToggle("server.group.dead", st, "group_dead_silent", "false", left, y, third, "group dead");
+        serverToggle("server.group.spectators", st, "group_spectators_apart", "false", x2, y, third, "group spectators");
+        serverToggle("server.group.zones", st, "group_isolated_zones", "false", x3, y, third, "group zones");
         y += ROW;
-        String groupDead = st.getProperty("group_dead_silent", "false");
-        String groupSpectators = st.getProperty("group_spectators_apart", "false");
-        String groupZones = st.getProperty("group_isolated_zones", "false");
-        serverButton(tr("server.group.dead", yesNo(groupDead)), "server.group.dead.tooltip", left, y, third,
-                "group dead " + ("true".equalsIgnoreCase(groupDead) ? "off" : "on"));
-        serverButton(tr("server.group.spectators", yesNo(groupSpectators)), "server.group.spectators.tooltip", x2, y, third,
-                "group spectators " + ("true".equalsIgnoreCase(groupSpectators) ? "off" : "on"));
-        serverButton(tr("server.group.zones", yesNo(groupZones)), "server.group.zones.tooltip", x3, y, third,
-                "group zones " + ("true".equalsIgnoreCase(groupZones) ? "off" : "on"));
-
-        // Zones: a list to pick from, the picked zone's settings under it
+        serverToggle("server.group.open_range", st, "open_group_range", "true", left, y, third, "group open_range");
         y += ROW + 4;
-        java.util.List<String[]> zones = new java.util.ArrayList<>();
+
+        // Players who have Simple Voice Chat but not this addon
+        y = heading("server.section.addon", y);
+        String require = st.getProperty("require_addon", "off");
+        serverButton(tr("server.require", tr("server.require." + require)), "server.require.tooltip", left, y, third * 2 + GAP,
+                "require " + next(SERVER_REQUIRE, require));
+        y += ROW + 4;
+
+        y = initZones(st, y, w, third);
+        contentEnd = y;
+    }
+
+    /** Zones: a list to pick from, and the picked zone's settings right under it. */
+    private int initZones(java.util.Properties st, int y, int w, int third) {
+        List<String[]> zones = new ArrayList<>();
         for (int i = 0; st.getProperty("zone." + i) != null; i++) {
-            zones.add(st.getProperty("zone." + i).split("\\|", -1));
+            String[] z = st.getProperty("zone." + i).split("\\|", -1);
+            if (z.length >= 11) {
+                zones.add(z);
+            }
         }
         int used = zones.size() + 1;
         java.util.Set<String> names = new java.util.HashSet<>();
@@ -643,55 +851,67 @@ public abstract class SettingsScreen extends Screen {
         while (names.contains("zone-" + used)) {
             used++;
         }
-        int createW = this.font.width(tr("server.zone.create")) + 16;
+        headings.add(new Heading(tr("server.zones"), y + 6));
+        int createW = Math.min(third * 2, this.font.width(tr("server.zone.create")) + 16);
         serverButton(tr("server.zone.create"), "server.zone.create.tooltip", right - createW, y, createW,
                 "zone create zone-" + used + " 8");
         y += ROW;
-        serverListTop = y;
+        if (zones.isEmpty()) {
+            noZonesY = y + 2;
+            return y + 14;
+        }
 
-        String[] picked = null;
+        LinkProtocol.ServerProfile profile = AudioDistancePlugin.LINK.profile();
+        String here = profile == null ? null : profile.zone();
+        int x2 = left + third + GAP;
+        int x3 = right - third;
         for (String[] z : zones) {
-            if (z.length >= 11 && z[1].equals(selectedZone)) {
-                picked = z;
-            }
-        }
-        int controlsY = contentBottom - 20 - 12;
-        int listBottom = picked != null ? controlsY - 4 : contentBottom - 12;
-        for (String[] z : zones) {
-            if (z.length < 11 || y + 18 > listBottom) {
-                break;
-            }
             String name = z[1];
-            Button b = Button.builder(zoneLabel(z), btn -> {
-                selectedZone = name;
+            boolean picked = name.equals(selectedZone);
+            Component label = zoneLabel(z);
+            if (name.equals(here)) {
+                label = Component.empty().append(label).append(Component.literal(" · ")).append(tr("server.zone.here"));
+            }
+            content(Button.builder(Component.literal(picked ? "▾ " : "▸ ").append(label), btn -> {
+                selectedZone = name.equals(selectedZone) ? null : name;
+                confirmDelete = null;
                 rebuild();
-            }).bounds(left, y, w, 18).build();
-            b.active = !name.equals(selectedZone);
-            addRenderableWidget(b);
-            y += 20;
-        }
-        if (picked != null) {
-            String name = picked[1];
-            int fifth = (w - GAP * 4) / 5;
-            int x = left;
-            serverButton(tr("server.zone.range", "-".equals(picked[6]) ? tr("server.default") : Component.literal("×" + picked[6])),
-                    "server.zone.range.tooltip", x, controlsY, fifth,
-                    "zone set " + name + " range_multiplier " + zoneValue(next(ZONE_RANGE, picked[6])));
-            x += fifth + GAP;
-            serverButton(tr("server.zone.walls", "-".equals(picked[7]) ? tr("server.default") : Component.literal(pct(parse(picked[7])))),
-                    "server.zone.walls.tooltip", x, controlsY, fifth,
-                    "zone set " + name + " walls " + zoneValue(next(ZONE_WALLS, picked[7])));
-            x += fifth + GAP;
-            serverButton(tr("server.zone.echo", "-".equals(picked[8]) ? tr("server.default")
-                            : "off".equals(picked[8]) ? tr("off") : Component.literal(pct(parse(picked[8])))),
-                    "server.zone.echo.tooltip", x, controlsY, fifth,
-                    "zone set " + name + " echo " + zoneValue(next(ZONE_ECHO, picked[8])));
-            x += fifth + GAP;
-            boolean isolated = "true".equalsIgnoreCase(picked[9]);
-            serverButton(tr("server.zone.isolated", yesNo(picked[9])), "server.zone.isolated.tooltip", x, controlsY, fifth,
+            }).bounds(left, y, w, 20).build());
+            y += 22;
+            if (!picked) {
+                continue;
+            }
+            serverButton(tr("server.zone.range", "-".equals(z[6]) ? tr("server.default") : Component.literal("×" + z[6])),
+                    "server.zone.range.tooltip", left, y, third,
+                    "zone set " + name + " range_multiplier " + zoneValue(next(ZONE_RANGE, z[6])));
+            serverButton(tr("server.zone.walls", "-".equals(z[7]) ? tr("server.default") : Component.literal(pct(parse(z[7])))),
+                    "server.zone.walls.tooltip", x2, y, third,
+                    "zone set " + name + " walls " + zoneValue(next(ZONE_WALLS, z[7])));
+            serverButton(tr("server.zone.echo", "-".equals(z[8]) ? tr("server.default")
+                            : "off".equals(z[8]) ? tr("off") : Component.literal(pct(parse(z[8])))),
+                    "server.zone.echo.tooltip", x3, y, third,
+                    "zone set " + name + " echo " + zoneValue(next(ZONE_ECHO, z[8])));
+            y += ROW;
+            boolean isolated = "true".equalsIgnoreCase(z[9]);
+            serverButton(tr("server.zone.isolated", tr(isolated ? "on" : "off")), "server.zone.isolated.tooltip", left, y, third,
                     "zone set " + name + " isolated " + (isolated ? "off" : "on"));
-            serverButton(tr("server.zone.delete"), null, right - fifth, controlsY, fifth, "zone delete " + name);
+            // Only a box has borders to draw
+            serverButton(tr("server.zone.show"), "server.zone.show.tooltip", x2, y, third, "zone show " + name)
+                    .active = "box".equals(z[0]);
+            boolean confirm = name.equals(confirmDelete);
+            content(Button.builder(tr(confirm ? "server.zone.delete.confirm" : "server.zone.delete"), btn -> {
+                if (name.equals(confirmDelete)) {
+                    confirmDelete = null;
+                    selectedZone = null;
+                    AudioDistancePlugin.LINK.sendAdmin("zone delete " + name);
+                } else {
+                    confirmDelete = name;
+                    rebuild();
+                }
+            }).bounds(x3, y, third, 20).tooltip(tip("server.zone.delete.tooltip")).build());
+            y += ROW + 4;
         }
+        return y;
     }
 
     private static String zoneValue(String v) {
@@ -708,7 +928,7 @@ public abstract class SettingsScreen extends Screen {
 
     /** "Box stage · range ×2 · isolated" for the zone list. */
     private static Component zoneLabel(String[] z) {
-        java.util.List<Component> parts = new java.util.ArrayList<>();
+        List<Component> parts = new ArrayList<>();
         if (!"-".equals(z[6])) {
             parts.add(tr("server.zone.range", Component.literal("×" + z[6])));
         }
@@ -737,19 +957,30 @@ public abstract class SettingsScreen extends Screen {
     private void paintServer(Canvas c) {
         LinkProtocol.AdminReply reply = AudioDistancePlugin.LINK.adminReply();
         if (reply == null) {
-            c.centered(tr("server.loading"), (left + right) / 2, (contentTop + contentBottom) / 2 - 4, Palette.TEXT_DIM);
+            c.centered(tr("server.loading"), (left + right) / 2, contentTop + 16, Palette.TEXT_DIM);
             return;
         }
-        java.util.Properties st = reply.state();
-        c.text(tr("server.zones"), left, serverListTop - ROW + 6, Palette.TEXT_DIM);
-        if (st.getProperty("zone.0") == null) {
-            c.text(fit(c, tr("server.zones.none"), right - left), left, serverListTop + 4, Palette.TEXT_MUTED);
+        for (Heading h : headings) {
+            c.text(h.text(), left + 1, h.y(), Palette.ACCENT_LINE);
+            int lineX = left + c.width(h.text()) + 8;
+            if (lineX < right) {
+                c.hLine(lineX, right, h.y() + 4, Palette.PANEL_BORDER);
+            }
         }
-        // The server's answer to the last change ("Saved ..."), or a hint
-        java.util.List<String> lines = reply.lines();
+        if (noZonesY >= 0) {
+            c.text(fit(c, tr("server.zones.none"), right - left), left + 1, noZonesY, Palette.TEXT_MUTED);
+        }
+    }
+
+    /** The server's answer to the last change ("Saved ..."), or a hint, left of Done in the footer. */
+    private void paintServerStatus(Canvas c) {
+        LinkProtocol.AdminReply reply = AudioDistancePlugin.LINK.adminReply();
+        java.util.List<String> lines = reply == null ? List.of() : reply.lines();
         Component status = lines.isEmpty() || lines.get(0).startsWith("Voice Physics")
                 ? tr("server.hint") : Component.literal(lines.get(lines.size() - 1));
-        c.text(fit(c, status, right - left), left, contentBottom - 9, Palette.TEXT_MUTED);
+        int w = right - left;
+        int doneW = (w - GAP * 3) / 4;
+        c.text(fit(c, status, w - doneW - GAP - 2), left + 1, footerY + 6, Palette.TEXT_MUTED);
     }
 
     // =========================================================================
@@ -858,8 +1089,12 @@ public abstract class SettingsScreen extends Screen {
 
     private void switchTab(Tab t) {
         previewStep = -1;
+        if (t != tab) {
+            scroll = 0;
+        }
         tab = t;
         lastTab = t;
+        confirmDelete = null;
         if (t == Tab.SERVER) {
             // Fresh settings from the server; the tab fills in when the reply arrives
             AudioDistancePlugin.LINK.sendAdmin("status");
@@ -870,13 +1105,6 @@ public abstract class SettingsScreen extends Screen {
     private void rebuild() {
         clearWidgets();
         init();
-    }
-
-    private void refreshPresetButtons() {
-        boolean enforced = AudioDistancePlugin.LINK.isLocked(DistanceConfig.Part.CURVE);
-        for (int i = 0; i < presetButtons.size(); i++) {
-            presetButtons.get(i).active = !enforced && !presetOrder.get(i).matches(config, AudioDistancePlugin.getServerMaxDistance());
-        }
     }
 
     // =========================================================================
@@ -907,36 +1135,80 @@ public abstract class SettingsScreen extends Screen {
     /** Draws everything that is not a widget. Called by the version subclass after the widgets. */
     protected void paint(Canvas c, int mouseX, int mouseY) {
         Palette.useColorblind(config.isColorblind());
-        refreshPresetButtons();
         if (serverChip) {
             c.text(this.title, left, 8, Palette.TEXT);
             if (AudioDistancePlugin.LINK.isEnforced()) {
-                DistanceConfig.Part part = lockedPartOf(tab);
-                boolean lockedHere = part == null || AudioDistancePlugin.LINK.isLocked(part);
+                boolean lockedHere = !lockedWidgets.isEmpty() || tab == Tab.MONITOR || tab == Tab.SERVER;
                 c.right(tr(lockedHere ? "server.enforced" : "server.enforced.free"), right, 8,
                         lockedHere ? Palette.WARN : Palette.TEXT_MUTED);
             }
         } else {
             c.centered(this.title, this.width / 2, 8, Palette.TEXT);
         }
-        c.fill(activeTabX1 + 2, tabsBottom + 1, activeTabX2 - 2, tabsBottom + 3, Palette.ACCENT);
-        for (int i = 0; i < presetBounds.size(); i++) {
-            if (presetOrder.get(i).matches(shown(), AudioDistancePlugin.getServerMaxDistance())) {
-                int[] b = presetBounds.get(i);
-                c.fill(b[0] + 2, b[2] + 1, b[1] - 2, b[2] + 3, Palette.ACCENT);
+        // The open tab and the preset that matches the sound: framed and underlined
+        if (activeTabButton != null) {
+            mark(c, activeTabButton);
+        }
+        for (int i = 0; i < presetButtons.size(); i++) {
+            Button b = presetButtons.get(i);
+            if (b.visible && presetOrder.get(i).matches(shown(), AudioDistancePlugin.getServerMaxDistance())) {
+                mark(c, b);
             }
         }
+
+        // The scrolling band: content coordinates, cut at the band's edges
+        Canvas band = new ScrollCanvas(c, scroll, viewTop, viewBottom);
+        boolean inBand = mouseY >= viewTop && mouseY < viewBottom;
+        int my = inBand ? mouseY + scroll : Integer.MIN_VALUE / 2;
         switch (tab) {
-            case DISTANCE -> paintDistance(c, mouseX, mouseY);
-            case WALLS -> paintWalls(c);
-            case MATERIALS -> {
-                c.text(fit(c, tr("materials.hint"), right - left), left, contentTop, Palette.TEXT_DIM);
-                c.text(fit(c, tr("materials.hint_other"), right - left), left, contentTop + 11, Palette.TEXT_MUTED);
-            }
-            case EFFECTS -> paintEffects(c);
-            case MONITOR -> paintMonitor(c, mouseX, mouseY);
-            case SERVER -> paintServer(c);
+            case DISTANCE -> paintDistance(band, mouseX, my);
+            case WALLS -> paintWalls(band);
+            case EFFECTS -> paintEffects(band);
+            case HUD -> paintHud(band);
+            case MONITOR -> paintMonitor(band, mouseX, my);
+            case SERVER -> paintServer(band);
         }
+        for (AbstractWidget widget : lockedWidgets) {
+            if (widget.visible) {
+                lockIcon(c, widget.getX() + widget.getWidth() - 11, widget.getY() + (widget.getHeight() - 8) / 2);
+            }
+        }
+        if (maxScroll > 0) {
+            paintScrollbar(c);
+        }
+        if (tab == Tab.SERVER) {
+            paintServerStatus(c);
+        }
+    }
+
+    private static void mark(Canvas c, AbstractWidget b) {
+        int x1 = b.getX();
+        int y1 = b.getY();
+        int x2 = x1 + b.getWidth();
+        int y2 = y1 + b.getHeight();
+        c.frame(x1 - 1, y1 - 1, x2 + 1, y2 + 1, 0x00000000, Palette.withAlpha(Palette.ACCENT, 0xC0));
+        c.fill(x1 + 2, y2 + 1, x2 - 2, y2 + 3, Palette.ACCENT);
+    }
+
+    /** A small padlock on a control the server locks. */
+    private static void lockIcon(Canvas c, int x, int y) {
+        int color = Palette.WARN;
+        c.fill(x + 2, y, x + 5, y + 1, color);
+        c.fill(x + 1, y + 1, x + 2, y + 3, color);
+        c.fill(x + 5, y + 1, x + 6, y + 3, color);
+        c.fill(x, y + 3, x + 7, y + 8, color);
+        c.fill(x + 3, y + 5, x + 4, y + 7, 0xFF000000);
+    }
+
+    /** A thin bar right of the content: where the visible band is in the whole tab. */
+    private void paintScrollbar(Canvas c) {
+        int x = Math.min(this.width - 3, right + 3);
+        int trackH = viewBottom - viewTop;
+        int total = trackH + maxScroll;
+        int thumbH = Math.max(16, trackH * trackH / total);
+        int thumbY = viewTop + (int) Math.round((double) (trackH - thumbH) * scroll / maxScroll);
+        c.fill(x, viewTop, x + 2, viewBottom, 0x30FFFFFF);
+        c.fill(x, thumbY, x + 2, thumbY + thumbH, Palette.withAlpha(Palette.TEXT, 0xB0));
     }
 
     // ---- Distance -----------------------------------------------------------
@@ -944,13 +1216,9 @@ public abstract class SettingsScreen extends Screen {
     private void paintDistance(Canvas c, int mouseX, int mouseY) {
         int x1 = left;
         int x2 = right;
-        // Header strip (summary, legend, listen button) above the panel
-        int headerY = graphTop + 3;
-        int y1 = graphTop + 17;
+        int headerY = graphHeaderY + 6;
+        int y1 = graphTop;
         int y2 = graphBottom;
-        if (y2 - y1 < 40) {
-            return;
-        }
 
         double maxDist = AudioDistancePlugin.getServerMaxDistance();
         DistanceConfig shown = shown();
@@ -1118,53 +1386,54 @@ public abstract class SettingsScreen extends Screen {
             c.vLine(mouseX, py1, py2, 0x66FFFFFF);
             c.fill(mouseX - 1, gy - 1, mouseX + 2, gy + 2, 0xFFFFFFFF);
             int badgeY = gy - 17 >= y1 + 2 ? gy - 17 : Math.min(py2 - 12, gy + 5);
-            badge(c, tr("inspect", blocks(f * maxDist), pct(g), db(g)), mouseX, badgeY);
+            badge(c, tr("inspect", blocks(f * maxDist), pct(g)), mouseX, badgeY);
         }
     }
 
     // ---- Walls --------------------------------------------------------------
 
-    private void paintWalls(Canvas c) {
+    /** A warning above a panel when Sound Physics Remastered does the job, or this build cannot. */
+    private void paintStatusBanner(Canvas c, String soundPhysicsKey) {
         AudioDistancePlugin.OcclusionStatus status = AudioDistancePlugin.occlusionStatus();
-        int y = panelTop;
-        if (status == AudioDistancePlugin.OcclusionStatus.SOUND_PHYSICS || status == AudioDistancePlugin.OcclusionStatus.UNAVAILABLE) {
-            String key = status == AudioDistancePlugin.OcclusionStatus.SOUND_PHYSICS ? "status.sound_physics" : "status.unavailable";
-            c.frame(left, y, right, y + 26, 0x30F6C453, Palette.withAlpha(Palette.WARN, 0x90));
-            c.text(fit(c, tr(key), right - left - 12), left + 6, y + 4, Palette.WARN);
-            c.text(fit(c, tr(key + ".detail"), right - left - 12), left + 6, y + 14, Palette.TEXT_DIM);
-            y += 30;
-        }
-        if (contentBottom - y < 40) {
+        if (status != AudioDistancePlugin.OcclusionStatus.SOUND_PHYSICS && status != AudioDistancePlugin.OcclusionStatus.UNAVAILABLE) {
             return;
         }
+        String key = status == AudioDistancePlugin.OcclusionStatus.SOUND_PHYSICS ? soundPhysicsKey : "status.unavailable";
+        int y = statusY;
+        c.frame(left, y, right, y + 26, 0x30F6C453, Palette.withAlpha(Palette.WARN, 0x90));
+        c.text(fit(c, tr(key), right - left - 12), left + 6, y + 4, Palette.WARN);
+        c.text(fit(c, tr(key + ".detail"), right - left - 12), left + 6, y + 14, Palette.TEXT_DIM);
+    }
 
+    private void paintWalls(Canvas c) {
+        paintStatusBanner(c, "status.sound_physics");
         DistanceConfig shown = shown();
         boolean on = shown.isOcclusionEnabled();
-        // The panel is as tall as its rows, not the whole window
-        int panelBottom = Math.min(contentBottom, y + 20 + EXAMPLES.length * 14 + 18);
+        int y = panelTop;
         c.frame(left, y, right, panelBottom, Palette.PANEL, Palette.PANEL_BORDER);
         Component header = on ? tr("walls.preview") : tr("walls.preview_off");
         c.text(fit(c, header, right - left - 12), left + 6, y + 5, on ? Palette.TEXT_DIM : Palette.TEXT_MUTED);
 
         int labelW = 0;
+        int levelW = 0;
         for (Example e : EXAMPLES) {
             labelW = Math.max(labelW, c.width(tr("walls.example." + e.key)));
         }
+        for (String level : WALL_LEVELS) {
+            levelW = Math.max(levelW, c.width(tr(level)));
+        }
         labelW = Math.min(labelW, (right - left) * 2 / 5);
-        int valueW = c.width(tr("walls.value", "−00.0", tr("khz", "00.0"))) + 4;
+        levelW = Math.min(levelW + 4, (right - left) / 4);
         int barX1 = left + 8 + labelW + 8;
-        int barX2 = right - 8 - valueW;
+        int barX2 = right - 8 - levelW;
         if (barX2 - barX1 < 30) {
             barX2 = right - 8;
-            valueW = 0;
+            levelW = 0;
         }
 
         double strength = shown.getOcclusionStrength();
         int rowY = y + 20;
         for (Example e : EXAMPLES) {
-            if (rowY + 10 > panelBottom - 4) {
-                break;
-            }
             double thickness = e.blocks * shown.getMaterialWeight(e.material);
             double muffle = OcclusionModel.muffle(thickness, strength);
             double loss = OcclusionModel.lossDb(thickness, strength);
@@ -1175,38 +1444,48 @@ public abstract class SettingsScreen extends Screen {
             c.fill(barX1, rowY + 1, barX2, rowY + 8, 0x22FFFFFF);
             int filled = barX1 + (int) Math.round(gain * (barX2 - barX1));
             c.fill(barX1, rowY + 1, filled, rowY + 8, Palette.withAlpha(Palette.mix(Palette.ACCENT, Palette.MUFFLED, muffle), alpha));
-            if (valueW > 0) {
-                c.right(tr("walls.value", String.format(Locale.ROOT, "−%.1f", loss), frequency(OcclusionModel.cutoffHz(muffle))),
-                        right - 8, rowY, Palette.withAlpha(Palette.TEXT_DIM, alpha));
+            if (levelW > 0) {
+                c.right(fit(c, tr(wallLevel(loss)), levelW - 4), right - 8, rowY, Palette.withAlpha(Palette.TEXT_DIM, alpha));
             }
             rowY += 14;
         }
-        if (rowY + 18 <= panelBottom) {
-            c.text(fit(c, tr("walls.hint"), right - left - 16), left + 8, panelBottom - 14, Palette.TEXT_MUTED);
+        c.text(fit(c, tr("walls.hint"), right - left - 16), left + 8, panelBottom - 14, Palette.TEXT_MUTED);
+
+        if (materialsHintY >= 0) {
+            c.text(fit(c, tr("materials.hint_other"), right - left), left + 1, materialsHintY, Palette.TEXT_MUTED);
         }
+    }
+
+    /** How a voice sounds behind a wall that takes {@code lossDb} away, in words. */
+    private static final String[] WALL_LEVELS = {"walls.level.clear", "walls.level.slight", "walls.level.muffled",
+            "walls.level.strong", "walls.level.faint"};
+
+    private static String wallLevel(double lossDb) {
+        if (lossDb < 1.5) {
+            return WALL_LEVELS[0];
+        }
+        if (lossDb < 5.0) {
+            return WALL_LEVELS[1];
+        }
+        if (lossDb < 10.0) {
+            return WALL_LEVELS[2];
+        }
+        return lossDb < 18.0 ? WALL_LEVELS[3] : WALL_LEVELS[4];
     }
 
     // ---- Effects ------------------------------------------------------------
 
     /** What the surroundings do to voices right now. */
     private void paintEffects(Canvas c) {
-        int y = panelTop;
+        paintStatusBanner(c, "effects.sound_physics");
         AudioDistancePlugin.OcclusionStatus status = AudioDistancePlugin.occlusionStatus();
-        if (status == AudioDistancePlugin.OcclusionStatus.SOUND_PHYSICS || status == AudioDistancePlugin.OcclusionStatus.UNAVAILABLE) {
-            String key = status == AudioDistancePlugin.OcclusionStatus.SOUND_PHYSICS ? "effects.sound_physics" : "status.unavailable";
-            c.frame(left, y, right, y + 26, 0x30F6C453, Palette.withAlpha(Palette.WARN, 0x90));
-            c.text(fit(c, tr(key), right - left - 12), left + 6, y + 4, Palette.WARN);
-            c.text(fit(c, tr(key + ".detail"), right - left - 12), left + 6, y + 14, Palette.TEXT_DIM);
-            y += 30;
-        }
-        if (contentBottom - y < 40) {
-            return;
-        }
-        c.frame(left, y, right, contentBottom, Palette.PANEL, Palette.PANEL_BORDER);
+        int y = panelTop;
+        int bottom = panelBottom;
+        c.frame(left, y, right, bottom, Palette.PANEL, Palette.PANEL_BORDER);
         int x = left + 8;
         int w = right - left - 16;
         if (!inWorld()) {
-            c.centered(tr("effects.no_world"), (left + right) / 2, (y + contentBottom) / 2 - 4, Palette.TEXT_DIM);
+            c.centered(tr("effects.no_world"), (left + right) / 2, (y + bottom) / 2 - 4, Palette.TEXT_DIM);
             return;
         }
         DistanceConfig shown = shown();
@@ -1227,7 +1506,7 @@ public abstract class SettingsScreen extends Screen {
         } else if (room.wet() > 0.0) {
             detail = tr("effects.room.detail", String.format(Locale.ROOT, "%.1f", room.decaySeconds()), blocks(room.meanFree()));
         }
-        if (detail != null && contentBottom - rowY > 72) {
+        if (detail != null) {
             c.text(fit(c, detail, w), x, rowY, Palette.TEXT_DIM);
             rowY += 12;
         }
@@ -1259,25 +1538,38 @@ public abstract class SettingsScreen extends Screen {
             }
         }
         boolean cornersOn = shown.isDiffractionEnabled() && status == AudioDistancePlugin.OcclusionStatus.ACTIVE;
-        if (rowY + 10 <= contentBottom - 4) {
-            c.text(fit(c, round > 0 ? tr("effects.corners.now", round) : tr("effects.corners.none"), w), x, rowY,
-                    round > 0 && cornersOn ? Palette.ACCENT_LINE : Palette.TEXT_MUTED);
-            rowY += 14;
-        }
+        c.text(fit(c, round > 0 ? tr("effects.corners.now", round) : tr("effects.corners.none"), w), x, rowY,
+                round > 0 && cornersOn ? Palette.ACCENT_LINE : Palette.TEXT_MUTED);
+        rowY += 14;
 
-        if (rowY + 22 <= contentBottom - 4) {
-            c.text(fit(c, tr("effects.hint"), w), x, contentBottom - 14, Palette.TEXT_MUTED);
+        if (rowY + 22 <= bottom - 4) {
+            c.text(fit(c, tr("effects.hint"), w), x, bottom - 14, Palette.TEXT_MUTED);
         }
+    }
+
+    // ---- HUD ----------------------------------------------------------------
+
+    private void paintHud(Canvas c) {
+        c.frame(left, panelTop, right, panelBottom, Palette.PANEL, Palette.PANEL_BORDER);
+        if (config.getHudMode() == HudMode.OFF) {
+            c.centered(fit(c, tr("hud.preview.off"), right - left - 12), (left + right) / 2,
+                    (panelTop + panelBottom) / 2 - 4, Palette.TEXT_MUTED);
+            return;
+        }
+        c.centered(fit(c, tr("hud.preview"), right - left - 12), (left + right) / 2,
+                (panelTop + panelBottom) / 2 - 4, Palette.withAlpha(Palette.TEXT_MUTED, 0x80));
+        HudOverlay.paintPreview(c, left + 1, panelTop + 1, right - 1, panelBottom - 1);
     }
 
     // ---- Monitor ------------------------------------------------------------
 
     private void paintMonitor(Canvas c, int mouseX, int mouseY) {
-        int top = monitorTop;
-        c.frame(left, top, right, contentBottom, Palette.PANEL, Palette.PANEL_BORDER);
+        int top = panelTop;
+        int bottom = panelBottom;
+        c.frame(left, top, right, bottom, Palette.PANEL, Palette.PANEL_BORDER);
         int midX = (left + right) / 2;
         if (!inWorld()) {
-            c.centered(tr("monitor.no_world"), midX, (top + contentBottom) / 2 - 4, Palette.TEXT_DIM);
+            c.centered(tr("monitor.no_world"), midX, (top + bottom) / 2 - 4, Palette.TEXT_DIM);
             return;
         }
 
@@ -1293,14 +1585,17 @@ public abstract class SettingsScreen extends Screen {
                 ? tr("monitor.server.none")
                 : tr("monitor.server.addon", tr("monitor.server.mode." + serverProfile.mode().getId()));
         y += 11;
-        // The addon's own cost per tick; it spaces its work out above PerfMeter.BUSY_MS
-        double ms = AudioDistancePlugin.CLIENT_PERF.averageMs();
-        Component perf = tr("monitor.perf", String.format(Locale.ROOT, "%.2f", ms));
-        c.right(perf, right - 6, y, AudioDistancePlugin.CLIENT_PERF.isBusy() ? Palette.WARN : Palette.TEXT_MUTED);
-        c.text(fit(c, serverLine, right - left - 18 - c.width(perf)), left + 6, y, Palette.TEXT_MUTED);
+        // The addon spaces its work out when it gets busy; say so only then
+        int busyW = 0;
+        if (AudioDistancePlugin.CLIENT_PERF.isBusy()) {
+            Component busy = tr("monitor.busy");
+            busyW = c.width(busy) + 12;
+            c.right(busy, right - 6, y, Palette.WARN);
+        }
+        c.text(fit(c, serverLine, right - left - 12 - busyW), left + 6, y, Palette.TEXT_MUTED);
 
         if (!AudioDistancePlugin.LINK.isMonitorAllowed()) {
-            c.centered(tr("monitor.off_by_server"), midX, (y + contentBottom) / 2, Palette.TEXT_DIM);
+            c.centered(tr("monitor.off_by_server"), midX, (y + bottom) / 2, Palette.TEXT_DIM);
             return;
         }
         long now = System.nanoTime();
@@ -1309,21 +1604,25 @@ public abstract class SettingsScreen extends Screen {
         // Without any source of voice chat states only who is talking is known
         int footer = AudioDistancePlugin.hasVoiceStates(now) ? 0 : 12;
         if (footer > 0) {
-            c.text(fit(c, tr("monitor.states_unknown"), right - left - 12), left + 6, contentBottom - 13, Palette.TEXT_MUTED);
+            c.text(fit(c, tr("monitor.states_unknown"), right - left - 12), left + 6, bottom - 13, Palette.TEXT_MUTED);
         }
         if (radarView) {
-            paintRadar(c, rows, y + 14, contentBottom - 4 - footer, maxDist, wallsActive, mouseX, mouseY);
+            paintRadar(c, rows, y + 14, bottom - 4 - footer, maxDist, wallsActive, mouseX, mouseY);
             return;
         }
         if (rows.isEmpty()) {
-            int cy = (y + contentBottom) / 2 - 4;
+            int cy = (y + bottom) / 2 - 4;
             c.centered(tr("monitor.empty"), midX, cy, Palette.TEXT_DIM);
             c.centered(fit(c, tr("monitor.empty_hint"), right - left - 12), midX, cy + 12, Palette.TEXT_MUTED);
             return;
         }
 
         int wallsRight = right - 8;
-        int wallsW = Math.max(c.width(tr("monitor.col.walls")), c.width(tr("db", "−00.0")));
+        int wallsW = c.width(tr("monitor.col.walls"));
+        for (String level : WALL_LEVELS) {
+            wallsW = Math.max(wallsW, c.width(tr(level)));
+        }
+        wallsW = Math.min(wallsW, (right - left) / 5);
         int loudRight = wallsRight - wallsW - 10;
         int loudW = Math.max(60, Math.min(120, (right - left) / 4));
         int loudLeft = loudRight - loudW;
@@ -1341,10 +1640,10 @@ public abstract class SettingsScreen extends Screen {
         c.hLine(left + 6, right - 6, hy + 11, Palette.PANEL_BORDER);
 
         int rowY = hy + 16;
-        int shown = 0;
+        int shownRows = 0;
         for (NearbyPlayers.Row row : rows) {
-            if (rowY + 10 > contentBottom - 4 - footer) {
-                c.text(tr("monitor.more", rows.size() - shown), nameLeft, rowY - 2, Palette.TEXT_MUTED);
+            if (rowY + 10 > bottom - 4 - footer) {
+                c.text(tr("monitor.more", rows.size() - shownRows), nameLeft, rowY - 2, Palette.TEXT_MUTED);
                 break;
             }
             // Distance and, after it, an arrow towards the player
@@ -1354,12 +1653,12 @@ public abstract class SettingsScreen extends Screen {
             }
             int numRight = distRight - arrowW;
             if (row.isTalking()) {
-                paintTalkingRow(c, row, rowY, wallsActive, nameLeft, nameW, numRight, loudLeft, loudRight, wallsRight);
+                paintTalkingRow(c, row, rowY, wallsActive, nameLeft, nameW, numRight, loudLeft, loudRight, wallsRight, wallsW);
             } else {
                 paintSilentRow(c, row, rowY, nameLeft, nameW, numRight, loudLeft, wallsRight);
             }
             rowY += 13;
-            shown++;
+            shownRows++;
         }
     }
 
@@ -1495,7 +1794,7 @@ public abstract class SettingsScreen extends Screen {
     }
 
     private void paintTalkingRow(Canvas c, NearbyPlayers.Row row, int rowY, boolean wallsActive, int nameLeft, int nameW,
-                                 int distRight, int loudLeft, int loudRight, int wallsRight) {
+                                 int distRight, int loudLeft, int loudRight, int wallsRight, int wallsW) {
         SpeakerRegistry.Speaker s = row.speaker();
         boolean talking = s.getLevelDb() > -50.0F;
         c.fill(left + 7, rowY + 2, left + 11, rowY + 6, talking ? Palette.GOOD : Palette.withAlpha(Palette.TEXT_MUTED, 0x80));
@@ -1537,8 +1836,8 @@ public abstract class SettingsScreen extends Screen {
         c.fill(loudLeft, rowY + 1, fill, rowY + 7, Palette.mix(Palette.ACCENT, Palette.MUFFLED, muffle));
         c.right(pctText, loudRight, rowY, Palette.TEXT_DIM);
 
-        if (lossDb > 0.5F) {
-            c.right(tr("db", String.format(Locale.ROOT, "−%.1f", lossDb)), wallsRight, rowY, Palette.MUFFLED);
+        if (lossDb >= 1.5F) {
+            c.right(fit(c, tr(wallLevel(lossDb)), wallsW), wallsRight, rowY, Palette.MUFFLED);
         } else {
             c.right(Component.literal("—"), wallsRight, rowY, Palette.TEXT_MUTED);
         }
@@ -1640,20 +1939,5 @@ public abstract class SettingsScreen extends Screen {
         return v < 10.0 && Math.abs(v - Math.rint(v)) > 0.05
                 ? String.format(Locale.ROOT, "%.1f", v)
                 : String.valueOf(Math.round(v));
-    }
-
-    private static Component db(double gain) {
-        if (gain <= 0.0001) {
-            return tr("db", "−∞");
-        }
-        double d = 20.0 * Math.log10(gain);
-        return tr("db", Math.abs(d) < 0.05 ? "0" : String.format(Locale.ROOT, "%.1f", d).replace('-', '−'));
-    }
-
-    private static Component frequency(double hz) {
-        if (hz >= 1000.0) {
-            return tr("khz", String.format(Locale.ROOT, "%.1f", hz / 1000.0));
-        }
-        return tr("hz", String.valueOf(Math.round(hz / 10.0) * 10));
     }
 }

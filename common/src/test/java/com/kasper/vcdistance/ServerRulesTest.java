@@ -293,6 +293,67 @@ public class ServerRulesTest {
     }
 
     @Test
+    @DisplayName("/vcd zone show: a box's edges as particles for the admin, only boxes in the admin's world")
+    void zoneShow() throws IOException {
+        ServerSettings s = settings("""
+                zone.box.stage.world=world
+                zone.box.stage.from=0,60,0
+                zone.box.stage.to=9,69,9
+                zone.box.far.world=world_nether
+                zone.box.far.from=0,0,0
+                zone.box.far.to=3,3,3
+                zone.world.world_the_end.voice_range=8
+                """);
+        ServerPlayers.Info admin = player("Admin", "world", 5, 5);
+        players.update(admin);
+        AdminCommands.Context ctx = ctx(admin.id());
+        ZoneOutlines.clear();
+        try {
+            assertTrue(AdminCommands.run("zone show stage", s, ctx).get(0).contains("stage"));
+            assertFalse(ZoneOutlines.isEmpty());
+            List<double[]> drawn = new java.util.ArrayList<>();
+            for (int i = 0; i < ZoneOutlines.REFRESH_TICKS; i++) {
+                ZoneOutlines.tick((player, world, points) -> {
+                    assertEquals(admin.id(), player);
+                    assertEquals("world", world);
+                    drawn.addAll(points);
+                });
+            }
+            assertFalse(drawn.isEmpty());
+            for (double[] p : drawn) {
+                assertTrue(p[0] >= 0 && p[0] <= 10 && p[1] >= 60 && p[1] <= 70 && p[2] >= 0 && p[2] <= 10);
+            }
+
+            assertTrue(AdminCommands.run("zone show far", s, ctx).get(0).contains("world_nether"));
+            assertTrue(AdminCommands.run("zone show world_the_end", s, ctx).get(0).startsWith("Only box zones"));
+            assertTrue(AdminCommands.run("zone show nothing", s, ctx).get(0).contains("nothing"));
+            assertTrue(AdminCommands.run("zone show stage", s, ctx(null)).get(0).startsWith("Only a player"));
+            AdminCommands.run("zone show off", s, ctx);
+            assertTrue(ZoneOutlines.isEmpty());
+        } finally {
+            ZoneOutlines.clear();
+        }
+    }
+
+    @Test
+    @DisplayName("Zone outlines: every point on the box's edges, big boxes kept to a few hundred points")
+    void zoneOutlinePoints() {
+        List<double[]> small = ZoneOutlines.points(new Zone.Box("world", 0, 0, 0, 9, 9, 9));
+        assertEquals(12 * 11, small.size());
+        for (double[] p : small) {
+            int onEdge = 0;
+            for (double c : p) {
+                if (c == 0.0 || c == 10.0) {
+                    onEdge++;
+                }
+            }
+            assertTrue(onEdge >= 2, "a point off the edges: " + java.util.Arrays.toString(p));
+        }
+        List<double[]> big = ZoneOutlines.points(new Zone.Box("world", -500, 0, -500, 499, 255, 499));
+        assertTrue(big.size() <= ZoneOutlines.MAX_POINTS + 12, String.valueOf(big.size()));
+    }
+
+    @Test
     @DisplayName("Server texts: every language file has them, and language codes are matched loosely")
     void serverText() {
         assertEquals("ru_ru", ServerText.language("ru"));

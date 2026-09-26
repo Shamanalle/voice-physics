@@ -14,17 +14,27 @@ import java.util.UUID;
 
 /**
  * Measures walls between a listener and a speaker on Bukkit servers, with the same five-ray bundle
- * and material weights as the Fabric builds. Runs on the main thread.
+ * and material weights as the Fabric builds. Runs on the main thread; on Folia on the listener's
+ * region thread, and only when the speaker is in the same region (otherwise the voice stays clear).
  */
 final class BukkitThickness implements ServerWalls.ThicknessProvider {
 
     /** Beyond this nobody hears proximity voice anyway; do not trace across the map. */
     private static final double MAX_TRACE_DISTANCE = 160.0;
 
+    private final boolean regionized;
+
+    BukkitThickness(boolean regionized) {
+        this.regionized = regionized;
+    }
+
     @Override
     public double thickness(Object listener, Object levelObject, UUID speakerEntity, double x, double y, double z) {
         // Simple Voice Chat on Bukkit hands out Bukkit players and worlds
         if (!(listener instanceof Player player) || !(levelObject instanceof World world)) {
+            return Double.NaN;
+        }
+        if (regionized && !Bukkit.isOwnedByCurrentRegion(player)) {
             return Double.NaN;
         }
         Location ear = player.getEyeLocation();
@@ -43,6 +53,9 @@ final class BukkitThickness implements ServerWalls.ThicknessProvider {
             sx = mouth.getX();
             sy = mouth.getY();
             sz = mouth.getZ();
+        }
+        if (regionized && !Bukkit.isOwnedByCurrentRegion(new Location(world, sx, sy, sz))) {
+            return Double.NaN;
         }
         double dx = sx - ear.getX();
         double dy = sy - ear.getY();
