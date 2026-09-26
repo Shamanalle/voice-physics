@@ -162,6 +162,17 @@ public abstract class SettingsScreen extends Screen {
         this.tab = lastTab;
     }
 
+    /** The tab the next settings screen opens on (the in-game tests walk through every tab). */
+    public static void openOn(Tab tab) {
+        lastTab = tab;
+    }
+
+    /** Scrolls the open tab to its end (in-game tests). */
+    public void scrollToEnd() {
+        scroll = maxScroll;
+        applyScroll();
+    }
+
     /** Shows another screen (the API for this differs between versions). */
     protected abstract void openScreen(Screen screen);
 

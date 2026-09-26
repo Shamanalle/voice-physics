@@ -93,3 +93,46 @@ jobs:
           name: server-log-${{ matrix.loader }}-${{ matrix.mc }}
           path: ${{ runner.temp }}/server-*/*.log
           if-no-files-found: ignore
+
+  client:
+    name: Client ${{ matrix.mc }} (settings screen)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { module: fabric-1.21, mc: '1.21.8' }
+          - { module: fabric-26, mc: '26.3' }
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up JDK 25
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '25'
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+      - name: Simple Voice Chat for the test client
+        run: |
+          mods="${{ matrix.module }}/build/run/clientGameTest/mods"
+          mkdir -p "${mods}"
+          url=$(curl -fsSL --retry 4 -G "https://api.modrinth.com/v2/project/simple-voice-chat/version" \
+              --data-urlencode 'loaders=["fabric"]' --data-urlencode 'game_versions=["${{ matrix.mc }}"]' \
+            | jq -r '.[0].files | (map(select(.primary)) + .)[0].url')
+          echo "Simple Voice Chat: ${url}"
+          curl -fsSL --retry 4 -o "${mods}/voicechat.jar" "${url}"
+      - name: Open the settings screen in a real client
+        run: |
+          chmod +x gradlew
+          xvfb-run -a -s "-screen 0 1280x720x24" ./gradlew :${{ matrix.module }}:runClientGameTest --no-daemon
+      - name: Upload screenshots and logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: client-${{ matrix.module }}
+          path: |
+            ${{ matrix.module }}/build/run/clientGameTest/screenshots/
+            ${{ matrix.module }}/build/run/clientGameTest/logs/latest.log
+          if-no-files-found: ignore

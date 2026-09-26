@@ -69,3 +69,23 @@ jar {
 remapJar {
     archiveClassifier = ''
 }
+
+// In-game test (Fabric client gametest, run by .github/workflows/ingame.yml): opens the settings screen
+// in a real client on every tab and takes screenshots. Simple Voice Chat goes into the run folder's mods/.
+fabricApi {
+    configureTests {
+        createSourceSet = true
+        modId = 'vc-audio-distance-gametest'
+        enableGameTests = false
+        enableClientGameTests = true
+        eula = true
+    }
+}
+
+sourceSets {
+    gametest {
+        java {
+            srcDir "${rootDir}/shared/gametest/src/java"
+        }
+    }
+}
