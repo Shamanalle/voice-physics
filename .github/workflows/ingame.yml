@@ -1,0 +1,93 @@
+name: In-game tests
+
+# Starts real servers with Simple Voice Chat and the addon (.github/scripts/server-smoke.sh): each must
+# come up, answer /vcd with real text, save a setting and log no exception from the addon. The
+# release (release.yml) runs this first and stops when it fails.
+
+on:
+  pull_request:
+    branches: [ "main" ]
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build the jars
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up JDK 25
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '25'
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+      - name: Build
+        run: |
+          chmod +x gradlew
+          ./gradlew build -x test --no-daemon
+      - name: Upload jars
+        uses: actions/upload-artifact@v4
+        with:
+          name: ingame-jars
+          path: build/libs/*.jar
+          if-no-files-found: error
+
+  server:
+    name: ${{ matrix.loader }} ${{ matrix.mc }}
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    # Folia is checked, but Simple Voice Chat itself may not run there yet
+    continue-on-error: ${{ matrix.loader == 'folia' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { loader: fabric, mc: '1.20.1', jar: 'voice-physics-fabric-*+mc1.20.1.jar', java: '21' }
+          - { loader: fabric, mc: '1.20.4', jar: 'voice-physics-fabric-*+mc1.20.2-1.20.4.jar', java: '21' }
+          - { loader: fabric, mc: '1.20.6', jar: 'voice-physics-fabric-*+mc1.20.5-1.20.6.jar', java: '21' }
+          - { loader: fabric, mc: '1.21.1', jar: 'voice-physics-fabric-*+mc1.21.x.jar', java: '21' }
+          - { loader: fabric, mc: '1.21.11', jar: 'voice-physics-fabric-*+mc1.21.x.jar', java: '21' }
+          - { loader: fabric, mc: '26.3', jar: 'voice-physics-fabric-*+mc26.x.jar', java: '25' }
+          - { loader: neoforge, mc: '26.2', jar: 'voice-physics-neoforge-*+mc26.x.jar', java: '25', version: 'nf26_neoforge' }
+          - { loader: paper, mc: '1.20.1', jar: 'voice-physics-bukkit-*.jar', java: '21' }
+          - { loader: paper, mc: '1.21.11', jar: 'voice-physics-bukkit-*.jar', java: '21' }
+          - { loader: paper, mc: 'latest', jar: 'voice-physics-bukkit-*.jar', java: '25' }
+          - { loader: folia, mc: 'latest', jar: 'voice-physics-bukkit-*.jar', java: '25' }
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up JDK ${{ matrix.java }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: ${{ matrix.java }}
+      - name: Download jars
+        uses: actions/download-artifact@v4
+        with:
+          name: ingame-jars
+          path: jars
+      - name: Start the server and run /vcd
+        run: |
+          jar=$(ls jars/${{ matrix.jar }} | head -1)
+          version=""
+          if [ -n "${{ matrix.version }}" ]; then
+            version=$(grep "^${{ matrix.version }}=" gradle.properties | cut -d= -f2)
+          fi
+          echo "Addon: ${jar} ${version}"
+          bash .github/scripts/server-smoke.sh "${{ matrix.loader }}" "${{ matrix.mc }}" "${jar}" "${version}"
+      - name: Upload the server log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: server-log-${{ matrix.loader }}-${{ matrix.mc }}
+          path: ${{ runner.temp }}/server-*/*.log
+          if-no-files-found: ignore
