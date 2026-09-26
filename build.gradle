@@ -2,15 +2,21 @@ plugins {
     id 'base'
 }
 
-// Every release target: the Fabric jar is the full addon. The Forge / NeoForge files are the same jar,
-// published under their loader's name: they load the Simple Voice Chat plugin (distance curves,
-// configured through config/vc-audio-distance.properties) without the Fabric-only client features.
+// Every release target: the Fabric jar is the full addon. Where a loader has no build of its own, its
+// file is the same jar under the loader's name ("lite"): it loads the Simple Voice Chat plugin
+// (distance curves, configured through config/vc-audio-distance.properties) without the other features.
 def releaseTargets = [
-        [project: ':fabric-1.20', target: 'mc1.20.1', aliases: ['forge']],
+        [project: ':fabric-1.20', target: 'mc1.20.1', aliases: []],
         [project: ':fabric-1.20.4', target: 'mc1.20.2-1.20.4', aliases: ['neoforge', 'forge']],
         [project: ':fabric-1.20.6', target: 'mc1.20.5-1.20.6', aliases: ['neoforge', 'forge']],
         [project: ':fabric-1.21', target: 'mc1.21.x', aliases: ['neoforge', 'forge']],
         [project: ':fabric-26', target: 'mc26.x', aliases: ['neoforge', 'forge']],
+]
+
+// Full builds of their own: Forge 1.20.1 (remapped to Forge's names by reobfJar) and NeoForge 1.21 - 1.21.1
+def loaderTargets = [
+        [project: ':forge-1.20.1', task: 'reobfJar', file: 'voice-physics-forge-%s+mc1.20.1.jar'],
+        [project: ':neoforge-1.21', task: 'jar', file: 'voice-physics-neoforge-%s+mc1.21-1.21.1.jar'],
 ]
 
 tasks.register('buildAll') {
@@ -18,6 +24,7 @@ tasks.register('buildAll') {
     description = 'Builds and collects the release jars for every Minecraft version and loader into build/libs'
     dependsOn releaseTargets.collect { "${it.project}:build" }
     dependsOn ':bukkit:build'
+    dependsOn loaderTargets.collect { "${it.project}:${it.task}" }
 
     doLast {
         def outDir = layout.buildDirectory.dir("libs").get().asFile
@@ -38,6 +45,17 @@ tasks.register('buildAll') {
                     into outDir
                     rename { "voice-physics-${loader}-${version}.jar" }
                 }
+            }
+        }
+        loaderTargets.each { t ->
+            def built = project(t.project).tasks.named(t.task).get().outputs.files.files.find { it.name.endsWith('.jar') }
+            if (built == null || !built.exists()) {
+                throw new GradleException("Expected release jar is missing: ${t.project} ${t.task}")
+            }
+            copy {
+                from built
+                into outDir
+                rename { String.format(t.file, project.mod_version) }
             }
         }
         // Bukkit / Spigot / Paper / Purpur plugin (server side, every supported Minecraft version)

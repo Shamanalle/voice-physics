@@ -15,8 +15,14 @@ permissions:
   contents: write
 
 jobs:
+  # Real servers with the addon must start and answer /vcd before anything is published
+  ingame:
+    name: In-game tests
+    uses: ./.github/workflows/ingame.yml
+
   release:
     name: Build & publish
+    needs: ingame
     runs-on: ubuntu-latest
     outputs:
       tag: ${{ steps.meta.outputs.tag }}

@@ -98,11 +98,18 @@ public final class ServerBridge {
 
     /** "NeoForge" or "Fabric", for /vcd status. */
     public static String platform() {
-        try {
-            Class.forName("net.neoforged.fml.common.Mod");
+        if (hasClass("net.neoforged.fml.common.Mod")) {
             return "NeoForge";
+        }
+        return hasClass("net.minecraftforge.fml.common.Mod") ? "Forge" : "Fabric";
+    }
+
+    private static boolean hasClass(String name) {
+        try {
+            Class.forName(name);
+            return true;
         } catch (ClassNotFoundException e) {
-            return "Fabric";
+            return false;
         }
     }
 

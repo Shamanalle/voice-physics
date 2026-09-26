@@ -5,7 +5,7 @@
 #
 #   server-smoke.sh <fabric|neoforge|forge|paper|folia> <minecraft version> <addon jar> [loader version]
 #
-# The loader version is needed for NeoForge and Forge (the installer's version). Everything else is
+# The loader version is needed for NeoForge and Forge: the installer's version (Forge: "1.20.1-47.4.0"). Everything else is
 # looked up: Fabric's loader and installer from meta.fabricmc.net, Paper and Folia builds from PaperMC,
 # Simple Voice Chat and Fabric API from Modrinth.
 set -euo pipefail
@@ -90,7 +90,7 @@ case "${loader}" in
     if [ "${loader}" = "neoforge" ]; then
       fetch "https://maven.neoforged.net/releases/net/neoforged/neoforge/${loader_version}/neoforge-${loader_version}-installer.jar" installer.jar
     else
-      fetch "https://maven.minecraftforge.net/net/minecraftforge/forge/${mc}-${loader_version}/forge-${mc}-${loader_version}-installer.jar" installer.jar
+      fetch "https://maven.minecraftforge.net/net/minecraftforge/forge/${loader_version}/forge-${loader_version}-installer.jar" installer.jar
     fi
     java -jar installer.jar --installServer > installer.log 2>&1 || { tail -40 installer.log; exit 1; }
     mkdir -p mods
