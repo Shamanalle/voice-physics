@@ -10,7 +10,6 @@ import com.mojang.blaze3d.platform.InputConstants;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
@@ -64,10 +63,7 @@ public class AudioDistanceClient implements ClientModInitializer {
 
         // /voicephysics opens the settings (also from the clickable link in chat)
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) ->
-                dispatcher.register(ClientCommandManager.literal(ClientHints.COMMAND).executes(context -> {
-                    ClientHints.requestOpen();
-                    return 1;
-                })));
+                dispatcher.register(ClientHints.openCommand()));
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             ticker.tick();

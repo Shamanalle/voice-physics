@@ -2,6 +2,7 @@ package com.kasper.vcdistance.client;
 
 import com.kasper.vcdistance.AudioDistancePlugin;
 import com.kasper.vcdistance.DistanceConfig;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.network.chat.Component;
 
@@ -62,6 +63,17 @@ public final class ClientHints {
     public static Component serverProfileMessage(boolean enforced) {
         Component message = Component.translatable("message.vc-audio-distance.server_profile." + (enforced ? "enforce" : "suggest"));
         return enforced ? message : withOpenLink(message);
+    }
+
+    /**
+     * The {@code /voicephysics} command for any loader's client command dispatcher. Built with
+     * Brigadier alone, since each loader names its own command helpers differently.
+     */
+    public static <S> LiteralArgumentBuilder<S> openCommand() {
+        return LiteralArgumentBuilder.<S>literal(COMMAND).executes(context -> {
+            requestOpen();
+            return 1;
+        });
     }
 
     /** Called by the {@code /voicephysics} command: open the settings on the next tick. */

@@ -18,7 +18,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.multiplayer.ClientPacketListener;
-import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.neoforged.bus.api.IEventBus;
@@ -78,11 +77,7 @@ final class NeoClient {
 
         NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post e) -> tick(Minecraft.getInstance()));
         // /voicephysics opens the settings (also from the clickable link in chat)
-        NeoForge.EVENT_BUS.addListener((RegisterClientCommandsEvent e) -> e.getDispatcher().register(
-                Commands.literal(ClientHints.COMMAND).executes(context -> {
-                    ClientHints.requestOpen();
-                    return 1;
-                })));
+        NeoForge.EVENT_BUS.addListener((RegisterClientCommandsEvent e) -> e.getDispatcher().register(ClientHints.openCommand()));
         NeoForge.EVENT_BUS.addListener((ScreenEvent.Init.Post e) -> {
             if (!SvcSettingsButton.isSvcSettings(e.getScreen())) {
                 return;
