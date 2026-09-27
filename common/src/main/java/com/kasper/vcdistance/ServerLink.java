@@ -58,8 +58,8 @@ public final class ServerLink {
             noticePending = true;
         }
         String before = previous == null ? null : previous.zone();
-        if (!java.util.Objects.equals(before, p.zone())) {
-            // Entering a zone names it; leaving one says the main profile is back ("")
+        if (!p.serverNotices() && !java.util.Objects.equals(before, p.zone())) {
+            // Servers before 2.5.0 leave zone notices to the client. Entering a zone names it; leaving one says the main profile is back ("")
             zoneNotice = p.zone() != null ? new ZoneNotice(p.zone(), p.zoneMessage())
                     : (before != null ? new ZoneNotice("", null) : null);
         }

@@ -9,7 +9,8 @@ import java.util.UUID;
 /**
  * The server-side events every platform reports the same way (Fabric, NeoForge, Paper): the players
  * online, joins and leaves, the addon's hello, and commands from the Server tab. The platform only
- * turns its players into {@link ServerPlayers.Info} and delivers messages.
+ * turns its players into {@link ServerPlayers.Info} and delivers messages; zone notices above the
+ * hotbar are decided here too, so players without the addon see them the same way.
  */
 public final class ServerHooks {
 
@@ -22,6 +23,9 @@ public final class ServerHooks {
         void message(UUID player, String text);
 
         void kick(UUID player, String text);
+
+        /** A short line above the player's hotbar. */
+        void actionBar(UUID player, String text);
     }
 
     private static long ticks;
@@ -49,6 +53,10 @@ public final class ServerHooks {
         }
         ServerSettings settings = AudioDistancePlugin.SERVER_SETTINGS;
         for (ServerPlayers.Info info : online) {
+            String notice = AudioDistancePlugin.ZONE_NOTICES.update(info, settings.zoneOf(info), settings);
+            if (notice != null) {
+                platform.actionBar(info.id(), notice);
+            }
             AddonCheck.Action action = AudioDistancePlugin.ADDON_CHECK.due(settings, info.id(), ticks,
                     AudioDistancePlugin.hasVoiceChat(info.id()));
             if (action == AddonCheck.Action.NONE) {
@@ -82,6 +90,7 @@ public final class ServerHooks {
         AudioDistancePlugin.PLAYERS.remove(player);
         AudioDistancePlugin.SERVER_WALLS.forgetPlayer(player);
         AudioDistancePlugin.ZONES.forget(player);
+        AudioDistancePlugin.ZONE_NOTICES.forget(player);
     }
 
     /** The addon's hello: remembers the player has it (and which version). */
@@ -105,7 +114,28 @@ public final class ServerHooks {
         if (command == null || !admin) {
             return null;
         }
-        List<String> lines = AdminCommands.run(command, AudioDistancePlugin.SERVER_SETTINGS, ctx);
-        return LinkProtocol.adminReply(lines, AudioDistancePlugin.SERVER_SETTINGS);
+        ServerSettings settings = AudioDistancePlugin.SERVER_SETTINGS;
+        List<String> lines = AdminCommands.run(command, settings, ctx);
+        return LinkProtocol.adminReply(lines, settings, tabState(settings, ctx));
+    }
+
+    /** How many latest changes the Server tab lists. */
+    static final int TAB_LOG = 5;
+
+    /** What the Server tab needs besides the settings: undo, the player's permissions, the latest changes. */
+    static java.util.Map<String, String> tabState(ServerSettings settings, AdminCommands.Context ctx) {
+        java.util.Map<String, String> out = new java.util.LinkedHashMap<>();
+        out.put("undo", String.valueOf(AdminCommands.undoable(settings)));
+        for (String permission : AdminCommands.PERMISSIONS) {
+            out.put("allows." + permission, String.valueOf(ctx.allows(permission)));
+        }
+        if (ctx.allows(AdminCommands.PERM_SETTINGS)) {
+            List<ChangeLog.Entry> log = ChangeLog.read(settings);
+            for (int i = 0; i < Math.min(TAB_LOG, log.size()); i++) {
+                ChangeLog.Entry e = log.get(i);
+                out.put("log." + i, e.time() + "|" + e.who() + "|" + e.undo() + "|" + e.command());
+            }
+        }
+        return out;
     }
 }

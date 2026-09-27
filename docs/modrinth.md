@@ -19,7 +19,8 @@ Install it on your client, on the server, or on both. Each works on its own.
 **🌊 Echo, water, rain**
 - The echo fits the place: short in a stone room, long in a cave, soft in a wooden house, none in a forest or field.
 - Near cliffs the voice comes back a moment later.
-- Dull voices under water; rain and thunder cover far voices.
+- The echo changes smoothly as you walk between places.
+- Dull voices under water; rain and thunder cover far voices. You choose how strong each is.
 
 **👀 HUD and monitor**
 - See who is talking, how far, from where, and whether they are behind a wall.
@@ -32,12 +33,12 @@ Install it on your client, on the server, or on both. Each works on its own.
 
 Players **without the addon** also hear voices muffled through walls.
 
-- **Sound zones:** a stage heard twice as far, a quiet library, a soundproof room, a cathedral with echo, a message on entering. WorldGuard regions work too.
+- **Sound zones:** a stage heard twice as far, a quiet library, a soundproof room, a cathedral with echo. Everyone sees the zone's name above the hotbar on entering, even without the addon. WorldGuard regions and Open Parties and Claims claims work too.
 - **Game rules:** sneaking is quieter, the dead are silent, spectators talk only to each other, a goat horn works as a megaphone.
 - **One sound for everyone:** offer or enforce the server's settings for fair PvP and events.
 - **No seeing through walls:** turn off the monitor and radar.
 - **Require the addon:** send a download link, remind on every join, or kick.
-- **In-game Server tab** for admins, and clickable `/vcd` commands with undo.
+- **In-game Server tab** for admins, clickable `/vcd` commands with undo, and a log of who changed what.
 
 ## Which file do I need?
 
@@ -77,7 +78,8 @@ Minecraft 1.20 – 1.20.6, 1.21 – 1.21.11 and 26.1 – 26.3.
 **🌊 Эхо, вода, дождь**
 - Эхо по месту: короткое в каменной комнате, долгое в пещере, мягкое в деревянном доме, никакого в лесу и в поле.
 - У скал голос возвращается через мгновение.
-- Глухие голоса под водой; дождь и гроза заглушают дальние голоса.
+- Эхо меняется плавно, когда вы переходите из одного места в другое.
+- Глухие голоса под водой; дождь и гроза заглушают дальние голоса. Силу каждого выбираете вы.
 
 **👀 HUD и монитор**
 - Видно, кто говорит, как далеко, откуда и за стеной ли.
@@ -90,12 +92,12 @@ Minecraft 1.20 – 1.20.6, 1.21 – 1.21.11 and 26.1 – 26.3.
 
 Игроки **без аддона** тоже слышат голоса за стенами приглушёнными.
 
-- **Звуковые зоны:** сцена, которую слышно вдвое дальше, тихая библиотека, звукоизолированная комната, собор с эхом, сообщение при входе. Регионы WorldGuard тоже подходят.
+- **Звуковые зоны:** сцена, которую слышно вдвое дальше, тихая библиотека, звукоизолированная комната, собор с эхом. При входе все видят название зоны над хотбаром, даже без аддона. Подходят и регионы WorldGuard, и приваты Open Parties and Claims.
 - **Правила игры:** на корточках тише, мёртвые молчат, наблюдатели говорят только между собой, козий рог работает как мегафон.
 - **Один звук для всех:** предложите или закрепите настройки сервера для честного PvP и ивентов.
 - **Без взгляда сквозь стены:** выключите монитор и радар.
 - **Обязательный аддон:** ссылка на скачивание, напоминание при каждом входе или кик.
-- **Вкладка «Сервер» в игре** для админов и кликабельные команды `/vcd` с отменой.
+- **Вкладка «Сервер» в игре** для админов, кликабельные команды `/vcd` с отменой и журнал того, кто что менял.
 
 ## Какой файл нужен?
 

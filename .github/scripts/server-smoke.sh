@@ -172,7 +172,7 @@ say "Running /vcd"
 # walls 150 must be refused, undo must take walls 70 back to 55, and deleting a zone asks first
 for command in "vcd status" "vcd help" "vcd help zone" "vcd zones" "vcd walls 55" "vcd rule sneak 0.5" \
                "vcd zone set smoke_world voice_range 16" "vcd zoen" "vcd walls 150" "vcd walls 70" "vcd undo" \
-               "vcd zone info smoke_world" "vcd zone delete smoke_world" \
+               "vcd notices off" "vcd log" "vcd zone info smoke_world" "vcd zone delete smoke_world" \
                "vcd debug nobody" "vcd reload" "vcd status"; do
   send "${command}"
   sleep 2
@@ -185,12 +185,13 @@ if ! grep -q 'Voice Physics [0-9]' "${log}"; then
   echo "::error::/vcd status did not answer with the Voice Physics status line"
   failed=true
 fi
-if grep -Eq '(^|[^.a-z_])(status\.title|status\.svc|walls_set|rule\.sneak|btn\.[a-z_]+|hover\.[a-z_]+|error\.[a-z_]+|help\.examples|undo\.done|zone\.delete_ask)([^.a-z_]|$)' "${log}"; then
+if grep -Eq '(^|[^.a-z_])(status\.title|status\.svc|walls_set|rule\.sneak|btn\.[a-z_]+|hover\.[a-z_]+|error\.[a-z_]+|help\.examples|undo\.done|zone\.delete_ask|log\.[a-z_]+|notices_(on|off))([^.a-z_]|$)' "${log}"; then
   echo "::error::/vcd answered with text keys instead of messages"
   failed=true
 fi
 for answer in 'Examples (click to type)' 'does not work. Allowed: 0-100|off' 'Did you mean /vcd zone' 'Undone: /vcd walls 70' \
-              'Delete zone smoke_world?' 'voice_range 16'; do
+              'Delete zone smoke_world?' 'voice_range 16' 'Changes to the settings (' 'undid /vcd walls 70' \
+              'Zone names above the hotbar are off'; do
   if ! grep -qF "${answer}" "${log}"; then
     echo "::error::/vcd did not answer with \"${answer}\""
     failed=true
@@ -206,6 +207,9 @@ if [ ! -f "${settings}" ]; then
   failed=true
 elif ! grep -q '^walls_strength=0.55' "${settings}"; then
   echo "::error::/vcd walls 55 was not saved to ${settings}"
+  failed=true
+elif ! grep -q 'console.set./vcd walls 55' "$(dirname "${settings}")/vc-audio-distance-changes.log"; then
+  echo "::error::/vcd walls 55 is not in the change log"
   failed=true
 fi
 

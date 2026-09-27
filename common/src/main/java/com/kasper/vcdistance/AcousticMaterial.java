@@ -12,8 +12,8 @@ public enum AcousticMaterial {
     // The order is the order of the Materials tab
     STONE("stone", 1.00, 0.03, 0.15, "stone, bricks, concrete, terracotta, ores: everything mined with a pickaxe",
             "камень, кирпич, бетон, терракота, руда: всё, что добывается киркой"),
-    METAL("metal", 1.30, 0.03, 0.10, "blocks of iron, gold, copper, netherite and other metal, anvils",
-            "блоки железа, золота, меди, незерита и другого металла, наковальни"),
+    METAL("metal", 1.30, 0.03, 0.10, "blocks of iron, gold, copper, netherite and other metal, anvils, iron and copper doors",
+            "блоки железа, золота, меди, незерита и другого металла, наковальни, железные и медные двери"),
     EARTH("earth", 0.90, 0.15, 0.45, "dirt, grass, sand, gravel, clay, mud, snow: everything dug with a shovel",
             "земля, дёрн, песок, гравий, глина, грязь, снег: всё, что копается лопатой"),
     WOOD("wood", 0.70, 0.12, 0.55, "logs, planks and wooden blocks: everything chopped with an axe",
@@ -23,7 +23,8 @@ public enum AcousticMaterial {
             "сено, губка, мох, скалк, сушёная ламинария: мягкие блоки, которые поглощают звук"),
     GLASS("glass", 0.40, 0.04, 0.10, "glass blocks and panes", "стеклянные блоки и панели"),
     ICE("ice", 0.70, 0.03, 0.10, "ice, packed ice and blue ice", "лёд, плотный и синий лёд"),
-    DOOR("door", 0.60, 0.12, 0.55, "doors and trapdoors", "двери и люки"),
+    DOOR("door", 0.60, 0.12, 0.55, "wooden doors and trapdoors; an open one counts a tenth",
+            "деревянные двери и люки; открытая считается на десятую часть"),
     LEAVES("leaves", 0.15, 0.90, 0.80, "leaves, let most of the sound through", "листва, пропускает почти весь звук"),
     THIN("thin", 0.20, 0.90, 0.50, "fences, gates and bars, mostly open", "заборы, калитки и решётки, почти открытые"),
     LIQUID("liquid", 0.35, 0.05, 0.30, "each block of water or lava", "каждый блок воды или лавы"),
@@ -31,6 +32,17 @@ public enum AcousticMaterial {
             "все остальные твёрдые блоки: бедрок, блоки из других модов и всё, чего нет выше");
 
     public static final double MAX_WEIGHT = 3.0;
+
+    /** Share of its weight an open door or trapdoor keeps: the sound goes round the panel. */
+    public static final double OPEN_PANEL_SHARE = 0.1;
+
+    /**
+     * Share of the weight of a door, trapdoor, fence or bars the ray crosses. They are thin by nature,
+     * so a closed one counts fully however the ray crosses it; an open one only a tenth.
+     */
+    public static double panelShare(boolean open) {
+        return open ? OPEN_PANEL_SHARE : 1.0;
+    }
 
     private final String id;
     private final double defaultWeight;

@@ -47,7 +47,7 @@ final class CommandSuggest {
                 case "profile" -> addAll(out, AdminCommands.MODES, typed);
                 case "preset" -> addAll(out, AdminCommands.PRESETS, typed);
                 case "walls" -> addAll(out, AdminCommands.WALLS_STEPS, typed);
-                case "serverwalls", "monitor" -> addAll(out, AdminCommands.ON_OFF, typed);
+                case "serverwalls", "monitor", "notices" -> addAll(out, AdminCommands.ON_OFF, typed);
                 case "lock" -> lockParts(out, typed);
                 case "rule" -> addAll(out, AdminCommands.RULES, typed);
                 case "group" -> addAll(out, AdminCommands.GROUP_RULES, typed);
@@ -120,6 +120,9 @@ final class CommandSuggest {
                             }
                         }
                     }
+                    if (ctx != null && ctx.claims()) {
+                        claims(out, ctx, settings, typed);
+                    }
                 } else if (args.length == 4) {
                     addAll(out, ZoneCommands.SETTINGS, typed);
                 } else if (args.length == 5) {
@@ -139,7 +142,28 @@ final class CommandSuggest {
         }
         for (Zone z : ZoneCommands.sorted(settings)) {
             if (!boxesOnly || z.box() != null) {
-                add(out, z.name(), typed, m == null ? null : ZoneCommands.describe(z, m));
+                add(out, ZoneCommands.ref(z), typed, m == null ? null : ZoneCommands.describe(z, m));
+            }
+        }
+    }
+
+    /** "claim:" and, once it is typed, "claim:<player>" for each player online and "claim:server". */
+    private static void claims(List<Suggestion> out, Context ctx, ServerSettings settings, String typed) {
+        String prefix = Zone.CLAIM + ":";
+        if (!typed.toLowerCase(Locale.ROOT).startsWith(prefix)) {
+            add(out, prefix, typed, null);
+            return;
+        }
+        Set<String> names = new java.util.TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+        names.add("server");
+        for (ServerPlayers.Info p : ctx.players().all()) {
+            if (p.name() != null) {
+                names.add(p.name().toLowerCase(Locale.ROOT));
+            }
+        }
+        for (String name : names) {
+            if (settings == null || settings.findZone(prefix + name) == null) {
+                add(out, prefix + name, typed, null);
             }
         }
     }

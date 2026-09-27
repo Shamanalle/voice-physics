@@ -56,6 +56,11 @@ public final class DistanceConfig {
     public static final double DEFAULT_REVERB_STRENGTH = 0.60;
     public static final boolean DEFAULT_UNDERWATER_ENABLED = true;
     public static final boolean DEFAULT_WEATHER_ENABLED = true;
+    /** How strong water and weather are: 1 = as measured in 2.4.0, up to half again as strong. */
+    public static final double DEFAULT_UNDERWATER_STRENGTH = 1.0;
+    public static final double DEFAULT_WEATHER_STRENGTH = 1.0;
+    public static final double EFFECT_STRENGTH_MIN = 0.0;
+    public static final double EFFECT_STRENGTH_MAX = 1.5;
     public static final boolean DEFAULT_DIFFRACTION_ENABLED = true;
 
     private volatile AttenuationModel model = DEFAULT_MODEL;
@@ -69,6 +74,8 @@ public final class DistanceConfig {
     private volatile double reverbStrength = DEFAULT_REVERB_STRENGTH;
     private volatile boolean underwaterEnabled = DEFAULT_UNDERWATER_ENABLED;
     private volatile boolean weatherEnabled = DEFAULT_WEATHER_ENABLED;
+    private volatile double underwaterStrength = DEFAULT_UNDERWATER_STRENGTH;
+    private volatile double weatherStrength = DEFAULT_WEATHER_STRENGTH;
     private volatile boolean diffractionEnabled = DEFAULT_DIFFRACTION_ENABLED;
     private final double[] materialWeights = new double[AcousticMaterial.values().length];
 
@@ -210,6 +217,26 @@ public final class DistanceConfig {
 
     public void setWeatherEnabled(boolean value) {
         weatherEnabled = value;
+        changed();
+    }
+
+    /** How dull and quiet voices get under water, 0 - 1.5 (1 = the usual). */
+    public double getUnderwaterStrength() {
+        return underwaterStrength;
+    }
+
+    public void setUnderwaterStrength(double value) {
+        underwaterStrength = clamp(value, EFFECT_STRENGTH_MIN, EFFECT_STRENGTH_MAX);
+        changed();
+    }
+
+    /** How much rain and thunder cover far voices, 0 - 1.5 (1 = the usual). */
+    public double getWeatherStrength() {
+        return weatherStrength;
+    }
+
+    public void setWeatherStrength(double value) {
+        weatherStrength = clamp(value, EFFECT_STRENGTH_MIN, EFFECT_STRENGTH_MAX);
         changed();
     }
 
@@ -373,6 +400,8 @@ public final class DistanceConfig {
         reverbStrength = DEFAULT_REVERB_STRENGTH;
         underwaterEnabled = DEFAULT_UNDERWATER_ENABLED;
         weatherEnabled = DEFAULT_WEATHER_ENABLED;
+        underwaterStrength = DEFAULT_UNDERWATER_STRENGTH;
+        weatherStrength = DEFAULT_WEATHER_STRENGTH;
         diffractionEnabled = DEFAULT_DIFFRACTION_ENABLED;
         resetMaterials();
     }
@@ -399,6 +428,8 @@ public final class DistanceConfig {
                 reverbStrength = DEFAULT_REVERB_STRENGTH;
                 underwaterEnabled = DEFAULT_UNDERWATER_ENABLED;
                 weatherEnabled = DEFAULT_WEATHER_ENABLED;
+                underwaterStrength = DEFAULT_UNDERWATER_STRENGTH;
+                weatherStrength = DEFAULT_WEATHER_STRENGTH;
                 diffractionEnabled = DEFAULT_DIFFRACTION_ENABLED;
             }
         }
@@ -436,6 +467,8 @@ public final class DistanceConfig {
         reverbStrength = other.reverbStrength;
         underwaterEnabled = other.underwaterEnabled;
         weatherEnabled = other.weatherEnabled;
+        underwaterStrength = other.underwaterStrength;
+        weatherStrength = other.weatherStrength;
         diffractionEnabled = other.diffractionEnabled;
         for (AcousticMaterial m : AcousticMaterial.values()) {
             double w = other.getMaterialWeight(m);
@@ -450,9 +483,9 @@ public final class DistanceConfig {
     public enum Part {
         /** Curve: model, falloff, full-volume distance, edge volume, whisper falloff. */
         CURVE("curve"),
-        /** Walls on or off and their strength. */
+        /** Walls on or off and their strength; locking them locks {@link #MATERIALS} too. */
         WALLS("walls"),
-        /** How much each material muffles. */
+        /** How much each material muffles (the walls' own percentages, so locked with them). */
         MATERIALS("materials"),
         /** Echo, water, weather and voices round corners. */
         EFFECTS("effects");
@@ -480,7 +513,7 @@ public final class DistanceConfig {
         }
 
         /**
-         * Parses "all", "none" or a list like "curve, walls".
+         * Parses "all", "none" or a list like "curve, walls"; walls bring their materials along.
          *
          * @return the parts, or {@code null} when the text has an unknown part
          */
@@ -502,6 +535,10 @@ public final class DistanceConfig {
                     return null;
                 }
                 set.add(p);
+            }
+            if (set.contains(WALLS)) {
+                // Fixed walls with blocks every player weighs as they like are not fixed walls
+                set.add(MATERIALS);
             }
             return set;
         }
@@ -551,6 +588,8 @@ public final class DistanceConfig {
                 reverbStrength = other.reverbStrength;
                 underwaterEnabled = other.underwaterEnabled;
                 weatherEnabled = other.weatherEnabled;
+                underwaterStrength = other.underwaterStrength;
+                weatherStrength = other.weatherStrength;
                 diffractionEnabled = other.diffractionEnabled;
             }
         }
@@ -738,9 +777,15 @@ public final class DistanceConfig {
                 .comment("Voices are dull and quiet when you or the speaker are under water: true / false. Default true.",
                         "Голоса глухие и тихие, когда вы или говорящий под водой: true / false. По умолчанию true.")
                 .value(prefix + "underwater_enabled", underwaterEnabled)
+                .comment("How strong that is, 0 - 1.5 (1 = the usual, 1.5 = half again as dull and quiet). Default 1.",
+                        "Насколько сильно, 0 - 1.5 (1 - обычно, 1.5 - в полтора раза глуше и тише). По умолчанию 1.")
+                .value(prefix + "underwater_strength", underwaterStrength)
                 .comment("Rain and thunder cover far voices under the open sky: true / false. Default true.",
                         "Дождь и гроза заглушают дальние голоса под открытым небом: true / false. По умолчанию true.")
                 .value(prefix + "weather_enabled", weatherEnabled)
+                .comment("How strong that is, 0 - 1.5 (1 = the usual). Default 1.",
+                        "Насколько сильно, 0 - 1.5 (1 - обычно). По умолчанию 1.")
+                .value(prefix + "weather_strength", weatherStrength)
                 .comment("Voices behind a wall come round through a nearby doorway or window: less muffled, from its direction. Default true.",
                         "Голоса за стеной обходят её через ближайший проём или окно: глушатся меньше и слышны с его стороны. По умолчанию true.")
                 .value(prefix + "diffraction_enabled", diffractionEnabled);
@@ -769,6 +814,8 @@ public final class DistanceConfig {
         props.setProperty(prefix + "reverb_strength", format(reverbStrength));
         props.setProperty(prefix + "underwater_enabled", String.valueOf(underwaterEnabled));
         props.setProperty(prefix + "weather_enabled", String.valueOf(weatherEnabled));
+        props.setProperty(prefix + "underwater_strength", format(underwaterStrength));
+        props.setProperty(prefix + "weather_strength", format(weatherStrength));
         props.setProperty(prefix + "diffraction_enabled", String.valueOf(diffractionEnabled));
         for (AcousticMaterial m : AcousticMaterial.values()) {
             props.setProperty(prefix + "material." + m.getId(), format(getMaterialWeight(m)));
@@ -788,6 +835,10 @@ public final class DistanceConfig {
         reverbStrength = clamp(parseDouble(props, prefix + "reverb_strength", DEFAULT_REVERB_STRENGTH), REVERB_MIN, REVERB_MAX);
         underwaterEnabled = parseBoolean(props, prefix + "underwater_enabled", DEFAULT_UNDERWATER_ENABLED);
         weatherEnabled = parseBoolean(props, prefix + "weather_enabled", DEFAULT_WEATHER_ENABLED);
+        underwaterStrength = clamp(parseDouble(props, prefix + "underwater_strength", DEFAULT_UNDERWATER_STRENGTH),
+                EFFECT_STRENGTH_MIN, EFFECT_STRENGTH_MAX);
+        weatherStrength = clamp(parseDouble(props, prefix + "weather_strength", DEFAULT_WEATHER_STRENGTH),
+                EFFECT_STRENGTH_MIN, EFFECT_STRENGTH_MAX);
         diffractionEnabled = parseBoolean(props, prefix + "diffraction_enabled", DEFAULT_DIFFRACTION_ENABLED);
         synchronized (materialWeights) {
             for (AcousticMaterial m : AcousticMaterial.values()) {
