@@ -239,6 +239,28 @@ public class CommandsTest {
     }
 
     @Test
+    @DisplayName("Server tab: its reply carries undo, the player's permissions and the latest changes")
+    void serverTabState() throws IOException {
+        ServerSettings s = settings("");
+        AdminCommands.Context ctx = ctx();
+        AdminCommands.run("walls 70", s, ctx);
+        AdminCommands.run("notices off", s, ctx);
+        java.util.Map<String, String> state = ServerHooks.tabState(s, ctx);
+        assertEquals("2", state.get("undo"));
+        assertEquals("true", state.get("allows." + AdminCommands.PERM_ZONE));
+        assertTrue(state.get("log.0").endsWith("|Admin|false|/vcd notices off"), state.get("log.0"));
+        assertTrue(state.get("log.1").endsWith("/vcd walls 70"));
+        assertFalse(s.isZoneNotices());
+
+        java.util.Map<String, String> viewer = ServerHooks.tabState(s, ctx(admin.id(), null, AdminCommands.PERM_STATUS));
+        assertEquals("false", viewer.get("allows." + AdminCommands.PERM_SETTINGS));
+        assertNull(viewer.get("log.0"), "the log needs vcd.settings");
+        LinkProtocol.AdminReply reply = LinkProtocol.parseAdminReply(LinkProtocol.adminReply(List.of("ok"), s, state));
+        assertEquals("false", reply.state().getProperty("zone_notices"));
+        assertEquals("2", reply.state().getProperty("undo"));
+    }
+
+    @Test
     @DisplayName("Claim zones (Open Parties and Claims): made with claim:<player>, found for the owner or party leader")
     void claimZones() throws IOException {
         ServerSettings s = settings("zone.claim.server.voice_range=24\nzone.world.steve.walls_strength=0.2\n");
