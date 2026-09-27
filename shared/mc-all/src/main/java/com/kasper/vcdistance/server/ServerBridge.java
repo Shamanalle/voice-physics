@@ -10,7 +10,6 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.protocol.game.ClientboundSetActionBarTextPacket;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -97,7 +96,9 @@ public final class ServerBridge {
             public void actionBar(UUID player, String text) {
                 ServerPlayer p = server.getPlayerList().getPlayer(player);
                 if (p != null) {
-                    p.connection.send(new ClientboundSetActionBarTextPacket(Component.literal(text)));
+                    // A system message shown as the overlay: the same line above the hotbar as
+                    // displayClientMessage(text, true), and clients see it as a game message
+                    p.sendSystemMessage(Component.literal(text), true);
                 }
             }
         });
