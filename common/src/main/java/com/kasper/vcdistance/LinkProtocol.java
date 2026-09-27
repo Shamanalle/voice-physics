@@ -78,11 +78,13 @@ public final class LinkProtocol {
      * @param zoneMessage what to show on entering the zone instead of its name, or {@code null}
      * @param echo        {@code null} = measure the room as usual, otherwise the echo size (0 - 1) the zone sets
      * @param admin       the player may change the server's settings (the Server tab is shown)
+     * @param serverNotices the server shows zone changes above the hotbar itself (2.5.0+), so the
+     *                      client does not show them again
      */
     public record ServerProfile(ServerSettings.ProfileMode mode, DistanceConfig config,
                                 double voiceDistance, double whisperDistance, boolean serverWalls, String zone,
                                 String zoneMessage, Double echo, boolean admin,
-                                java.util.Set<DistanceConfig.Part> locked, boolean monitor) {
+                                java.util.Set<DistanceConfig.Part> locked, boolean monitor, boolean serverNotices) {
 
         /** Whisper range as a share of the voice range, for the distance graph. */
         public double whisperShare() {
@@ -140,6 +142,7 @@ public final class LinkProtocol {
         }
         p.setProperty("locked", DistanceConfig.Part.format(settings.getLockedParts()));
         p.setProperty("monitor", String.valueOf(settings.isMonitorAllowed()));
+        p.setProperty("zone_notices", "server");
         settings.profileIn(zone, voiceDistance).writeTo(p, PROFILE_PREFIX);
         return write(p);
     }
@@ -165,7 +168,8 @@ public final class LinkProtocol {
                 DistanceConfig.parseBoolean(p, "admin", false),
                 // Servers before 1.9.0 lock the whole profile and allow the monitor
                 lockedOf(p.getProperty("locked")),
-                DistanceConfig.parseBoolean(p, "monitor", true));
+                DistanceConfig.parseBoolean(p, "monitor", true),
+                "server".equals(p.getProperty("zone_notices")));
     }
 
     private static java.util.Set<DistanceConfig.Part> lockedOf(String text) {

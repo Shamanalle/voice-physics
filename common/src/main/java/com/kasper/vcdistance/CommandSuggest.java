@@ -47,7 +47,7 @@ final class CommandSuggest {
                 case "profile" -> addAll(out, AdminCommands.MODES, typed);
                 case "preset" -> addAll(out, AdminCommands.PRESETS, typed);
                 case "walls" -> addAll(out, AdminCommands.WALLS_STEPS, typed);
-                case "serverwalls", "monitor" -> addAll(out, AdminCommands.ON_OFF, typed);
+                case "serverwalls", "monitor", "notices" -> addAll(out, AdminCommands.ON_OFF, typed);
                 case "lock" -> lockParts(out, typed);
                 case "rule" -> addAll(out, AdminCommands.RULES, typed);
                 case "group" -> addAll(out, AdminCommands.GROUP_RULES, typed);

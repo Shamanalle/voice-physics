@@ -71,6 +71,7 @@ public class AudioDistancePlugin implements VoicechatPlugin {
     public static final AddonCheck ADDON_CHECK = new AddonCheck();
     /** Which sound zone each player with the addon was last sent (server). */
     public static final ZoneTracker ZONES = new ZoneTracker();
+    public static final ZoneNotices ZONE_NOTICES = new ZoneNotices();
 
     private static volatile VoicechatApi api;
     private static volatile VoicechatServerApi serverApi;

@@ -79,17 +79,56 @@ public class ServerToolsTest {
     }
 
     @Test
-    @DisplayName("Client announces entering and leaving a zone once")
+    @DisplayName("Client announces zones only for servers before 2.5.0; newer servers do it above the hotbar")
     void zoneNotice() throws IOException {
         ServerSettings s = settings("zone.world.world_nether.profile_preset=stealth\n");
         ServerLink link = new ServerLink();
-        link.onProfile(LinkProtocol.profile(s, null, 48, 24));
+        Zone nether = s.zones().get("world:world_nether");
+        link.onProfile(LinkProtocol.profile(s, nether, 48, 24));
         assertNull(link.consumeZoneNotice());
-        link.onProfile(LinkProtocol.profile(s, s.zones().get("world:world_nether"), 48, 24));
-        assertEquals("world_nether", link.consumeZoneNotice().name());
-        assertNull(link.consumeZoneNotice());
-        link.onProfile(LinkProtocol.profile(s, null, 48, 24));
-        assertEquals("", link.consumeZoneNotice().name());
+
+        ServerLink old = new ServerLink();
+        old.onProfile(oldServer(LinkProtocol.profile(s, null, 48, 24)));
+        assertNull(old.consumeZoneNotice());
+        old.onProfile(oldServer(LinkProtocol.profile(s, nether, 48, 24)));
+        assertEquals("world_nether", old.consumeZoneNotice().name());
+        assertNull(old.consumeZoneNotice());
+        old.onProfile(oldServer(LinkProtocol.profile(s, null, 48, 24)));
+        assertEquals("", old.consumeZoneNotice().name());
+    }
+
+    private static String oldServer(String profile) {
+        assertTrue(profile.contains("zone_notices=server"));
+        return profile.replace("zone_notices=server", "");
+    }
+
+    @Test
+    @DisplayName("Server tells every player above the hotbar when they enter or leave a zone")
+    void zoneNoticesAboveHotbar() throws IOException {
+        ServerSettings s = settings("zone.box.hall.world=world\nzone.box.hall.from=0,0,0\nzone.box.hall.to=10,10,10\n"
+                + "zone.box.stage.world=world\nzone.box.stage.from=2,0,2\nzone.box.stage.to=4,4,4\nzone.box.stage.priority=1\n"
+                + "zone.box.stage.enter_message=On stage\n");
+        ZoneNotices notices = new ZoneNotices();
+        UUID id = UUID.randomUUID();
+        java.util.function.BiFunction<Double, String, String> at = (x, language) -> {
+            ServerPlayers.Info info = new ServerPlayers.Info(id, "Alex", "world", x, 1, 3, false, true, false,
+                    "", "", List.of(), language);
+            return notices.update(info, s.zoneOf(info), s);
+        };
+        assertNull(at.apply(-5.0, "en_us"), "joining outside zones says nothing");
+        assertEquals("Sound zone: hall", at.apply(8.0, "en_us"));
+        assertNull(at.apply(9.0, "en_us"), "walking inside the zone says nothing");
+        assertEquals("On stage", at.apply(3.0, "en_us"), "the zone's own message wins");
+        assertEquals("Sound zone: hall", at.apply(8.0, "en_us"));
+        String left = at.apply(20.0, "ru_ru");
+        assertTrue(left.contains("hall") && !left.startsWith("Left"), left);
+        assertNull(at.apply(21.0, "en_us"));
+
+        s.setZoneNotices(false);
+        assertNull(at.apply(8.0, "en_us"), "notices can be turned off");
+        s.setZoneNotices(true);
+        notices.forget(id);
+        assertEquals("Sound zone: hall", at.apply(8.0, "en_us"), "a player who comes back is told again");
     }
 
     @Test

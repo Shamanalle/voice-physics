@@ -34,6 +34,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * /vcd lock all|none|curve,walls,...           what players cannot change while the profile is enforced
  * /vcd group dead|spectators|zones|open_range on|off  rules for Simple Voice Chat groups
  * /vcd monitor on|off                          monitor, radar and nearby players in the HUD
+ * /vcd notices on|off                          zone names above the hotbar when players enter or leave
  * /vcd zones [page]                            every zone
  * /vcd zone ...                                see {@link ZoneCommands}
  * /vcd rule sneak|dead|spectators|megaphone|megaphone_range &lt;value&gt;
@@ -72,10 +73,10 @@ public final class AdminCommands {
     }
 
     static final String[] SUBCOMMANDS = {"status", "help", "reload", "undo", "profile", "preset", "walls", "serverwalls", "lock",
-            "monitor", "zones", "zone", "rule", "group", "require", "debug"};
+            "monitor", "notices", "zones", "zone", "rule", "group", "require", "debug"};
     /** The topics of {@code /vcd help}, in the order they are listed. */
     static final String[] TOPICS = {"status", "zones", "zone", "profile", "preset", "walls", "serverwalls", "lock", "monitor",
-            "rule", "group", "require", "debug", "undo", "reload"};
+            "notices", "rule", "group", "require", "debug", "undo", "reload"};
     static final String[] MODES = {"off", "suggest", "enforce"};
     static final String[] PRESETS = {"vanilla", "realistic", "clear", "stealth", "custom", "export", "import"};
     static final String[] LOCK_PARTS = {"all", "none", "curve", "walls", "materials", "effects"};
@@ -217,6 +218,7 @@ public final class AdminCommands {
                 r.saved("lock_set", DistanceConfig.Part.format(parts));
             }
             case "monitor" -> onOff(r, "monitor", on -> settings.setMonitorAllowed(on), "monitor_on", "monitor_off");
+            case "notices" -> onOff(r, "notices", on -> settings.setZoneNotices(on), "notices_on", "notices_off");
             case "zones" -> ZoneCommands.list(r, r.args.length > 1 ? parseInt(r.args[1]) : null);
             case "zone" -> ZoneCommands.zone(r);
             case "rule" -> rule(r);
@@ -266,7 +268,7 @@ public final class AdminCommands {
             case "status", "help", "?", "zones" -> PERM_STATUS;
             case "debug" -> PERM_DEBUG;
             case "zone" -> ZoneCommands.readOnly(action) ? PERM_STATUS : PERM_ZONE;
-            case "reload", "profile", "preset", "walls", "serverwalls", "lock", "monitor", "rule", "group", "require" -> PERM_SETTINGS;
+            case "reload", "profile", "preset", "walls", "serverwalls", "lock", "monitor", "notices", "rule", "group", "require" -> PERM_SETTINGS;
             default -> null;
         };
     }
@@ -274,7 +276,7 @@ public final class AdminCommands {
     /** Subcommands that may change the settings (their state before is kept for undo). */
     private static boolean changes(String sub) {
         return switch (sub) {
-            case "profile", "preset", "walls", "serverwalls", "lock", "monitor", "zone", "rule", "group", "require" -> true;
+            case "profile", "preset", "walls", "serverwalls", "lock", "monitor", "notices", "zone", "rule", "group", "require" -> true;
             default -> false;
         };
     }
@@ -333,7 +335,8 @@ public final class AdminCommands {
                 r.change(settings.getRequireAddon().getId(), "require"),
                 settings.getMinAddonVersion().isEmpty() ? "-" : settings.getMinAddonVersion())));
         r.reply.add(CommandReply.line().addAll(m.spans("status.zones", Style.PLAIN,
-                new Span(String.valueOf(settings.zones().size()), Style.VALUE, Click.RUN, "/vcd zones", m.get("hover.run", "/vcd zones")))));
+                new Span(String.valueOf(settings.zones().size()), Style.VALUE, Click.RUN, "/vcd zones", m.get("hover.run", "/vcd zones")),
+                r.change(onOff(m, settings.isZoneNotices()), "notices"))));
         r.reply.add(CommandReply.line().addAll(m.spans("status.perf", Style.MUTED,
                 String.format(Locale.ROOT, "%.2f", AudioDistancePlugin.SERVER_WALLS.perf().averageMs()))));
         LineBuilder buttons = CommandReply.line();

@@ -24,6 +24,7 @@ final class CommandHelp {
             Map.entry("serverwalls", new String[]{"serverwalls on", "serverwalls off"}),
             Map.entry("lock", new String[]{"lock all", "lock curve,walls", "lock none"}),
             Map.entry("monitor", new String[]{"monitor on", "monitor off"}),
+            Map.entry("notices", new String[]{"notices on", "notices off"}),
             Map.entry("zones", new String[]{"zones", "zones 2"}),
             Map.entry("zone", new String[]{"zone pos1", "zone pos2 look", "zone create stage", "zone create lobby 10",
                     "zone info stage", "zone set stage range_multiplier 2", "zone set stage message Welcome!",

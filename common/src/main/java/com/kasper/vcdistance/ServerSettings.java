@@ -120,6 +120,7 @@ public final class ServerSettings {
     private volatile String profilePreset = CUSTOM_PRESET;
     private volatile java.util.Set<DistanceConfig.Part> lockedParts = java.util.EnumSet.allOf(DistanceConfig.Part.class);
     private volatile boolean allowMonitor = true;
+    private volatile boolean zoneNotices = true;
     private volatile boolean groupDeadSilent;
     private volatile boolean groupSpectatorsApart;
     private volatile boolean groupIsolatedZones;
@@ -170,6 +171,15 @@ public final class ServerSettings {
         return allowMonitor;
     }
 
+    /** Players see "Sound zone: ..." above the hotbar when they enter or leave a zone. */
+    public boolean isZoneNotices() {
+        return zoneNotices;
+    }
+
+    public void setZoneNotices(boolean on) {
+        this.zoneNotices = on;
+    }
+
     /** Server-side wall muffling for players without the addon. */
     public boolean isServerWalls() {
         return serverWalls;
@@ -208,6 +218,7 @@ public final class ServerSettings {
         String language = props.getProperty("messages_language", "auto").trim().toLowerCase(Locale.ROOT);
         messagesLanguage = language.isEmpty() || language.equals("auto") ? "auto" : ServerText.language(language);
         zones = readZones(props, file);
+        zoneNotices = DistanceConfig.parseBoolean(props, "zone_notices", true);
         sneakMultiplier = DistanceConfig.clamp(DistanceConfig.parseDouble(props, "sneak_range_multiplier", 1.0), 0.1, 1.0);
         deadSilent = DistanceConfig.parseBoolean(props, "dead_players_silent", false);
         spectatorsOnly = DistanceConfig.parseBoolean(props, "spectators_hear_only_spectators", false);
@@ -362,7 +373,12 @@ public final class ServerSettings {
                         "  walls_strength - сила стен 0 - 1; echo - auto (как измерено), off или 0.1 - 1: такое эхо везде в зоне;",
                         "  isolated - true: голоса не выходят из зоны и не заходят в неё; enter_message - сообщение при входе;",
                         "  priority - целое число, по умолчанию 0; zone.box.<имя>.world / from / to - мир и два угла бокса x,y,z.",
-                        "<kind> - world (на Fabric измерение: the_nether, the_end...), box или region (WorldGuard).");
+                        "<kind> - world (на Fabric измерение: the_nether, the_end...), box или region (WorldGuard).")
+                .comment("Players see the zone's name (or its enter_message) above the hotbar when they enter or leave it,",
+                        "with or without the addon. Default true.",
+                        "Игроки видят название зоны (или её enter_message) над хотбаром при входе и выходе,",
+                        "с аддоном и без. По умолчанию true.")
+                .value("zone_notices", zoneNotices);
         for (Zone z : zones.values()) {
             String base = ZONE_PREFIX + z.kind() + "." + z.name() + ".";
             if (z.box() != null) {
@@ -692,6 +708,7 @@ public final class ServerSettings {
         p.setProperty(prefix + "profile_preset", profilePreset);
         p.setProperty(prefix + "profile_locked", DistanceConfig.Part.format(lockedParts));
         p.setProperty(prefix + "allow_monitor", String.valueOf(allowMonitor));
+        p.setProperty(prefix + "zone_notices", String.valueOf(zoneNotices));
         p.setProperty(prefix + "walls_strength", DistanceConfig.format(profile.isOcclusionEnabled() ? profile.getOcclusionStrength() : 0.0));
         p.setProperty(prefix + "server_walls", String.valueOf(serverWalls));
         p.setProperty(prefix + "sneak_range_multiplier", DistanceConfig.format(sneakMultiplier));
