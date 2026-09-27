@@ -281,7 +281,10 @@ public class ServerRulesTest {
         assertTrue(debug.get(0).contains("Bob"), debug.toString());
         assertTrue(debug.stream().anyMatch(l -> l.startsWith("Admin")), debug.toString());
 
+        // Deleting asks first
         AdminCommands.run("zone delete stage", s, ctx);
+        assertFalse(s.zones().isEmpty());
+        AdminCommands.run("zone delete stage confirm", s, ctx);
         assertTrue(s.zones().isEmpty());
 
         // The console gets the configured language, English by default
@@ -365,7 +368,7 @@ public class ServerRulesTest {
             String t = ServerText.get(l, "usage", "/vcd x");
             assertTrue(t.contains("/vcd x") && !t.startsWith("usage"), l + ": " + t);
         }
-        assertEquals("Zone a: b, from c to d. Saved. Change it with /vcd zone set a <setting> <value>.",
+        assertEquals("Zone a created: b, from c to d. Saved.",
                 ServerText.get("en_us", "zone.created", "a", "b", "c", "d"));
         Map<String, String> parsed = ServerText.parse("{\"a\": \"x\\\"y\\n\", \"b\":\"\\u00e9\"}");
         assertEquals("x\"y\n", parsed.get("a"));

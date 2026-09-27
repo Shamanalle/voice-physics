@@ -63,7 +63,7 @@ The repository description and topics live in `.github/about.json`. The *Reposit
 ### In-game tests
 
 *In-game tests* (`.github/workflows/ingame.yml`) runs on every pull request and before every release:
-- **Servers:** `.github/scripts/server-smoke.sh` starts Fabric, Forge, NeoForge, Paper and Folia servers with Simple Voice Chat and the addon, runs `/vcd` from the console and fails on bare text keys, a setting that was not saved, or an exception from the addon. Locally: `bash .github/scripts/server-smoke.sh fabric 1.21.1 build/libs/voice-physics-fabric-*+mc1.21.x.jar`.
+- **Servers:** `.github/scripts/server-smoke.sh` starts Fabric, Forge, NeoForge, Paper and Folia servers with Simple Voice Chat and the addon, runs `/vcd` from the console (status, help, a refused value, a change and its undo, a delete that asks first) and fails on bare text keys, a missing answer, a setting that was not saved, or an exception from the addon. Locally: `bash .github/scripts/server-smoke.sh fabric 1.21.1 build/libs/voice-physics-fabric-*+mc1.21.x.jar`.
 - **Client:** `./gradlew :fabric-26:runClientGameTest` (or `:fabric-1.21`) opens the settings screen on every tab (the Server tab as a pretend admin), in English and Russian, at two window sizes, and saves screenshots in `build/run/clientGameTest/screenshots/`. Simple Voice Chat's jar goes to `build/gametest-mods/voicechat.jar` of the module. CI runs it under `xvfb-run` with Mesa's software OpenGL and Vulkan; the 1.21 client runs on Java 21.
 - Logs and screenshots are attached to each run as artifacts.
 
@@ -154,7 +154,7 @@ README — это два файла: `README.md` на английском и `R
 ### Проверки в игре
 
 *In-game tests* (`.github/workflows/ingame.yml`) запускается на каждый pull request и перед каждым релизом:
-- **Серверы:** `.github/scripts/server-smoke.sh` запускает серверы Fabric, Forge, NeoForge, Paper и Folia с Simple Voice Chat и аддоном, выполняет `/vcd` из консоли и падает, если ответ — голые ключи текстов, настройка не сохранилась или аддон бросил исключение. Локально: `bash .github/scripts/server-smoke.sh fabric 1.21.1 build/libs/voice-physics-fabric-*+mc1.21.x.jar`.
+- **Серверы:** `.github/scripts/server-smoke.sh` запускает серверы Fabric, Forge, NeoForge, Paper и Folia с Simple Voice Chat и аддоном, выполняет `/vcd` из консоли (статус, справка, отклонённое значение, изменение и его отмена, удаление с вопросом) и падает, если ответ — голые ключи текстов, нужного ответа нет, настройка не сохранилась или аддон бросил исключение. Локально: `bash .github/scripts/server-smoke.sh fabric 1.21.1 build/libs/voice-physics-fabric-*+mc1.21.x.jar`.
 - **Клиент:** `./gradlew :fabric-26:runClientGameTest` (или `:fabric-1.21`) открывает экран настроек на каждой вкладке (вкладку «Сервер» — как будто вы админ), на английском и русском, при двух размерах окна и сохраняет скриншоты в `build/run/clientGameTest/screenshots/`. JAR Simple Voice Chat кладётся в `build/gametest-mods/voicechat.jar` модуля. В CI тест идёт под `xvfb-run` с программными OpenGL и Vulkan из Mesa; клиент 1.21 запускается на Java 21.
 - Логи и скриншоты прикладываются к каждому запуску как артефакты.
 

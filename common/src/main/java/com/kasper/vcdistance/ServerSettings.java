@@ -875,7 +875,7 @@ public final class ServerSettings {
     }
 
     /** A preset by the name used in the settings file (or its internal id), or {@code null}. */
-    static Preset presetByName(String name) {
+    public static Preset presetByName(String name) {
         if (name == null) {
             return null;
         }
@@ -896,7 +896,7 @@ public final class ServerSettings {
         }
     }
 
-    static String nameOf(Preset preset) {
+    public static String nameOf(Preset preset) {
         switch (preset) {
             case VANILLA:
                 return "vanilla";
@@ -985,6 +985,37 @@ public final class ServerSettings {
 
     public void setMaxStreams(int maxStreams) {
         this.maxStreams = Math.max(0, Math.min(MAX_STREAMS_LIMIT, maxStreams));
+    }
+
+    /**
+     * The settings as the file holds them (every change is saved at once), for {@code /vcd undo};
+     * {@code null} when the file cannot be read.
+     */
+    public synchronized String snapshot() {
+        try {
+            Path file = getPath();
+            if (!Files.exists(file)) {
+                save();
+            }
+            return Files.readString(file, java.nio.charset.StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            return null;
+        }
+    }
+
+    /** Puts back settings taken with {@link #snapshot()}: writes them to the file and reads it again. */
+    public synchronized boolean restore(String snapshot) {
+        if (snapshot == null) {
+            return false;
+        }
+        try {
+            Files.writeString(getPath(), snapshot, java.nio.charset.StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            DistanceConfig.LOGGER.error("Could not write {}: {}", getPath(), e.getMessage());
+            return false;
+        }
+        load();
+        return true;
     }
 
     private static long lastModified(Path file) {

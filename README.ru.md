@@ -107,7 +107,7 @@
 - **Один звук для всех.** Предложите игрокам профиль звука сервера кнопкой или закрепите его, пока они на сервере (честное PvP и ивенты). Закрепите всё или только часть: кривую, стены, материалы, эффекты.
 - **Без взгляда сквозь стены.** Можно выключить монитор, радар и игроков рядом в HUD.
 - **Обязательный аддон.** Игрокам с Simple Voice Chat, но без аддона можно один раз дать ссылку на скачивание, напоминать при каждом входе или кикать. Игроков без голосового чата это не касается.
-- **Инструменты админа.** Вкладка «Сервер» в экране настроек для операторов, `/vcd debug <игрок>` — кого слышит игрок и почему не слышит остальных, сообщения на языке каждого игрока (все тексты можно менять).
+- **Инструменты админа.** Вкладка «Сервер» в экране настроек, [`/vcd`](#команды) с кликабельными ответами, примерами в справке, отменой и отдельными правами, `/vcd debug <игрок>` — кого слышит игрок и почему не слышит остальных, сообщения на языке каждого игрока (все тексты можно менять).
 
 ## Что где работает
 
@@ -129,20 +129,20 @@
 
 | Загрузчик | Minecraft | Файл | Java | Simple Voice Chat |
 |---|---|---|---|---|
-| **Fabric / Quilt** | 1.20 – 1.20.1 | `voice-physics-fabric-2.3.0+mc1.20.1.jar` | 17+ | 2.4.0+ |
-| **Fabric / Quilt** | 1.20.2 – 1.20.4 | `voice-physics-fabric-2.3.0+mc1.20.2-1.20.4.jar` | 17+ | 2.4.0+ |
-| **Fabric / Quilt** | 1.20.5 – 1.20.6 | `voice-physics-fabric-2.3.0+mc1.20.5-1.20.6.jar` | 21+ | 2.5.0+ |
-| **Fabric / Quilt** | 1.21 – 1.21.11 | `voice-physics-fabric-2.3.0+mc1.21.x.jar` | 21+ | 2.5.0+ |
-| **Fabric** | 26.1 – 26.3 | `voice-physics-fabric-2.3.0+mc26.x.jar` | 25+ | 2.6.0+ |
-| **Forge** | 1.20.1 | `voice-physics-forge-2.3.0+mc1.20.1.jar` | 17+ | 2.4.0+ |
-| **NeoForge** | 1.21 – 1.21.1 | `voice-physics-neoforge-2.3.0+mc1.21-1.21.1.jar` | 21+ | 2.5.0+ |
-| **NeoForge** | 26.1 – 26.3 | `voice-physics-neoforge-2.3.0+mc26.x.jar` | 25+ | 2.6.0+ |
-| **Paper / Purpur / Folia / Spigot / Bukkit** | 1.20.1 – 26.3 | `voice-physics-bukkit-2.3.0.jar` | 17+ | версия для Bukkit |
-| NeoForge / Forge (облегчённая) | 1.20.2 – 1.20.4 | `voice-physics-{neoforge,forge}-2.3.0+mc1.20.2-1.20.4.jar` | 17+ | 2.4.0+ |
-| NeoForge / Forge (облегчённая) | 1.20.5 – 1.20.6 | `voice-physics-{neoforge,forge}-2.3.0+mc1.20.5-1.20.6.jar` | 21+ | 2.5.0+ |
-| Forge (облегчённая) | 1.21 – 1.21.11 | `voice-physics-forge-2.3.0+mc1.21.x.jar` | 21+ | 2.5.0+ |
-| NeoForge (облегчённая) | 1.21.2 – 1.21.11 | `voice-physics-neoforge-2.3.0+mc1.21.x.jar` | 21+ | 2.5.0+ |
-| Forge (облегчённая) | 26.1 – 26.3 | `voice-physics-forge-2.3.0+mc26.x.jar` | 25+ | 2.6.0+ |
+| **Fabric / Quilt** | 1.20 – 1.20.1 | `voice-physics-fabric-2.4.0+mc1.20.1.jar` | 17+ | 2.4.0+ |
+| **Fabric / Quilt** | 1.20.2 – 1.20.4 | `voice-physics-fabric-2.4.0+mc1.20.2-1.20.4.jar` | 17+ | 2.4.0+ |
+| **Fabric / Quilt** | 1.20.5 – 1.20.6 | `voice-physics-fabric-2.4.0+mc1.20.5-1.20.6.jar` | 21+ | 2.5.0+ |
+| **Fabric / Quilt** | 1.21 – 1.21.11 | `voice-physics-fabric-2.4.0+mc1.21.x.jar` | 21+ | 2.5.0+ |
+| **Fabric** | 26.1 – 26.3 | `voice-physics-fabric-2.4.0+mc26.x.jar` | 25+ | 2.6.0+ |
+| **Forge** | 1.20.1 | `voice-physics-forge-2.4.0+mc1.20.1.jar` | 17+ | 2.4.0+ |
+| **NeoForge** | 1.21 – 1.21.1 | `voice-physics-neoforge-2.4.0+mc1.21-1.21.1.jar` | 21+ | 2.5.0+ |
+| **NeoForge** | 26.1 – 26.3 | `voice-physics-neoforge-2.4.0+mc26.x.jar` | 25+ | 2.6.0+ |
+| **Paper / Purpur / Folia / Spigot / Bukkit** | 1.20.1 – 26.3 | `voice-physics-bukkit-2.4.0.jar` | 17+ | версия для Bukkit |
+| NeoForge / Forge (облегчённая) | 1.20.2 – 1.20.4 | `voice-physics-{neoforge,forge}-2.4.0+mc1.20.2-1.20.4.jar` | 17+ | 2.4.0+ |
+| NeoForge / Forge (облегчённая) | 1.20.5 – 1.20.6 | `voice-physics-{neoforge,forge}-2.4.0+mc1.20.5-1.20.6.jar` | 21+ | 2.5.0+ |
+| Forge (облегчённая) | 1.21 – 1.21.11 | `voice-physics-forge-2.4.0+mc1.21.x.jar` | 21+ | 2.5.0+ |
+| NeoForge (облегчённая) | 1.21.2 – 1.21.11 | `voice-physics-neoforge-2.4.0+mc1.21.x.jar` | 21+ | 2.5.0+ |
+| Forge (облегчённая) | 26.1 – 26.3 | `voice-physics-forge-2.4.0+mc26.x.jar` | 25+ | 2.6.0+ |
 
 - **Fabric**, **Forge 1.20.1** и **NeoForge 1.21 – 1.21.1 и 26.x** — полный аддон, для клиента и сервера. Для Fabric нужен [Fabric API](https://modrinth.com/mod/fabric-api); [Mod Menu](https://modrinth.com/mod/modmenu) — по желанию.
 - **Плагин** — только серверная часть. Заходить можно с аддоном, без него или вообще без модов.
@@ -156,11 +156,33 @@
 
 ## Команды
 
-`/vcd` доступна операторам (уровень 2+) и консоли. На Paper право — `vcd.admin`. Изменения сохраняются в файл настроек и сразу доходят до игроков.
+### Для игроков: `/voicephysics`
+
+Работает на любом сервере, с аддоном на нём или без.
+
+| Команда | Что делает |
+|---|---|
+| `/voicephysics` | Открыть настройки |
+| `/voicephysics distance\|walls\|effects\|hud\|monitor\|server` | Открыть настройки на этой вкладке |
+| `/voicephysics preset vanilla\|realistic\|clear\|stealth` | Ваш пресет звука |
+| `/voicephysics hud off\|talking\|always`, `hud compact on\|off` | HUD голоса |
+| `/voicephysics code` | Ваш код профиля с кнопкой «Копировать» |
+| `/voicephysics code <код>` | Загрузить код профиля |
+| `/voicephysics reset curve\|walls\|materials\|effects\|hud\|all` | Сбросить по умолчанию |
+| `/voicephysics status` | Что сервер делает с вашим звуком: его профиль, что он закрепил, ваша зона, дальность голоса |
+| `/voicephysics help` | Эти команды, по ним можно кликнуть |
+
+То, что закрепил сервер, отсюда тоже не поменять.
+
+### Для серверов: `/vcd`
+
+Ответы цветные и кликабельные: по значению в `/vcd status` в чат подставляется команда, которая его меняет, у зон в `/vcd zones` есть кнопки «Подробнее», «Показать» и «Туда», у каждого изменения — кнопка «Отменить». Tab подсказывает имена зон, миров и игроков и значения каждого параметра. Изменения сохраняются в файл настроек и сразу доходят до игроков.
 
 | Команда | Что делает |
 |---|---|
 | `/vcd` или `/vcd status` | Версия, дальность голоса, стены, игроки с аддоном, профиль, зоны |
+| `/vcd help [команда]` | Все команды или одна с примерами, по которым можно кликнуть |
+| `/vcd undo` | Отменить последнее изменение (до 10) |
 | `/vcd reload` | Перечитать файл настроек |
 | `/vcd profile off\|suggest\|enforce` | Как предлагается профиль сервера |
 | `/vcd preset vanilla\|realistic\|clear\|stealth\|custom` | Звук сервера |
@@ -169,15 +191,31 @@
 | `/vcd serverwalls on\|off` | Стены для игроков без аддона |
 | `/vcd lock all\|none\|curve,walls,materials,effects` | Что игроки не могут менять, пока профиль закреплён |
 | `/vcd monitor on\|off` | Монитор, радар и игроки рядом в HUD |
-| `/vcd zones` | Список зон |
-| `/vcd zone pos1` / `pos2`, `/vcd zone create <имя> [радиус]` | Создать зону-бокс по двум углам или вокруг себя |
-| `/vcd zone set <имя> <параметр> <значение\|default>` | `mode`, `preset`, `voice_range`, `whisper_range`, `range_multiplier`, `walls`, `echo`, `isolated`, `message`, `priority` |
+| `/vcd zones [страница]` | Все зоны, с кнопками |
+| `/vcd zone pos1\|pos2 [x y z \| ~ ~ ~ \| look]` | Угол бокса: где вы стоите, по координатам или блок, на который вы смотрите. Выделение показывается частицами |
+| `/vcd zone create <имя> [радиус]` | Бокс по двум углам или вокруг вас |
+| `/vcd zone info [имя]` | Настройки зоны; по любой можно кликнуть, чтобы изменить. Без имени — зона, где вы стоите |
+| `/vcd zone set <имя> <параметр> [значение\|default]` | `mode`, `preset`, `voice_range`, `whisper_range`, `range_multiplier`, `walls`, `echo`, `isolated`, `message`, `priority`. Без значения — текущее и варианты |
 | `/vcd zone show <имя>\|off` | Показать границы бокса частицами на 30 секунд (видите только вы) |
-| `/vcd zone delete <имя>`, `/vcd zone info` | Удалить зону; в какой зоне вы стоите |
+| `/vcd zone tp <имя>` | Переместиться в центр бокса |
+| `/vcd zone rename <имя> <новое имя>` | Переименовать бокс; настройки остаются |
+| `/vcd zone delete <имя>` | Удалить зону (сначала спросит; `/vcd undo` вернёт её) |
 | `/vcd rule sneak 0.1-1\|dead on\|off\|spectators on\|off\|megaphone <предмет>\|megaphone_range 1-10` | Правила игры |
 | `/vcd group dead\|spectators\|zones\|open_range on\|off` | Правила внутри групп Simple Voice Chat |
 | `/vcd require off\|suggest\|warn\|kick [версия]` | Обязательный аддон |
-| `/vcd debug <игрок>` | Кого слышит игрок, кто слышит его и почему нет |
+| `/vcd debug [игрок]` | Кого слышит игрок, кто слышит его и почему нет (без имени — вы) |
+
+**Права.** Консоли можно всё. На Paper у каждой части `/vcd` своё право; у операторов есть все:
+
+| Право | Что разрешает |
+|---|---|
+| `vcd.status` | `status`, `help`, `zones`, `zone info` |
+| `vcd.settings` | `profile`, `preset`, `walls`, `serverwalls`, `lock`, `monitor`, `rule`, `group`, `require`, `reload`, `undo` |
+| `vcd.zone` | Создавать, менять, показывать и удалять зоны |
+| `vcd.debug` | `debug` |
+| `vcd.admin` | Всё перечисленное |
+
+На Fabric, Forge и NeoForge `/vcd` доступна операторам (уровень 2+). С LuckPerms или другим модом на fabric-permissions-api Fabric проверяет те же права. Вкладка «Сервер» видна всем, кому доступна хоть одна часть `/vcd`.
 
 ## Файлы настроек
 

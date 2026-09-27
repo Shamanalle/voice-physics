@@ -932,7 +932,7 @@ public abstract class SettingsScreen extends Screen {
                 if (name.equals(confirmDelete)) {
                     confirmDelete = null;
                     selectedZone = null;
-                    AudioDistancePlugin.LINK.sendAdmin("zone delete " + name);
+                    AudioDistancePlugin.LINK.sendAdmin("zone delete " + name + " confirm");
                 } else {
                     confirmDelete = name;
                     rebuild();
