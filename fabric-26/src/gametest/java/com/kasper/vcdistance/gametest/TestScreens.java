@@ -42,8 +42,25 @@ final class TestScreens {
         client.options.broadcastOptions();
     }
 
+    /**
+     * Empties the chat, so each screenshot shows one group of replies. The chat moved out of Gui in
+     * 26.x, so it is looked up by its clearMessages(boolean); without it the older lines stay.
+     */
     static void clearChat(Minecraft client) {
-        client.gui.getChat().clearMessages(false);
+        for (Object owner : new Object[]{client.gui, client}) {
+            for (java.lang.reflect.Method getter : owner.getClass().getMethods()) {
+                if (getter.getParameterCount() != 0 || !getter.getReturnType().getSimpleName().contains("Chat")) {
+                    continue;
+                }
+                try {
+                    Object chat = getter.invoke(owner);
+                    chat.getClass().getMethod("clearMessages", boolean.class).invoke(chat, false);
+                    return;
+                } catch (ReflectiveOperationException | RuntimeException ignored) {
+                    // Not the chat; try the next
+                }
+            }
+        }
     }
 
     /** Whether the game has finished loading resources. */
