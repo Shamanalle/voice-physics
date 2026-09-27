@@ -61,7 +61,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { module: neoforge-1.20.6, key: nf1206_neoforge_oldest, override: nfOverride }
           - { module: neoforge-1.21, key: nf121_neoforge_oldest, override: nfOverride }
           - { module: neoforge-1.21.5, key: nf1215_neoforge_oldest, override: nfOverride }
           - { module: neoforge-1.21.8, key: nf1218_neoforge_oldest, override: nfOverride }

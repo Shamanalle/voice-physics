@@ -29,11 +29,13 @@ neoForge {
     version = project.findProperty('nfOverride') ?: project.property(nfVersion)
 }
 
+// In order of precedence: a file in an earlier folder replaces the file with the same path in a later one
+def ownRoot = file('src/main/java')
 def sharedRoots = [
-        "${rootDir}/shared/mc-all/src/main/java",
-        "${rootDir}/shared/mc-1.20-1.21/src/main/java",
         "${rootDir}/shared/neoforge/src/main/java",
-]
+        "${rootDir}/shared/mc-1.20-1.21/src/main/java",
+        "${rootDir}/shared/mc-all/src/main/java",
+].collect { new File(it) }
 // The Fabric hooks, which NeoForge replaces with its own
 def fabricOnly = [
         'com/kasper/vcdistance/AudioDistanceClient.java',
@@ -42,16 +44,22 @@ def fabricOnly = [
         'com/kasper/vcdistance/client/HudHook.java',
 ]
 def excluded = fabricOnly + (project.hasProperty('nfExclude') ? nfExclude : [])
-def ownRoot = file('src/main/java')
 
 sourceSets {
     main {
         java {
             sharedRoots.each { srcDir it }
             exclude { FileTreeElement e ->
+                if (e.directory) {
+                    return false
+                }
                 def path = e.relativePath.pathString
-                def fromShared = sharedRoots.any { e.file.path.startsWith(new File(it).path) }
-                fromShared && (excluded.contains(path) || (!e.directory && new File(ownRoot, path).exists()))
+                def index = sharedRoots.findIndexOf { e.file.path.startsWith(it.path + File.separator) }
+                if (index < 0) {
+                    return false
+                }
+                def before = [ownRoot] + sharedRoots.take(index)
+                excluded.contains(path) || before.any { new File(it, path).exists() }
             }
         }
     }
