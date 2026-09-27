@@ -1,0 +1,1280 @@
+=================== FORGE 1.20.4-49.2.9
+net/minecraftforge/client/ConfigScreenHandler$ConfigScreenFactory.class
+net/minecraftforge/client/ConfigScreenHandler.class
+net/minecraftforge/client/event/RegisterClientCommandsEvent.class
+net/minecraftforge/client/event/RegisterGuiOverlaysEvent$Ordering.class
+net/minecraftforge/client/event/RegisterGuiOverlaysEvent.class
+net/minecraftforge/client/event/RegisterKeyMappingsEvent.class
+net/minecraftforge/client/extensions/IForgeGuiGraphics.class
+net/minecraftforge/client/gui/overlay/
+net/minecraftforge/client/gui/overlay/ForgeGui$OverlayAccess.class
+net/minecraftforge/client/gui/overlay/ForgeGui.class
+net/minecraftforge/client/gui/overlay/GuiOverlayManager.class
+net/minecraftforge/client/gui/overlay/IGuiOverlay.class
+net/minecraftforge/client/gui/overlay/NamedGuiOverlay.class
+net/minecraftforge/client/gui/overlay/VanillaGuiOverlay.class
+net/minecraftforge/event/TickEvent$ClientTickEvent$Post.class
+net/minecraftforge/event/TickEvent$ClientTickEvent$Pre.class
+net/minecraftforge/event/TickEvent$ClientTickEvent.class
+net/minecraftforge/event/TickEvent$LevelTickEvent$Post.class
+net/minecraftforge/event/TickEvent$LevelTickEvent$Pre.class
+net/minecraftforge/event/TickEvent$LevelTickEvent.class
+net/minecraftforge/event/TickEvent$Phase.class
+net/minecraftforge/event/TickEvent$PlayerTickEvent$Post.class
+net/minecraftforge/event/TickEvent$PlayerTickEvent$Pre.class
+net/minecraftforge/event/TickEvent$PlayerTickEvent.class
+net/minecraftforge/event/TickEvent$RenderTickEvent$Post.class
+net/minecraftforge/event/TickEvent$RenderTickEvent$Pre.class
+net/minecraftforge/event/TickEvent$RenderTickEvent.class
+net/minecraftforge/event/TickEvent$ServerTickEvent$Post.class
+net/minecraftforge/event/TickEvent$ServerTickEvent$Pre.class
+net/minecraftforge/event/TickEvent$ServerTickEvent.class
+net/minecraftforge/event/TickEvent$Type.class
+net/minecraftforge/event/TickEvent.class
+net/minecraftforge/event/network/CustomPayloadEvent$Context.class
+net/minecraftforge/event/network/CustomPayloadEvent.class
+net/minecraftforge/network/Channel.class
+net/minecraftforge/network/ChannelBuilder.class
+net/minecraftforge/network/EventNetworkChannel.class
+net/minecraftforge/network/NetworkRegistry.class
+net/minecraftforge/network/PacketDistributor.class
+--- net.minecraftforge.network.ChannelBuilder
+Compiled from "ChannelBuilder.java"
+public class net.minecraftforge.network.ChannelBuilder {
+  public static net.minecraftforge.network.ChannelBuilder named(java.lang.String);
+  public static net.minecraftforge.network.ChannelBuilder named(net.minecraft.resources.ResourceLocation);
+  public net.minecraftforge.network.ChannelBuilder networkProtocolVersion(int);
+  public net.minecraftforge.network.ChannelBuilder acceptedVersions(net.minecraftforge.network.Channel$VersionTest);
+  public net.minecraftforge.network.ChannelBuilder clientAcceptedVersions(net.minecraftforge.network.Channel$VersionTest);
+  public net.minecraftforge.network.ChannelBuilder serverAcceptedVersions(net.minecraftforge.network.Channel$VersionTest);
+  public net.minecraftforge.network.ChannelBuilder optional();
+  public net.minecraftforge.network.ChannelBuilder optionalServer();
+  public net.minecraftforge.network.ChannelBuilder optionalClient();
+  public <T> net.minecraftforge.network.ChannelBuilder attribute(io.netty.util.AttributeKey<T>, java.util.function.Supplier<T>);
+  public <T> net.minecraftforge.network.ChannelBuilder attribute(io.netty.util.AttributeKey<T>, java.util.function.Function<net.minecraft.network.Connection, T>);
+  public net.minecraftforge.network.ChannelBuilder connectionHandler(java.util.function.Consumer<net.minecraft.network.Connection>);
+  public net.minecraftforge.network.SimpleChannel simpleChannel();
+  public net.minecraftforge.network.EventNetworkChannel eventNetworkChannel();
+}
+--- net.minecraftforge.network.EventNetworkChannel
+Compiled from "EventNetworkChannel.java"
+public class net.minecraftforge.network.EventNetworkChannel extends net.minecraftforge.network.Channel<net.minecraft.network.FriendlyByteBuf> {
+  net.minecraftforge.network.EventNetworkChannel(net.minecraftforge.network.NetworkInstance);
+  public <T extends net.minecraftforge.event.network.CustomPayloadEvent> net.minecraftforge.network.EventNetworkChannel addListener(java.util.function.Consumer<T>);
+  public net.minecraftforge.network.EventNetworkChannel registerObject(java.lang.Object);
+  public void unregisterObject(java.lang.Object);
+  public net.minecraft.network.FriendlyByteBuf toBuffer(net.minecraft.network.FriendlyByteBuf);
+  public net.minecraft.network.FriendlyByteBuf toBuffer(java.lang.Object);
+}
+--- net.minecraftforge.event.network.CustomPayloadEvent
+Compiled from "CustomPayloadEvent.java"
+public class net.minecraftforge.event.network.CustomPayloadEvent extends net.minecraftforge.eventbus.api.Event {
+  public net.minecraftforge.event.network.CustomPayloadEvent(net.minecraft.resources.ResourceLocation, net.minecraft.network.FriendlyByteBuf, net.minecraftforge.event.network.CustomPayloadEvent$Context, int);
+  public net.minecraftforge.event.network.CustomPayloadEvent(net.minecraftforge.network.ICustomPacket<?>, net.minecraftforge.event.network.CustomPayloadEvent$Context);
+  public net.minecraft.resources.ResourceLocation getChannel();
+  public net.minecraft.network.FriendlyByteBuf getPayload();
+  public int getLoginIndex();
+  public net.minecraftforge.event.network.CustomPayloadEvent$Context getSource();
+}
+--- net.minecraftforge.event.network.CustomPayloadEvent$Context
+Compiled from "CustomPayloadEvent.java"
+public class net.minecraftforge.event.network.CustomPayloadEvent$Context {
+  public net.minecraftforge.event.network.CustomPayloadEvent$Context(net.minecraft.network.Connection, net.minecraftforge.network.NetworkDirection);
+  public boolean isClientSide();
+  public boolean isServerSide();
+  public net.minecraftforge.network.NetworkDirection getDirection();
+  public net.minecraft.network.Connection getConnection();
+  public <T> io.netty.util.Attribute<T> attr(io.netty.util.AttributeKey<T>);
+  public void setPacketHandled(boolean);
+  public boolean getPacketHandled();
+  public java.util.concurrent.CompletableFuture<java.lang.Void> enqueueWork(java.lang.Runnable);
+  public net.minecraft.server.level.ServerPlayer getSender();
+}
+--- net.minecraftforge.client.event.AddGuiOverlayLayersEvent
+Error: class not found: net.minecraftforge.client.event.AddGuiOverlayLayersEvent
+--- net.minecraftforge.client.event.RegisterGuiOverlaysEvent
+Compiled from "RegisterGuiOverlaysEvent.java"
+public class net.minecraftforge.client.event.RegisterGuiOverlaysEvent extends net.minecraftforge.eventbus.api.Event implements net.minecraftforge.fml.event.IModBusEvent {
+  public net.minecraftforge.client.event.RegisterGuiOverlaysEvent(java.util.Map<net.minecraft.resources.ResourceLocation, net.minecraftforge.client.gui.overlay.IGuiOverlay>, java.util.List<net.minecraft.resources.ResourceLocation>);
+  public void registerBelowAll(java.lang.String, net.minecraftforge.client.gui.overlay.IGuiOverlay);
+  public void registerBelow(net.minecraft.resources.ResourceLocation, java.lang.String, net.minecraftforge.client.gui.overlay.IGuiOverlay);
+  public void registerAbove(net.minecraft.resources.ResourceLocation, java.lang.String, net.minecraftforge.client.gui.overlay.IGuiOverlay);
+  public void registerAboveAll(java.lang.String, net.minecraftforge.client.gui.overlay.IGuiOverlay);
+}
+--- net.minecraftforge.client.ConfigScreenHandler$ConfigScreenFactory
+Compiled from "ConfigScreenHandler.java"
+public final class net.minecraftforge.client.ConfigScreenHandler$ConfigScreenFactory extends java.lang.Record implements net.minecraftforge.fml.IExtensionPoint<net.minecraftforge.client.ConfigScreenHandler$ConfigScreenFactory> {
+  public net.minecraftforge.client.ConfigScreenHandler$ConfigScreenFactory(java.util.function.Function<net.minecraft.client.gui.screens.Screen, net.minecraft.client.gui.screens.Screen>);
+  public net.minecraftforge.client.ConfigScreenHandler$ConfigScreenFactory(java.util.function.BiFunction<net.minecraft.client.Minecraft, net.minecraft.client.gui.screens.Screen, net.minecraft.client.gui.screens.Screen>);
+  public final java.lang.String toString();
+  public final int hashCode();
+  public final boolean equals(java.lang.Object);
+  public java.util.function.BiFunction<net.minecraft.client.Minecraft, net.minecraft.client.gui.screens.Screen, net.minecraft.client.gui.screens.Screen> screenFunction();
+}
+--- net.minecraftforge.event.TickEvent$ServerTickEvent
+Compiled from "TickEvent.java"
+public class net.minecraftforge.event.TickEvent$ServerTickEvent extends net.minecraftforge.event.TickEvent {
+  public net.minecraftforge.event.TickEvent$ServerTickEvent(net.minecraftforge.event.TickEvent$Phase, java.util.function.BooleanSupplier, net.minecraft.server.MinecraftServer);
+  protected net.minecraftforge.event.TickEvent$ServerTickEvent(java.util.function.BooleanSupplier, net.minecraft.server.MinecraftServer, net.minecraftforge.event.TickEvent$Phase);
+  public boolean haveTime();
+  public net.minecraft.server.MinecraftServer getServer();
+}
+--- net.minecraftforge.event.TickEvent$ServerTickEvent$Post
+Compiled from "TickEvent.java"
+public class net.minecraftforge.event.TickEvent$ServerTickEvent$Post extends net.minecraftforge.event.TickEvent$ServerTickEvent {
+  public net.minecraftforge.event.TickEvent$ServerTickEvent$Post(java.util.function.BooleanSupplier, net.minecraft.server.MinecraftServer);
+}
+--- net.minecraftforge.event.TickEvent$ClientTickEvent$Post
+Compiled from "TickEvent.java"
+public class net.minecraftforge.event.TickEvent$ClientTickEvent$Post extends net.minecraftforge.event.TickEvent$ClientTickEvent {
+  public net.minecraftforge.event.TickEvent$ClientTickEvent$Post();
+}
+--- net.minecraftforge.client.event.RegisterKeyMappingsEvent
+Compiled from "RegisterKeyMappingsEvent.java"
+public class net.minecraftforge.client.event.RegisterKeyMappingsEvent extends net.minecraftforge.eventbus.api.Event implements net.minecraftforge.fml.event.IModBusEvent {
+  public net.minecraftforge.client.event.RegisterKeyMappingsEvent(net.minecraft.client.Options);
+  public void register(net.minecraft.client.KeyMapping);
+}
+--- net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext
+Error: class not found: net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext
+--- net.minecraftforge.client.event.ScreenEvent$Init$Post
+Compiled from "ScreenEvent.java"
+public class net.minecraftforge.client.event.ScreenEvent$Init$Post extends net.minecraftforge.client.event.ScreenEvent$Init {
+  public net.minecraftforge.client.event.ScreenEvent$Init$Post(net.minecraft.client.gui.screens.Screen, java.util.List<net.minecraft.client.gui.components.events.GuiEventListener>, java.util.function.Consumer<net.minecraft.client.gui.components.events.GuiEventListener>, java.util.function.Consumer<net.minecraft.client.gui.components.events.GuiEventListener>);
+}
+--- net.minecraftforge.event.entity.player.PlayerEvent$PlayerLoggedInEvent
+Compiled from "PlayerEvent.java"
+public class net.minecraftforge.event.entity.player.PlayerEvent$PlayerLoggedInEvent extends net.minecraftforge.event.entity.player.PlayerEvent {
+  public net.minecraftforge.event.entity.player.PlayerEvent$PlayerLoggedInEvent(net.minecraft.world.entity.player.Player);
+  public net.minecraft.world.entity.LivingEntity getEntity();
+  public net.minecraft.world.entity.Entity getEntity();
+}
+--- net.minecraftforge.event.RegisterCommandsEvent
+Compiled from "RegisterCommandsEvent.java"
+public class net.minecraftforge.event.RegisterCommandsEvent extends net.minecraftforge.eventbus.api.Event {
+  public net.minecraftforge.event.RegisterCommandsEvent(com.mojang.brigadier.CommandDispatcher<net.minecraft.commands.CommandSourceStack>, net.minecraft.commands.Commands$CommandSelection, net.minecraft.commands.CommandBuildContext);
+  public com.mojang.brigadier.CommandDispatcher<net.minecraft.commands.CommandSourceStack> getDispatcher();
+  public net.minecraft.commands.Commands$CommandSelection getCommandSelection();
+  public net.minecraft.commands.CommandBuildContext getBuildContext();
+}
+--- net.minecraftforge.event.server.ServerStartingEvent
+Compiled from "ServerStartingEvent.java"
+public class net.minecraftforge.event.server.ServerStartingEvent extends net.minecraftforge.event.server.ServerLifecycleEvent {
+  public net.minecraftforge.event.server.ServerStartingEvent(net.minecraft.server.MinecraftServer);
+}
+--- net.minecraftforge.client.event.RegisterClientCommandsEvent
+Compiled from "RegisterClientCommandsEvent.java"
+public class net.minecraftforge.client.event.RegisterClientCommandsEvent extends net.minecraftforge.eventbus.api.Event {
+  public net.minecraftforge.client.event.RegisterClientCommandsEvent(com.mojang.brigadier.CommandDispatcher<net.minecraft.commands.CommandSourceStack>, net.minecraft.commands.CommandBuildContext);
+  public com.mojang.brigadier.CommandDispatcher<net.minecraft.commands.CommandSourceStack> getDispatcher();
+  public net.minecraft.commands.CommandBuildContext getBuildContext();
+}
+=================== FORGE 1.20.6-50.2.10
+net/minecraftforge/client/ConfigScreenHandler$ConfigScreenFactory.class
+net/minecraftforge/client/ConfigScreenHandler.class
+net/minecraftforge/client/event/AddGuiOverlayLayersEvent.class
+net/minecraftforge/client/event/RegisterClientCommandsEvent.class
+net/minecraftforge/client/event/RegisterKeyMappingsEvent.class
+net/minecraftforge/client/extensions/IForgeGuiGraphics.class
+net/minecraftforge/client/gui/overlay/
+net/minecraftforge/client/gui/overlay/ForgeLayeredDraw$LayerOffset.class
+net/minecraftforge/client/gui/overlay/ForgeLayeredDraw.class
+net/minecraftforge/event/TickEvent$ClientTickEvent$Post.class
+net/minecraftforge/event/TickEvent$ClientTickEvent$Pre.class
+net/minecraftforge/event/TickEvent$ClientTickEvent.class
+net/minecraftforge/event/TickEvent$LevelTickEvent$Post.class
+net/minecraftforge/event/TickEvent$LevelTickEvent$Pre.class
+net/minecraftforge/event/TickEvent$LevelTickEvent.class
+net/minecraftforge/event/TickEvent$Phase.class
+net/minecraftforge/event/TickEvent$PlayerTickEvent$Post.class
+net/minecraftforge/event/TickEvent$PlayerTickEvent$Pre.class
+net/minecraftforge/event/TickEvent$PlayerTickEvent.class
+net/minecraftforge/event/TickEvent$RenderTickEvent$Post.class
+net/minecraftforge/event/TickEvent$RenderTickEvent$Pre.class
+net/minecraftforge/event/TickEvent$RenderTickEvent.class
+net/minecraftforge/event/TickEvent$ServerTickEvent$Post.class
+net/minecraftforge/event/TickEvent$ServerTickEvent$Pre.class
+net/minecraftforge/event/TickEvent$ServerTickEvent.class
+net/minecraftforge/event/TickEvent$Type.class
+net/minecraftforge/event/TickEvent.class
+net/minecraftforge/event/network/CustomPayloadEvent$Context.class
+net/minecraftforge/event/network/CustomPayloadEvent.class
+net/minecraftforge/network/Channel.class
+net/minecraftforge/network/ChannelBuilder.class
+net/minecraftforge/network/EventNetworkChannel.class
+net/minecraftforge/network/NetworkRegistry.class
+net/minecraftforge/network/PacketDistributor.class
+--- net.minecraftforge.network.ChannelBuilder
+Compiled from "ChannelBuilder.java"
+public class net.minecraftforge.network.ChannelBuilder {
+  public static net.minecraftforge.network.ChannelBuilder named(java.lang.String);
+  public static net.minecraftforge.network.ChannelBuilder named(net.minecraft.resources.ResourceLocation);
+  public net.minecraftforge.network.ChannelBuilder networkProtocolVersion(int);
+  public net.minecraftforge.network.ChannelBuilder acceptedVersions(net.minecraftforge.network.Channel$VersionTest);
+  public net.minecraftforge.network.ChannelBuilder clientAcceptedVersions(net.minecraftforge.network.Channel$VersionTest);
+  public net.minecraftforge.network.ChannelBuilder serverAcceptedVersions(net.minecraftforge.network.Channel$VersionTest);
+  public net.minecraftforge.network.ChannelBuilder optional();
+  public net.minecraftforge.network.ChannelBuilder optionalServer();
+  public net.minecraftforge.network.ChannelBuilder optionalClient();
+  public <T> net.minecraftforge.network.ChannelBuilder attribute(io.netty.util.AttributeKey<T>, java.util.function.Supplier<T>);
+  public <T> net.minecraftforge.network.ChannelBuilder attribute(io.netty.util.AttributeKey<T>, java.util.function.Function<net.minecraft.network.Connection, T>);
+  public net.minecraftforge.network.ChannelBuilder connectionHandler(java.util.function.Consumer<net.minecraft.network.Connection>);
+  public net.minecraftforge.network.SimpleChannel simpleChannel();
+  public net.minecraftforge.network.EventNetworkChannel eventNetworkChannel();
+  public net.minecraftforge.network.payload.PayloadConnection<net.minecraft.network.protocol.common.custom.CustomPacketPayload> payloadChannel();
+  public <C> C channel(java.util.function.Function<net.minecraftforge.network.NetworkInstance, C>);
+}
+--- net.minecraftforge.network.EventNetworkChannel
+Compiled from "EventNetworkChannel.java"
+public class net.minecraftforge.network.EventNetworkChannel extends net.minecraftforge.network.Channel<net.minecraft.network.FriendlyByteBuf> {
+  net.minecraftforge.network.EventNetworkChannel(net.minecraftforge.network.NetworkInstance);
+  public <T extends net.minecraftforge.event.network.CustomPayloadEvent> net.minecraftforge.network.EventNetworkChannel addListener(java.util.function.Consumer<T>);
+  public net.minecraftforge.network.EventNetworkChannel registerObject(java.lang.Object);
+  public void unregisterObject(java.lang.Object);
+  public void encode(net.minecraft.network.FriendlyByteBuf, net.minecraft.network.FriendlyByteBuf);
+  public void encode(net.minecraft.network.FriendlyByteBuf, java.lang.Object);
+}
+--- net.minecraftforge.event.network.CustomPayloadEvent
+Compiled from "CustomPayloadEvent.java"
+public class net.minecraftforge.event.network.CustomPayloadEvent extends net.minecraftforge.eventbus.api.Event {
+  public net.minecraftforge.event.network.CustomPayloadEvent(net.minecraft.resources.ResourceLocation, java.lang.Object, net.minecraftforge.event.network.CustomPayloadEvent$Context, int);
+  public net.minecraft.resources.ResourceLocation getChannel();
+  public net.minecraft.network.FriendlyByteBuf getPayload();
+  public java.lang.Object getPayloadObject();
+  public int getLoginIndex();
+  public net.minecraftforge.event.network.CustomPayloadEvent$Context getSource();
+}
+--- net.minecraftforge.event.network.CustomPayloadEvent$Context
+Compiled from "CustomPayloadEvent.java"
+public class net.minecraftforge.event.network.CustomPayloadEvent$Context {
+  public net.minecraftforge.event.network.CustomPayloadEvent$Context(net.minecraft.network.Connection);
+  public boolean isClientSide();
+  public boolean isServerSide();
+  public net.minecraft.network.Connection getConnection();
+  public <T> io.netty.util.Attribute<T> attr(io.netty.util.AttributeKey<T>);
+  public void setPacketHandled(boolean);
+  public boolean getPacketHandled();
+  public java.util.concurrent.CompletableFuture<java.lang.Void> enqueueWork(java.lang.Runnable);
+  public net.minecraft.server.level.ServerPlayer getSender();
+}
+--- net.minecraftforge.client.event.AddGuiOverlayLayersEvent
+Compiled from "AddGuiOverlayLayersEvent.java"
+public final class net.minecraftforge.client.event.AddGuiOverlayLayersEvent extends net.minecraftforge.eventbus.api.Event implements net.minecraftforge.fml.event.IModBusEvent {
+  public net.minecraftforge.client.event.AddGuiOverlayLayersEvent(net.minecraftforge.client.gui.overlay.ForgeLayeredDraw);
+  public net.minecraftforge.client.gui.overlay.ForgeLayeredDraw getLayeredDraw();
+}
+--- net.minecraftforge.client.event.RegisterGuiOverlaysEvent
+Error: class not found: net.minecraftforge.client.event.RegisterGuiOverlaysEvent
+--- net.minecraftforge.client.ConfigScreenHandler$ConfigScreenFactory
+Compiled from "ConfigScreenHandler.java"
+public final class net.minecraftforge.client.ConfigScreenHandler$ConfigScreenFactory extends java.lang.Record implements net.minecraftforge.fml.IExtensionPoint<net.minecraftforge.client.ConfigScreenHandler$ConfigScreenFactory> {
+  public net.minecraftforge.client.ConfigScreenHandler$ConfigScreenFactory(java.util.function.Function<net.minecraft.client.gui.screens.Screen, net.minecraft.client.gui.screens.Screen>);
+  public net.minecraftforge.client.ConfigScreenHandler$ConfigScreenFactory(java.util.function.BiFunction<net.minecraft.client.Minecraft, net.minecraft.client.gui.screens.Screen, net.minecraft.client.gui.screens.Screen>);
+  public final java.lang.String toString();
+  public final int hashCode();
+  public final boolean equals(java.lang.Object);
+  public java.util.function.BiFunction<net.minecraft.client.Minecraft, net.minecraft.client.gui.screens.Screen, net.minecraft.client.gui.screens.Screen> screenFunction();
+}
+--- net.minecraftforge.event.TickEvent$ServerTickEvent
+Compiled from "TickEvent.java"
+public class net.minecraftforge.event.TickEvent$ServerTickEvent extends net.minecraftforge.event.TickEvent {
+  public net.minecraftforge.event.TickEvent$ServerTickEvent(net.minecraftforge.event.TickEvent$Phase, java.util.function.BooleanSupplier, net.minecraft.server.MinecraftServer);
+  protected net.minecraftforge.event.TickEvent$ServerTickEvent(java.util.function.BooleanSupplier, net.minecraft.server.MinecraftServer, net.minecraftforge.event.TickEvent$Phase);
+  public boolean haveTime();
+  public net.minecraft.server.MinecraftServer getServer();
+}
+--- net.minecraftforge.event.TickEvent$ServerTickEvent$Post
+Compiled from "TickEvent.java"
+public class net.minecraftforge.event.TickEvent$ServerTickEvent$Post extends net.minecraftforge.event.TickEvent$ServerTickEvent {
+  public net.minecraftforge.event.TickEvent$ServerTickEvent$Post(java.util.function.BooleanSupplier, net.minecraft.server.MinecraftServer);
+}
+--- net.minecraftforge.event.TickEvent$ClientTickEvent$Post
+Compiled from "TickEvent.java"
+public class net.minecraftforge.event.TickEvent$ClientTickEvent$Post extends net.minecraftforge.event.TickEvent$ClientTickEvent {
+  public net.minecraftforge.event.TickEvent$ClientTickEvent$Post();
+}
+--- net.minecraftforge.client.event.RegisterKeyMappingsEvent
+Compiled from "RegisterKeyMappingsEvent.java"
+public class net.minecraftforge.client.event.RegisterKeyMappingsEvent extends net.minecraftforge.eventbus.api.Event implements net.minecraftforge.fml.event.IModBusEvent {
+  public net.minecraftforge.client.event.RegisterKeyMappingsEvent(net.minecraft.client.Options);
+  public void register(net.minecraft.client.KeyMapping);
+}
+--- net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext
+Error: class not found: net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext
+--- net.minecraftforge.client.event.ScreenEvent$Init$Post
+Compiled from "ScreenEvent.java"
+public class net.minecraftforge.client.event.ScreenEvent$Init$Post extends net.minecraftforge.client.event.ScreenEvent$Init {
+  public net.minecraftforge.client.event.ScreenEvent$Init$Post(net.minecraft.client.gui.screens.Screen, java.util.List<net.minecraft.client.gui.components.events.GuiEventListener>, java.util.function.Consumer<net.minecraft.client.gui.components.events.GuiEventListener>, java.util.function.Consumer<net.minecraft.client.gui.components.events.GuiEventListener>);
+}
+--- net.minecraftforge.event.entity.player.PlayerEvent$PlayerLoggedInEvent
+Compiled from "PlayerEvent.java"
+public class net.minecraftforge.event.entity.player.PlayerEvent$PlayerLoggedInEvent extends net.minecraftforge.event.entity.player.PlayerEvent {
+  public net.minecraftforge.event.entity.player.PlayerEvent$PlayerLoggedInEvent(net.minecraft.world.entity.player.Player);
+  public net.minecraft.world.entity.LivingEntity getEntity();
+  public net.minecraft.world.entity.Entity getEntity();
+}
+--- net.minecraftforge.event.RegisterCommandsEvent
+Compiled from "RegisterCommandsEvent.java"
+public class net.minecraftforge.event.RegisterCommandsEvent extends net.minecraftforge.eventbus.api.Event {
+  public net.minecraftforge.event.RegisterCommandsEvent(com.mojang.brigadier.CommandDispatcher<net.minecraft.commands.CommandSourceStack>, net.minecraft.commands.Commands$CommandSelection, net.minecraft.commands.CommandBuildContext);
+  public com.mojang.brigadier.CommandDispatcher<net.minecraft.commands.CommandSourceStack> getDispatcher();
+  public net.minecraft.commands.Commands$CommandSelection getCommandSelection();
+  public net.minecraft.commands.CommandBuildContext getBuildContext();
+}
+--- net.minecraftforge.event.server.ServerStartingEvent
+Compiled from "ServerStartingEvent.java"
+public class net.minecraftforge.event.server.ServerStartingEvent extends net.minecraftforge.event.server.ServerLifecycleEvent {
+  public net.minecraftforge.event.server.ServerStartingEvent(net.minecraft.server.MinecraftServer);
+}
+--- net.minecraftforge.client.event.RegisterClientCommandsEvent
+Compiled from "RegisterClientCommandsEvent.java"
+public class net.minecraftforge.client.event.RegisterClientCommandsEvent extends net.minecraftforge.eventbus.api.Event {
+  public net.minecraftforge.client.event.RegisterClientCommandsEvent(com.mojang.brigadier.CommandDispatcher<net.minecraft.commands.CommandSourceStack>, net.minecraft.commands.CommandBuildContext);
+  public com.mojang.brigadier.CommandDispatcher<net.minecraft.commands.CommandSourceStack> getDispatcher();
+  public net.minecraft.commands.CommandBuildContext getBuildContext();
+}
+=================== FORGE 1.21.1-52.1.16
+net/minecraftforge/client/ConfigScreenHandler$ConfigScreenFactory.class
+net/minecraftforge/client/ConfigScreenHandler.class
+net/minecraftforge/client/event/AddGuiOverlayLayersEvent.class
+net/minecraftforge/client/event/RegisterClientCommandsEvent.class
+net/minecraftforge/client/event/RegisterKeyMappingsEvent.class
+net/minecraftforge/client/extensions/IForgeGuiGraphics.class
+net/minecraftforge/client/gui/overlay/
+net/minecraftforge/client/gui/overlay/ForgeLayeredDraw$LayerOffset.class
+net/minecraftforge/client/gui/overlay/ForgeLayeredDraw.class
+net/minecraftforge/event/TickEvent$ClientTickEvent$Post.class
+net/minecraftforge/event/TickEvent$ClientTickEvent$Pre.class
+net/minecraftforge/event/TickEvent$ClientTickEvent.class
+net/minecraftforge/event/TickEvent$LevelTickEvent$Post.class
+net/minecraftforge/event/TickEvent$LevelTickEvent$Pre.class
+net/minecraftforge/event/TickEvent$LevelTickEvent.class
+net/minecraftforge/event/TickEvent$Phase.class
+net/minecraftforge/event/TickEvent$PlayerTickEvent$Post.class
+net/minecraftforge/event/TickEvent$PlayerTickEvent$Pre.class
+net/minecraftforge/event/TickEvent$PlayerTickEvent.class
+net/minecraftforge/event/TickEvent$RenderTickEvent$Post.class
+net/minecraftforge/event/TickEvent$RenderTickEvent$Pre.class
+net/minecraftforge/event/TickEvent$RenderTickEvent.class
+net/minecraftforge/event/TickEvent$ServerTickEvent$Post.class
+net/minecraftforge/event/TickEvent$ServerTickEvent$Pre.class
+net/minecraftforge/event/TickEvent$ServerTickEvent.class
+net/minecraftforge/event/TickEvent$Type.class
+net/minecraftforge/event/TickEvent.class
+net/minecraftforge/event/network/CustomPayloadEvent$Context.class
+net/minecraftforge/event/network/CustomPayloadEvent.class
+net/minecraftforge/network/Channel.class
+net/minecraftforge/network/ChannelBuilder.class
+net/minecraftforge/network/EventNetworkChannel.class
+net/minecraftforge/network/NetworkRegistry.class
+net/minecraftforge/network/PacketDistributor.class
+--- net.minecraftforge.network.ChannelBuilder
+Compiled from "ChannelBuilder.java"
+public class net.minecraftforge.network.ChannelBuilder {
+  public static net.minecraftforge.network.ChannelBuilder named(java.lang.String);
+  public static net.minecraftforge.network.ChannelBuilder named(net.minecraft.resources.ResourceLocation);
+  public net.minecraftforge.network.ChannelBuilder networkProtocolVersion(int);
+  public net.minecraftforge.network.ChannelBuilder acceptedVersions(net.minecraftforge.network.Channel$VersionTest);
+  public net.minecraftforge.network.ChannelBuilder clientAcceptedVersions(net.minecraftforge.network.Channel$VersionTest);
+  public net.minecraftforge.network.ChannelBuilder serverAcceptedVersions(net.minecraftforge.network.Channel$VersionTest);
+  public net.minecraftforge.network.ChannelBuilder optional();
+  public net.minecraftforge.network.ChannelBuilder optionalServer();
+  public net.minecraftforge.network.ChannelBuilder optionalClient();
+  public <T> net.minecraftforge.network.ChannelBuilder attribute(io.netty.util.AttributeKey<T>, java.util.function.Supplier<T>);
+  public <T> net.minecraftforge.network.ChannelBuilder attribute(io.netty.util.AttributeKey<T>, java.util.function.Function<net.minecraft.network.Connection, T>);
+  public net.minecraftforge.network.ChannelBuilder connectionHandler(java.util.function.Consumer<net.minecraft.network.Connection>);
+  public net.minecraftforge.network.SimpleChannel simpleChannel();
+  public net.minecraftforge.network.EventNetworkChannel eventNetworkChannel();
+  public net.minecraftforge.network.payload.PayloadConnection<net.minecraft.network.protocol.common.custom.CustomPacketPayload> payloadChannel();
+  public <C> C channel(java.util.function.Function<net.minecraftforge.network.NetworkInstance, C>);
+}
+--- net.minecraftforge.network.EventNetworkChannel
+Compiled from "EventNetworkChannel.java"
+public class net.minecraftforge.network.EventNetworkChannel extends net.minecraftforge.network.Channel<net.minecraft.network.FriendlyByteBuf> {
+  net.minecraftforge.network.EventNetworkChannel(net.minecraftforge.network.NetworkInstance);
+  public <T extends net.minecraftforge.event.network.CustomPayloadEvent> net.minecraftforge.network.EventNetworkChannel addListener(java.util.function.Consumer<T>);
+  public net.minecraftforge.network.EventNetworkChannel registerObject(java.lang.Object);
+  public void unregisterObject(java.lang.Object);
+  public void encode(net.minecraft.network.FriendlyByteBuf, net.minecraft.network.FriendlyByteBuf);
+  public void encode(net.minecraft.network.FriendlyByteBuf, java.lang.Object);
+}
+--- net.minecraftforge.event.network.CustomPayloadEvent
+Compiled from "CustomPayloadEvent.java"
+public class net.minecraftforge.event.network.CustomPayloadEvent extends net.minecraftforge.eventbus.api.Event {
+  public net.minecraftforge.event.network.CustomPayloadEvent(net.minecraft.resources.ResourceLocation, java.lang.Object, net.minecraftforge.event.network.CustomPayloadEvent$Context, int);
+  public net.minecraft.resources.ResourceLocation getChannel();
+  public net.minecraft.network.FriendlyByteBuf getPayload();
+  public java.lang.Object getPayloadObject();
+  public int getLoginIndex();
+  public net.minecraftforge.event.network.CustomPayloadEvent$Context getSource();
+}
+--- net.minecraftforge.event.network.CustomPayloadEvent$Context
+Compiled from "CustomPayloadEvent.java"
+public class net.minecraftforge.event.network.CustomPayloadEvent$Context {
+  public net.minecraftforge.event.network.CustomPayloadEvent$Context(net.minecraft.network.Connection);
+  public boolean isClientSide();
+  public boolean isServerSide();
+  public net.minecraft.network.Connection getConnection();
+  public <T> io.netty.util.Attribute<T> attr(io.netty.util.AttributeKey<T>);
+  public void setPacketHandled(boolean);
+  public boolean getPacketHandled();
+  public java.util.concurrent.CompletableFuture<java.lang.Void> enqueueWork(java.lang.Runnable);
+  public net.minecraft.server.level.ServerPlayer getSender();
+}
+--- net.minecraftforge.client.event.AddGuiOverlayLayersEvent
+Compiled from "AddGuiOverlayLayersEvent.java"
+public final class net.minecraftforge.client.event.AddGuiOverlayLayersEvent extends net.minecraftforge.eventbus.api.Event implements net.minecraftforge.fml.event.IModBusEvent {
+  public net.minecraftforge.client.event.AddGuiOverlayLayersEvent(net.minecraftforge.client.gui.overlay.ForgeLayeredDraw);
+  public net.minecraftforge.client.gui.overlay.ForgeLayeredDraw getLayeredDraw();
+}
+--- net.minecraftforge.client.event.RegisterGuiOverlaysEvent
+Error: class not found: net.minecraftforge.client.event.RegisterGuiOverlaysEvent
+--- net.minecraftforge.client.ConfigScreenHandler$ConfigScreenFactory
+Compiled from "ConfigScreenHandler.java"
+public final class net.minecraftforge.client.ConfigScreenHandler$ConfigScreenFactory extends java.lang.Record implements net.minecraftforge.fml.IExtensionPoint<net.minecraftforge.client.ConfigScreenHandler$ConfigScreenFactory> {
+  public net.minecraftforge.client.ConfigScreenHandler$ConfigScreenFactory(java.util.function.Function<net.minecraft.client.gui.screens.Screen, net.minecraft.client.gui.screens.Screen>);
+  public net.minecraftforge.client.ConfigScreenHandler$ConfigScreenFactory(java.util.function.BiFunction<net.minecraft.client.Minecraft, net.minecraft.client.gui.screens.Screen, net.minecraft.client.gui.screens.Screen>);
+  public final java.lang.String toString();
+  public final int hashCode();
+  public final boolean equals(java.lang.Object);
+  public java.util.function.BiFunction<net.minecraft.client.Minecraft, net.minecraft.client.gui.screens.Screen, net.minecraft.client.gui.screens.Screen> screenFunction();
+}
+--- net.minecraftforge.event.TickEvent$ServerTickEvent
+Compiled from "TickEvent.java"
+public class net.minecraftforge.event.TickEvent$ServerTickEvent extends net.minecraftforge.event.TickEvent {
+  protected net.minecraftforge.event.TickEvent$ServerTickEvent(java.util.function.BooleanSupplier, net.minecraft.server.MinecraftServer, net.minecraftforge.event.TickEvent$Phase);
+  public boolean haveTime();
+  public net.minecraft.server.MinecraftServer getServer();
+}
+--- net.minecraftforge.event.TickEvent$ServerTickEvent$Post
+Compiled from "TickEvent.java"
+public class net.minecraftforge.event.TickEvent$ServerTickEvent$Post extends net.minecraftforge.event.TickEvent$ServerTickEvent {
+  public net.minecraftforge.event.TickEvent$ServerTickEvent$Post(java.util.function.BooleanSupplier, net.minecraft.server.MinecraftServer);
+}
+--- net.minecraftforge.event.TickEvent$ClientTickEvent$Post
+Compiled from "TickEvent.java"
+public class net.minecraftforge.event.TickEvent$ClientTickEvent$Post extends net.minecraftforge.event.TickEvent$ClientTickEvent {
+  public net.minecraftforge.event.TickEvent$ClientTickEvent$Post();
+}
+--- net.minecraftforge.client.event.RegisterKeyMappingsEvent
+Compiled from "RegisterKeyMappingsEvent.java"
+public class net.minecraftforge.client.event.RegisterKeyMappingsEvent extends net.minecraftforge.eventbus.api.Event implements net.minecraftforge.fml.event.IModBusEvent {
+  public net.minecraftforge.client.event.RegisterKeyMappingsEvent(net.minecraft.client.Options);
+  public void register(net.minecraft.client.KeyMapping);
+}
+--- net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext
+Error: class not found: net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext
+--- net.minecraftforge.client.event.ScreenEvent$Init$Post
+Compiled from "ScreenEvent.java"
+public class net.minecraftforge.client.event.ScreenEvent$Init$Post extends net.minecraftforge.client.event.ScreenEvent$Init {
+  public net.minecraftforge.client.event.ScreenEvent$Init$Post(net.minecraft.client.gui.screens.Screen, java.util.List<net.minecraft.client.gui.components.events.GuiEventListener>, java.util.function.Consumer<net.minecraft.client.gui.components.events.GuiEventListener>, java.util.function.Consumer<net.minecraft.client.gui.components.events.GuiEventListener>);
+}
+--- net.minecraftforge.event.entity.player.PlayerEvent$PlayerLoggedInEvent
+Compiled from "PlayerEvent.java"
+public class net.minecraftforge.event.entity.player.PlayerEvent$PlayerLoggedInEvent extends net.minecraftforge.event.entity.player.PlayerEvent {
+  public net.minecraftforge.event.entity.player.PlayerEvent$PlayerLoggedInEvent(net.minecraft.world.entity.player.Player);
+  public net.minecraft.world.entity.LivingEntity getEntity();
+  public net.minecraft.world.entity.Entity getEntity();
+}
+--- net.minecraftforge.event.RegisterCommandsEvent
+Compiled from "RegisterCommandsEvent.java"
+public class net.minecraftforge.event.RegisterCommandsEvent extends net.minecraftforge.eventbus.api.Event {
+  public net.minecraftforge.event.RegisterCommandsEvent(com.mojang.brigadier.CommandDispatcher<net.minecraft.commands.CommandSourceStack>, net.minecraft.commands.Commands$CommandSelection, net.minecraft.commands.CommandBuildContext);
+  public com.mojang.brigadier.CommandDispatcher<net.minecraft.commands.CommandSourceStack> getDispatcher();
+  public net.minecraft.commands.Commands$CommandSelection getCommandSelection();
+  public net.minecraft.commands.CommandBuildContext getBuildContext();
+}
+--- net.minecraftforge.event.server.ServerStartingEvent
+Compiled from "ServerStartingEvent.java"
+public class net.minecraftforge.event.server.ServerStartingEvent extends net.minecraftforge.event.server.ServerLifecycleEvent {
+  public net.minecraftforge.event.server.ServerStartingEvent(net.minecraft.server.MinecraftServer);
+}
+--- net.minecraftforge.client.event.RegisterClientCommandsEvent
+Compiled from "RegisterClientCommandsEvent.java"
+public class net.minecraftforge.client.event.RegisterClientCommandsEvent extends net.minecraftforge.eventbus.api.Event {
+  public net.minecraftforge.client.event.RegisterClientCommandsEvent(com.mojang.brigadier.CommandDispatcher<net.minecraft.commands.CommandSourceStack>, net.minecraft.commands.CommandBuildContext);
+  public com.mojang.brigadier.CommandDispatcher<net.minecraft.commands.CommandSourceStack> getDispatcher();
+  public net.minecraft.commands.CommandBuildContext getBuildContext();
+}
+=================== FORGE 1.21.5-55.1.14
+net/minecraftforge/client/ConfigScreenHandler$ConfigScreenFactory.class
+net/minecraftforge/client/ConfigScreenHandler.class
+net/minecraftforge/client/event/AddGuiOverlayLayersEvent.class
+net/minecraftforge/client/event/RegisterClientCommandsEvent.class
+net/minecraftforge/client/event/RegisterKeyMappingsEvent.class
+net/minecraftforge/client/extensions/IForgeGuiGraphics.class
+net/minecraftforge/client/gui/overlay/
+net/minecraftforge/client/gui/overlay/ForgeLayeredDraw$LayerOffset.class
+net/minecraftforge/client/gui/overlay/ForgeLayeredDraw.class
+net/minecraftforge/event/TickEvent$ClientTickEvent$Post.class
+net/minecraftforge/event/TickEvent$ClientTickEvent$Pre.class
+net/minecraftforge/event/TickEvent$ClientTickEvent.class
+net/minecraftforge/event/TickEvent$LevelTickEvent$Post.class
+net/minecraftforge/event/TickEvent$LevelTickEvent$Pre.class
+net/minecraftforge/event/TickEvent$LevelTickEvent.class
+net/minecraftforge/event/TickEvent$Phase.class
+net/minecraftforge/event/TickEvent$PlayerTickEvent$Post.class
+net/minecraftforge/event/TickEvent$PlayerTickEvent$Pre.class
+net/minecraftforge/event/TickEvent$PlayerTickEvent.class
+net/minecraftforge/event/TickEvent$RenderTickEvent$Post.class
+net/minecraftforge/event/TickEvent$RenderTickEvent$Pre.class
+net/minecraftforge/event/TickEvent$RenderTickEvent.class
+net/minecraftforge/event/TickEvent$ServerTickEvent$Post.class
+net/minecraftforge/event/TickEvent$ServerTickEvent$Pre.class
+net/minecraftforge/event/TickEvent$ServerTickEvent.class
+net/minecraftforge/event/TickEvent$Type.class
+net/minecraftforge/event/TickEvent.class
+net/minecraftforge/event/network/CustomPayloadEvent$Context.class
+net/minecraftforge/event/network/CustomPayloadEvent.class
+net/minecraftforge/network/Channel.class
+net/minecraftforge/network/ChannelBuilder.class
+net/minecraftforge/network/EventNetworkChannel.class
+net/minecraftforge/network/NetworkRegistry.class
+net/minecraftforge/network/PacketDistributor.class
+--- net.minecraftforge.network.ChannelBuilder
+Compiled from "ChannelBuilder.java"
+public class net.minecraftforge.network.ChannelBuilder {
+  public static net.minecraftforge.network.ChannelBuilder named(java.lang.String);
+  public static net.minecraftforge.network.ChannelBuilder named(net.minecraft.resources.ResourceLocation);
+  public net.minecraftforge.network.ChannelBuilder networkProtocolVersion(int);
+  public net.minecraftforge.network.ChannelBuilder acceptedVersions(net.minecraftforge.network.Channel$VersionTest);
+  public net.minecraftforge.network.ChannelBuilder clientAcceptedVersions(net.minecraftforge.network.Channel$VersionTest);
+  public net.minecraftforge.network.ChannelBuilder serverAcceptedVersions(net.minecraftforge.network.Channel$VersionTest);
+  public net.minecraftforge.network.ChannelBuilder optional();
+  public net.minecraftforge.network.ChannelBuilder optionalServer();
+  public net.minecraftforge.network.ChannelBuilder optionalClient();
+  public <T> net.minecraftforge.network.ChannelBuilder attribute(io.netty.util.AttributeKey<T>, java.util.function.Supplier<T>);
+  public <T> net.minecraftforge.network.ChannelBuilder attribute(io.netty.util.AttributeKey<T>, java.util.function.Function<net.minecraft.network.Connection, T>);
+  public net.minecraftforge.network.ChannelBuilder connectionHandler(java.util.function.Consumer<net.minecraft.network.Connection>);
+  public net.minecraftforge.network.SimpleChannel simpleChannel();
+  public net.minecraftforge.network.EventNetworkChannel eventNetworkChannel();
+  public net.minecraftforge.network.payload.PayloadConnection<net.minecraft.network.protocol.common.custom.CustomPacketPayload> payloadChannel();
+  public <C> C channel(java.util.function.Function<net.minecraftforge.network.NetworkInstance, C>);
+}
+--- net.minecraftforge.network.EventNetworkChannel
+Compiled from "EventNetworkChannel.java"
+public class net.minecraftforge.network.EventNetworkChannel extends net.minecraftforge.network.Channel<net.minecraft.network.FriendlyByteBuf> {
+  net.minecraftforge.network.EventNetworkChannel(net.minecraftforge.network.NetworkInstance);
+  public <T extends net.minecraftforge.event.network.CustomPayloadEvent> net.minecraftforge.network.EventNetworkChannel addListener(java.util.function.Consumer<T>);
+  public net.minecraftforge.network.EventNetworkChannel registerObject(java.lang.Object);
+  public void unregisterObject(java.lang.Object);
+  public void encode(net.minecraft.network.FriendlyByteBuf, net.minecraft.network.FriendlyByteBuf);
+  public void encode(net.minecraft.network.FriendlyByteBuf, java.lang.Object);
+}
+--- net.minecraftforge.event.network.CustomPayloadEvent
+Compiled from "CustomPayloadEvent.java"
+public class net.minecraftforge.event.network.CustomPayloadEvent extends net.minecraftforge.eventbus.api.Event {
+  public net.minecraftforge.event.network.CustomPayloadEvent(net.minecraft.resources.ResourceLocation, java.lang.Object, net.minecraftforge.event.network.CustomPayloadEvent$Context, int);
+  public net.minecraft.resources.ResourceLocation getChannel();
+  public net.minecraft.network.FriendlyByteBuf getPayload();
+  public java.lang.Object getPayloadObject();
+  public int getLoginIndex();
+  public net.minecraftforge.event.network.CustomPayloadEvent$Context getSource();
+}
+--- net.minecraftforge.event.network.CustomPayloadEvent$Context
+Compiled from "CustomPayloadEvent.java"
+public class net.minecraftforge.event.network.CustomPayloadEvent$Context {
+  public net.minecraftforge.event.network.CustomPayloadEvent$Context(net.minecraft.network.Connection);
+  public boolean isClientSide();
+  public boolean isServerSide();
+  public net.minecraft.network.Connection getConnection();
+  public <T> io.netty.util.Attribute<T> attr(io.netty.util.AttributeKey<T>);
+  public void setPacketHandled(boolean);
+  public boolean getPacketHandled();
+  public java.util.concurrent.CompletableFuture<java.lang.Void> enqueueWork(java.lang.Runnable);
+  public net.minecraft.server.level.ServerPlayer getSender();
+}
+--- net.minecraftforge.client.event.AddGuiOverlayLayersEvent
+Compiled from "AddGuiOverlayLayersEvent.java"
+public final class net.minecraftforge.client.event.AddGuiOverlayLayersEvent extends net.minecraftforge.eventbus.api.Event implements net.minecraftforge.fml.event.IModBusEvent {
+  public net.minecraftforge.client.event.AddGuiOverlayLayersEvent(net.minecraftforge.client.gui.overlay.ForgeLayeredDraw);
+  public net.minecraftforge.client.gui.overlay.ForgeLayeredDraw getLayeredDraw();
+}
+--- net.minecraftforge.client.event.RegisterGuiOverlaysEvent
+Error: class not found: net.minecraftforge.client.event.RegisterGuiOverlaysEvent
+--- net.minecraftforge.client.ConfigScreenHandler$ConfigScreenFactory
+Compiled from "ConfigScreenHandler.java"
+public final class net.minecraftforge.client.ConfigScreenHandler$ConfigScreenFactory extends java.lang.Record implements net.minecraftforge.fml.IExtensionPoint<net.minecraftforge.client.ConfigScreenHandler$ConfigScreenFactory> {
+  public net.minecraftforge.client.ConfigScreenHandler$ConfigScreenFactory(java.util.function.Function<net.minecraft.client.gui.screens.Screen, net.minecraft.client.gui.screens.Screen>);
+  public net.minecraftforge.client.ConfigScreenHandler$ConfigScreenFactory(java.util.function.BiFunction<net.minecraft.client.Minecraft, net.minecraft.client.gui.screens.Screen, net.minecraft.client.gui.screens.Screen>);
+  public final java.lang.String toString();
+  public final int hashCode();
+  public final boolean equals(java.lang.Object);
+  public java.util.function.BiFunction<net.minecraft.client.Minecraft, net.minecraft.client.gui.screens.Screen, net.minecraft.client.gui.screens.Screen> screenFunction();
+}
+--- net.minecraftforge.event.TickEvent$ServerTickEvent
+Compiled from "TickEvent.java"
+public class net.minecraftforge.event.TickEvent$ServerTickEvent extends net.minecraftforge.event.TickEvent {
+  protected net.minecraftforge.event.TickEvent$ServerTickEvent(java.util.function.BooleanSupplier, net.minecraft.server.MinecraftServer, net.minecraftforge.event.TickEvent$Phase);
+  public boolean haveTime();
+  public net.minecraft.server.MinecraftServer getServer();
+}
+--- net.minecraftforge.event.TickEvent$ServerTickEvent$Post
+Compiled from "TickEvent.java"
+public final class net.minecraftforge.event.TickEvent$ServerTickEvent$Post extends net.minecraftforge.event.TickEvent$ServerTickEvent {
+  public net.minecraftforge.event.TickEvent$ServerTickEvent$Post(java.util.function.BooleanSupplier, net.minecraft.server.MinecraftServer);
+}
+--- net.minecraftforge.event.TickEvent$ClientTickEvent$Post
+Compiled from "TickEvent.java"
+public final class net.minecraftforge.event.TickEvent$ClientTickEvent$Post extends net.minecraftforge.event.TickEvent$ClientTickEvent {
+  public net.minecraftforge.event.TickEvent$ClientTickEvent$Post();
+}
+--- net.minecraftforge.client.event.RegisterKeyMappingsEvent
+Compiled from "RegisterKeyMappingsEvent.java"
+public final class net.minecraftforge.client.event.RegisterKeyMappingsEvent extends net.minecraftforge.eventbus.api.Event implements net.minecraftforge.fml.event.IModBusEvent {
+  public net.minecraftforge.client.event.RegisterKeyMappingsEvent(net.minecraft.client.Options);
+  public void register(net.minecraft.client.KeyMapping);
+}
+--- net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext
+Error: class not found: net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext
+--- net.minecraftforge.client.event.ScreenEvent$Init$Post
+Compiled from "ScreenEvent.java"
+public final class net.minecraftforge.client.event.ScreenEvent$Init$Post extends net.minecraftforge.client.event.ScreenEvent$Init {
+  public net.minecraftforge.client.event.ScreenEvent$Init$Post(net.minecraft.client.gui.screens.Screen, java.util.List<net.minecraft.client.gui.components.events.GuiEventListener>, java.util.function.Consumer<net.minecraft.client.gui.components.events.GuiEventListener>, java.util.function.Consumer<net.minecraft.client.gui.components.events.GuiEventListener>);
+}
+--- net.minecraftforge.event.entity.player.PlayerEvent$PlayerLoggedInEvent
+Compiled from "PlayerEvent.java"
+public final class net.minecraftforge.event.entity.player.PlayerEvent$PlayerLoggedInEvent extends net.minecraftforge.event.entity.player.PlayerEvent {
+  public net.minecraftforge.event.entity.player.PlayerEvent$PlayerLoggedInEvent(net.minecraft.world.entity.player.Player);
+  public net.minecraft.world.entity.LivingEntity getEntity();
+  public net.minecraft.world.entity.Entity getEntity();
+}
+--- net.minecraftforge.event.RegisterCommandsEvent
+Compiled from "RegisterCommandsEvent.java"
+public final class net.minecraftforge.event.RegisterCommandsEvent extends net.minecraftforge.eventbus.api.Event {
+  public net.minecraftforge.event.RegisterCommandsEvent(com.mojang.brigadier.CommandDispatcher<net.minecraft.commands.CommandSourceStack>, net.minecraft.commands.Commands$CommandSelection, net.minecraft.commands.CommandBuildContext);
+  public com.mojang.brigadier.CommandDispatcher<net.minecraft.commands.CommandSourceStack> getDispatcher();
+  public net.minecraft.commands.Commands$CommandSelection getCommandSelection();
+  public net.minecraft.commands.CommandBuildContext getBuildContext();
+}
+--- net.minecraftforge.event.server.ServerStartingEvent
+Compiled from "ServerStartingEvent.java"
+public final class net.minecraftforge.event.server.ServerStartingEvent extends net.minecraftforge.event.server.ServerLifecycleEvent {
+  public net.minecraftforge.event.server.ServerStartingEvent(net.minecraft.server.MinecraftServer);
+}
+--- net.minecraftforge.client.event.RegisterClientCommandsEvent
+Compiled from "RegisterClientCommandsEvent.java"
+public final class net.minecraftforge.client.event.RegisterClientCommandsEvent extends net.minecraftforge.eventbus.api.Event {
+  public net.minecraftforge.client.event.RegisterClientCommandsEvent(com.mojang.brigadier.CommandDispatcher<net.minecraft.commands.CommandSourceStack>, net.minecraft.commands.CommandBuildContext);
+  public com.mojang.brigadier.CommandDispatcher<net.minecraft.commands.CommandSourceStack> getDispatcher();
+  public net.minecraft.commands.CommandBuildContext getBuildContext();
+}
+=================== FORGE 1.21.8-58.1.22
+net/minecraftforge/client/ConfigScreenHandler$ConfigScreenFactory.class
+net/minecraftforge/client/ConfigScreenHandler.class
+net/minecraftforge/client/event/AddGuiOverlayLayersEvent.class
+net/minecraftforge/client/event/RegisterClientCommandsEvent.class
+net/minecraftforge/client/event/RegisterKeyMappingsEvent.class
+net/minecraftforge/client/extensions/IForgeGuiGraphics.class
+net/minecraftforge/client/gui/overlay/
+net/minecraftforge/client/gui/overlay/ForgeLayer.class
+net/minecraftforge/client/gui/overlay/ForgeLayeredDraw$LayerOffset.class
+net/minecraftforge/client/gui/overlay/ForgeLayeredDraw.class
+net/minecraftforge/event/TickEvent$ClientTickEvent$Post.class
+net/minecraftforge/event/TickEvent$ClientTickEvent$Pre.class
+net/minecraftforge/event/TickEvent$ClientTickEvent.class
+net/minecraftforge/event/TickEvent$LevelTickEvent$Post.class
+net/minecraftforge/event/TickEvent$LevelTickEvent$Pre.class
+net/minecraftforge/event/TickEvent$LevelTickEvent.class
+net/minecraftforge/event/TickEvent$Phase.class
+net/minecraftforge/event/TickEvent$PlayerTickEvent$Post.class
+net/minecraftforge/event/TickEvent$PlayerTickEvent$Pre.class
+net/minecraftforge/event/TickEvent$PlayerTickEvent.class
+net/minecraftforge/event/TickEvent$RenderTickEvent$Post.class
+net/minecraftforge/event/TickEvent$RenderTickEvent$Pre.class
+net/minecraftforge/event/TickEvent$RenderTickEvent.class
+net/minecraftforge/event/TickEvent$ServerTickEvent$Post.class
+net/minecraftforge/event/TickEvent$ServerTickEvent$Pre.class
+net/minecraftforge/event/TickEvent$ServerTickEvent.class
+net/minecraftforge/event/TickEvent$Type.class
+net/minecraftforge/event/TickEvent.class
+net/minecraftforge/event/network/CustomPayloadEvent$Context.class
+net/minecraftforge/event/network/CustomPayloadEvent.class
+net/minecraftforge/network/Channel.class
+net/minecraftforge/network/ChannelBuilder.class
+net/minecraftforge/network/EventNetworkChannel.class
+net/minecraftforge/network/NetworkRegistry.class
+net/minecraftforge/network/PacketDistributor.class
+--- net.minecraftforge.network.ChannelBuilder
+Compiled from "ChannelBuilder.java"
+public class net.minecraftforge.network.ChannelBuilder {
+  public static net.minecraftforge.network.ChannelBuilder named(java.lang.String);
+  public static net.minecraftforge.network.ChannelBuilder named(net.minecraft.resources.ResourceLocation);
+  public net.minecraftforge.network.ChannelBuilder networkProtocolVersion(int);
+  public net.minecraftforge.network.ChannelBuilder acceptedVersions(net.minecraftforge.network.Channel$VersionTest);
+  public net.minecraftforge.network.ChannelBuilder clientAcceptedVersions(net.minecraftforge.network.Channel$VersionTest);
+  public net.minecraftforge.network.ChannelBuilder serverAcceptedVersions(net.minecraftforge.network.Channel$VersionTest);
+  public net.minecraftforge.network.ChannelBuilder optional();
+  public net.minecraftforge.network.ChannelBuilder optionalServer();
+  public net.minecraftforge.network.ChannelBuilder optionalClient();
+  public <T> net.minecraftforge.network.ChannelBuilder attribute(io.netty.util.AttributeKey<T>, java.util.function.Supplier<T>);
+  public <T> net.minecraftforge.network.ChannelBuilder attribute(io.netty.util.AttributeKey<T>, java.util.function.Function<net.minecraft.network.Connection, T>);
+  public net.minecraftforge.network.ChannelBuilder connectionHandler(java.util.function.Consumer<net.minecraft.network.Connection>);
+  public net.minecraftforge.network.SimpleChannel simpleChannel();
+  public net.minecraftforge.network.EventNetworkChannel eventNetworkChannel();
+  public net.minecraftforge.network.payload.PayloadConnection<net.minecraft.network.protocol.common.custom.CustomPacketPayload> payloadChannel();
+  public <C> C channel(java.util.function.Function<net.minecraftforge.network.NetworkInstance, C>);
+}
+--- net.minecraftforge.network.EventNetworkChannel
+Compiled from "EventNetworkChannel.java"
+public class net.minecraftforge.network.EventNetworkChannel extends net.minecraftforge.network.Channel<net.minecraft.network.FriendlyByteBuf> {
+  net.minecraftforge.network.EventNetworkChannel(net.minecraftforge.network.NetworkInstance);
+  public net.minecraftforge.network.EventNetworkChannel addListener(java.util.function.Consumer<net.minecraftforge.event.network.CustomPayloadEvent>);
+  public void encode(net.minecraft.network.FriendlyByteBuf, net.minecraft.network.FriendlyByteBuf);
+  public void encode(net.minecraft.network.FriendlyByteBuf, java.lang.Object);
+}
+--- net.minecraftforge.event.network.CustomPayloadEvent
+Compiled from "CustomPayloadEvent.java"
+public final class net.minecraftforge.event.network.CustomPayloadEvent extends java.lang.Record implements net.minecraftforge.eventbus.api.event.RecordEvent {
+  public static final net.minecraftforge.eventbus.api.bus.EventBus<net.minecraftforge.event.network.CustomPayloadEvent> BUS;
+  public net.minecraftforge.event.network.CustomPayloadEvent(net.minecraft.resources.ResourceLocation, java.lang.Object, net.minecraftforge.event.network.CustomPayloadEvent$Context, int);
+  public net.minecraftforge.event.network.CustomPayloadEvent(net.minecraft.resources.ResourceLocation, java.lang.Object, net.minecraft.network.FriendlyByteBuf, net.minecraftforge.event.network.CustomPayloadEvent$Context, int);
+  public final java.lang.String toString();
+  public final int hashCode();
+  public final boolean equals(java.lang.Object);
+  public net.minecraft.resources.ResourceLocation getChannel();
+  public java.lang.Object getPayloadObject();
+  public net.minecraft.network.FriendlyByteBuf getPayload();
+  public net.minecraftforge.event.network.CustomPayloadEvent$Context getSource();
+  public int getLoginIndex();
+  static {};
+}
+--- net.minecraftforge.event.network.CustomPayloadEvent$Context
+Compiled from "CustomPayloadEvent.java"
+public class net.minecraftforge.event.network.CustomPayloadEvent$Context {
+  public net.minecraftforge.event.network.CustomPayloadEvent$Context(net.minecraft.network.Connection);
+  public boolean isClientSide();
+  public boolean isServerSide();
+  public net.minecraft.network.Connection getConnection();
+  public <T> io.netty.util.Attribute<T> attr(io.netty.util.AttributeKey<T>);
+  public void setPacketHandled(boolean);
+  public boolean getPacketHandled();
+  public java.util.concurrent.CompletableFuture<java.lang.Void> enqueueWork(java.lang.Runnable);
+  public net.minecraft.server.level.ServerPlayer getSender();
+}
+--- net.minecraftforge.client.event.AddGuiOverlayLayersEvent
+Compiled from "AddGuiOverlayLayersEvent.java"
+public final class net.minecraftforge.client.event.AddGuiOverlayLayersEvent extends java.lang.Record implements net.minecraftforge.fml.event.IModBusEvent,net.minecraftforge.eventbus.api.event.characteristic.SelfDestructing,net.minecraftforge.eventbus.api.event.RecordEvent {
+  public net.minecraftforge.client.event.AddGuiOverlayLayersEvent(net.minecraftforge.client.gui.overlay.ForgeLayeredDraw);
+  public static net.minecraftforge.eventbus.api.bus.EventBus<net.minecraftforge.client.event.AddGuiOverlayLayersEvent> getBus(net.minecraftforge.eventbus.api.bus.BusGroup);
+  public final java.lang.String toString();
+  public final int hashCode();
+  public final boolean equals(java.lang.Object);
+  public net.minecraftforge.client.gui.overlay.ForgeLayeredDraw getLayeredDraw();
+}
+--- net.minecraftforge.client.event.RegisterGuiOverlaysEvent
+Error: class not found: net.minecraftforge.client.event.RegisterGuiOverlaysEvent
+--- net.minecraftforge.client.ConfigScreenHandler$ConfigScreenFactory
+Compiled from "ConfigScreenHandler.java"
+public final class net.minecraftforge.client.ConfigScreenHandler$ConfigScreenFactory extends java.lang.Record implements net.minecraftforge.fml.IExtensionPoint<net.minecraftforge.client.ConfigScreenHandler$ConfigScreenFactory> {
+  public net.minecraftforge.client.ConfigScreenHandler$ConfigScreenFactory(java.util.function.Function<net.minecraft.client.gui.screens.Screen, net.minecraft.client.gui.screens.Screen>);
+  public net.minecraftforge.client.ConfigScreenHandler$ConfigScreenFactory(java.util.function.BiFunction<net.minecraft.client.Minecraft, net.minecraft.client.gui.screens.Screen, net.minecraft.client.gui.screens.Screen>);
+  public final java.lang.String toString();
+  public final int hashCode();
+  public final boolean equals(java.lang.Object);
+  public java.util.function.BiFunction<net.minecraft.client.Minecraft, net.minecraft.client.gui.screens.Screen, net.minecraft.client.gui.screens.Screen> screenFunction();
+}
+--- net.minecraftforge.event.TickEvent$ServerTickEvent
+Compiled from "TickEvent.java"
+public class net.minecraftforge.event.TickEvent$ServerTickEvent extends net.minecraftforge.event.TickEvent {
+  public static final net.minecraftforge.eventbus.api.bus.EventBus<net.minecraftforge.event.TickEvent$ServerTickEvent> BUS;
+  protected net.minecraftforge.event.TickEvent$ServerTickEvent(java.util.function.BooleanSupplier, net.minecraft.server.MinecraftServer, net.minecraftforge.event.TickEvent$Phase);
+  public boolean haveTime();
+  public net.minecraft.server.MinecraftServer getServer();
+  static {};
+}
+--- net.minecraftforge.event.TickEvent$ServerTickEvent$Post
+Compiled from "TickEvent.java"
+public final class net.minecraftforge.event.TickEvent$ServerTickEvent$Post extends net.minecraftforge.event.TickEvent$ServerTickEvent {
+  public static final net.minecraftforge.eventbus.api.bus.EventBus<net.minecraftforge.event.TickEvent$ServerTickEvent$Post> BUS;
+  public net.minecraftforge.event.TickEvent$ServerTickEvent$Post(java.util.function.BooleanSupplier, net.minecraft.server.MinecraftServer);
+  static {};
+}
+--- net.minecraftforge.event.TickEvent$ClientTickEvent$Post
+Compiled from "TickEvent.java"
+public final class net.minecraftforge.event.TickEvent$ClientTickEvent$Post extends net.minecraftforge.event.TickEvent$ClientTickEvent {
+  public static final net.minecraftforge.eventbus.api.bus.EventBus<net.minecraftforge.event.TickEvent$ClientTickEvent$Post> BUS;
+  public static final net.minecraftforge.event.TickEvent$ClientTickEvent$Post INSTANCE;
+  public net.minecraftforge.event.TickEvent$ClientTickEvent$Post();
+  static {};
+}
+--- net.minecraftforge.client.event.RegisterKeyMappingsEvent
+Compiled from "RegisterKeyMappingsEvent.java"
+public final class net.minecraftforge.client.event.RegisterKeyMappingsEvent implements net.minecraftforge.eventbus.api.event.characteristic.SelfDestructing,net.minecraftforge.fml.event.IModBusEvent {
+  public static net.minecraftforge.eventbus.api.bus.EventBus<net.minecraftforge.client.event.RegisterKeyMappingsEvent> getBus(net.minecraftforge.eventbus.api.bus.BusGroup);
+  public net.minecraftforge.client.event.RegisterKeyMappingsEvent(net.minecraft.client.Options);
+  public void register(net.minecraft.client.KeyMapping);
+}
+--- net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext
+Error: class not found: net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext
+--- net.minecraftforge.client.event.ScreenEvent$Init$Post
+Compiled from "ScreenEvent.java"
+public final class net.minecraftforge.client.event.ScreenEvent$Init$Post extends net.minecraftforge.client.event.ScreenEvent$Init {
+  public static final net.minecraftforge.eventbus.api.bus.EventBus<net.minecraftforge.client.event.ScreenEvent$Init$Post> BUS;
+  public net.minecraftforge.client.event.ScreenEvent$Init$Post(net.minecraft.client.gui.screens.Screen, java.util.List<net.minecraft.client.gui.components.events.GuiEventListener>, java.util.function.Consumer<net.minecraft.client.gui.components.events.GuiEventListener>, java.util.function.Consumer<net.minecraft.client.gui.components.events.GuiEventListener>);
+  static {};
+}
+--- net.minecraftforge.event.entity.player.PlayerEvent$PlayerLoggedInEvent
+Compiled from "PlayerEvent.java"
+public final class net.minecraftforge.event.entity.player.PlayerEvent$PlayerLoggedInEvent extends net.minecraftforge.event.entity.player.PlayerEvent {
+  public static final net.minecraftforge.eventbus.api.bus.EventBus<net.minecraftforge.event.entity.player.PlayerEvent$PlayerLoggedInEvent> BUS;
+  public net.minecraftforge.event.entity.player.PlayerEvent$PlayerLoggedInEvent(net.minecraft.world.entity.player.Player);
+  public net.minecraft.world.entity.LivingEntity getEntity();
+  public net.minecraft.world.entity.Entity getEntity();
+  static {};
+}
+--- net.minecraftforge.event.RegisterCommandsEvent
+Compiled from "RegisterCommandsEvent.java"
+public final class net.minecraftforge.event.RegisterCommandsEvent extends java.lang.Record implements net.minecraftforge.eventbus.api.event.RecordEvent {
+  public static final net.minecraftforge.eventbus.api.bus.EventBus<net.minecraftforge.event.RegisterCommandsEvent> BUS;
+  public net.minecraftforge.event.RegisterCommandsEvent(com.mojang.brigadier.CommandDispatcher<net.minecraft.commands.CommandSourceStack>, net.minecraft.commands.Commands$CommandSelection, net.minecraft.commands.CommandBuildContext);
+  public final java.lang.String toString();
+  public final int hashCode();
+  public final boolean equals(java.lang.Object);
+  public com.mojang.brigadier.CommandDispatcher<net.minecraft.commands.CommandSourceStack> getDispatcher();
+  public net.minecraft.commands.Commands$CommandSelection getCommandSelection();
+  public net.minecraft.commands.CommandBuildContext getBuildContext();
+  static {};
+}
+--- net.minecraftforge.event.server.ServerStartingEvent
+Compiled from "ServerStartingEvent.java"
+public final class net.minecraftforge.event.server.ServerStartingEvent extends net.minecraftforge.event.server.ServerLifecycleEvent {
+  public static final net.minecraftforge.eventbus.api.bus.EventBus<net.minecraftforge.event.server.ServerStartingEvent> BUS;
+  public net.minecraftforge.event.server.ServerStartingEvent(net.minecraft.server.MinecraftServer);
+  static {};
+}
+--- net.minecraftforge.client.event.RegisterClientCommandsEvent
+Compiled from "RegisterClientCommandsEvent.java"
+public final class net.minecraftforge.client.event.RegisterClientCommandsEvent extends java.lang.Record implements net.minecraftforge.eventbus.api.event.RecordEvent {
+  public static final net.minecraftforge.eventbus.api.bus.EventBus<net.minecraftforge.client.event.RegisterClientCommandsEvent> BUS;
+  public net.minecraftforge.client.event.RegisterClientCommandsEvent(com.mojang.brigadier.CommandDispatcher<net.minecraft.commands.CommandSourceStack>, net.minecraft.commands.CommandBuildContext);
+  public final java.lang.String toString();
+  public final int hashCode();
+  public final boolean equals(java.lang.Object);
+  public com.mojang.brigadier.CommandDispatcher<net.minecraft.commands.CommandSourceStack> getDispatcher();
+  public net.minecraft.commands.CommandBuildContext getBuildContext();
+  static {};
+}
+=================== FORGE 1.21.11-61.2.1
+net/minecraftforge/client/ConfigScreenHandler$ConfigScreenFactory.class
+net/minecraftforge/client/ConfigScreenHandler.class
+net/minecraftforge/client/event/AddGuiOverlayLayersEvent.class
+net/minecraftforge/client/event/RegisterClientCommandsEvent.class
+net/minecraftforge/client/event/RegisterKeyMappingsEvent.class
+net/minecraftforge/client/extensions/IForgeGuiGraphics.class
+net/minecraftforge/client/gui/overlay/
+net/minecraftforge/client/gui/overlay/ForgeLayer.class
+net/minecraftforge/client/gui/overlay/ForgeLayeredDraw$LayerOffset.class
+net/minecraftforge/client/gui/overlay/ForgeLayeredDraw.class
+net/minecraftforge/event/TickEvent$ClientTickEvent$Post.class
+net/minecraftforge/event/TickEvent$ClientTickEvent$Pre.class
+net/minecraftforge/event/TickEvent$ClientTickEvent.class
+net/minecraftforge/event/TickEvent$LevelTickEvent$Post.class
+net/minecraftforge/event/TickEvent$LevelTickEvent$Pre.class
+net/minecraftforge/event/TickEvent$LevelTickEvent.class
+net/minecraftforge/event/TickEvent$PlayerTickEvent$Post.class
+net/minecraftforge/event/TickEvent$PlayerTickEvent$Pre.class
+net/minecraftforge/event/TickEvent$PlayerTickEvent.class
+net/minecraftforge/event/TickEvent$RenderTickEvent$Post.class
+net/minecraftforge/event/TickEvent$RenderTickEvent$Pre.class
+net/minecraftforge/event/TickEvent$RenderTickEvent.class
+net/minecraftforge/event/TickEvent$ServerTickEvent$Post.class
+net/minecraftforge/event/TickEvent$ServerTickEvent$Pre.class
+net/minecraftforge/event/TickEvent$ServerTickEvent.class
+net/minecraftforge/event/TickEvent.class
+net/minecraftforge/event/network/CustomPayloadEvent$Context.class
+net/minecraftforge/event/network/CustomPayloadEvent.class
+net/minecraftforge/network/Channel.class
+net/minecraftforge/network/ChannelBuilder.class
+net/minecraftforge/network/EventNetworkChannel.class
+net/minecraftforge/network/NetworkRegistry.class
+net/minecraftforge/network/PacketDistributor.class
+--- net.minecraftforge.network.ChannelBuilder
+Compiled from "ChannelBuilder.java"
+public class net.minecraftforge.network.ChannelBuilder {
+  public static net.minecraftforge.network.ChannelBuilder named(java.lang.String);
+  public static net.minecraftforge.network.ChannelBuilder named(net.minecraft.resources.Identifier);
+  public net.minecraftforge.network.ChannelBuilder networkProtocolVersion(int);
+  public net.minecraftforge.network.ChannelBuilder acceptedVersions(net.minecraftforge.network.Channel$VersionTest);
+  public net.minecraftforge.network.ChannelBuilder clientAcceptedVersions(net.minecraftforge.network.Channel$VersionTest);
+  public net.minecraftforge.network.ChannelBuilder serverAcceptedVersions(net.minecraftforge.network.Channel$VersionTest);
+  public net.minecraftforge.network.ChannelBuilder optional();
+  public net.minecraftforge.network.ChannelBuilder optionalServer();
+  public net.minecraftforge.network.ChannelBuilder optionalClient();
+  public <T> net.minecraftforge.network.ChannelBuilder attribute(io.netty.util.AttributeKey<T>, java.util.function.Supplier<T>);
+  public <T> net.minecraftforge.network.ChannelBuilder attribute(io.netty.util.AttributeKey<T>, java.util.function.Function<net.minecraft.network.Connection, T>);
+  public net.minecraftforge.network.ChannelBuilder connectionHandler(java.util.function.Consumer<net.minecraft.network.Connection>);
+  public net.minecraftforge.network.SimpleChannel simpleChannel();
+  public net.minecraftforge.network.EventNetworkChannel eventNetworkChannel();
+  public net.minecraftforge.network.payload.PayloadConnection<net.minecraft.network.protocol.common.custom.CustomPacketPayload> payloadChannel();
+  public <C> C channel(java.util.function.Function<net.minecraftforge.network.NetworkInstance, C>);
+}
+--- net.minecraftforge.network.EventNetworkChannel
+Compiled from "EventNetworkChannel.java"
+public class net.minecraftforge.network.EventNetworkChannel extends net.minecraftforge.network.Channel<net.minecraft.network.FriendlyByteBuf> {
+  net.minecraftforge.network.EventNetworkChannel(net.minecraftforge.network.NetworkInstance);
+  public net.minecraftforge.network.EventNetworkChannel addListener(java.util.function.Consumer<net.minecraftforge.event.network.CustomPayloadEvent>);
+  public void encode(net.minecraft.network.FriendlyByteBuf, net.minecraft.network.FriendlyByteBuf);
+  public void encode(net.minecraft.network.FriendlyByteBuf, java.lang.Object);
+}
+--- net.minecraftforge.event.network.CustomPayloadEvent
+Compiled from "CustomPayloadEvent.java"
+public final class net.minecraftforge.event.network.CustomPayloadEvent extends java.lang.Record implements net.minecraftforge.eventbus.api.event.RecordEvent {
+  public static final net.minecraftforge.eventbus.api.bus.EventBus<net.minecraftforge.event.network.CustomPayloadEvent> BUS;
+  public net.minecraftforge.event.network.CustomPayloadEvent(net.minecraft.resources.Identifier, java.lang.Object, net.minecraftforge.event.network.CustomPayloadEvent$Context, int);
+  public net.minecraftforge.event.network.CustomPayloadEvent(net.minecraft.resources.Identifier, java.lang.Object, net.minecraft.network.FriendlyByteBuf, net.minecraftforge.event.network.CustomPayloadEvent$Context, int);
+  public final java.lang.String toString();
+  public final int hashCode();
+  public final boolean equals(java.lang.Object);
+  public net.minecraft.resources.Identifier getChannel();
+  public java.lang.Object getPayloadObject();
+  public net.minecraft.network.FriendlyByteBuf getPayload();
+  public net.minecraftforge.event.network.CustomPayloadEvent$Context getSource();
+  public int getLoginIndex();
+  static {};
+}
+--- net.minecraftforge.event.network.CustomPayloadEvent$Context
+Compiled from "CustomPayloadEvent.java"
+public class net.minecraftforge.event.network.CustomPayloadEvent$Context {
+  public net.minecraftforge.event.network.CustomPayloadEvent$Context(net.minecraft.network.Connection);
+  public boolean isClientSide();
+  public boolean isServerSide();
+  public net.minecraft.network.Connection getConnection();
+  public <T> io.netty.util.Attribute<T> attr(io.netty.util.AttributeKey<T>);
+  public void setPacketHandled(boolean);
+  public boolean getPacketHandled();
+  public java.util.concurrent.CompletableFuture<java.lang.Void> enqueueWork(java.lang.Runnable);
+  public net.minecraft.server.level.ServerPlayer getSender();
+}
+--- net.minecraftforge.client.event.AddGuiOverlayLayersEvent
+Compiled from "AddGuiOverlayLayersEvent.java"
+public final class net.minecraftforge.client.event.AddGuiOverlayLayersEvent extends java.lang.Record implements net.minecraftforge.eventbus.api.event.characteristic.SelfDestructing,net.minecraftforge.eventbus.api.event.RecordEvent {
+  public static final net.minecraftforge.eventbus.api.bus.EventBus<net.minecraftforge.client.event.AddGuiOverlayLayersEvent> BUS;
+  public net.minecraftforge.client.event.AddGuiOverlayLayersEvent(net.minecraftforge.client.gui.overlay.ForgeLayeredDraw);
+  public static net.minecraftforge.eventbus.api.bus.EventBus<net.minecraftforge.client.event.AddGuiOverlayLayersEvent> getBus(net.minecraftforge.eventbus.api.bus.BusGroup);
+  public final java.lang.String toString();
+  public final int hashCode();
+  public final boolean equals(java.lang.Object);
+  public net.minecraftforge.client.gui.overlay.ForgeLayeredDraw getLayeredDraw();
+  static {};
+}
+--- net.minecraftforge.client.event.RegisterGuiOverlaysEvent
+Error: class not found: net.minecraftforge.client.event.RegisterGuiOverlaysEvent
+--- net.minecraftforge.client.ConfigScreenHandler$ConfigScreenFactory
+Compiled from "ConfigScreenHandler.java"
+public final class net.minecraftforge.client.ConfigScreenHandler$ConfigScreenFactory extends java.lang.Record implements net.minecraftforge.fml.IExtensionPoint<net.minecraftforge.client.ConfigScreenHandler$ConfigScreenFactory> {
+  public net.minecraftforge.client.ConfigScreenHandler$ConfigScreenFactory(java.util.function.Function<net.minecraft.client.gui.screens.Screen, net.minecraft.client.gui.screens.Screen>);
+  public net.minecraftforge.client.ConfigScreenHandler$ConfigScreenFactory(java.util.function.BiFunction<net.minecraft.client.Minecraft, net.minecraft.client.gui.screens.Screen, net.minecraft.client.gui.screens.Screen>);
+  public final java.lang.String toString();
+  public final int hashCode();
+  public final boolean equals(java.lang.Object);
+  public java.util.function.BiFunction<net.minecraft.client.Minecraft, net.minecraft.client.gui.screens.Screen, net.minecraft.client.gui.screens.Screen> screenFunction();
+}
+--- net.minecraftforge.event.TickEvent$ServerTickEvent
+Compiled from "TickEvent.java"
+public interface net.minecraftforge.event.TickEvent$ServerTickEvent extends net.minecraftforge.event.TickEvent {
+  public abstract java.util.function.BooleanSupplier haveTimeSupplier();
+  public default boolean haveTime();
+  public abstract net.minecraft.server.MinecraftServer server();
+}
+--- net.minecraftforge.event.TickEvent$ServerTickEvent$Post
+Compiled from "TickEvent.java"
+public final class net.minecraftforge.event.TickEvent$ServerTickEvent$Post extends java.lang.Record implements net.minecraftforge.eventbus.api.event.RecordEvent,net.minecraftforge.event.TickEvent$ServerTickEvent {
+  public static final net.minecraftforge.eventbus.api.bus.EventBus<net.minecraftforge.event.TickEvent$ServerTickEvent$Post> BUS;
+  public net.minecraftforge.event.TickEvent$ServerTickEvent$Post(java.util.function.BooleanSupplier, net.minecraft.server.MinecraftServer);
+  public final java.lang.String toString();
+  public final int hashCode();
+  public final boolean equals(java.lang.Object);
+  public java.util.function.BooleanSupplier haveTimeSupplier();
+  public net.minecraft.server.MinecraftServer server();
+  static {};
+}
+--- net.minecraftforge.event.TickEvent$ClientTickEvent$Post
+Compiled from "TickEvent.java"
+public final class net.minecraftforge.event.TickEvent$ClientTickEvent$Post extends java.lang.Record implements net.minecraftforge.eventbus.api.event.RecordEvent,net.minecraftforge.event.TickEvent$ClientTickEvent {
+  public static final net.minecraftforge.eventbus.api.bus.EventBus<net.minecraftforge.event.TickEvent$ClientTickEvent$Post> BUS;
+  public static final net.minecraftforge.event.TickEvent$ClientTickEvent$Post INSTANCE;
+  public net.minecraftforge.event.TickEvent$ClientTickEvent$Post();
+  public final java.lang.String toString();
+  public final int hashCode();
+  public final boolean equals(java.lang.Object);
+  static {};
+}
+--- net.minecraftforge.client.event.RegisterKeyMappingsEvent
+Compiled from "RegisterKeyMappingsEvent.java"
+public final class net.minecraftforge.client.event.RegisterKeyMappingsEvent extends net.minecraftforge.eventbus.api.event.MutableEvent implements net.minecraftforge.eventbus.api.event.characteristic.SelfDestructing {
+  public static final net.minecraftforge.eventbus.api.bus.EventBus<net.minecraftforge.client.event.RegisterKeyMappingsEvent> BUS;
+  public static net.minecraftforge.eventbus.api.bus.EventBus<net.minecraftforge.client.event.RegisterKeyMappingsEvent> getBus(net.minecraftforge.eventbus.api.bus.BusGroup);
+  public net.minecraftforge.client.event.RegisterKeyMappingsEvent(net.minecraft.client.Options);
+  public void register(net.minecraft.client.KeyMapping);
+  static {};
+}
+--- net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext
+Error: class not found: net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext
+--- net.minecraftforge.client.event.ScreenEvent$Init$Post
+Compiled from "ScreenEvent.java"
+public final class net.minecraftforge.client.event.ScreenEvent$Init$Post extends net.minecraftforge.client.event.ScreenEvent$Init {
+  public static final net.minecraftforge.eventbus.api.bus.EventBus<net.minecraftforge.client.event.ScreenEvent$Init$Post> BUS;
+  public net.minecraftforge.client.event.ScreenEvent$Init$Post(net.minecraft.client.gui.screens.Screen, java.util.List<net.minecraft.client.gui.components.events.GuiEventListener>, java.util.function.Consumer<net.minecraft.client.gui.components.events.GuiEventListener>, java.util.function.Consumer<net.minecraft.client.gui.components.events.GuiEventListener>);
+  static {};
+}
+--- net.minecraftforge.event.entity.player.PlayerEvent$PlayerLoggedInEvent
+Compiled from "PlayerEvent.java"
+public final class net.minecraftforge.event.entity.player.PlayerEvent$PlayerLoggedInEvent extends java.lang.Record implements net.minecraftforge.eventbus.api.event.RecordEvent,net.minecraftforge.event.entity.player.PlayerEvent {
+  public static final net.minecraftforge.eventbus.api.bus.EventBus<net.minecraftforge.event.entity.player.PlayerEvent$PlayerLoggedInEvent> BUS;
+  public net.minecraftforge.event.entity.player.PlayerEvent$PlayerLoggedInEvent(net.minecraft.world.entity.player.Player);
+  public final java.lang.String toString();
+  public final int hashCode();
+  public final boolean equals(java.lang.Object);
+  public net.minecraft.world.entity.player.Player getEntity();
+  public net.minecraft.world.entity.LivingEntity getEntity();
+  public net.minecraft.world.entity.Entity getEntity();
+  static {};
+}
+--- net.minecraftforge.event.RegisterCommandsEvent
+Compiled from "RegisterCommandsEvent.java"
+public final class net.minecraftforge.event.RegisterCommandsEvent extends java.lang.Record implements net.minecraftforge.eventbus.api.event.RecordEvent {
+  public static final net.minecraftforge.eventbus.api.bus.EventBus<net.minecraftforge.event.RegisterCommandsEvent> BUS;
+  public net.minecraftforge.event.RegisterCommandsEvent(com.mojang.brigadier.CommandDispatcher<net.minecraft.commands.CommandSourceStack>, net.minecraft.commands.Commands$CommandSelection, net.minecraft.commands.CommandBuildContext);
+  public final java.lang.String toString();
+  public final int hashCode();
+  public final boolean equals(java.lang.Object);
+  public com.mojang.brigadier.CommandDispatcher<net.minecraft.commands.CommandSourceStack> getDispatcher();
+  public net.minecraft.commands.Commands$CommandSelection getCommandSelection();
+  public net.minecraft.commands.CommandBuildContext getBuildContext();
+  static {};
+}
+--- net.minecraftforge.event.server.ServerStartingEvent
+Compiled from "ServerStartingEvent.java"
+public final class net.minecraftforge.event.server.ServerStartingEvent extends java.lang.Record implements net.minecraftforge.event.server.ServerLifecycleEvent {
+  public static final net.minecraftforge.eventbus.api.bus.EventBus<net.minecraftforge.event.server.ServerStartingEvent> BUS;
+  public net.minecraftforge.event.server.ServerStartingEvent(net.minecraft.server.MinecraftServer);
+  public final java.lang.String toString();
+  public final int hashCode();
+  public final boolean equals(java.lang.Object);
+  public net.minecraft.server.MinecraftServer getServer();
+  static {};
+}
+--- net.minecraftforge.client.event.RegisterClientCommandsEvent
+Compiled from "RegisterClientCommandsEvent.java"
+public final class net.minecraftforge.client.event.RegisterClientCommandsEvent extends java.lang.Record implements net.minecraftforge.eventbus.api.event.RecordEvent {
+  public static final net.minecraftforge.eventbus.api.bus.EventBus<net.minecraftforge.client.event.RegisterClientCommandsEvent> BUS;
+  public net.minecraftforge.client.event.RegisterClientCommandsEvent(com.mojang.brigadier.CommandDispatcher<net.minecraft.commands.CommandSourceStack>, net.minecraft.commands.CommandBuildContext);
+  public final java.lang.String toString();
+  public final int hashCode();
+  public final boolean equals(java.lang.Object);
+  public com.mojang.brigadier.CommandDispatcher<net.minecraft.commands.CommandSourceStack> getDispatcher();
+  public net.minecraft.commands.CommandBuildContext getBuildContext();
+  static {};
+}
+=================== FORGE 26.3-66.0.6
+net/minecraftforge/client/ConfigScreenHandler$ConfigScreenFactory.class
+net/minecraftforge/client/ConfigScreenHandler.class
+net/minecraftforge/client/event/AddGuiOverlayLayersEvent.class
+net/minecraftforge/client/event/RegisterClientCommandsEvent.class
+net/minecraftforge/client/event/RegisterKeyMappingsEvent.class
+net/minecraftforge/client/extensions/IForgeGuiGraphicsExtractor.class
+net/minecraftforge/client/gui/overlay/
+net/minecraftforge/client/gui/overlay/ForgeLayer.class
+net/minecraftforge/client/gui/overlay/ForgeLayerInstance.class
+net/minecraftforge/client/gui/overlay/ForgeLayeredDraw$LayerOffset.class
+net/minecraftforge/client/gui/overlay/ForgeLayeredDraw.class
+net/minecraftforge/event/TickEvent$ClientTickEvent$Post.class
+net/minecraftforge/event/TickEvent$ClientTickEvent$Pre.class
+net/minecraftforge/event/TickEvent$ClientTickEvent.class
+net/minecraftforge/event/TickEvent$LevelTickEvent$Post.class
+net/minecraftforge/event/TickEvent$LevelTickEvent$Pre.class
+net/minecraftforge/event/TickEvent$LevelTickEvent.class
+net/minecraftforge/event/TickEvent$PlayerTickEvent$Post.class
+net/minecraftforge/event/TickEvent$PlayerTickEvent$Pre.class
+net/minecraftforge/event/TickEvent$PlayerTickEvent.class
+net/minecraftforge/event/TickEvent$RenderTickEvent$Post.class
+net/minecraftforge/event/TickEvent$RenderTickEvent$Pre.class
+net/minecraftforge/event/TickEvent$RenderTickEvent.class
+net/minecraftforge/event/TickEvent$ServerTickEvent$Post.class
+net/minecraftforge/event/TickEvent$ServerTickEvent$Pre.class
+net/minecraftforge/event/TickEvent$ServerTickEvent.class
+net/minecraftforge/event/TickEvent.class
+net/minecraftforge/event/network/CustomPayloadEvent$Context.class
+net/minecraftforge/event/network/CustomPayloadEvent.class
+net/minecraftforge/network/Channel.class
+net/minecraftforge/network/ChannelBuilder.class
+net/minecraftforge/network/EventNetworkChannel.class
+net/minecraftforge/network/NetworkRegistry.class
+net/minecraftforge/network/PacketDistributor.class
+--- net.minecraftforge.network.ChannelBuilder
+Compiled from "ChannelBuilder.java"
+public class net.minecraftforge.network.ChannelBuilder {
+  public static net.minecraftforge.network.ChannelBuilder named(java.lang.String);
+  public static net.minecraftforge.network.ChannelBuilder named(net.minecraft.resources.Identifier);
+  public net.minecraftforge.network.ChannelBuilder networkProtocolVersion(int);
+  public net.minecraftforge.network.ChannelBuilder acceptedVersions(net.minecraftforge.network.Channel$VersionTest);
+  public net.minecraftforge.network.ChannelBuilder clientAcceptedVersions(net.minecraftforge.network.Channel$VersionTest);
+  public net.minecraftforge.network.ChannelBuilder serverAcceptedVersions(net.minecraftforge.network.Channel$VersionTest);
+  public net.minecraftforge.network.ChannelBuilder optional();
+  public net.minecraftforge.network.ChannelBuilder optionalServer();
+  public net.minecraftforge.network.ChannelBuilder optionalClient();
+  public <T> net.minecraftforge.network.ChannelBuilder attribute(io.netty.util.AttributeKey<T>, java.util.function.Supplier<T>);
+  public <T> net.minecraftforge.network.ChannelBuilder attribute(io.netty.util.AttributeKey<T>, java.util.function.Function<net.minecraft.network.Connection, T>);
+  public net.minecraftforge.network.ChannelBuilder connectionHandler(java.util.function.Consumer<net.minecraft.network.Connection>);
+  public net.minecraftforge.network.SimpleChannel simpleChannel();
+  public net.minecraftforge.network.EventNetworkChannel eventNetworkChannel();
+  public net.minecraftforge.network.payload.PayloadConnection<net.minecraft.network.protocol.common.custom.CustomPacketPayload> payloadChannel();
+  public <C> C channel(java.util.function.Function<net.minecraftforge.network.NetworkInstance, C>);
+}
+--- net.minecraftforge.network.EventNetworkChannel
+Compiled from "EventNetworkChannel.java"
+public class net.minecraftforge.network.EventNetworkChannel extends net.minecraftforge.network.Channel<net.minecraft.network.FriendlyByteBuf> {
+  net.minecraftforge.network.EventNetworkChannel(net.minecraftforge.network.NetworkInstance);
+  public net.minecraftforge.network.EventNetworkChannel addListener(java.util.function.Consumer<net.minecraftforge.event.network.CustomPayloadEvent>);
+  public void encode(net.minecraft.network.FriendlyByteBuf, net.minecraft.network.FriendlyByteBuf);
+  public void encode(net.minecraft.network.FriendlyByteBuf, java.lang.Object);
+}
+--- net.minecraftforge.event.network.CustomPayloadEvent
+Compiled from "CustomPayloadEvent.java"
+public final class net.minecraftforge.event.network.CustomPayloadEvent extends java.lang.Record implements net.minecraftforge.eventbus.api.event.RecordEvent {
+  public static final net.minecraftforge.eventbus.api.bus.EventBus<net.minecraftforge.event.network.CustomPayloadEvent> BUS;
+  public net.minecraftforge.event.network.CustomPayloadEvent(net.minecraft.resources.Identifier, java.lang.Object, net.minecraftforge.event.network.CustomPayloadEvent$Context, int);
+  public net.minecraftforge.event.network.CustomPayloadEvent(net.minecraft.resources.Identifier, java.lang.Object, net.minecraft.network.FriendlyByteBuf, net.minecraftforge.event.network.CustomPayloadEvent$Context, int);
+  public final java.lang.String toString();
+  public final int hashCode();
+  public final boolean equals(java.lang.Object);
+  public net.minecraft.resources.Identifier getChannel();
+  public java.lang.Object getPayloadObject();
+  public net.minecraft.network.FriendlyByteBuf getPayload();
+  public net.minecraftforge.event.network.CustomPayloadEvent$Context getSource();
+  public int getLoginIndex();
+  static {};
+}
+--- net.minecraftforge.event.network.CustomPayloadEvent$Context
+Compiled from "CustomPayloadEvent.java"
+public class net.minecraftforge.event.network.CustomPayloadEvent$Context {
+  public net.minecraftforge.event.network.CustomPayloadEvent$Context(net.minecraft.network.Connection);
+  public boolean isClientSide();
+  public boolean isServerSide();
+  public net.minecraft.network.Connection getConnection();
+  public <T> io.netty.util.Attribute<T> attr(io.netty.util.AttributeKey<T>);
+  public void setPacketHandled(boolean);
+  public boolean getPacketHandled();
+  public java.util.concurrent.CompletableFuture<java.lang.Void> enqueueWork(java.lang.Runnable);
+  public net.minecraft.server.level.ServerPlayer getSender();
+}
+--- net.minecraftforge.client.event.AddGuiOverlayLayersEvent
+Compiled from "AddGuiOverlayLayersEvent.java"
+public final class net.minecraftforge.client.event.AddGuiOverlayLayersEvent extends java.lang.Record implements net.minecraftforge.eventbus.api.event.characteristic.SelfDestructing,net.minecraftforge.eventbus.api.event.RecordEvent {
+  public static final net.minecraftforge.eventbus.api.bus.EventBus<net.minecraftforge.client.event.AddGuiOverlayLayersEvent> BUS;
+  public net.minecraftforge.client.event.AddGuiOverlayLayersEvent(net.minecraftforge.client.gui.overlay.ForgeLayeredDraw);
+  public final java.lang.String toString();
+  public final int hashCode();
+  public final boolean equals(java.lang.Object);
+  public net.minecraftforge.client.gui.overlay.ForgeLayeredDraw getLayeredDraw();
+  static {};
+}
+--- net.minecraftforge.client.event.RegisterGuiOverlaysEvent
+Error: class not found: net.minecraftforge.client.event.RegisterGuiOverlaysEvent
+--- net.minecraftforge.client.ConfigScreenHandler$ConfigScreenFactory
+Compiled from "ConfigScreenHandler.java"
+public final class net.minecraftforge.client.ConfigScreenHandler$ConfigScreenFactory extends java.lang.Record implements net.minecraftforge.fml.IExtensionPoint<net.minecraftforge.client.ConfigScreenHandler$ConfigScreenFactory> {
+  public net.minecraftforge.client.ConfigScreenHandler$ConfigScreenFactory(java.util.function.Function<net.minecraft.client.gui.screens.Screen, net.minecraft.client.gui.screens.Screen>);
+  public net.minecraftforge.client.ConfigScreenHandler$ConfigScreenFactory(java.util.function.BiFunction<net.minecraft.client.Minecraft, net.minecraft.client.gui.screens.Screen, net.minecraft.client.gui.screens.Screen>);
+  public final java.lang.String toString();
+  public final int hashCode();
+  public final boolean equals(java.lang.Object);
+  public java.util.function.BiFunction<net.minecraft.client.Minecraft, net.minecraft.client.gui.screens.Screen, net.minecraft.client.gui.screens.Screen> screenFunction();
+}
+--- net.minecraftforge.event.TickEvent$ServerTickEvent
+Compiled from "TickEvent.java"
+public interface net.minecraftforge.event.TickEvent$ServerTickEvent extends net.minecraftforge.event.TickEvent {
+  public abstract java.util.function.BooleanSupplier haveTimeSupplier();
+  public default boolean haveTime();
+  public abstract net.minecraft.server.MinecraftServer server();
+}
+--- net.minecraftforge.event.TickEvent$ServerTickEvent$Post
+Compiled from "TickEvent.java"
+public final class net.minecraftforge.event.TickEvent$ServerTickEvent$Post extends java.lang.Record implements net.minecraftforge.eventbus.api.event.RecordEvent,net.minecraftforge.event.TickEvent$ServerTickEvent {
+  public static final net.minecraftforge.eventbus.api.bus.EventBus<net.minecraftforge.event.TickEvent$ServerTickEvent$Post> BUS;
+  public net.minecraftforge.event.TickEvent$ServerTickEvent$Post(java.util.function.BooleanSupplier, net.minecraft.server.MinecraftServer);
+  public final java.lang.String toString();
+  public final int hashCode();
+  public final boolean equals(java.lang.Object);
+  public java.util.function.BooleanSupplier haveTimeSupplier();
+  public net.minecraft.server.MinecraftServer server();
+  static {};
+}
+--- net.minecraftforge.event.TickEvent$ClientTickEvent$Post
+Compiled from "TickEvent.java"
+public final class net.minecraftforge.event.TickEvent$ClientTickEvent$Post extends java.lang.Record implements net.minecraftforge.eventbus.api.event.RecordEvent,net.minecraftforge.event.TickEvent$ClientTickEvent {
+  public static final net.minecraftforge.eventbus.api.bus.EventBus<net.minecraftforge.event.TickEvent$ClientTickEvent$Post> BUS;
+  public static final net.minecraftforge.event.TickEvent$ClientTickEvent$Post INSTANCE;
+  public net.minecraftforge.event.TickEvent$ClientTickEvent$Post();
+  public final java.lang.String toString();
+  public final int hashCode();
+  public final boolean equals(java.lang.Object);
+  static {};
+}
+--- net.minecraftforge.client.event.RegisterKeyMappingsEvent
+Compiled from "RegisterKeyMappingsEvent.java"
+public final class net.minecraftforge.client.event.RegisterKeyMappingsEvent extends net.minecraftforge.eventbus.api.event.MutableEvent implements net.minecraftforge.eventbus.api.event.characteristic.SelfDestructing {
+  public static final net.minecraftforge.eventbus.api.bus.EventBus<net.minecraftforge.client.event.RegisterKeyMappingsEvent> BUS;
+  public net.minecraftforge.client.event.RegisterKeyMappingsEvent(net.minecraft.client.Options);
+  public void register(net.minecraft.client.KeyMapping);
+  static {};
+}
+--- net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext
+Error: class not found: net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext
+--- net.minecraftforge.client.event.ScreenEvent$Init$Post
+Compiled from "ScreenEvent.java"
+public final class net.minecraftforge.client.event.ScreenEvent$Init$Post extends net.minecraftforge.client.event.ScreenEvent$Init {
+  public static final net.minecraftforge.eventbus.api.bus.EventBus<net.minecraftforge.client.event.ScreenEvent$Init$Post> BUS;
+  public net.minecraftforge.client.event.ScreenEvent$Init$Post(net.minecraft.client.gui.screens.Screen, java.util.List<net.minecraft.client.gui.components.events.GuiEventListener>, java.util.function.Consumer<net.minecraft.client.gui.components.events.GuiEventListener>, java.util.function.Consumer<net.minecraft.client.gui.components.events.GuiEventListener>);
+  static {};
+}
+--- net.minecraftforge.event.entity.player.PlayerEvent$PlayerLoggedInEvent
+Compiled from "PlayerEvent.java"
+public final class net.minecraftforge.event.entity.player.PlayerEvent$PlayerLoggedInEvent extends java.lang.Record implements net.minecraftforge.eventbus.api.event.RecordEvent,net.minecraftforge.event.entity.player.PlayerEvent {
+  public static final net.minecraftforge.eventbus.api.bus.EventBus<net.minecraftforge.event.entity.player.PlayerEvent$PlayerLoggedInEvent> BUS;
+  public net.minecraftforge.event.entity.player.PlayerEvent$PlayerLoggedInEvent(net.minecraft.world.entity.player.Player);
+  public final java.lang.String toString();
+  public final int hashCode();
+  public final boolean equals(java.lang.Object);
+  public net.minecraft.world.entity.player.Player getEntity();
+  public net.minecraft.world.entity.LivingEntity getEntity();
+  public net.minecraft.world.entity.Entity getEntity();
+  static {};
+}
+--- net.minecraftforge.event.RegisterCommandsEvent
+Compiled from "RegisterCommandsEvent.java"
+public final class net.minecraftforge.event.RegisterCommandsEvent extends java.lang.Record implements net.minecraftforge.eventbus.api.event.RecordEvent {
+  public static final net.minecraftforge.eventbus.api.bus.EventBus<net.minecraftforge.event.RegisterCommandsEvent> BUS;
+  public net.minecraftforge.event.RegisterCommandsEvent(com.mojang.brigadier.CommandDispatcher<net.minecraft.commands.CommandSourceStack>, net.minecraft.commands.Commands$CommandSelection, net.minecraft.commands.CommandBuildContext);
+  public final java.lang.String toString();
+  public final int hashCode();
+  public final boolean equals(java.lang.Object);
+  public com.mojang.brigadier.CommandDispatcher<net.minecraft.commands.CommandSourceStack> getDispatcher();
+  public net.minecraft.commands.Commands$CommandSelection getCommandSelection();
+  public net.minecraft.commands.CommandBuildContext getBuildContext();
+  static {};
+}
+--- net.minecraftforge.event.server.ServerStartingEvent
+Compiled from "ServerStartingEvent.java"
+public final class net.minecraftforge.event.server.ServerStartingEvent extends java.lang.Record implements net.minecraftforge.event.server.ServerLifecycleEvent {
+  public static final net.minecraftforge.eventbus.api.bus.EventBus<net.minecraftforge.event.server.ServerStartingEvent> BUS;
+  public net.minecraftforge.event.server.ServerStartingEvent(net.minecraft.server.MinecraftServer);
+  public final java.lang.String toString();
+  public final int hashCode();
+  public final boolean equals(java.lang.Object);
+  public net.minecraft.server.MinecraftServer getServer();
+  static {};
+}
+--- net.minecraftforge.client.event.RegisterClientCommandsEvent
+Compiled from "RegisterClientCommandsEvent.java"
+public final class net.minecraftforge.client.event.RegisterClientCommandsEvent extends java.lang.Record implements net.minecraftforge.eventbus.api.event.RecordEvent {
+  public static final net.minecraftforge.eventbus.api.bus.EventBus<net.minecraftforge.client.event.RegisterClientCommandsEvent> BUS;
+  public net.minecraftforge.client.event.RegisterClientCommandsEvent(com.mojang.brigadier.CommandDispatcher<net.minecraft.commands.CommandSourceStack>, net.minecraft.commands.CommandBuildContext);
+  public final java.lang.String toString();
+  public final int hashCode();
+  public final boolean equals(java.lang.Object);
+  public com.mojang.brigadier.CommandDispatcher<net.minecraft.commands.CommandSourceStack> getDispatcher();
+  public net.minecraft.commands.CommandBuildContext getBuildContext();
+  static {};
+}
