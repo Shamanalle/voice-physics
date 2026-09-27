@@ -1350,16 +1350,21 @@ public abstract class SettingsScreen extends Screen {
             c.text(label, px2 - c.width(label) - 2, Math.max(py1, fy - 10), Palette.FLOOR);
         }
 
-        // Axis in blocks
+        // Axis in blocks; a middle mark that would run into the last label is left out
+        Component lastMark = tr("blocks", blocks(maxDist));
+        int lastLeft = px2 + 1 - c.width(lastMark);
         for (int i = 0; i <= 4; i++) {
             int x = px1 + pw * i / 4;
             int ly = py2 + 3;
             if (i == 0) {
                 c.text(Component.literal("0"), x, ly, Palette.TEXT_MUTED);
             } else if (i == 4) {
-                c.right(tr("blocks", blocks(maxDist)), x + 1, ly, Palette.TEXT_MUTED);
+                c.right(lastMark, x + 1, ly, Palette.TEXT_MUTED);
             } else {
-                c.centered(Component.literal(blocks(maxDist * i / 4.0)), x, ly, Palette.TEXT_MUTED);
+                Component mark = Component.literal(blocks(maxDist * i / 4.0));
+                if (x + (c.width(mark) + 1) / 2 + 4 <= lastLeft) {
+                    c.centered(mark, x, ly, Palette.TEXT_MUTED);
+                }
             }
         }
 
