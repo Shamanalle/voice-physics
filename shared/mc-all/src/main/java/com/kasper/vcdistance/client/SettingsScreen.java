@@ -220,11 +220,25 @@ public abstract class SettingsScreen extends Screen {
             tab = Tab.DISTANCE;
         }
         Tab[] tabs = admin ? Tab.values() : java.util.Arrays.copyOf(Tab.values(), Tab.values().length - 1);
-        int tabW = (w - GAP * (tabs.length - 1)) / tabs.length;
+        // Equal tabs; when a name would not fit, each tab gets its name's width plus an equal share of the rest
+        int free = w - GAP * (tabs.length - 1);
+        int[] tabWs = new int[tabs.length];
+        int needed = 0;
+        boolean cut = false;
+        for (int i = 0; i < tabs.length; i++) {
+            tabWs[i] = this.font.width(tr(tabs[i].key)) + 10;
+            needed += tabWs[i];
+            cut |= tabWs[i] > free / tabs.length;
+        }
+        for (int i = 0; i < tabs.length; i++) {
+            tabWs[i] = cut && needed <= free ? tabWs[i] + (free - needed) / tabs.length : free / tabs.length;
+        }
+        int x = left;
         for (int i = 0; i < tabs.length; i++) {
             Tab t = tabs[i];
-            int x = i == tabs.length - 1 ? right - tabW : left + i * (tabW + GAP);
+            int tabW = i == tabs.length - 1 ? right - x : tabWs[i];
             Button b = Button.builder(tr(t.key), btn -> switchTab(t)).bounds(x, 22, tabW, 20).build();
+            x += tabW + GAP;
             addRenderableWidget(b);
             if (t == tab) {
                 activeTabButton = b;
@@ -948,7 +962,7 @@ public abstract class SettingsScreen extends Screen {
             parts.add(tr("server.zone.range", Component.literal("×" + z[6])));
         }
         if (!"-".equals(z[4])) {
-            parts.add(tr("server.zone.voice", z[4]));
+            parts.add(tr("server.zone.voice", blocks(parse(z[4]))));
         }
         if (!"-".equals(z[7])) {
             parts.add(tr("server.zone.walls", Component.literal(pct(parse(z[7])))));
@@ -995,7 +1009,9 @@ public abstract class SettingsScreen extends Screen {
                 ? tr("server.hint") : Component.literal(lines.get(lines.size() - 1));
         int w = right - left;
         int doneW = (w - GAP * 3) / 4;
-        c.text(fit(c, status, w - doneW - GAP - 2), left + 1, footerY + 6, Palette.TEXT_MUTED);
+        // Two lines when it does not fit in one: the footer is 20 high
+        int lines2 = wrap(status, w - doneW - GAP - 2, 2, c::width).size();
+        paragraph(c, status, left + 1, footerY + (lines2 > 1 ? 1 : 6), w - doneW - GAP - 2, 2, Palette.TEXT_MUTED, false);
     }
 
     // =========================================================================

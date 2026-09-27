@@ -22,6 +22,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 #### Fixed
 - With falloff below 100% the voice still fades out fully by the edge of hearing.
 - Server tab: long setting names are no longer cut off, and the zones line does not run under its button.
+- Long hints wrap to a second line instead of being cut off; tab names fit in small windows.
 
 ### Русский
 
@@ -37,6 +38,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 #### Исправлено
 - При затухании меньше 100% голос всё равно полностью стихает к краю слышимости.
 - Вкладка «Сервер»: длинные названия настроек больше не обрезаются, линия «Зоны» не заходит под кнопку.
+- Длинные подсказки переносятся на вторую строку, а не обрезаются; названия вкладок помещаются в маленьком окне.
 
 ## [2.2.0] - 2026-09-26
 
