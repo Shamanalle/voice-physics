@@ -10,6 +10,7 @@ displayName = "Voice Physics"
 displayURL = "https://github.com/Shamanalle/voice-physics"
 logoFile = "assets/vc-audio-distance/icon.png"
 authors = "Shamanalle"
+displayTest = "IGNORE_ALL_VERSION"
 description = '''
 Shapes how Simple Voice Chat voices fade with distance and muffles them through walls, with echo, water, weather and sound around corners. Client: live curve, voice HUD, monitor. Server (optional): walls for players without the addon, a shared sound profile, zones and /vcd.
 
@@ -18,21 +19,21 @@ Shapes how Simple Voice Chat voices fade with distance and muffles them through 
 
 [[dependencies.vc_audio_distance]]
 modId = "forge"
-type = "required"
+mandatory = true
 versionRange = "[62,)"
 ordering = "NONE"
 side = "BOTH"
 
 [[dependencies.vc_audio_distance]]
 modId = "minecraft"
-type = "required"
+mandatory = true
 versionRange = "[26.1,26.4)"
 ordering = "NONE"
 side = "BOTH"
 
 [[dependencies.vc_audio_distance]]
 modId = "voicechat"
-type = "required"
+mandatory = true
 versionRange = "[2.6.0,)"
 ordering = "AFTER"
 side = "BOTH"
