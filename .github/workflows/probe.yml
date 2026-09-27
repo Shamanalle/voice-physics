@@ -4,19 +4,24 @@ on:
   push:
     branches: [ "claude/addon-analysis-improvement-4olq7u" ]
 
+permissions:
+  contents: write
+
 jobs:
   probe:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '25'
       - name: Forge MDKs
         run: |
+          exec > >(tee probe-mdk.txt) 2>&1
           for v in 1.20.4-49.2.9 1.20.6-50.2.10 1.21.1-52.1.16 1.21.5-55.1.14 1.21.8-58.1.22 1.21.11-61.2.1 26.3-66.0.6; do
             echo "=================== MDK $v"
-            curl -fsSL -o mdk.zip "https://maven.minecraftforge.net/net/minecraftforge/forge/$v/forge-$v-mdk.zip" || { echo none; continue; }
+            curl -fsSL -A "Mozilla/5.0" -o mdk.zip "https://maven.minecraftforge.net/net/minecraftforge/forge/$v/forge-$v-mdk.zip" || { echo none; continue; }
             rm -rf mdk; mkdir mdk; (cd mdk && unzip -q ../mdk.zip)
             for f in build.gradle settings.gradle gradle.properties gradle/wrapper/gradle-wrapper.properties; do echo "--- $f"; grep -v '^\s*//' mdk/$f | grep -v '^\s*$' | head -120; done
             echo "--- java"; find mdk/src -name '*.java' | head; cat $(find mdk/src -name 'ExampleMod.java') | head -150
@@ -24,6 +29,7 @@ jobs:
           done
       - name: Forge API
         run: |
+          exec > probe-forge.txt 2>&1
           show() { javap -cp "$1" "$2" 2>&1 | head -60; }
           for v in 1.20.4-49.2.9 1.20.6-50.2.10 1.21.1-52.1.16 1.21.5-55.1.14 1.21.8-58.1.22 1.21.11-61.2.1 26.3-66.0.6; do
             echo "=================== FORGE $v"
@@ -35,6 +41,7 @@ jobs:
           done
       - name: NeoForge API
         run: |
+          exec > probe-neoforge.txt 2>&1
           show() { javap -cp "$1" "$2" 2>&1 | head -50; }
           for v in 20.4.251 20.6.141 21.3.97 21.4.157 21.5.98 21.8.54 21.10.64 21.11.45; do
             echo "=================== NEOFORGE $v"
@@ -44,3 +51,10 @@ jobs:
             done
             unzip -l n.jar | awk '{print $4}' | grep -E 'client/gui/(GuiLayer|IConfigScreenFactory)|ModConfigSpec' | head
           done
+      - name: Save
+        if: always()
+        run: |
+          mkdir -p probe-out && mv probe-*.txt probe-out/ || true
+          git config user.name Shamanalle
+          git config user.email 123158634+Shamanalle@users.noreply.github.com
+          git add probe-out && git commit -m "Probe output (temporary)" && git push origin HEAD:${GITHUB_REF_NAME}
