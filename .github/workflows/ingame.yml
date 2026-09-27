@@ -117,6 +117,12 @@ jobs:
             25
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
+      # Software OpenGL and Vulkan (Mesa llvmpipe / lavapipe): 26.3 draws through either, and the
+      # runner's X server alone offers neither a matching GLX visual nor a Vulkan surface
+      - name: Software graphics
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq mesa-vulkan-drivers libvulkan1 libgl1-mesa-dri libglx-mesa0 libegl1 mesa-utils > /dev/null
       - name: Simple Voice Chat for the test client
         run: |
           mods="${{ matrix.module }}/build/gametest-mods"
@@ -128,10 +134,11 @@ jobs:
           curl -fsSL --retry 4 -o "${mods}/voicechat.jar" "${url}"
       - name: Open the settings screen in a real client
         # Shorter than the job, so the screenshots and the log are still uploaded when the client hangs
-        timeout-minutes: 18
+        timeout-minutes: 12
         run: |
           chmod +x gradlew
-          xvfb-run -a -s "-screen 0 1280x960x24" ./gradlew :${{ matrix.module }}:runClientGameTest --no-daemon \
+          xvfb-run -a -s "-screen 0 1280x960x24 +extension GLX +render" sh -c 'glxinfo -B | head -12 || true'
+          xvfb-run -a -s "-screen 0 1280x960x24 +extension GLX +render" ./gradlew :${{ matrix.module }}:runClientGameTest --no-daemon \
             -Porg.gradle.java.installations.fromEnv=JAVA_HOME_21_X64,JAVA_HOME_25_X64
       - name: Upload screenshots and logs
         if: always()
