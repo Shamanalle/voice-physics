@@ -6,6 +6,36 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 *Все заметные изменения проекта описываются в этом файле. Каждая версия описана сначала на английском, затем на русском.*
 
+## [2.5.0] - 2026-09-27
+
+### English
+
+#### Added
+- Entering or leaving a sound zone shows its name above the hotbar, for every player, even without the addon. `/vcd notices off` turns it off.
+- Zones from Open Parties and Claims on Fabric, Forge and NeoForge: `/vcd zone set claim:<player> …` covers that player's claims, or the whole party's for its leader.
+- `/vcd log`: who changed the server's settings and when. Every change is also written to a file next to the settings.
+- Sliders for how strong water and rain are, on the *Effects* tab.
+- Server tab: zone names above the hotbar on or off, corners from where you stand and where you look, *Go there*, *Rename*, the latest changes and *Undo*. Buttons you have no permission for are greyed out.
+
+#### Changed
+- Open doors and trapdoors muffle a tenth of a closed one; iron and copper doors count as metal.
+- The echo changes smoothly as you walk between places, instead of in steps.
+- Locking walls on the server also locks each block's percentage.
+
+### Русский
+
+#### Добавлено
+- При входе в звуковую зону и выходе из неё её название показывается над хотбаром у всех игроков, даже без аддона. `/vcd notices off` выключает.
+- Зоны из Open Parties and Claims на Fabric, Forge и NeoForge: `/vcd zone set claim:<игрок> …` — приваты этого игрока, а для лидера группы — всей группы.
+- `/vcd log`: кто и когда менял настройки сервера. Каждое изменение также записывается в файл рядом с настройками.
+- Ползунки силы воды и дождя на вкладке «Эффекты».
+- Вкладка «Сервер»: названия зон над хотбаром вкл/выкл, углы по месту, где вы стоите, и по блоку, на который смотрите, «Перейти», «Переименовать», последние изменения и «Отменить». Кнопки, на которые нет прав, неактивны.
+
+#### Изменено
+- Открытые двери и люки глушат на десятую часть от закрытых; железные и медные двери считаются металлом.
+- Эхо меняется плавно, когда вы переходите из одного места в другое, а не ступеньками.
+- Закреплённые на сервере стены закрепляют и проценты каждого блока.
+
 ## [2.4.0] - 2026-09-27
 
 ### English

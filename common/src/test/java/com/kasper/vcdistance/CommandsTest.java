@@ -34,6 +34,9 @@ public class CommandsTest {
     private final ServerPlayers.Info admin = new ServerPlayers.Info(UUID.randomUUID(), "Admin", "world", 10.5, 64, 10.5,
             false, true, false, "", "", List.of(), "en_us");
 
+    /** Whether the test server has Open Parties and Claims. */
+    private boolean claimsInstalled;
+
     @AfterEach
     void clear() {
         players.clear();
@@ -91,6 +94,10 @@ public class CommandsTest {
 
             public Collection<String> worlds() {
                 return List.of("world", "world_nether");
+            }
+
+            public boolean claims() {
+                return claimsInstalled;
             }
 
             @Override
@@ -209,6 +216,86 @@ public class CommandsTest {
         // The same value again is no change to undo
         AdminCommands.run("walls 60", s, ctx);
         assertEquals(0, AdminCommands.undoable(s));
+
+        // Every change and undo is in the log, newest first; nothing was logged for "walls 60" (no change)
+        List<ChangeLog.Entry> log = ChangeLog.read(s);
+        assertEquals(6, log.size(), log.toString());
+        assertTrue(log.get(0).undo() && log.get(0).command().equals("/vcd walls 85"), log.get(0).toString());
+        assertEquals("/vcd zone create stage 5", log.get(3).command());
+        assertFalse(log.get(5).undo());
+        assertTrue(Files.isRegularFile(dir.resolve(ChangeLog.FILE)));
+        CommandReply shown = AdminCommands.execute("log", s, ctx);
+        String text = String.join("\n", shown.text());
+        assertTrue(text.startsWith("Changes to the settings (6)"), text);
+        assertTrue(text.contains("undid /vcd walls 85"), text);
+        assertTrue(AdminCommands.run("log", s, ctx(admin.id(), null, AdminCommands.PERM_STATUS)).get(0).contains("vcd.settings"),
+                "the log needs vcd.settings");
+        for (int i = 0; i < 12; i++) {
+            AdminCommands.run("walls " + (20 + i), s, ctx);
+        }
+        String page = String.join("\n", AdminCommands.execute("log", s, ctx).plain());
+        assertTrue(page.contains("Page 1 of 2"), page);
+        assertEquals(ChangeLog.read(s).size(), 18);
+    }
+
+    @Test
+    @DisplayName("Server tab: its reply carries undo, the player's permissions and the latest changes")
+    void serverTabState() throws IOException {
+        ServerSettings s = settings("");
+        AdminCommands.Context ctx = ctx();
+        AdminCommands.run("walls 70", s, ctx);
+        AdminCommands.run("notices off", s, ctx);
+        java.util.Map<String, String> state = ServerHooks.tabState(s, ctx);
+        assertEquals("2", state.get("undo"));
+        assertEquals("true", state.get("allows." + AdminCommands.PERM_ZONE));
+        assertTrue(state.get("log.0").endsWith("|Admin|false|/vcd notices off"), state.get("log.0"));
+        assertTrue(state.get("log.1").endsWith("/vcd walls 70"));
+        assertFalse(s.isZoneNotices());
+
+        java.util.Map<String, String> viewer = ServerHooks.tabState(s, ctx(admin.id(), null, AdminCommands.PERM_STATUS));
+        assertEquals("false", viewer.get("allows." + AdminCommands.PERM_SETTINGS));
+        assertNull(viewer.get("log.0"), "the log needs vcd.settings");
+        LinkProtocol.AdminReply reply = LinkProtocol.parseAdminReply(LinkProtocol.adminReply(List.of("ok"), s, state));
+        assertEquals("false", reply.state().getProperty("zone_notices"));
+        assertEquals("2", reply.state().getProperty("undo"));
+    }
+
+    @Test
+    @DisplayName("Claim zones (Open Parties and Claims): made with claim:<player>, found for the owner or party leader")
+    void claimZones() throws IOException {
+        ServerSettings s = settings("zone.claim.server.voice_range=24\nzone.world.steve.walls_strength=0.2\n");
+        assertEquals(Zone.CLAIM, s.findZone("claim:server").kind());
+        claimsInstalled = true;
+        players.update(new ServerPlayers.Info(UUID.randomUUID(), "Steve", "world", 0, 64, 0, false, true, false, "", "", List.of(), ""));
+        AdminCommands.Context ctx = ctx();
+        List<String> start = AdminCommands.suggestions("zone set cl", s, ctx).stream().map(AdminCommands.Suggestion::text).toList();
+        assertTrue(start.contains("claim:"), start.toString());
+        List<String> owners = AdminCommands.suggestions("zone set claim:", s, ctx).stream().map(AdminCommands.Suggestion::text).toList();
+        assertTrue(owners.contains("claim:steve") && owners.contains("claim:admin"), owners.toString());
+        assertEquals(1, owners.stream().filter("claim:server"::equals).count(), "the existing zone once: " + owners);
+
+        AdminCommands.run("zone set claim:Steve walls_strength 90", s, ctx);
+        Zone steve = s.findZone("claim:steve");
+        assertNotNull(steve);
+        assertEquals(Zone.CLAIM, steve.kind());
+        assertEquals(0.9, steve.rules().wallsStrength(), 1e-9);
+        assertEquals(Zone.WORLD, s.findZone("steve").kind(), "a plain name still finds the world first");
+        ServerSettings again = new ServerSettings(s.getPath());
+        again.load();
+        assertNotNull(again.findZone("claim:steve"), "saved as zone.claim.steve");
+
+        // In a party member's claim, the party leader's zone applies; outside claims the world's
+        assertSame(steve, s.zoneOf(new ServerPlayers.Info(UUID.randomUUID(), "Alex", "world_nether", 0, 64, 0, false, true, false,
+                "", "", List.of("claim:alex", "claim:" + UUID.randomUUID(), "claim:steve"), "")));
+        assertEquals("server", s.zoneOf(new ServerPlayers.Info(UUID.randomUUID(), "Alex", "world", 0, 64, 0, false, true, false,
+                "", "", List.of("claim:server"), "")).name());
+        String card = String.join("\n", AdminCommands.execute("zone info claim:steve", s, ctx).plain());
+        assertTrue(card.contains("Claims steve"), card);
+        CommandReply list = AdminCommands.execute("zones", s, ctx);
+        assertTrue(list.lines().stream().flatMap(l -> l.spans().stream())
+                .anyMatch(sp -> "/vcd zone info claim:steve".equals(sp.action())), "buttons name claims with claim:");
+        assertTrue(AdminCommands.run("zone delete claim:steve confirm", s, ctx).get(0).contains("steve"));
+        assertNull(s.findZone("claim:steve"));
     }
 
     @Test

@@ -1,6 +1,7 @@
 package com.kasper.vcdistance.client;
 
 import com.kasper.vcdistance.AcousticMaterial;
+import com.kasper.vcdistance.AdminCommands;
 import com.kasper.vcdistance.AttenuationModel;
 import com.kasper.vcdistance.AudioDistancePlugin;
 import com.kasper.vcdistance.AudioPhysics;
@@ -20,6 +21,7 @@ import com.kasper.vcdistance.SpeakerRegistry;
 import com.kasper.vcdistance.VoiceState;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
@@ -125,6 +127,8 @@ public abstract class SettingsScreen extends Screen {
     private int wallsHintLines = 1;
     private int noZonesY = -1;
     private final List<Heading> headings = new ArrayList<>();
+    /** Plain text lines of the Server tab (the latest changes). */
+    private final List<Heading> notes = new ArrayList<>();
 
     /** Widgets below the tabs, with the content y they were laid out at. */
     private final List<AbstractWidget> scrolled = new ArrayList<>();
@@ -137,6 +141,8 @@ public abstract class SettingsScreen extends Screen {
     private Button activeTabButton;
     private RangeSlider strengthSlider;
     private RangeSlider reverbSlider;
+    private RangeSlider waterSlider;
+    private RangeSlider weatherSlider;
     private boolean serverChip;
     /** Current walk-away preview step, or -1 when it is not playing. */
     private int previewStep = -1;
@@ -200,8 +206,11 @@ public abstract class SettingsScreen extends Screen {
         presetButtons.clear();
         presetOrder.clear();
         headings.clear();
+        notes.clear();
         strengthSlider = null;
         reverbSlider = null;
+        waterSlider = null;
+        weatherSlider = null;
         listenButton = null;
         copyButton = null;
         pasteButton = null;
@@ -613,20 +622,41 @@ public abstract class SettingsScreen extends Screen {
         reverbSlider.active = shown().isReverbEnabled();
         edit(withTip(reverbSlider, "effects.reverb.strength.tooltip"), DistanceConfig.Part.EFFECTS);
 
+        // Water and weather: on or off, and how strong, like the echo
         edit(Button.builder(onOff("effects.water", shown().isUnderwaterEnabled()), b -> {
             config.setUnderwaterEnabled(!config.isUnderwaterEnabled());
             b.setMessage(onOff("effects.water", config.isUnderwaterEnabled()));
+            if (waterSlider != null) {
+                waterSlider.active = config.isUnderwaterEnabled();
+            }
         }).bounds(left, y + ROW, colW, 20).tooltip(tip("effects.water.tooltip")).build(), DistanceConfig.Part.EFFECTS);
+        waterSlider = new RangeSlider(right - colW, y + ROW, colW, 20,
+                DistanceConfig.EFFECT_STRENGTH_MIN, DistanceConfig.EFFECT_STRENGTH_MAX, 0.05,
+                () -> shown().getUnderwaterStrength(), config::setUnderwaterStrength,
+                v -> tr("effects.water.strength", pct(v)));
+        waterSlider.active = shown().isUnderwaterEnabled();
+        edit(withTip(waterSlider, "effects.water.strength.tooltip"), DistanceConfig.Part.EFFECTS);
+
         edit(Button.builder(onOff("effects.weather", shown().isWeatherEnabled()), b -> {
             config.setWeatherEnabled(!config.isWeatherEnabled());
             b.setMessage(onOff("effects.weather", config.isWeatherEnabled()));
-        }).bounds(right - colW, y + ROW, colW, 20).tooltip(tip("effects.weather.tooltip")).build(), DistanceConfig.Part.EFFECTS);
+            if (weatherSlider != null) {
+                weatherSlider.active = config.isWeatherEnabled();
+            }
+        }).bounds(left, y + ROW * 2, colW, 20).tooltip(tip("effects.weather.tooltip")).build(), DistanceConfig.Part.EFFECTS);
+        weatherSlider = new RangeSlider(right - colW, y + ROW * 2, colW, 20,
+                DistanceConfig.EFFECT_STRENGTH_MIN, DistanceConfig.EFFECT_STRENGTH_MAX, 0.05,
+                () -> shown().getWeatherStrength(), config::setWeatherStrength,
+                v -> tr("effects.weather.strength", pct(v)));
+        weatherSlider.active = shown().isWeatherEnabled();
+        edit(withTip(weatherSlider, "effects.weather.strength.tooltip"), DistanceConfig.Part.EFFECTS);
+
         edit(Button.builder(onOff("effects.corners", shown().isDiffractionEnabled()), b -> {
             config.setDiffractionEnabled(!config.isDiffractionEnabled());
             b.setMessage(onOff("effects.corners", config.isDiffractionEnabled()));
-        }).bounds(left, y + ROW * 2, colW, 20).tooltip(tip("effects.corners.tooltip")).build(), DistanceConfig.Part.EFFECTS);
+        }).bounds(left, y + ROW * 3, colW, 20).tooltip(tip("effects.corners.tooltip")).build(), DistanceConfig.Part.EFFECTS);
 
-        statusY = y + ROW * 3 + 2;
+        statusY = y + ROW * 4 + 2;
         panelTop = statusY + (hasStatusBanner() ? 30 : 0);
         panelBottom = stretch(panelTop, 140);
         contentEnd = panelBottom;
@@ -708,7 +738,7 @@ public abstract class SettingsScreen extends Screen {
     private static final String[] ZONE_ECHO = {"-", "off", "0.5", "0.9"};
     private static final String MEGAPHONE = "minecraft:goat_horn";
     /** What {@code /vcd lock} cycles through on the Server tab. */
-    private static final String[] SERVER_LOCKS = {"all", "curve,walls", "curve", "none"};
+    private static final String[] SERVER_LOCKS = {"all", "curve,walls,materials", "curve", "none"};
 
     private static java.util.Properties serverState() {
         LinkProtocol.AdminReply reply = AudioDistancePlugin.LINK.adminReply();
@@ -752,7 +782,18 @@ public abstract class SettingsScreen extends Screen {
         if (tooltip != null) {
             b.setTooltip(tip(tooltip));
         }
+        b.active = mayRun(serverState(), command);
         return content(b);
+    }
+
+    /** Whether the player may run {@code command} on the server; servers before 2.5.0 send no permissions (yes). */
+    private static boolean mayRun(java.util.Properties st, String command) {
+        if (st == null) {
+            return true;
+        }
+        String[] a = command.trim().split("\\s+");
+        String permission = AdminCommands.permissionFor(a[0], a.length > 1 ? a[1] : "");
+        return permission == null || !"false".equals(st.getProperty("allows." + permission));
     }
 
     /** A toggle: "on" or "off" sent after {@code command}. */
@@ -777,7 +818,7 @@ public abstract class SettingsScreen extends Screen {
             case "all" -> tr("server.locked.all");
             case "none" -> tr("server.locked.none");
             case "curve" -> tr("server.locked.curve");
-            case "curve,walls" -> tr("server.locked.curve_walls");
+            case "curve,walls,materials", "curve,walls" -> tr("server.locked.curve_walls");
             default -> Component.literal(locked);
         };
     }
@@ -820,14 +861,15 @@ public abstract class SettingsScreen extends Screen {
         int down = Math.max(0, (wallsPct + 4) / 5 * 5 - 5);
         int up = Math.min(100, wallsPct / 5 * 5 + 5);
         serverButton(Component.literal("−"), "server.walls.tooltip", left, y, 20, down == 0 ? "walls off" : "walls " + down)
-                .active = wallsPct > 0;
+                .active &= wallsPct > 0;
         serverButton(tr("server.walls", wallsPct == 0 ? tr("off") : Component.literal(wallsPct + "%")), "server.walls.tooltip",
-                left + 22, y, half - 44, "walls " + up).active = wallsPct < 100;
+                left + 22, y, half - 44, "walls " + up).active &= wallsPct < 100;
         serverButton(Component.literal("+"), "server.walls.tooltip", left + half - 20, y, 20, "walls " + up)
-                .active = wallsPct < 100;
+                .active &= wallsPct < 100;
         serverToggle("server.server_walls", st, "server_walls", "false", x2, y, half, "serverwalls");
         y += ROW;
         serverToggle("server.monitor", st, "allow_monitor", "true", left, y, half, "monitor");
+        serverToggle("server.notices", st, "zone_notices", "true", x2, y, half, "notices");
         y += ROW + 4;
 
         // Game rules
@@ -860,7 +902,43 @@ public abstract class SettingsScreen extends Screen {
         y += ROW + 4;
 
         y = initZones(st, y, w, (w - GAP * 2) / 3);
+        y = initLog(st, y + 4, w);
         contentEnd = y;
+    }
+
+    /** The latest changes to the settings, who made them, and a button that takes the last one back. */
+    private int initLog(java.util.Properties st, int y, int w) {
+        boolean any = st.getProperty("log.0") != null;
+        int undo = (int) parse(st.getProperty("undo", "0"));
+        if (!any && undo <= 0) {
+            return y;
+        }
+        int undoW = Math.min(w / 3, this.font.width(tr("server.log.undo")) + 16);
+        headings.add(new Heading(tr("server.section.log"), y + 6, undo > 0 ? right - undoW - 8 : right));
+        if (undo > 0) {
+            serverButton(tr("server.log.undo"), "server.log.undo.tooltip", right - undoW, y, undoW, "undo");
+        }
+        y += ROW;
+        java.time.format.DateTimeFormatter time = java.time.format.DateTimeFormatter.ofPattern("dd.MM HH:mm")
+                .withZone(java.time.ZoneId.systemDefault());
+        for (int i = 0; st.getProperty("log." + i) != null; i++) {
+            String[] e = st.getProperty("log." + i).split("\\|", 4);
+            if (e.length < 4) {
+                continue;
+            }
+            String when;
+            try {
+                when = time.format(java.time.Instant.parse(e[0]));
+            } catch (RuntimeException ex) {
+                when = "";
+            }
+            Component who = "@console".equals(e[1]) ? tr("server.log.console") : Component.literal(e[1]);
+            Component line = Component.literal(when + "  ").append(who).append(Component.literal("  "))
+                    .append("true".equals(e[2]) ? tr("server.log.undone", e[3]) : Component.literal(e[3]));
+            notes.add(new Heading(line, y, right));
+            y += 11;
+        }
+        return y + 4;
     }
 
     /** Zones: a list to pick from, and the picked zone's settings right under it. */
@@ -885,6 +963,14 @@ public abstract class SettingsScreen extends Screen {
         serverButton(tr("server.zone.create"), "server.zone.create.tooltip", right - createW, y, createW,
                 "zone create zone-" + used + " 8");
         y += ROW;
+        // A box between two corners: where you stand and where you look
+        if (mayRun(st, "zone pos1")) {
+            serverButton(tr("server.zone.pos1"), "server.zone.pos1.tooltip", left, y, third, "zone pos1");
+            serverButton(tr("server.zone.pos2"), "server.zone.pos2.tooltip", left + third + GAP, y, third, "zone pos2 look");
+            serverButton(tr("server.zone.create_corners"), "server.zone.create_corners.tooltip", right - third, y, third,
+                    "zone create zone-" + used);
+            y += ROW;
+        }
         if (zones.isEmpty()) {
             noZonesY = y + 2;
             return y + 14;
@@ -896,6 +982,8 @@ public abstract class SettingsScreen extends Screen {
         int x3 = right - third;
         for (String[] z : zones) {
             String name = z[1];
+            // Commands name claims "claim:steve" (a player may share a world's name)
+            String ref = "claim".equals(z[0]) ? "claim:" + name : name;
             boolean picked = name.equals(selectedZone);
             Component label = zoneLabel(z);
             if (name.equals(here)) {
@@ -912,33 +1000,52 @@ public abstract class SettingsScreen extends Screen {
             }
             serverButton(tr("server.zone.range", "-".equals(z[6]) ? tr("server.default") : Component.literal("×" + z[6])),
                     "server.zone.range.tooltip", left, y, third,
-                    "zone set " + name + " range_multiplier " + zoneValue(next(ZONE_RANGE, z[6])));
+                    "zone set " + ref + " range_multiplier " + zoneValue(next(ZONE_RANGE, z[6])));
             serverButton(tr("server.zone.walls", "-".equals(z[7]) ? tr("server.default") : Component.literal(pct(parse(z[7])))),
                     "server.zone.walls.tooltip", x2, y, third,
-                    "zone set " + name + " walls " + zoneValue(next(ZONE_WALLS, z[7])));
+                    "zone set " + ref + " walls " + zoneValue(next(ZONE_WALLS, z[7])));
             serverButton(tr("server.zone.echo", "-".equals(z[8]) ? tr("server.default")
                             : "off".equals(z[8]) ? tr("off") : Component.literal(pct(parse(z[8])))),
                     "server.zone.echo.tooltip", x3, y, third,
-                    "zone set " + name + " echo " + zoneValue(next(ZONE_ECHO, z[8])));
+                    "zone set " + ref + " echo " + zoneValue(next(ZONE_ECHO, z[8])));
             y += ROW;
             boolean isolated = "true".equalsIgnoreCase(z[9]);
             serverButton(tr("server.zone.isolated", tr(isolated ? "on" : "off")), "server.zone.isolated.tooltip", left, y, third,
-                    "zone set " + name + " isolated " + (isolated ? "off" : "on"));
+                    "zone set " + ref + " isolated " + (isolated ? "off" : "on"));
             // Only a box has borders to draw
-            serverButton(tr("server.zone.show"), "server.zone.show.tooltip", x2, y, third, "zone show " + name)
+            serverButton(tr("server.zone.show"), "server.zone.show.tooltip", x2, y, third, "zone show " + ref)
                     .active = "box".equals(z[0]);
             boolean confirm = name.equals(confirmDelete);
             content(Button.builder(tr(confirm ? "server.zone.delete.confirm" : "server.zone.delete"), btn -> {
                 if (name.equals(confirmDelete)) {
                     confirmDelete = null;
                     selectedZone = null;
-                    AudioDistancePlugin.LINK.sendAdmin("zone delete " + name + " confirm");
+                    AudioDistancePlugin.LINK.sendAdmin("zone delete " + ref + " confirm");
                 } else {
                     confirmDelete = name;
                     rebuild();
                 }
-            }).bounds(x3, y, third, 20).tooltip(tip("server.zone.delete.tooltip")).build());
-            y += ROW + 4;
+            }).bounds(x3, y, third, 20).tooltip(tip("server.zone.delete.tooltip")).build()).active = mayRun(st, "zone delete");
+            y += ROW;
+            if ("box".equals(z[0])) {
+                // Go there, and a new name
+                serverButton(tr("server.zone.tp"), "server.zone.tp.tooltip", left, y, third, "zone tp " + ref);
+                EditBox field = content(new EditBox(this.font, x2, y, third, 20, tr("server.zone.rename")));
+                field.setMaxLength(32);
+                field.setValue(name);
+                field.setTooltip(tip("server.zone.rename.tooltip"));
+                Button rename = content(Button.builder(tr("server.zone.rename"), btn -> {
+                    String to = field.getValue().trim().toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9_\\-]", "");
+                    if (!to.isEmpty() && !to.equals(name)) {
+                        selectedZone = to;
+                        AudioDistancePlugin.LINK.sendAdmin("zone rename " + ref + " " + to);
+                    }
+                }).bounds(x3, y, third, 20).tooltip(tip("server.zone.rename.tooltip")).build());
+                rename.active = mayRun(st, "zone rename");
+                field.active = rename.active;
+                y += ROW;
+            }
+            y += 4;
         }
         return y;
     }
@@ -998,6 +1105,9 @@ public abstract class SettingsScreen extends Screen {
         }
         if (noZonesY >= 0) {
             c.text(fit(c, tr("server.zones.none"), right - left), left + 1, noZonesY, Palette.TEXT_MUTED);
+        }
+        for (Heading n : notes) {
+            c.text(fit(c, n.text(), right - left - 2), left + 1, n.y() + 1, Palette.TEXT_MUTED);
         }
     }
 

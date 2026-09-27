@@ -65,7 +65,7 @@ public final class SpeakerRegistry {
         private double[] heard;
         private long heardNanos;
         // The space around the speaker (client tick); null: the listener's own
-        private volatile RoomEstimate room;
+        private final RoomGlide room = new RoomGlide(true);
         private volatile long lastRoomNanos = Long.MIN_VALUE;
         private volatile String displayName;
         private volatile long lastTraceNanos;
@@ -238,9 +238,12 @@ public final class SpeakerRegistry {
             return heard.clone();
         }
 
-        /** The space the speaker is in, or {@code null} when it is the listener's own (or not known yet). */
+        /**
+         * The space the speaker is in, gliding towards the latest measurement, or {@code null} when it
+         * is the listener's own (or not known yet).
+         */
         public RoomEstimate getRoom() {
-            return room;
+            return room.get(System.nanoTime());
         }
 
         public long getLastRoomNanos() {
@@ -248,7 +251,7 @@ public final class SpeakerRegistry {
         }
 
         public void setRoom(RoomEstimate room, long nowNanos) {
-            this.room = room;
+            this.room.set(room, nowNanos);
             this.lastRoomNanos = nowNanos;
         }
 

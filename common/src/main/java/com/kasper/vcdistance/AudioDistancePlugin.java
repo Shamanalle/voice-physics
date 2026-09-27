@@ -71,6 +71,7 @@ public class AudioDistancePlugin implements VoicechatPlugin {
     public static final AddonCheck ADDON_CHECK = new AddonCheck();
     /** Which sound zone each player with the addon was last sent (server). */
     public static final ZoneTracker ZONES = new ZoneTracker();
+    public static final ZoneNotices ZONE_NOTICES = new ZoneNotices();
 
     private static volatile VoicechatApi api;
     private static volatile VoicechatServerApi serverApi;
@@ -708,12 +709,13 @@ public class AudioDistancePlugin implements VoicechatPlugin {
             boolean ownPhysics = status != OcclusionStatus.SOUND_PHYSICS && status != OcclusionStatus.UNAVAILABLE;
             ListenerEnvironment env = ENVIRONMENT;
             if (ownPhysics && c.isUnderwaterEnabled()) {
-                effect = effect.plus(EnvironmentEffects.water(env.isUnderWater(), speaker.isUnderWater()));
+                effect = effect.plus(EnvironmentEffects.water(env.isUnderWater(), speaker.isUnderWater(), c.getUnderwaterStrength()));
             }
             if (c.isWeatherEnabled() && speaker.getDistance() >= 0.0) {
                 double range = speaker.getMaxDistance() > 0.0F ? speaker.getMaxDistance() : getServerMaxDistance();
                 effect = effect.plus(EnvironmentEffects.weather(
-                        ListenerEnvironment.worse(env.weather(), speaker.getWeather()), speaker.getDistance() / range));
+                        ListenerEnvironment.worse(env.weather(), speaker.getWeather()), speaker.getDistance() / range,
+                        c.getWeatherStrength()));
             }
 
             // Both stages work on the frame in place

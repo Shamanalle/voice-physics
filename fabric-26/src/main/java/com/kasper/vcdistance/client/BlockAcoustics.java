@@ -27,7 +27,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * <p>
  * Every voxel the ray passes through counts. Blocks that do not occlude light (glass, leaves, doors,
  * fences) are included explicitly through their material class. A ray that only grazes a block's
- * corner counts it by the short way it runs inside; doors, trapdoors, fences and bars count fully.
+ * corner counts it by the short way it runs inside; doors, trapdoors, fences and bars count fully,
+ * and open doors, trapdoors and gates a tenth.
  */
 public final class BlockAcoustics {
 
@@ -55,7 +56,7 @@ public final class BlockAcoustics {
                     return m == null ? NONE : m;
                 });
                 if (material instanceof AcousticMaterial m) {
-                    acc[0] += weights.getMaterialWeight(m) * share(m, pos, from, to);
+                    acc[0] += weights.getMaterialWeight(m) * share(state, m, pos, from, to);
                 }
             }
             return acc[0] >= WorldAccess.MAX_RAY_THICKNESS ? Boolean.TRUE : null;
@@ -64,12 +65,18 @@ public final class BlockAcoustics {
     }
 
     /** How much of the block's weight the ray takes: grazing a corner counts less than crossing it. */
-    static double share(AcousticMaterial material, BlockPos pos, Vec3 from, Vec3 to) {
-        if (material == AcousticMaterial.DOOR || material == AcousticMaterial.THIN) {
-            return 1.0;
+    static double share(BlockState state, AcousticMaterial material, BlockPos pos, Vec3 from, Vec3 to) {
+        if (isPanel(state, material)) {
+            return AcousticMaterial.panelShare(state.hasProperty(BlockStateProperties.OPEN) && state.getValue(BlockStateProperties.OPEN));
         }
         return RayBundle.chordWeight(VoxelRay.chord(from.x, from.y, from.z, to.x, to.y, to.z,
                 pos.getX(), pos.getY(), pos.getZ(), pos.getX() + 1.0, pos.getY() + 1.0, pos.getZ() + 1.0));
+    }
+
+    /** Doors, trapdoors (wooden or metal), fences, gates and bars: thin by nature. */
+    private static boolean isPanel(BlockState state, AcousticMaterial material) {
+        return material == AcousticMaterial.DOOR || material == AcousticMaterial.THIN
+                || (material == AcousticMaterial.METAL && (state.is(BlockTags.DOORS) || state.is(BlockTags.TRAPDOORS)));
     }
 
     /** {@code true} when sound passes this block freely: air, water, open doors and gates, fences, bars. */
@@ -111,7 +118,8 @@ public final class BlockAcoustics {
             return AcousticMaterial.LEAVES;
         }
         if (state.is(BlockTags.DOORS) || state.is(BlockTags.TRAPDOORS)) {
-            return AcousticMaterial.DOOR;
+            // Iron and copper doors (mined with a pickaxe) are metal
+            return state.is(BlockTags.MINEABLE_WITH_PICKAXE) ? AcousticMaterial.METAL : AcousticMaterial.DOOR;
         }
         // Ice sounds like glass, so it is checked first
         if (state.is(BlockTags.ICE)) {

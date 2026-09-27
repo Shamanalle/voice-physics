@@ -250,6 +250,85 @@ public class EnvironmentTest {
     }
 
     @Test
+    @DisplayName("Water and weather follow the player's strength setting, and it is saved and sent")
+    void waterAndWeatherStrength(@org.junit.jupiter.api.io.TempDir java.nio.file.Path dir) {
+        EnvironmentEffects.Effect usual = EnvironmentEffects.water(true, false);
+        assertEquals(usual, EnvironmentEffects.water(true, false, 1.0));
+        EnvironmentEffects.Effect strong = EnvironmentEffects.water(false, true, 1.5);
+        assertTrue(strong.muffle() > usual.muffle() && strong.muffle() < 1.0 && strong.lossDb() > usual.lossDb());
+        EnvironmentEffects.Effect soft = EnvironmentEffects.water(true, true, 0.5);
+        assertTrue(soft.muffle() < usual.muffle() && soft.lossDb() < usual.lossDb());
+        assertEquals(EnvironmentEffects.Effect.NONE, EnvironmentEffects.water(true, true, 0.0));
+        assertEquals(EnvironmentEffects.weather(EnvironmentEffects.Weather.RAIN, 0.8).lossDb() * 1.5,
+                EnvironmentEffects.weather(EnvironmentEffects.Weather.RAIN, 0.8, 1.5).lossDb(), 1e-9);
+
+        DistanceConfig c = new DistanceConfig(dir.resolve("c.properties"));
+        c.setUnderwaterStrength(1.3);
+        c.setWeatherStrength(9.0);
+        assertEquals(DistanceConfig.EFFECT_STRENGTH_MAX, c.getWeatherStrength(), 1e-9);
+        java.util.Properties p = new java.util.Properties();
+        c.writeTo(p, "profile.");
+        DistanceConfig back = new DistanceConfig(dir.resolve("d.properties"));
+        back.readFrom(p, "profile.");
+        assertEquals(1.3, back.getUnderwaterStrength(), 1e-9);
+        back.resetPart(DistanceConfig.Part.EFFECTS);
+        assertEquals(1.0, back.getUnderwaterStrength(), 1e-9);
+    }
+
+    @Test
+    @DisplayName("Echo glides with time into a cave and out again, taps fading instead of jumping")
+    void echoGlidesWithTime() {
+        RoomEstimate cave = RoomEstimate.of(box(15, 12, 10, AcousticMaterial.STONE, AcousticMaterial.STONE));
+        RoomEstimate.Taps cliff = new RoomEstimate.Taps(new double[]{0.12, 0.2}, new double[]{0.4, 0.3});
+        RoomEstimate canyon = new RoomEstimate(RoomEstimate.Kind.CANYON, 0.2, 2.0, Reverb.MIN_DECAY_SECONDS, 0.1,
+                0.3, 0.0, RoomEstimate.Taps.NONE, cliff);
+        RoomGlide glide = new RoomGlide(false);
+        long t = 0;
+        glide.jump(RoomEstimate.OPEN, t);
+        glide.set(cave, t);
+        double before = glide.get(t).wet();
+        long frame = 20_000_000L; // 20 ms, one voice frame
+        double biggestStep = 0.0;
+        for (int i = 0; i < 25; i++) { // half a second
+            t += frame;
+            double now = glide.get(t).wet();
+            biggestStep = Math.max(biggestStep, Math.abs(now - before));
+            before = now;
+        }
+        assertTrue(biggestStep < cave.wet() * 0.05, "no frame jumps: " + biggestStep);
+        assertTrue(before > cave.wet() * 0.5 && before < cave.wet() * 0.75, "about 63% after one time constant: " + before);
+        t += (long) (RoomGlide.SETTLE_SECONDS * 1e9);
+        assertTrue(glide.get(t).wet() > cave.wet() * 0.9, "settled after about 1.5 s");
+        t += 5_000_000_000L;
+        assertSame(cave, glide.get(t), "arrives exactly");
+
+        // Out to a canyon: its repeats fade in where they are
+        glide.set(canyon, t);
+        t += 100_000_000L;
+        RoomEstimate.Taps partway = glide.get(t).echoes();
+        assertEquals(2, partway.size());
+        assertEquals(0.12, partway.delays()[0], 1e-9);
+        assertTrue(partway.gains()[0] > 0.0 && partway.gains()[0] < 0.4 * 0.5, "fades in: " + partway.gains()[0]);
+        // And back to the field: they fade out and are dropped
+        glide.set(RoomEstimate.OPEN, t);
+        t += 10_000_000_000L;
+        assertSame(RoomEstimate.OPEN, glide.get(t));
+
+        // Doors: an open one lets the sound round its panel
+        assertEquals(1.0, AcousticMaterial.panelShare(false), 1e-9);
+        assertEquals(AcousticMaterial.OPEN_PANEL_SHARE, AcousticMaterial.panelShare(true), 1e-9);
+
+        // A speaker in the listener's own space has no room of its own (null) and glides back to that
+        RoomGlide speaker = new RoomGlide(true);
+        assertNull(speaker.get(0));
+        speaker.set(cave, 0);
+        assertNotNull(speaker.get(100_000_000L));
+        speaker.set(null, 100_000_000L);
+        assertNotNull(speaker.get(200_000_000L), "fades rather than cuts off");
+        assertNull(speaker.get(20_000_000_000L));
+    }
+
+    @Test
     @DisplayName("Reverb: a repeat off a cliff arrives exactly 2d/343 s later, at its level")
     void reverbRepeat() {
         RoomEstimate.Taps echo = new RoomEstimate.Taps(new double[]{0.1}, new double[]{0.5});

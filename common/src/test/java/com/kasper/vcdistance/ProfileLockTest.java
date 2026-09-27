@@ -17,7 +17,9 @@ class ProfileLockTest {
     void parseParts() {
         assertEquals(EnumSet.allOf(DistanceConfig.Part.class), DistanceConfig.Part.parseSet("all"));
         assertEquals(EnumSet.noneOf(DistanceConfig.Part.class), DistanceConfig.Part.parseSet("none"));
-        assertEquals(EnumSet.of(DistanceConfig.Part.CURVE, DistanceConfig.Part.WALLS), DistanceConfig.Part.parseSet("Curve, walls"));
+        assertEquals(EnumSet.of(DistanceConfig.Part.CURVE, DistanceConfig.Part.WALLS, DistanceConfig.Part.MATERIALS),
+                DistanceConfig.Part.parseSet("Curve, walls"), "locking walls locks the materials' percentages too");
+        assertEquals(EnumSet.of(DistanceConfig.Part.MATERIALS), DistanceConfig.Part.parseSet("materials"));
         assertNull(DistanceConfig.Part.parseSet("curve,echo"));
         assertEquals("curve,walls", DistanceConfig.Part.format(EnumSet.of(DistanceConfig.Part.WALLS, DistanceConfig.Part.CURVE)));
         assertEquals("all", DistanceConfig.Part.format(EnumSet.allOf(DistanceConfig.Part.class)));
@@ -107,13 +109,13 @@ class ProfileLockTest {
         };
         AdminCommands.run("lock curve,walls", s, ctx);
         AdminCommands.run("monitor off", s, ctx);
-        assertTrue(AdminCommands.run("status", s, ctx).stream().anyMatch(l -> l.contains("curve,walls")));
+        assertTrue(AdminCommands.run("status", s, ctx).stream().anyMatch(l -> l.contains("curve,walls,materials")));
         String text = Files.readString(file);
-        assertTrue(text.contains("profile_locked=curve,walls\n"));
+        assertTrue(text.contains("profile_locked=curve,walls,materials\n"));
         assertTrue(text.contains("allow_monitor=false\n"));
         ServerSettings again = new ServerSettings(file);
         again.load();
-        assertEquals(EnumSet.of(DistanceConfig.Part.CURVE, DistanceConfig.Part.WALLS), again.getLockedParts());
+        assertEquals(EnumSet.of(DistanceConfig.Part.CURVE, DistanceConfig.Part.WALLS, DistanceConfig.Part.MATERIALS), again.getLockedParts());
         assertFalse(again.isMonitorAllowed());
     }
 }

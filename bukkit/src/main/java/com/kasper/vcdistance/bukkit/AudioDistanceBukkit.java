@@ -252,6 +252,24 @@ public final class AudioDistanceBukkit extends JavaPlugin implements Listener {
                     scheduling.onPlayer(p, () -> p.kickPlayer(text));
                 }
             }
+
+            @Override
+            public void actionBar(UUID player, String text) {
+                Player p = getServer().getPlayer(player);
+                if (p != null) {
+                    scheduling.onPlayer(p, () -> {
+                        try {
+                            ChatLink.actionBar(p, text);
+                        } catch (LinkageError e) {
+                            try {
+                                ChatLink.Spigot.actionBar(p, text);
+                            } catch (LinkageError ignored) {
+                                // Neither API: no line above the hotbar
+                            }
+                        }
+                    });
+                }
+            }
         });
     }
 

@@ -5,12 +5,13 @@ import java.util.Locale;
 import java.util.Map;
 
 /**
- * A place with its own sound: a world (dimension), a box drawn with {@code /vcd zone}, or, on Paper
- * with WorldGuard, a region. A zone can change how the profile is offered, which preset it uses, how
+ * A place with its own sound: a world (dimension), a box drawn with {@code /vcd zone}, on Paper
+ * with WorldGuard a region, or on Fabric, Forge and NeoForge with Open Parties and Claims the claims
+ * of a player or party. A zone can change how the profile is offered, which preset it uses, how
  * far voices carry, how strong walls are and whether there is always an echo; whatever it leaves out
  * comes from the server's main settings.
  *
- * @param kind     {@link #WORLD}, {@link #BOX} or {@link #REGION}
+ * @param kind     {@link #WORLD}, {@link #BOX}, {@link #REGION} or {@link #CLAIM}
  * @param name     world name ("world_nether", or on Fabric "the_nether" / "minecraft:the_nether"),
  *                 box name or region id
  * @param mode     how the profile is offered here, or {@code null} to keep the server's
@@ -25,6 +26,8 @@ public record Zone(String kind, String name, ServerSettings.ProfileMode mode, St
     public static final String WORLD = "world";
     public static final String BOX = "box";
     public static final String REGION = "region";
+    /** Chunks claimed with Open Parties and Claims, by the player (or party leader) the zone is named after. */
+    public static final String CLAIM = "claim";
 
     public Zone(String kind, String name, ServerSettings.ProfileMode mode, String preset) {
         this(kind, name, mode, preset, Rules.NONE, null, 0);
@@ -93,6 +96,11 @@ public record Zone(String kind, String name, ServerSettings.ProfileMode mode, St
         }
     }
 
+    /** Whether {@code kind} is one of the zone kinds. */
+    public static boolean isKind(String kind) {
+        return WORLD.equals(kind) || BOX.equals(kind) || REGION.equals(kind) || CLAIM.equals(kind);
+    }
+
     /** Stable key for tracking which zone a player is in. */
     public String key() {
         return kind + ":" + name;
@@ -107,11 +115,12 @@ public record Zone(String kind, String name, ServerSettings.ProfileMode mode, St
     }
 
     /**
-     * The zone a player is in: of their WorldGuard regions and the boxes around them, the one with
-     * the highest priority (on a tie: regions in WorldGuard's order, then the smallest box);
+     * The zone a player is in: of their WorldGuard regions or claims and the boxes around them, the
+     * one with the highest priority (on a tie: regions and claims first, then the smallest box);
      * otherwise their world's zone; otherwise {@code null} (the server's main settings).
      *
-     * @param regions ids of the regions at the player's position, highest priority first
+     * @param regions ids of the regions at the player's position, highest priority first, and
+     *                "claim:&lt;owner&gt;" for the claim there
      */
     public static Zone resolve(Map<String, Zone> zones, String world, List<String> regions, double x, double y, double z) {
         if (zones.isEmpty()) {
@@ -120,7 +129,8 @@ public record Zone(String kind, String name, ServerSettings.ProfileMode mode, St
         Zone best = null;
         if (regions != null) {
             for (String region : regions) {
-                Zone r = zones.get(REGION + ":" + normalize(region));
+                // WorldGuard region ids, and "claim:<owner>" for claims (region ids have no colon)
+                Zone r = zones.get(region.startsWith(CLAIM + ":") ? normalize(region) : REGION + ":" + normalize(region));
                 if (r != null && (best == null || r.priority() > best.priority())) {
                     best = r;
                 }

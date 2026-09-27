@@ -37,11 +37,13 @@ public final class ServerBridge {
 
     /** A player as the voice rules see them. */
     public static ServerPlayers.Info info(ServerPlayer p) {
-        return new ServerPlayers.Info(p.getUUID(), p.getName().getString(),
-                ServerZones.dimensionId(String.valueOf(p.level().dimension())),
+        String world = ServerZones.dimensionId(String.valueOf(p.level().dimension()));
+        String name = p.getName().getString();
+        Claims.seen(p.getUUID(), name);
+        return new ServerPlayers.Info(p.getUUID(), name, world,
                 p.getX(), p.getY(), p.getZ(),
                 p.isShiftKeyDown(), p.isAlive(), p.isSpectator(),
-                item(p.getMainHandItem()), item(p.getOffhandItem()), List.of(), PlayerLanguage.of(p));
+                item(p.getMainHandItem()), item(p.getOffhandItem()), Claims.at(p, world), PlayerLanguage.of(p));
     }
 
     private static String item(ItemStack stack) {
@@ -87,6 +89,16 @@ public final class ServerBridge {
                 ServerPlayer p = server.getPlayerList().getPlayer(player);
                 if (p != null) {
                     p.connection.disconnect(Component.literal(text));
+                }
+            }
+
+            @Override
+            public void actionBar(UUID player, String text) {
+                ServerPlayer p = server.getPlayerList().getPlayer(player);
+                if (p != null) {
+                    // A system message shown as the overlay: the same line above the hotbar as
+                    // displayClientMessage(text, true), and clients see it as a game message
+                    p.sendSystemMessage(Component.literal(text), true);
                 }
             }
         });
@@ -186,6 +198,11 @@ public final class ServerBridge {
                     // no suggestions then
                 }
                 return out;
+            }
+
+            @Override
+            public boolean claims() {
+                return Claims.installed();
             }
         };
     }

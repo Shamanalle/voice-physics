@@ -6,17 +6,15 @@ package com.kasper.vcdistance;
  */
 public final class ListenerEnvironment {
 
-    /** How much of the way to a new room estimate the echo moves per update (every half second). */
-    private static final double ROOM_GLIDE = 0.5;
-
-    private volatile RoomEstimate room = RoomEstimate.OPEN;
+    private final RoomGlide room = new RoomGlide(false);
     private volatile boolean underWater;
     private volatile EnvironmentEffects.Weather weather = EnvironmentEffects.Weather.CLEAR;
     /** The listener's head in world coordinates, for directions to doorways; NaN when unknown. */
     private volatile double[] position = {Double.NaN, Double.NaN, Double.NaN};
 
+    /** The echo around the listener right now, gliding towards the latest measurement. */
     public RoomEstimate room() {
-        return room;
+        return room.get(System.nanoTime());
     }
 
     public boolean isUnderWater() {
@@ -27,9 +25,9 @@ public final class ListenerEnvironment {
         return weather;
     }
 
-    /** A new room measurement; the echo glides towards it. */
+    /** A new room measurement; the echo glides towards it over about {@link RoomGlide#SETTLE_SECONDS}. */
     public void updateRoom(RoomEstimate measured) {
-        room = room.towards(measured, ROOM_GLIDE);
+        room.set(measured, System.nanoTime());
     }
 
     public void update(boolean underWater, EnvironmentEffects.Weather weather) {
@@ -47,7 +45,7 @@ public final class ListenerEnvironment {
 
     public void reset() {
         position = new double[]{Double.NaN, Double.NaN, Double.NaN};
-        room = RoomEstimate.OPEN;
+        room.jump(RoomEstimate.OPEN, System.nanoTime());
         underWater = false;
         weather = EnvironmentEffects.Weather.CLEAR;
     }

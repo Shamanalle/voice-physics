@@ -85,6 +85,45 @@ public record RoomEstimate(Kind kind, double enclosure, double meanFree, double 
             return max;
         }
 
+        /**
+         * {@code amount} of the way to {@code target}, tap by tap: delays slide, gains fade, and taps
+         * that only one side has fade in or out where they are.
+         */
+        public Taps towards(Taps target, double amount) {
+            int n = Math.max(size(), target.size());
+            double[] d = new double[n];
+            double[] g = new double[n];
+            int kept = 0;
+            for (int i = 0; i < n; i++) {
+                boolean mine = i < size();
+                boolean theirs = i < target.size();
+                double d0 = mine ? delays[i] : target.delays[i];
+                double d1 = theirs ? target.delays[i] : delays[i];
+                double g0 = mine ? gains[i] : 0.0;
+                double g1 = theirs ? target.gains[i] : 0.0;
+                double gain = g0 + (g1 - g0) * amount;
+                if (!theirs && gain < FADED) {
+                    continue; // faded out
+                }
+                d[kept] = d0 + (d1 - d0) * amount;
+                g[kept] = gain;
+                kept++;
+            }
+            return kept == 0 ? NONE : new Taps(Arrays.copyOf(d, kept), Arrays.copyOf(g, kept));
+        }
+
+        boolean closeTo(Taps other) {
+            if (size() != other.size()) {
+                return false;
+            }
+            for (int i = 0; i < size(); i++) {
+                if (Math.abs(delays[i] - other.delays[i]) > 1e-4 || Math.abs(gains[i] - other.gains[i]) > FADED) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
         @Override
         public boolean equals(Object o) {
             return o instanceof Taps t && Arrays.equals(delays, t.delays) && Arrays.equals(gains, t.gains);
@@ -122,6 +161,8 @@ public record RoomEstimate(Kind kind, double enclosure, double meanFree, double 
     /** A cliff this close gives a repeat too quick to hear apart (about 0.1 s). */
     static final double MIN_ECHO_DISTANCE = 17.0;
     static final int MAX_EARLY = 6;
+    /** A tap this quiet is gone. */
+    static final double FADED = 0.005;
     static final int MAX_ECHOES = 3;
 
     /** 16 horizontal rays, then the 18 of a cube's corners and edges above and below. */
@@ -251,7 +292,7 @@ public record RoomEstimate(Kind kind, double enclosure, double meanFree, double 
                 Math.min(0.05, meanFree / SOUND_SPEED), Taps.NONE, Taps.NONE);
     }
 
-    /** Glides towards {@code target} so the echo changes smoothly as the player walks. */
+    /** Glides towards {@code target} so the echo changes smoothly as the player walks (see {@link RoomGlide}). */
     public RoomEstimate towards(RoomEstimate target, double amount) {
         double a = Math.max(0.0, Math.min(1.0, amount));
         return new RoomEstimate(target.kind,
@@ -261,7 +302,15 @@ public record RoomEstimate(Kind kind, double enclosure, double meanFree, double 
                 wet + (target.wet - wet) * a,
                 damping + (target.damping - damping) * a,
                 preDelaySeconds + (target.preDelaySeconds - preDelaySeconds) * a,
-                target.early, target.echoes);
+                early.towards(target.early, a), echoes.towards(target.echoes, a));
+    }
+
+    /** Near enough to {@code other} that nobody could hear the difference. */
+    boolean closeTo(RoomEstimate other) {
+        return Math.abs(wet - other.wet) < 0.005 && Math.abs(decaySeconds - other.decaySeconds) < 0.01
+                && Math.abs(damping - other.damping) < 0.005 && Math.abs(preDelaySeconds - other.preDelaySeconds) < 0.0005
+                && Math.abs(enclosure - other.enclosure) < 0.005 && Math.abs(meanFree - other.meanFree) < 0.05
+                && early.closeTo(other.early) && echoes.closeTo(other.echoes);
     }
 
     /**
