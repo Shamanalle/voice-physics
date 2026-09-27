@@ -37,7 +37,7 @@ Players **without the addon** also hear voices muffled through walls.
 - **One sound for everyone:** offer or enforce the server's settings for fair PvP and events.
 - **No seeing through walls:** turn off the monitor and radar.
 - **Require the addon:** send a download link, remind on every join, or kick.
-- **In-game Server tab** for admins, and `/vcd` commands.
+- **In-game Server tab** for admins, and clickable `/vcd` commands with undo.
 
 ## Which file do I need?
 
@@ -95,7 +95,7 @@ Minecraft 1.20 – 1.20.6, 1.21 – 1.21.11 and 26.1 – 26.3.
 - **Один звук для всех:** предложите или закрепите настройки сервера для честного PvP и ивентов.
 - **Без взгляда сквозь стены:** выключите монитор и радар.
 - **Обязательный аддон:** ссылка на скачивание, напоминание при каждом входе или кик.
-- **Вкладка «Сервер» в игре** для админов и команды `/vcd`.
+- **Вкладка «Сервер» в игре** для админов и кликабельные команды `/vcd` с отменой.
 
 ## Какой файл нужен?
 

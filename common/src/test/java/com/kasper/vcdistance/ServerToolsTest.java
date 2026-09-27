@@ -151,7 +151,7 @@ public class ServerToolsTest {
         assertFalse(s.profile().isOcclusionEnabled());
 
         List<String> bad = AdminCommands.run("profile loud", s, ctx);
-        assertTrue(bad.get(0).startsWith("Использование"), bad.toString());
+        assertTrue(bad.get(0).contains("loud") && bad.get(0).contains("off|suggest|enforce"), bad.toString());
         assertEquals(5, resent.get());
         assertTrue(AdminCommands.run("help", s, ctx).size() > 5);
         assertTrue(AdminCommands.run("zones", s, ctx).get(0).startsWith("Зон пока нет"));
@@ -169,7 +169,7 @@ public class ServerToolsTest {
         assertTrue(imported.get(0).contains("custom"), imported.toString());
         assertEquals(ServerSettings.CUSTOM_PRESET, s.getProfilePreset());
         assertEquals(AttenuationModel.REALISTIC_INVERSE, s.profile().getModel());
-        assertTrue(AdminCommands.run("preset import nonsense", s, ctx).get(0).startsWith("Использование"));
+        assertTrue(AdminCommands.run("preset import nonsense", s, ctx).get(0).contains("не подходит"));
 
         assertEquals(0.6, AdminCommands.parsePercent("60%"), 1e-9);
         assertEquals(0.6, AdminCommands.parsePercent("0.6"), 1e-9);

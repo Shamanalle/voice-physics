@@ -169,7 +169,10 @@ if [ "${up}" != true ]; then
 fi
 
 say "Running /vcd"
-for command in "vcd status" "vcd zones" "vcd walls 55" "vcd rule sneak 0.5" "vcd zone create smoke 3" \
+# walls 150 must be refused, undo must take walls 70 back to 55, and deleting a zone asks first
+for command in "vcd status" "vcd help" "vcd help zone" "vcd zones" "vcd walls 55" "vcd rule sneak 0.5" \
+               "vcd zone set smoke_world voice_range 16" "vcd zoen" "vcd walls 150" "vcd walls 70" "vcd undo" \
+               "vcd zone info smoke_world" "vcd zone delete smoke_world" \
                "vcd debug nobody" "vcd reload" "vcd status"; do
   send "${command}"
   sleep 2
@@ -182,10 +185,17 @@ if ! grep -q 'Voice Physics [0-9]' "${log}"; then
   echo "::error::/vcd status did not answer with the Voice Physics status line"
   failed=true
 fi
-if grep -Eq '(^|[^.a-z_])(status\.title|status\.svc|walls_set|rule\.sneak)([^.a-z_]|$)' "${log}"; then
+if grep -Eq '(^|[^.a-z_])(status\.title|status\.svc|walls_set|rule\.sneak|btn\.[a-z_]+|hover\.[a-z_]+|error\.[a-z_]+|help\.examples|undo\.done|zone\.delete_ask)([^.a-z_]|$)' "${log}"; then
   echo "::error::/vcd answered with text keys instead of messages"
   failed=true
 fi
+for answer in 'Examples (click to type)' 'does not work. Allowed: 0-100|off' 'Did you mean /vcd zone' 'Undone: /vcd walls 70' \
+              'Delete zone smoke_world?' 'voice_range 16'; do
+  if ! grep -qF "${answer}" "${log}"; then
+    echo "::error::/vcd did not answer with \"${answer}\""
+    failed=true
+  fi
+done
 if grep -q 'at com\.kasper\.vcdistance' "${log}"; then
   echo "::error::The addon threw an exception"
   grep -n -B8 -A4 'at com\.kasper\.vcdistance' "${log}" | head -80

@@ -1,7 +1,16 @@
 package com.kasper.vcdistance;
 
+import com.kasper.vcdistance.CommandReply.Click;
+import com.kasper.vcdistance.CommandReply.LineBuilder;
+import com.kasper.vcdistance.CommandReply.Span;
+import com.kasper.vcdistance.CommandReply.Style;
+
+import java.nio.file.Path;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Deque;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -9,31 +18,47 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * The {@code /vcd} command for server admins, the same on Fabric, NeoForge and Paper (and behind the
- * Server tab): the platform only passes the typed text and prints the reply lines. Changes are saved
- * to the settings file and sent to the players who have the addon right away. Replies come in the
- * admin's own game language, or the one set in the settings file.
+ * The {@code /vcd} command for server admins, the same on Fabric, Forge, NeoForge and Paper (and
+ * behind the Server tab): the platform only passes the typed text and shows the reply. Replies are
+ * {@link CommandReply} lines with coloured values and buttons; every change is saved to the settings
+ * file, sent to the players who have the addon right away, and can be taken back with {@code /vcd undo}.
+ * Replies come in the admin's own game language, or the one set in the settings file.
  * <pre>
  * /vcd status                                  what the addon is doing now
- * /vcd reload                                  re-read the settings file
+ * /vcd help [topic]                            commands, or one command with examples
+ * /vcd reload | undo                           re-read the settings file | take back the last change
  * /vcd profile off|suggest|enforce             how the profile is offered
- * /vcd preset vanilla|realistic|clear|stealth|custom
- * /vcd preset export | import &lt;code&gt;             the profile as a code players can paste
+ * /vcd preset vanilla|realistic|clear|stealth|custom | export | import &lt;code&gt;
  * /vcd walls 0-100|off                         wall strength for everyone, in %
  * /vcd serverwalls on|off                      walls for players without the addon
  * /vcd lock all|none|curve,walls,...           what players cannot change while the profile is enforced
  * /vcd group dead|spectators|zones|open_range on|off  rules for Simple Voice Chat groups
  * /vcd monitor on|off                          monitor, radar and nearby players in the HUD
- * /vcd zones                                   every zone
- * /vcd zone pos1|pos2 | create &lt;name&gt; [radius] | set &lt;name&gt; &lt;setting&gt; &lt;value&gt; | show &lt;name&gt;|off | delete &lt;name&gt; | info
+ * /vcd zones [page]                            every zone
+ * /vcd zone ...                                see {@link ZoneCommands}
  * /vcd rule sneak|dead|spectators|megaphone|megaphone_range &lt;value&gt;
  * /vcd require off|suggest|warn|kick [min version]
- * /vcd debug &lt;player&gt;                          what a player hears, and why not
+ * /vcd debug [player]                          what a player hears, and why not
  * </pre>
+ * Who may do what is split into permissions ({@link #PERM_STATUS} and the others, all under
+ * {@link #PERM_ADMIN}); the platform answers {@link Context#allows}.
  */
 public final class AdminCommands {
 
     public static final String NAME = "vcd";
+
+    /** Everything below. */
+    public static final String PERM_ADMIN = "vcd.admin";
+    /** status, help, zones, zone info. */
+    public static final String PERM_STATUS = "vcd.status";
+    /** The server's settings: profile, preset, walls, rules, groups, require, reload, undo. */
+    public static final String PERM_SETTINGS = "vcd.settings";
+    /** Making and changing zones. */
+    public static final String PERM_ZONE = "vcd.zone";
+    /** debug. */
+    public static final String PERM_DEBUG = "vcd.debug";
+    public static final String[] PERMISSIONS = {PERM_STATUS, PERM_SETTINGS, PERM_ZONE, PERM_DEBUG};
+
     /** Wall strength suggestions: off, then every 5%. */
     static final String[] WALLS_STEPS = wallsSteps();
 
@@ -46,18 +71,22 @@ public final class AdminCommands {
         return steps;
     }
 
-    static final String[] SUBCOMMANDS = {"status", "reload", "profile", "preset", "walls", "serverwalls", "lock", "monitor", "zones", "zone",
-            "rule", "group", "require", "debug", "help"};
+    static final String[] SUBCOMMANDS = {"status", "help", "reload", "undo", "profile", "preset", "walls", "serverwalls", "lock",
+            "monitor", "zones", "zone", "rule", "group", "require", "debug"};
+    /** The topics of {@code /vcd help}, in the order they are listed. */
+    static final String[] TOPICS = {"status", "zones", "zone", "profile", "preset", "walls", "serverwalls", "lock", "monitor",
+            "rule", "group", "require", "debug", "undo", "reload"};
     static final String[] MODES = {"off", "suggest", "enforce"};
     static final String[] PRESETS = {"vanilla", "realistic", "clear", "stealth", "custom", "export", "import"};
-    static final String[] ZONE_ACTIONS = {"pos1", "pos2", "create", "set", "show", "delete", "info", "list"};
-    static final String[] ZONE_SETTINGS = {"mode", "preset", "voice_range", "whisper_range", "range_multiplier", "walls",
-            "echo", "isolated", "message", "priority"};
+    static final String[] LOCK_PARTS = {"all", "none", "curve", "walls", "materials", "effects"};
     static final String[] RULES = {"sneak", "dead", "spectators", "megaphone", "megaphone_range"};
     static final String[] GROUP_RULES = {"dead", "spectators", "zones", "open_range"};
     static final String[] REQUIRE = {"off", "suggest", "warn", "kick"};
-    /** Largest box {@code zone create <name> <radius>} makes around the admin. */
-    static final int MAX_RADIUS = 256;
+    static final String[] ON_OFF = {"on", "off"};
+    /** Changes {@code /vcd undo} can take back, per settings file. */
+    static final int UNDO_STEPS = 10;
+    /** Players {@code /vcd debug} lists. */
+    static final int DEBUG_PLAYERS = 8;
 
     /** What the platform provides to the command. */
     public interface Context {
@@ -85,12 +114,40 @@ public final class AdminCommands {
         default ServerPlayers players() {
             return AudioDistancePlugin.PLAYERS;
         }
+
+        /**
+         * Whether the sender has a permission ({@link #PERM_STATUS} and the others); having
+         * {@link #PERM_ADMIN} counts as having all of them. The console always may.
+         */
+        default boolean allows(String permission) {
+            return true;
+        }
+
+        /** The block the sender looks at, up to 64 blocks away, as {x, y, z}; {@code null} when none. */
+        default int[] targetBlock() {
+            return null;
+        }
+
+        /** Moves the sender to a spot; {@code false} when this platform cannot. */
+        default boolean teleport(String world, double x, double y, double z) {
+            return false;
+        }
+
+        /** The server's worlds, for suggestions. */
+        default Collection<String> worlds() {
+            return List.of();
+        }
     }
 
-    /** Corners picked with {@code zone pos1/pos2}, per admin, until the server stops. */
-    private static final Map<UUID, int[]> POS1 = new ConcurrentHashMap<>();
-    private static final Map<UUID, int[]> POS2 = new ConcurrentHashMap<>();
-    private static final Map<UUID, String> POS_WORLD = new ConcurrentHashMap<>();
+    /** A completion for the word being typed, with a short explanation (or {@code null}). */
+    public record Suggestion(String text, String tooltip) {
+    }
+
+    /** A change {@code /vcd undo} can take back: the settings before it, and the command that made it. */
+    private record Change(String before, String command, String permission) {
+    }
+
+    private static final Map<Path, Deque<Change>> HISTORY = new ConcurrentHashMap<>();
 
     private AdminCommands() {
     }
@@ -99,421 +156,282 @@ public final class AdminCommands {
      * Runs a command.
      *
      * @param input everything typed after {@code /vcd}, possibly empty
-     * @return the reply, one line per entry
      */
-    public static List<String> run(String input, ServerSettings settings, Context ctx) {
-        ServerPlayers.Info me = ctx.sender() == null ? null : ctx.players().get(ctx.sender());
-        Messages m = new Messages(settings.languageFor(me == null ? "" : me.language()));
-        String[] args = input == null || input.isBlank() ? new String[0] : input.trim().split("\\s+");
-        String sub = args.length == 0 ? "status" : args[0].toLowerCase(Locale.ROOT);
-        List<String> out = new ArrayList<>();
+    public static CommandReply execute(String input, ServerSettings settings, Context ctx) {
+        Run r = new Run(input, settings, ctx);
+        String sub = r.args.length == 0 ? "" : r.args[0].toLowerCase(Locale.ROOT);
+        if (sub.isEmpty()) {
+            sub = ctx.allows(PERM_STATUS) ? "status" : "help";
+        }
+        String permission = permissionFor(sub, r.args.length > 1 ? r.args[1] : "");
+        if (permission != null && !ctx.allows(permission)) {
+            r.error("no_permission", "/vcd " + sub, permission);
+            return r.reply;
+        }
+        if (changes(sub)) {
+            r.before = settings.snapshot();
+        }
         switch (sub) {
-            case "status" -> status(settings, ctx, m, out);
+            case "status" -> status(r);
+            case "help", "?" -> CommandHelp.help(r, r.args.length > 1 ? r.args[1] : "");
             case "reload" -> {
                 settings.load();
+                HISTORY.remove(key(settings));
                 ctx.afterSettingsChange();
                 ctx.resendProfiles();
-                out.add(m.get("reloaded", settings.getPath().toString()));
+                r.ok(r.m.spans("reloaded", Style.OK, settings.getPath().toString()), false);
             }
+            case "undo" -> undo(r);
             case "profile" -> {
-                ServerSettings.ProfileMode mode = args.length > 1 ? ServerSettings.ProfileMode.fromId(args[1], null) : null;
+                ServerSettings.ProfileMode mode = r.args.length > 1 ? ServerSettings.ProfileMode.fromId(r.args[1], null) : null;
                 if (mode == null) {
-                    out.add(m.get("usage", "/vcd profile off|suggest|enforce"));
+                    r.badValue("profile", r.arg(1), String.join("|", MODES), "profile");
                     break;
                 }
                 settings.setProfileMode(mode);
-                saved(settings, ctx, out, m.get("profile_set", mode.getId()));
+                r.saved("profile_set", mode.getId());
             }
-            case "preset" -> preset(args, settings, ctx, m, out);
+            case "preset" -> preset(r);
             case "walls" -> {
-                Double strength = args.length > 1 ? parsePercent(args[1]) : null;
+                Double strength = r.args.length > 1 ? parsePercent(r.args[1]) : null;
                 if (strength == null) {
-                    out.add(m.get("usage", "/vcd walls 0-100|off"));
+                    r.badValue("walls", r.arg(1), "0-100|off", "walls");
                     break;
                 }
                 settings.setWallsStrength(strength);
-                saved(settings, ctx, out, strength > 0.0 ? m.get("walls_set", pct(strength)) : m.get("walls_off"));
-            }
-            case "serverwalls" -> {
-                Boolean on = args.length > 1 ? parseOnOff(args[1]) : null;
-                if (on == null) {
-                    out.add(m.get("usage", "/vcd serverwalls on|off"));
-                    break;
+                if (strength > 0.0) {
+                    r.saved("walls_set", pct(strength));
+                } else {
+                    r.saved("walls_off");
                 }
-                settings.setServerWalls(on);
-                saved(settings, ctx, out, m.get(on ? "serverwalls_on" : "serverwalls_off"));
             }
+            case "serverwalls" -> onOff(r, "serverwalls", on -> settings.setServerWalls(on), "serverwalls_on", "serverwalls_off");
             case "lock" -> {
-                java.util.Set<DistanceConfig.Part> parts = args.length > 1
-                        ? DistanceConfig.Part.parseSet(String.join(",", java.util.Arrays.copyOfRange(args, 1, args.length))) : null;
+                java.util.Set<DistanceConfig.Part> parts = r.args.length > 1
+                        ? DistanceConfig.Part.parseSet(String.join(",", Arrays.copyOfRange(r.args, 1, r.args.length))) : null;
                 if (parts == null) {
-                    out.add(m.get("usage", "/vcd lock all|none|curve,walls,materials,effects"));
+                    r.badValue("lock", r.rest(1), "all|none|curve,walls,materials,effects", "lock");
                     break;
                 }
                 settings.setLockedParts(parts);
-                saved(settings, ctx, out, m.get("lock_set", DistanceConfig.Part.format(parts)));
+                r.saved("lock_set", DistanceConfig.Part.format(parts));
             }
-            case "monitor" -> {
-                Boolean on = args.length > 1 ? parseOnOff(args[1]) : null;
-                if (on == null) {
-                    out.add(m.get("usage", "/vcd monitor on|off"));
-                    break;
-                }
-                settings.setMonitorAllowed(on);
-                saved(settings, ctx, out, m.get(on ? "monitor_on" : "monitor_off"));
-            }
-            case "zones" -> zones(settings, m, out);
-            case "zone" -> zone(args, settings, ctx, me, m, out);
-            case "rule" -> rule(args, settings, ctx, m, out);
-            case "group" -> group(args, settings, ctx, m, out);
-            case "require" -> require(args, settings, ctx, m, out);
-            case "debug" -> debug(args, settings, ctx, m, out);
-            default -> help(m, out);
+            case "monitor" -> onOff(r, "monitor", on -> settings.setMonitorAllowed(on), "monitor_on", "monitor_off");
+            case "zones" -> ZoneCommands.list(r, r.args.length > 1 ? parseInt(r.args[1]) : null);
+            case "zone" -> ZoneCommands.zone(r);
+            case "rule" -> rule(r);
+            case "group" -> group(r);
+            case "require" -> require(r);
+            case "debug" -> debug(r);
+            default -> CommandHelp.unknown(r, sub);
+        }
+        return r.reply;
+    }
+
+    /** Runs a command and gives its reply as text, without buttons (the Server tab, tests). */
+    public static List<String> run(String input, ServerSettings settings, Context ctx) {
+        return execute(input, settings, ctx).text();
+    }
+
+    /** Completions for the word being typed, only for what the sender may use. */
+    public static List<Suggestion> suggestions(String input, ServerSettings settings, Context ctx) {
+        return CommandSuggest.suggest(input, settings, ctx);
+    }
+
+    /** Completions for the word being typed, from the fixed words alone. */
+    public static List<String> suggest(String input) {
+        List<String> out = new ArrayList<>();
+        for (Suggestion s : CommandSuggest.suggest(input, null, null)) {
+            out.add(s.text());
         }
         return out;
     }
 
-    /** Completions for the word being typed. */
-    public static List<String> suggest(String input) {
-        String text = input == null ? "" : input;
-        String[] args = text.stripLeading().split("\\s+", -1);
-        List<String> out = new ArrayList<>();
-        if (args.length <= 1) {
-            addMatching(out, SUBCOMMANDS, args.length == 0 ? "" : args[0]);
-        } else if (args.length == 2) {
-            String[] options = switch (args[0].toLowerCase(Locale.ROOT)) {
-                case "profile" -> MODES;
-                case "preset" -> PRESETS;
-                case "walls" -> WALLS_STEPS;
-                case "serverwalls", "monitor" -> new String[]{"on", "off"};
-                case "lock" -> new String[]{"all", "none", "curve", "walls", "materials", "effects", "curve,walls"};
-                case "zone" -> ZONE_ACTIONS;
-                case "rule" -> RULES;
-                case "group" -> GROUP_RULES;
-                case "require" -> REQUIRE;
-                default -> new String[0];
-            };
-            addMatching(out, options, args[1]);
-        } else if (args.length == 4 && args[0].equalsIgnoreCase("zone") && args[1].equalsIgnoreCase("set")) {
-            addMatching(out, ZONE_SETTINGS, args[3]);
-        } else if (args.length == 3 && args[0].equalsIgnoreCase("rule")) {
-            String[] options = switch (args[1].toLowerCase(Locale.ROOT)) {
-                case "sneak" -> new String[]{"1", "0.5", "0.3"};
-                case "dead", "spectators" -> new String[]{"on", "off"};
-                case "megaphone" -> new String[]{"off", "minecraft:goat_horn"};
-                case "megaphone_range" -> new String[]{"2", "2.5", "4"};
-                default -> new String[0];
-            };
-            addMatching(out, options, args[2]);
-        } else if (args.length == 3 && args[0].equalsIgnoreCase("group")) {
-            addMatching(out, new String[]{"on", "off"}, args[2]);
+    /** Whether the sender may use {@code /vcd} at all (any of its permissions). */
+    public static boolean mayUseAny(Context ctx) {
+        for (String p : PERMISSIONS) {
+            if (ctx.allows(p)) {
+                return true;
+            }
         }
-        return out;
+        return false;
+    }
+
+    /**
+     * The permission a subcommand needs, or {@code null} when it checks by itself (undo) or is not
+     * a command (the reply is then the help).
+     */
+    static String permissionFor(String sub, String action) {
+        return switch (sub.toLowerCase(Locale.ROOT)) {
+            case "status", "help", "?", "zones" -> PERM_STATUS;
+            case "debug" -> PERM_DEBUG;
+            case "zone" -> ZoneCommands.readOnly(action) ? PERM_STATUS : PERM_ZONE;
+            case "reload", "profile", "preset", "walls", "serverwalls", "lock", "monitor", "rule", "group", "require" -> PERM_SETTINGS;
+            default -> null;
+        };
+    }
+
+    /** Subcommands that may change the settings (their state before is kept for undo). */
+    private static boolean changes(String sub) {
+        return switch (sub) {
+            case "profile", "preset", "walls", "serverwalls", "lock", "monitor", "zone", "rule", "group", "require" -> true;
+            default -> false;
+        };
+    }
+
+    private static Path key(ServerSettings settings) {
+        return settings.getPath().toAbsolutePath().normalize();
+    }
+
+    /** How many changes {@code /vcd undo} can still take back. */
+    static int undoable(ServerSettings settings) {
+        Deque<Change> changes = HISTORY.get(key(settings));
+        return changes == null ? 0 : changes.size();
     }
 
     // -------------------------------------------------------------------------
     // Subcommands
     // -------------------------------------------------------------------------
 
-    private static void status(ServerSettings settings, Context ctx, Messages m, List<String> out) {
-        out.add(m.get("status.title", BuildInfo.version(), ctx.platform()));
+    private static void status(Run r) {
+        Messages m = r.m;
+        ServerSettings settings = r.settings;
+        Context ctx = r.ctx;
+        r.line(Style.TITLE, m.get("status.title", BuildInfo.version(), ctx.platform()));
         double voice = AudioDistancePlugin.serverVoiceDistance();
-        out.add(voice > 0.0
-                ? m.get("status.svc", fmt(voice), fmt(AudioDistancePlugin.serverWhisperDistance()))
-                : m.get("status.svc_off"));
+        if (voice > 0.0) {
+            r.reply.add(CommandReply.line().addAll(m.spans("status.svc", Style.PLAIN, fmt(voice),
+                    fmt(AudioDistancePlugin.serverWhisperDistance()))));
+        } else {
+            r.line(Style.WARN, m.get("status.svc_off"));
+        }
         DistanceConfig p = settings.profile();
-        String walls = p.isOcclusionEnabled() ? pct(p.getOcclusionStrength()) : m.get("off");
-        out.add(m.get("status.walls", walls,
-                settings.isServerWalls() ? m.get("on") : m.get("off"),
-                AudioDistancePlugin.SERVER_WALLS.activeStreams(), settings.getMaxStreams()));
-        out.add(m.get("status.players", ctx.addonPlayers(), ctx.onlinePlayers()));
-        out.add(m.get("status.profile", settings.getProfileMode().getId(), settings.getProfilePreset(),
-                p.getModel().getId(), p.isReverbEnabled() ? pct(p.getReverbStrength()) : m.get("off")));
-        out.add(m.get("status.locks", DistanceConfig.Part.format(settings.getLockedParts()),
-                settings.isMonitorAllowed() ? m.get("on") : m.get("off")));
-        out.add(m.get("status.groups", onOff(m, settings.isGroupDeadSilent()), onOff(m, settings.isGroupSpectatorsApart()),
-                onOff(m, settings.isGroupIsolatedZones()), onOff(m, settings.isOpenGroupRange())));
-        out.add(m.get("status.rules", pct(settings.getSneakMultiplier()),
-                settings.isDeadSilent() ? m.get("on") : m.get("off"),
-                settings.isSpectatorsOnly() ? m.get("on") : m.get("off"),
-                settings.getMegaphoneItem().isEmpty() ? m.get("off")
-                        : settings.getMegaphoneItem() + " ×" + fmt(settings.getMegaphoneMultiplier())));
-        out.add(m.get("status.require", settings.getRequireAddon().getId(),
-                settings.getMinAddonVersion().isEmpty() ? "-" : settings.getMinAddonVersion()));
-        out.add(m.get("status.zones", settings.zones().size()));
-        out.add(m.get("status.perf", String.format(Locale.ROOT, "%.2f", AudioDistancePlugin.SERVER_WALLS.perf().averageMs())));
+        r.reply.add(CommandReply.line().addAll(m.spans("status.walls", Style.PLAIN,
+                r.change(p.isOcclusionEnabled() ? pct(p.getOcclusionStrength()) : m.get("off"), "walls"),
+                r.change(onOff(m, settings.isServerWalls()), "serverwalls"),
+                AudioDistancePlugin.SERVER_WALLS.activeStreams(), settings.getMaxStreams())));
+        r.reply.add(CommandReply.line().addAll(m.spans("status.players", Style.PLAIN, ctx.addonPlayers(), ctx.onlinePlayers())));
+        r.reply.add(CommandReply.line().addAll(m.spans("status.profile", Style.PLAIN,
+                r.change(settings.getProfileMode().getId(), "profile"),
+                r.change(settings.getProfilePreset(), "preset"),
+                p.getModel().getId(), p.isReverbEnabled() ? pct(p.getReverbStrength()) : m.get("off"))));
+        r.reply.add(CommandReply.line().addAll(m.spans("status.locks", Style.PLAIN,
+                r.change(DistanceConfig.Part.format(settings.getLockedParts()), "lock"),
+                r.change(onOff(m, settings.isMonitorAllowed()), "monitor"))));
+        r.reply.add(CommandReply.line().addAll(m.spans("status.groups", Style.PLAIN,
+                r.change(onOff(m, settings.isGroupDeadSilent()), "group dead"),
+                r.change(onOff(m, settings.isGroupSpectatorsApart()), "group spectators"),
+                r.change(onOff(m, settings.isGroupIsolatedZones()), "group zones"),
+                r.change(onOff(m, settings.isOpenGroupRange()), "group open_range"))));
+        r.reply.add(CommandReply.line().addAll(m.spans("status.rules", Style.PLAIN,
+                r.change(pct(settings.getSneakMultiplier()), "rule sneak"),
+                r.change(onOff(m, settings.isDeadSilent()), "rule dead"),
+                r.change(onOff(m, settings.isSpectatorsOnly()), "rule spectators"),
+                r.change(settings.getMegaphoneItem().isEmpty() ? m.get("off")
+                        : settings.getMegaphoneItem() + " ×" + fmt(settings.getMegaphoneMultiplier()), "rule megaphone"))));
+        r.reply.add(CommandReply.line().addAll(m.spans("status.require", Style.PLAIN,
+                r.change(settings.getRequireAddon().getId(), "require"),
+                settings.getMinAddonVersion().isEmpty() ? "-" : settings.getMinAddonVersion())));
+        r.reply.add(CommandReply.line().addAll(m.spans("status.zones", Style.PLAIN,
+                new Span(String.valueOf(settings.zones().size()), Style.VALUE, Click.RUN, "/vcd zones", m.get("hover.run", "/vcd zones")))));
+        r.reply.add(CommandReply.line().addAll(m.spans("status.perf", Style.MUTED,
+                String.format(Locale.ROOT, "%.2f", AudioDistancePlugin.SERVER_WALLS.perf().averageMs()))));
+        LineBuilder buttons = CommandReply.line();
+        r.button(buttons, "btn.zones", Click.RUN, "/vcd zones", PERM_STATUS);
+        r.button(buttons, "btn.help", Click.RUN, "/vcd help", PERM_STATUS);
+        r.button(buttons, "btn.reload", Click.RUN, "/vcd reload", PERM_SETTINGS);
+        if (undoable(settings) > 0) {
+            r.button(buttons, "btn.undo", Click.RUN, "/vcd undo", null);
+        }
+        if (!buttons.isEmpty()) {
+            r.reply.add(buttons);
+        }
     }
 
-    private static void preset(String[] args, ServerSettings settings, Context ctx, Messages m, List<String> out) {
-        String name = args.length > 1 ? args[1].toLowerCase(Locale.ROOT) : "";
+    private static void undo(Run r) {
+        Deque<Change> changes = HISTORY.get(key(r.settings));
+        Change last = changes == null ? null : changes.peekFirst();
+        if (last == null) {
+            r.line(Style.WARN, r.m.get("undo.none"));
+            return;
+        }
+        if (!r.ctx.allows(last.permission())) {
+            r.error("no_permission", last.command(), last.permission());
+            return;
+        }
+        changes.pollFirst();
+        if (!r.settings.restore(last.before())) {
+            r.error("undo.failed", r.settings.getPath().toString());
+            return;
+        }
+        r.ctx.afterSettingsChange();
+        r.ctx.resendProfiles();
+        LineBuilder line = CommandReply.line().addAll(r.m.spans("undo.done", Style.OK,
+                new Span(last.command(), Style.VALUE)));
+        if (!changes.isEmpty()) {
+            line.button(r.m.get("btn.undo_more"), Click.RUN, "/vcd undo", r.m.get("hover.undo", changes.peekFirst().command()));
+        }
+        r.reply.add(line);
+    }
+
+    private static void preset(Run r) {
+        ServerSettings settings = r.settings;
+        String name = r.args.length > 1 ? r.args[1].toLowerCase(Locale.ROOT) : "";
         if (name.equals("export")) {
-            out.add(m.get("preset_export"));
             double range = AudioDistancePlugin.serverVoiceDistance();
-            out.add(ProfileCode.encode(settings.profileIn(null, range > 0.0 ? range : AudioDistancePlugin.FALLBACK_DISTANCE)));
+            String code = ProfileCode.encode(settings.profileIn(null, range > 0.0 ? range : AudioDistancePlugin.FALLBACK_DISTANCE));
+            r.line(Style.PLAIN, r.m.get("preset_export"));
+            r.reply.add(CommandReply.line()
+                    .add(new Span(code, Style.VALUE, Click.COPY, code, r.m.get("hover.copy")))
+                    .button(r.m.get("btn.copy"), Click.COPY, code, r.m.get("hover.copy")));
             return;
         }
         if (name.equals("import")) {
             // The code may have been split by the chat box; spaces are ignored
-            String code = args.length > 2 ? String.join("", Arrays.copyOfRange(args, 2, args.length)) : "";
+            String code = r.args.length > 2 ? String.join("", Arrays.copyOfRange(r.args, 2, r.args.length)) : "";
             if (!settings.importProfile(code)) {
-                out.add(m.get("usage", "/vcd preset import VP1:..."));
+                r.badValue("preset import", code, "VP1:...", "preset");
                 return;
             }
-            saved(settings, ctx, out, m.get("preset_imported"));
+            r.saved("preset_imported");
             return;
         }
         if (!name.equals(ServerSettings.CUSTOM_PRESET) && ServerSettings.presetByName(name) == null) {
-            out.add(m.get("usage", "/vcd preset vanilla|realistic|clear|stealth|custom|export|import <code>"));
+            r.badValue("preset", r.arg(1), "vanilla|realistic|clear|stealth|custom|export|import <code>", "preset");
             return;
         }
         settings.setProfilePreset(name);
-        saved(settings, ctx, out, m.get("preset_set", settings.getProfilePreset()));
+        r.saved("preset_set", settings.getProfilePreset());
     }
 
-    private static void zones(ServerSettings settings, Messages m, List<String> out) {
-        Map<String, Zone> zones = settings.zones();
-        if (zones.isEmpty()) {
-            out.add(m.get("zones.none"));
+    private static void onOff(Run r, String command, java.util.function.Consumer<Boolean> set, String onKey, String offKey) {
+        Boolean on = r.args.length > 1 ? parseOnOff(r.args[1]) : null;
+        if (on == null) {
+            r.badValue(command, r.arg(1), "on|off", command);
             return;
         }
-        for (Zone z : zones.values()) {
-            out.add(describe(z, m));
-        }
+        set.accept(on);
+        r.saved(on ? onKey : offKey);
     }
 
-    private static String describe(Zone z, Messages m) {
-        StringBuilder b = new StringBuilder(m.get("zones." + z.kind())).append(' ').append(z.name()).append(':');
-        if (z.box() != null) {
-            b.append(' ').append(z.box().world()).append(" [").append(z.box().from()).append(" – ").append(z.box().to()).append(']');
-        }
-        List<String> parts = new ArrayList<>();
-        if (z.mode() != null) {
-            parts.add("mode " + z.mode().getId());
-        }
-        if (z.preset() != null) {
-            parts.add("preset " + z.preset());
-        }
-        Zone.Rules r = z.rules();
-        if (r.voiceRange() != null) {
-            parts.add("voice_range " + fmt(r.voiceRange()));
-        }
-        if (r.whisperRange() != null) {
-            parts.add("whisper_range " + fmt(r.whisperRange()));
-        }
-        if (r.rangeMultiplier() != null) {
-            parts.add("range ×" + fmt(r.rangeMultiplier()));
-        }
-        if (r.wallsStrength() != null) {
-            parts.add("walls " + pct(r.wallsStrength()));
-        }
-        if (r.echo() != null) {
-            parts.add("echo " + (r.echo() <= 0.0 ? "off" : pct(r.echo())));
-        }
-        if (r.isolated()) {
-            parts.add("isolated");
-        }
-        if (z.priority() != 0) {
-            parts.add("priority " + z.priority());
-        }
-        if (r.enterMessage() != null) {
-            parts.add("message \"" + r.enterMessage() + "\"");
-        }
-        b.append(' ').append(parts.isEmpty() ? "-" : String.join(", ", parts));
-        return b.toString();
-    }
-
-    private static void zone(String[] args, ServerSettings settings, Context ctx, ServerPlayers.Info me, Messages m, List<String> out) {
-        String action = args.length > 1 ? args[1].toLowerCase(Locale.ROOT) : "";
-        switch (action) {
-            case "pos1", "pos2" -> {
-                if (me == null) {
-                    out.add(m.get("zone.need_player"));
-                    return;
-                }
-                int[] pos = {(int) Math.floor(me.x()), (int) Math.floor(me.y()), (int) Math.floor(me.z())};
-                (action.equals("pos1") ? POS1 : POS2).put(me.id(), pos);
-                POS_WORLD.put(me.id(), me.world());
-                out.add(m.get("zone.pos", action, pos[0] + "," + pos[1] + "," + pos[2]));
-            }
-            case "create" -> {
-                String name = args.length > 2 ? clean(args[2]) : "";
-                if (name.isEmpty()) {
-                    out.add(m.get("usage", "/vcd zone create <name> [radius]"));
-                    return;
-                }
-                Zone.Box box;
-                if (args.length > 3) {
-                    Integer radius = parseInt(args[3]);
-                    if (me == null || radius == null || radius < 1 || radius > MAX_RADIUS) {
-                        out.add(me == null ? m.get("zone.need_player") : m.get("usage", "/vcd zone create <name> [1-" + MAX_RADIUS + "]"));
-                        return;
-                    }
-                    int x = (int) Math.floor(me.x());
-                    int y = (int) Math.floor(me.y());
-                    int z = (int) Math.floor(me.z());
-                    box = new Zone.Box(me.world(), x - radius, y - radius, z - radius, x + radius, y + radius, z + radius);
-                } else {
-                    UUID id = me == null ? null : me.id();
-                    int[] a = id == null ? null : POS1.get(id);
-                    int[] b = id == null ? null : POS2.get(id);
-                    if (a == null || b == null) {
-                        out.add(m.get("zone.need_corners"));
-                        return;
-                    }
-                    box = new Zone.Box(POS_WORLD.getOrDefault(id, me.world()), a[0], a[1], a[2], b[0], b[1], b[2]);
-                }
-                Zone old = settings.zones().get(Zone.BOX + ":" + name);
-                Zone zone = old == null
-                        ? new Zone(Zone.BOX, name, null, null, Zone.Rules.NONE, box, 0)
-                        : new Zone(Zone.BOX, name, old.mode(), old.preset(), old.rules(), box, old.priority());
-                settings.putZone(zone);
-                saved(settings, ctx, out, m.get("zone.created", name, box.world(), box.from(), box.to()));
-            }
-            case "set" -> zoneSet(args, settings, ctx, m, out);
-            case "delete", "remove" -> {
-                Zone z = args.length > 2 ? settings.findZone(args[2]) : null;
-                if (z == null) {
-                    out.add(m.get("zone.unknown", args.length > 2 ? args[2] : ""));
-                    return;
-                }
-                settings.removeZone(z.key());
-                saved(settings, ctx, out, m.get("zone.deleted", z.name()));
-            }
-            case "info", "here" -> {
-                if (me == null) {
-                    out.add(m.get("zone.need_player"));
-                    return;
-                }
-                Zone z = settings.zoneOf(me);
-                out.add(z == null ? m.get("zone.nowhere", me.world()) : m.get("zone.here", describe(z, m)));
-            }
-            case "show" -> {
-                if (me == null) {
-                    out.add(m.get("zone.need_player"));
-                    return;
-                }
-                String target = args.length > 2 ? args[2] : "";
-                if (target.equalsIgnoreCase("off")) {
-                    ZoneOutlines.hide(me.id());
-                    out.add(m.get("zone.show_off"));
-                    return;
-                }
-                Zone z = settings.findZone(target);
-                if (z == null) {
-                    out.add(m.get("zone.unknown", target));
-                } else if (z.box() == null) {
-                    out.add(m.get("zone.show_box"));
-                } else if (!Zone.sameWorld(z.box().world(), me.world())) {
-                    out.add(m.get("zone.show_world", z.name(), z.box().world()));
-                } else {
-                    ZoneOutlines.show(me.id(), z.box());
-                    out.add(m.get("zone.shown", z.name()));
-                }
-            }
-            case "list", "" -> zones(settings, m, out);
-            default -> out.add(m.get("usage", "/vcd zone pos1|pos2|create|set|show|delete|info|list"));
-        }
-    }
-
-    private static void zoneSet(String[] args, ServerSettings settings, Context ctx, Messages m, List<String> out) {
-        if (args.length < 5) {
-            out.add(m.get("usage", "/vcd zone set <name> <" + String.join("|", ZONE_SETTINGS) + "> <value|default>"));
-            return;
-        }
-        Zone z = settings.findZone(args[2]);
-        String name = clean(args[2]);
-        if (z == null) {
-            // A world gets a zone just by setting something on it
-            z = new Zone(Zone.WORLD, name, null, null);
-        }
-        String key = args[3].toLowerCase(Locale.ROOT);
-        String value = String.join(" ", Arrays.copyOfRange(args, 4, args.length)).trim();
-        boolean reset = value.equalsIgnoreCase("default") || value.equals("-");
-        Zone.Rules r = z.rules();
-        ServerSettings.ProfileMode mode = z.mode();
-        String preset = z.preset();
-        int priority = z.priority();
-        Double num = reset ? null : parseNumber(value);
-        boolean bad = false;
-        switch (key) {
-            case "mode" -> {
-                mode = reset ? null : ServerSettings.ProfileMode.fromId(value, null);
-                bad = !reset && mode == null;
-            }
-            case "preset" -> {
-                Preset p = reset ? null : ServerSettings.presetByName(value);
-                preset = p == null ? null : ServerSettings.nameOf(p);
-                bad = !reset && p == null;
-            }
-            case "voice_range" -> {
-                bad = !reset && (num == null || num < 1 || num > 1000);
-                r = new Zone.Rules(bad ? r.voiceRange() : num, r.whisperRange(), r.rangeMultiplier(), r.wallsStrength(), r.echo(), r.isolated(), r.enterMessage());
-            }
-            case "whisper_range" -> {
-                bad = !reset && (num == null || num < 1 || num > 1000);
-                r = new Zone.Rules(r.voiceRange(), bad ? r.whisperRange() : num, r.rangeMultiplier(), r.wallsStrength(), r.echo(), r.isolated(), r.enterMessage());
-            }
-            case "range_multiplier", "range" -> {
-                bad = !reset && (num == null || num < 0.05 || num > 10);
-                r = new Zone.Rules(r.voiceRange(), r.whisperRange(), bad ? r.rangeMultiplier() : num, r.wallsStrength(), r.echo(), r.isolated(), r.enterMessage());
-            }
-            case "walls", "walls_strength" -> {
-                Double w = reset ? null : parsePercent(value);
-                bad = !reset && w == null;
-                r = new Zone.Rules(r.voiceRange(), r.whisperRange(), r.rangeMultiplier(), bad ? r.wallsStrength() : w, r.echo(), r.isolated(), r.enterMessage());
-            }
-            case "echo" -> {
-                Double e = reset ? null : ServerSettings.parseEcho(value.endsWith("%") ? String.valueOf(parsePercent(value)) : value);
-                bad = !reset && e == null && !value.equalsIgnoreCase("auto");
-                r = new Zone.Rules(r.voiceRange(), r.whisperRange(), r.rangeMultiplier(), r.wallsStrength(), bad ? r.echo() : e, r.isolated(), r.enterMessage());
-            }
-            case "isolated" -> {
-                Boolean on = reset ? Boolean.FALSE : parseOnOff(value);
-                bad = on == null;
-                r = new Zone.Rules(r.voiceRange(), r.whisperRange(), r.rangeMultiplier(), r.wallsStrength(), r.echo(), bad ? r.isolated() : on, r.enterMessage());
-            }
-            case "message", "enter_message" -> r = new Zone.Rules(r.voiceRange(), r.whisperRange(), r.rangeMultiplier(), r.wallsStrength(), r.echo(), r.isolated(), reset || value.isEmpty() ? null : value);
-            case "priority" -> {
-                Integer pr = reset ? Integer.valueOf(0) : parseInt(value);
-                bad = pr == null;
-                priority = bad ? priority : pr;
-            }
-            default -> {
-                out.add(m.get("usage", "/vcd zone set <name> <" + String.join("|", ZONE_SETTINGS) + "> <value|default>"));
-                return;
-            }
-        }
-        if (bad) {
-            out.add(m.get("zone.bad_value", key, value));
-            return;
-        }
-        Zone updated = new Zone(z.kind(), z.name(), mode, preset, r, z.box(), priority);
-        if (updated.box() == null && updated.mode() == null && updated.preset() == null && updated.rules().isEmpty()) {
-            // A world or region zone with nothing left is removed
-            settings.removeZone(updated.key());
-        } else {
-            settings.putZone(updated);
-        }
-        saved(settings, ctx, out, m.get("zone.set", z.name(), key, reset ? m.get("default") : value));
-    }
-
-    private static void rule(String[] args, ServerSettings settings, Context ctx, Messages m, List<String> out) {
-        String name = args.length > 1 ? args[1].toLowerCase(Locale.ROOT) : "";
-        String value = args.length > 2 ? args[2] : "";
+    private static void rule(Run r) {
+        ServerSettings settings = r.settings;
+        String name = r.args.length > 1 ? r.args[1].toLowerCase(Locale.ROOT) : "";
+        String value = r.args.length > 2 ? r.args[2] : "";
         switch (name) {
             case "sneak" -> {
                 Double v = parseNumber(value.endsWith("%") ? String.valueOf(parsePercent(value)) : value);
                 if (v == null || v < 0.1 || v > 1.0) {
-                    out.add(m.get("usage", "/vcd rule sneak 0.1-1"));
+                    r.badValue("rule sneak", value, "0.1-1", "rule");
                     return;
                 }
                 settings.setSneakMultiplier(v);
-                saved(settings, ctx, out, m.get("rule.sneak", pct(settings.getSneakMultiplier())));
+                r.saved("rule.sneak", pct(settings.getSneakMultiplier()));
             }
             case "dead", "spectators" -> {
                 Boolean on = parseOnOff(value);
                 if (on == null) {
-                    out.add(m.get("usage", "/vcd rule " + name + " on|off"));
+                    r.badValue("rule " + name, value, "on|off", "rule");
                     return;
                 }
                 if (name.equals("dead")) {
@@ -521,35 +439,43 @@ public final class AdminCommands {
                 } else {
                     settings.setSpectatorsOnly(on);
                 }
-                saved(settings, ctx, out, m.get("rule." + name + (on ? ".on" : ".off")));
+                r.saved("rule." + name + (on ? ".on" : ".off"));
             }
             case "megaphone" -> {
                 if (value.isEmpty()) {
-                    out.add(m.get("usage", "/vcd rule megaphone <item id>|off"));
+                    r.badValue("rule megaphone", value, "<item id>|off", "rule");
                     return;
                 }
                 settings.setMegaphoneItem(value);
-                saved(settings, ctx, out, settings.getMegaphoneItem().isEmpty() ? m.get("rule.megaphone.off")
-                        : m.get("rule.megaphone.on", settings.getMegaphoneItem(), fmt(settings.getMegaphoneMultiplier())));
+                if (settings.getMegaphoneItem().isEmpty()) {
+                    r.saved("rule.megaphone.off");
+                } else {
+                    r.saved("rule.megaphone.on", settings.getMegaphoneItem(), fmt(settings.getMegaphoneMultiplier()));
+                }
             }
             case "megaphone_range" -> {
                 Double v = parseNumber(value);
                 if (v == null || v < 1.0 || v > 10.0) {
-                    out.add(m.get("usage", "/vcd rule megaphone_range 1-10"));
+                    r.badValue("rule megaphone_range", value, "1-10", "rule");
                     return;
                 }
                 settings.setMegaphoneMultiplier(v);
-                saved(settings, ctx, out, m.get("rule.megaphone_range", fmt(settings.getMegaphoneMultiplier())));
+                r.saved("rule.megaphone_range", fmt(settings.getMegaphoneMultiplier()));
             }
-            default -> out.add(m.get("usage", "/vcd rule " + String.join("|", RULES) + " <value>"));
+            default -> r.badValue("rule", name, String.join("|", RULES), "rule");
         }
     }
 
-    private static void group(String[] args, ServerSettings settings, Context ctx, Messages m, List<String> out) {
-        String name = args.length > 1 ? args[1].toLowerCase(Locale.ROOT) : "";
-        Boolean on = args.length > 2 ? parseOnOff(args[2]) : null;
-        if (on == null || !Arrays.asList(GROUP_RULES).contains(name)) {
-            out.add(m.get("usage", "/vcd group " + String.join("|", GROUP_RULES) + " on|off"));
+    private static void group(Run r) {
+        ServerSettings settings = r.settings;
+        String name = r.args.length > 1 ? r.args[1].toLowerCase(Locale.ROOT) : "";
+        if (!Arrays.asList(GROUP_RULES).contains(name)) {
+            r.badValue("group", name, String.join("|", GROUP_RULES), "group");
+            return;
+        }
+        Boolean on = r.args.length > 2 ? parseOnOff(r.args[2]) : null;
+        if (on == null) {
+            r.badValue("group " + name, r.arg(2), "on|off", "group");
             return;
         }
         switch (name) {
@@ -558,28 +484,34 @@ public final class AdminCommands {
             case "zones" -> settings.setGroupIsolatedZones(on);
             default -> settings.setOpenGroupRange(on);
         }
-        saved(settings, ctx, out, m.get("group." + name + (on ? ".on" : ".off")));
+        r.saved("group." + name + (on ? ".on" : ".off"));
     }
 
-    private static void require(String[] args, ServerSettings settings, Context ctx, Messages m, List<String> out) {
-        ServerSettings.RequireAddon mode = args.length > 1 ? ServerSettings.RequireAddon.fromId(args[1], null) : null;
+    private static void require(Run r) {
+        ServerSettings settings = r.settings;
+        ServerSettings.RequireAddon mode = r.args.length > 1 ? ServerSettings.RequireAddon.fromId(r.args[1], null) : null;
         if (mode == null) {
-            out.add(m.get("usage", "/vcd require off|suggest|warn|kick [min version]"));
+            r.badValue("require", r.arg(1), "off|suggest|warn|kick [version]", "require");
             return;
         }
         settings.setRequireAddon(mode);
-        if (args.length > 2) {
-            settings.setMinAddonVersion(args[2].equals("-") || args[2].equalsIgnoreCase("any") ? "" : args[2]);
+        if (r.args.length > 2) {
+            settings.setMinAddonVersion(r.args[2].equals("-") || r.args[2].equalsIgnoreCase("any") ? "" : r.args[2]);
         }
-        saved(settings, ctx, out, m.get("require.set", mode.getId(),
-                settings.getMinAddonVersion().isEmpty() ? "-" : settings.getMinAddonVersion()));
+        r.saved("require.set", mode.getId(), settings.getMinAddonVersion().isEmpty() ? "-" : settings.getMinAddonVersion());
     }
 
-    private static void debug(String[] args, ServerSettings settings, Context ctx, Messages m, List<String> out) {
-        ServerPlayers players = ctx.players();
-        ServerPlayers.Info target = args.length > 1 ? players.byName(args[1]) : null;
+    private static void debug(Run r) {
+        Messages m = r.m;
+        ServerSettings settings = r.settings;
+        ServerPlayers players = r.ctx.players();
+        ServerPlayers.Info target = r.args.length > 1 ? players.byName(r.args[1]) : r.me;
         if (target == null) {
-            out.add(args.length > 1 ? m.get("debug.unknown", args[1]) : m.get("usage", "/vcd debug <player>"));
+            if (r.args.length > 1) {
+                r.error("debug.unknown", r.args[1]);
+            } else {
+                r.badValue("debug", "", "<player>", "debug");
+            }
             return;
         }
         double voice = AudioDistancePlugin.serverVoiceDistance();
@@ -590,57 +522,171 @@ public final class AdminCommands {
         }
         Zone zone = settings.zoneOf(target);
         String version = AudioDistancePlugin.ADDON_CHECK.version(target.id());
-        out.add(m.get("debug.title", target.name()));
-        out.add(m.get("debug.where", target.world(), fmt(target.x()) + " " + fmt(target.y()) + " " + fmt(target.z()),
-                zone == null ? "-" : zone.name()));
-        out.add(m.get("debug.addon", version == null ? m.get("debug.no_addon") : version,
-                ServerRange.isMegaphone(settings, target) ? m.get("on") : m.get("off"),
-                target.sneaking() ? m.get("on") : m.get("off")));
+        r.line(Style.TITLE, m.get("debug.title", target.name()));
+        r.reply.add(CommandReply.line().addAll(m.spans("debug.where", Style.PLAIN, target.world(),
+                fmt(target.x()) + " " + fmt(target.y()) + " " + fmt(target.z()),
+                zone == null ? new Span("-", Style.VALUE)
+                        : new Span(zone.name(), Style.VALUE, Click.RUN, "/vcd zone info " + zone.name(), ZoneCommands.describe(zone, m)))));
+        r.reply.add(CommandReply.line().addAll(m.spans("debug.addon", Style.PLAIN,
+                version == null ? new Span(m.get("debug.no_addon"), Style.WARN) : new Span(version, Style.VALUE),
+                onOff(m, ServerRange.isMegaphone(settings, target)), onOff(m, target.sneaking()))));
         String[] group = AudioDistancePlugin.groupOf(target.id());
         if (group != null) {
-            out.add(m.get("debug.group", group[0], group[1].isEmpty() ? "-" : m.get("group.type." + group[1])));
+            r.reply.add(CommandReply.line().addAll(m.spans("debug.group", Style.PLAIN, group[0],
+                    group[1].isEmpty() ? "-" : m.get("group.type." + group[1]))));
         }
-        out.add(m.get("debug.range", fmt(ServerRange.rangeOf(settings, target, false, voice, whisper)),
-                fmt(ServerRange.rangeOf(settings, target, true, voice, whisper))));
-        int shown = 0;
-        List<ServerPlayers.Info> others = new ArrayList<>(players.all());
+        r.reply.add(CommandReply.line().addAll(m.spans("debug.range", Style.PLAIN,
+                fmt(ServerRange.rangeOf(settings, target, false, voice, whisper)),
+                fmt(ServerRange.rangeOf(settings, target, true, voice, whisper)))));
+        List<ServerPlayers.Info> others = new ArrayList<>();
+        for (ServerPlayers.Info other : players.all()) {
+            if (!other.id().equals(target.id()) && Zone.sameWorld(other.world(), target.world())) {
+                others.add(other);
+            }
+        }
         others.sort((a, b) -> Double.compare(a.distanceTo(target), b.distanceTo(target)));
-        for (ServerPlayers.Info other : others) {
-            if (other.id().equals(target.id()) || !Zone.sameWorld(other.world(), target.world())) {
-                continue;
-            }
-            if (shown++ == 8) {
-                break;
-            }
+        for (int i = 0; i < Math.min(DEBUG_PLAYERS, others.size()); i++) {
+            ServerPlayers.Info other = others.get(i);
             // How the target hears them, and how they hear the target
             ServerRange.Decision in = ServerRange.decide(settings, other, target, false, voice, whisper);
             ServerRange.Decision outgoing = ServerRange.decide(settings, target, other, false, voice, whisper);
-            out.add(m.get("debug.line", other.name(), fmt(other.distanceTo(target)),
-                    m.get("debug.reason." + in.reason().name().toLowerCase(Locale.ROOT)),
-                    m.get("debug.reason." + outgoing.reason().name().toLowerCase(Locale.ROOT))));
+            r.reply.add(CommandReply.line().addAll(m.spans("debug.line", Style.PLAIN,
+                    new Span(other.name(), Style.VALUE, Click.RUN, "/vcd debug " + other.name(), m.get("hover.debug", other.name())),
+                    fmt(other.distanceTo(target)), reason(m, in), reason(m, outgoing))));
         }
-        if (shown == 0) {
-            out.add(m.get("debug.alone"));
+        if (others.isEmpty()) {
+            r.line(Style.MUTED, m.get("debug.alone"));
+        } else if (others.size() > DEBUG_PLAYERS) {
+            r.line(Style.MUTED, m.get("debug.more", others.size() - DEBUG_PLAYERS));
         }
     }
 
-    private static String onOff(Messages m, boolean on) {
+    private static Span reason(Messages m, ServerRange.Decision d) {
+        String id = d.reason().name().toLowerCase(Locale.ROOT);
+        return new Span(m.get("debug.reason." + id), d.hears() ? Style.OK : Style.ERROR, null, null,
+                d.hears() ? null : m.get("debug.why." + id));
+    }
+
+    static String onOff(Messages m, boolean on) {
         return on ? m.get("on") : m.get("off");
     }
 
-    private static void help(Messages m, List<String> out) {
-        out.add(m.get("help.title"));
-        for (String line : new String[]{"status", "reload", "profile", "preset", "walls", "serverwalls", "lock", "monitor", "zones", "zone",
-                "rule", "group", "require", "debug"}) {
-            out.add(m.get("help." + line));
-        }
-    }
+    // -------------------------------------------------------------------------
+    // One run of a command
+    // -------------------------------------------------------------------------
 
-    private static void saved(ServerSettings settings, Context ctx, List<String> out, String line) {
-        settings.save();
-        ctx.afterSettingsChange();
-        ctx.resendProfiles();
-        out.add(line);
+    /** The state of one command: who runs it, in which language, the reply so far. */
+    static final class Run {
+
+        final String input;
+        final String[] args;
+        final ServerSettings settings;
+        final Context ctx;
+        final ServerPlayers.Info me;
+        final Messages m;
+        final CommandReply reply = new CommandReply();
+        /** The settings file before the command, for undo; {@code null} for commands that change nothing. */
+        String before;
+
+        Run(String input, ServerSettings settings, Context ctx) {
+            this.input = input == null ? "" : input.trim();
+            this.args = this.input.isEmpty() ? new String[0] : this.input.split("\\s+");
+            this.settings = settings;
+            this.ctx = ctx;
+            this.me = ctx.sender() == null ? null : ctx.players().get(ctx.sender());
+            this.m = new Messages(settings.languageFor(me == null ? "" : me.language()));
+        }
+
+        /** Argument {@code i}, or "". */
+        String arg(int i) {
+            return i < args.length ? args[i] : "";
+        }
+
+        /** Arguments from {@code i} on, joined by spaces. */
+        String rest(int i) {
+            return i < args.length ? String.join(" ", Arrays.copyOfRange(args, i, args.length)) : "";
+        }
+
+        void line(Style style, String text) {
+            reply.add(text, style);
+        }
+
+        void error(String key, Object... args) {
+            reply.add(CommandReply.line().addAll(m.spans(key, Style.ERROR, args)));
+        }
+
+        /**
+         * "walls: "150" does not work. Allowed: 0-100|off" with a button that puts the command back
+         * in the chat box, and one that shows the command's help.
+         */
+        void badValue(String command, String value, String allowed, String topic) {
+            LineBuilder line = CommandReply.line();
+            if (value == null || value.isBlank()) {
+                line.addAll(m.spans("error.missing", Style.ERROR, "/vcd " + command, new Span(allowed, Style.VALUE)));
+            } else {
+                line.addAll(m.spans("error.value", Style.ERROR, "/vcd " + command, value, new Span(allowed, Style.VALUE)));
+            }
+            line.button(m.get("btn.fix"), Click.SUGGEST, "/vcd " + command + " ", m.get("hover.suggest", "/vcd " + command));
+            line.button("?", Click.RUN, "/vcd help " + topic, m.get("hover.help", "/vcd " + topic));
+            reply.add(line);
+        }
+
+        /** A value that puts the command changing it in the chat box when clicked. */
+        Span change(String value, String command) {
+            return new Span(value, Style.VALUE, Click.SUGGEST, "/vcd " + command + " ", m.get("hover.change", "/vcd " + command));
+        }
+
+        /** A button, when the sender has {@code permission} (or it is {@code null}). */
+        void button(LineBuilder line, String labelKey, Click click, String command, String permission) {
+            if (permission == null || ctx.allows(permission)) {
+                line.button(m.get(labelKey), click, command, m.get(click == Click.RUN ? "hover.run" : "hover.suggest", command));
+            }
+        }
+
+        /** A line in the OK colour; with {@code undo}, a button that takes the change back. */
+        void ok(List<Span> spans, boolean undo) {
+            LineBuilder line = CommandReply.line().addAll(spans);
+            if (undo) {
+                line.button(m.get("btn.undo"), Click.RUN, "/vcd undo", m.get("hover.undo", "/vcd " + input));
+            }
+            reply.add(line);
+        }
+
+        /** Saves the settings, sends them to the players, remembers the change for undo and says so. */
+        void saved(String key, Object... args) {
+            savedLine(CommandReply.line().addAll(m.spans(key, Style.OK, args)));
+        }
+
+        void savedLine(LineBuilder line) {
+            settings.save();
+            ctx.afterSettingsChange();
+            ctx.resendProfiles();
+            boolean undo = remember();
+            if (undo) {
+                line.button(m.get("btn.undo"), Click.RUN, "/vcd undo", m.get("hover.undo", "/vcd " + input));
+            }
+            reply.add(line);
+        }
+
+        private boolean remember() {
+            if (before == null) {
+                return false;
+            }
+            String after = settings.snapshot();
+            if (before.equals(after)) {
+                return false;
+            }
+            Deque<Change> changes = HISTORY.computeIfAbsent(key(settings), k -> new ArrayDeque<>());
+            synchronized (changes) {
+                String permission = permissionFor(arg(0), arg(1));
+                changes.addFirst(new Change(before, "/vcd " + input, permission == null ? PERM_SETTINGS : permission));
+                while (changes.size() > UNDO_STEPS) {
+                    changes.pollLast();
+                }
+            }
+            before = after;
+            return true;
+        }
     }
 
     // -------------------------------------------------------------------------
@@ -656,8 +702,8 @@ public final class AdminCommands {
             v = v.substring(0, v.length() - 1);
         }
         try {
-            double d = Double.parseDouble(v);
-            if (!Double.isFinite(d) || d < 0.0) {
+            double d = Double.parseDouble(v.replace(',', '.'));
+            if (!Double.isFinite(d) || d < 0.0 || d > 100.0) {
                 return null;
             }
             // 0.6 and 60 both mean 60%
@@ -675,7 +721,7 @@ public final class AdminCommands {
         };
     }
 
-    private static Double parseNumber(String s) {
+    static Double parseNumber(String s) {
         try {
             double d = Double.parseDouble(s.trim().replace(',', '.'));
             return Double.isFinite(d) ? d : null;
@@ -684,7 +730,7 @@ public final class AdminCommands {
         }
     }
 
-    private static Integer parseInt(String s) {
+    static Integer parseInt(String s) {
         try {
             return Integer.parseInt(s.trim());
         } catch (NumberFormatException e) {
@@ -693,31 +739,22 @@ public final class AdminCommands {
     }
 
     /** Zone names: letters, digits, '_' and '-' (they become settings keys). */
-    private static String clean(String name) {
+    static String clean(String name) {
         return name.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9_\\-]", "");
     }
 
-    private static void addMatching(List<String> out, String[] options, String prefix) {
-        String p = prefix.toLowerCase(Locale.ROOT);
-        for (String o : options) {
-            if (o.startsWith(p)) {
-                out.add(o);
-            }
-        }
-    }
-
-    private static String pct(double v) {
+    static String pct(double v) {
         return Math.round(v * 100.0) + "%";
     }
 
-    private static String fmt(double v) {
+    static String fmt(double v) {
         return Math.abs(v - Math.rint(v)) < 0.05 ? String.valueOf(Math.round(v)) : String.format(Locale.ROOT, "%.1f", v);
     }
 
     /** Reply texts in the chosen language (the {@code command.vc-audio-distance.*} keys). */
     static final class Messages {
 
-        private final String language;
+        final String language;
 
         Messages(String language) {
             this.language = language;
@@ -725,6 +762,11 @@ public final class AdminCommands {
 
         String get(String key, Object... args) {
             return ServerText.get(language, key, args);
+        }
+
+        /** The text of {@code key} as spans in {@code style}, with its values as their own spans. */
+        List<Span> spans(String key, Style style, Object... args) {
+            return CommandReply.fill(ServerText.get(language, key), style, args);
         }
     }
 }

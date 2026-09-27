@@ -2,6 +2,7 @@ package com.kasper.vcdistance.bukkit;
 
 import com.kasper.vcdistance.AdminCommands;
 import com.kasper.vcdistance.AudioDistancePlugin;
+import com.kasper.vcdistance.CommandReply;
 import com.kasper.vcdistance.LinkProtocol;
 import com.kasper.vcdistance.ModEnvironment;
 import com.kasper.vcdistance.ServerHooks;
@@ -50,7 +51,9 @@ public final class AudioDistanceBukkit extends JavaPlugin implements Listener {
     static final String NEARBY_CHANNEL = LinkProtocol.NAMESPACE + ":" + LinkProtocol.NEARBY;
     static final String ADMIN_CHANNEL = LinkProtocol.NAMESPACE + ":" + LinkProtocol.ADMIN;
     static final String ADMIN_REPLY_CHANNEL = LinkProtocol.NAMESPACE + ":" + LinkProtocol.ADMIN_REPLY;
-    static final String ADMIN_PERMISSION = "vcd.admin";
+    static final String ADMIN_PERMISSION = AdminCommands.PERM_ADMIN;
+    /** How far {@code /vcd zone pos1 look} reaches, in blocks. */
+    static final int LOOK_REACH = 64;
 
     private static final int RELOAD_CHECK_TICKS = 40;
     /** The plugin's name before 2.2.0, and so its old settings folder. */
@@ -280,15 +283,25 @@ public final class AudioDistanceBukkit extends JavaPlugin implements Listener {
         }
     }
 
+    /** Whether the player may use any part of /vcd (and so gets the Server tab). */
     static boolean isAdmin(Player player) {
-        return player.isOp() || player.hasPermission(ADMIN_PERMISSION);
+        for (String permission : AdminCommands.PERMISSIONS) {
+            if (allows(player, permission)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** A part of /vcd: its own permission, or vcd.admin for all of them (both default to operators, see plugin.yml). */
+    static boolean allows(CommandSender sender, String permission) {
+        return sender.hasPermission(permission) || sender.hasPermission(ADMIN_PERMISSION);
     }
 
     /** A command from the player's Server tab; answered only for admins. */
     private void onAdmin(Player player, byte[] message) {
         AudioDistancePlugin.PLAYERS.update(info(player));
-        String reply = ServerHooks.admin(player.getUniqueId(), LinkProtocol.decode(message), isAdmin(player),
-                context(player.getUniqueId()));
+        String reply = ServerHooks.admin(player.getUniqueId(), LinkProtocol.decode(message), isAdmin(player), context(player));
         if (reply != null) {
             player.sendPluginMessage(this, ADMIN_REPLY_CHANNEL, LinkProtocol.encode(reply));
         }
@@ -356,8 +369,9 @@ public final class AudioDistanceBukkit extends JavaPlugin implements Listener {
         ZoneOutlines.hide(event.getPlayer().getUniqueId());
     }
 
-    /** What /vcd needs from the server, for a command run by {@code sender} ({@code null}: the console). */
-    private AdminCommands.Context context(UUID sender) {
+    /** What /vcd needs from the server, for a command run by {@code sender} (a player or the console). */
+    private AdminCommands.Context context(CommandSender sender) {
+        Player player = sender instanceof Player p ? p : null;
         return new AdminCommands.Context() {
             @Override
             public String platform() {
@@ -392,31 +406,84 @@ public final class AudioDistanceBukkit extends JavaPlugin implements Listener {
 
             @Override
             public UUID sender() {
-                return sender;
+                return player == null ? null : player.getUniqueId();
+            }
+
+            @Override
+            public boolean allows(String permission) {
+                return AudioDistanceBukkit.allows(sender, permission);
+            }
+
+            @Override
+            public int[] targetBlock() {
+                try {
+                    org.bukkit.block.Block block = player == null ? null : player.getTargetBlockExact(LOOK_REACH);
+                    return block == null ? null : new int[]{block.getX(), block.getY(), block.getZ()};
+                } catch (Throwable t) {
+                    return null;
+                }
+            }
+
+            @Override
+            public boolean teleport(String world, double x, double y, double z) {
+                org.bukkit.World w = getServer().getWorld(world);
+                if (player == null || w == null) {
+                    return false;
+                }
+                Location to = new Location(w, x, y, z, player.getLocation().getYaw(), player.getLocation().getPitch());
+                try {
+                    // Paper and Folia: moves the player between regions safely
+                    player.teleportAsync(to);
+                } catch (NoSuchMethodError e) {
+                    player.teleport(to);
+                }
+                return true;
+            }
+
+            @Override
+            public java.util.Collection<String> worlds() {
+                List<String> names = new ArrayList<>();
+                for (org.bukkit.World w : getServer().getWorlds()) {
+                    names.add(w.getName());
+                }
+                return names;
             }
         };
     }
 
-    /** {@code /vcd}: for operators and players with the vcd.admin permission (see plugin.yml). */
+    /**
+     * {@code /vcd}: each part needs its own permission (vcd.status, vcd.settings, vcd.zone, vcd.debug)
+     * or vcd.admin for all; operators have them all (see plugin.yml).
+     */
     private final class AdminCommand implements TabExecutor {
 
         @Override
         public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-            UUID id = null;
             if (sender instanceof Player p) {
                 // Commands like zone pos1 need where the admin stands right now
                 AudioDistancePlugin.PLAYERS.update(info(p));
-                id = p.getUniqueId();
             }
-            for (String line : AdminCommands.run(String.join(" ", args), AudioDistancePlugin.SERVER_SETTINGS, context(id))) {
-                sender.sendMessage(line);
+            AdminCommands.Context context = context(sender);
+            if (!AdminCommands.mayUseAny(context)) {
+                sender.sendMessage(org.bukkit.ChatColor.RED + com.kasper.vcdistance.ServerText.get(
+                        AudioDistancePlugin.SERVER_SETTINGS.languageFor(sender instanceof Player p ? info(p).language() : ""),
+                        "no_permission", "/vcd", ADMIN_PERMISSION));
+                return true;
+            }
+            for (CommandReply.Line line : AdminCommands.execute(String.join(" ", args), AudioDistancePlugin.SERVER_SETTINGS, context).lines()) {
+                ReplyAdventure.send(sender, line);
             }
             return true;
         }
 
         @Override
         public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
-            return AdminCommands.suggest(String.join(" ", args));
+            List<String> out = new ArrayList<>();
+            for (AdminCommands.Suggestion s : AdminCommands.suggestions(String.join(" ", args), AudioDistancePlugin.SERVER_SETTINGS,
+                    context(sender))) {
+                out.add(s.text());
+            }
+            return out;
         }
     }
 
