@@ -6,6 +6,38 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 *Все заметные изменения проекта описываются в этом файле. Каждая версия описана сначала на английском, затем на русском.*
 
+## [2.4.0] - 2026-09-27
+
+### English
+
+#### Added
+- `/vcd` replies are coloured and clickable: click a value in `/vcd status` to change it, zones in `/vcd zones` have Info, Show and Go there buttons.
+- `/vcd undo` takes back the last changes, up to 10; every change has an Undo button.
+- `/vcd help <command>` shows the command with examples you can click; typos get "Did you mean…".
+- Zones: corners at coordinates or at the block you look at (`/vcd zone pos1 look`), the selection is shown with particles, `/vcd zone info` lists a zone's settings to click, `/vcd zone tp` and `/vcd zone rename`.
+- Tab completion offers zone, world and player names and each setting's values, with short explanations.
+- Separate permissions on Paper: `vcd.status`, `vcd.settings`, `vcd.zone`, `vcd.debug` (`vcd.admin` gives all). LuckPerms on Fabric uses the same.
+- `/voicephysics` for players: open a tab, choose a preset, switch the HUD, copy or load a profile code, reset, and see what the server does to your sound.
+
+#### Changed
+- Deleting a zone with `/vcd zone delete` asks first.
+- Wrong values say what is allowed, and walls above 100% are refused.
+
+### Русский
+
+#### Добавлено
+- Ответы `/vcd` цветные и кликабельные: по значению в `/vcd status` можно кликнуть, чтобы изменить его, у зон в `/vcd zones` есть кнопки «Подробнее», «Показать» и «Туда».
+- `/vcd undo` отменяет последние изменения, до 10; у каждого изменения есть кнопка «Отменить».
+- `/vcd help <команда>` показывает команду с примерами, по которым можно кликнуть; при опечатке — «Может, …».
+- Зоны: углы по координатам или по блоку, на который вы смотрите (`/vcd zone pos1 look`), выделение видно частицами, `/vcd zone info` показывает настройки зоны с кликом по каждой, `/vcd zone tp` и `/vcd zone rename`.
+- Tab подсказывает имена зон, миров и игроков и значения каждого параметра, с короткими пояснениями.
+- Отдельные права на Paper: `vcd.status`, `vcd.settings`, `vcd.zone`, `vcd.debug` (`vcd.admin` даёт все). LuckPerms на Fabric использует те же.
+- `/voicephysics` для игроков: открыть вкладку, выбрать пресет, переключить HUD, скопировать или загрузить код профиля, сбросить и посмотреть, что сервер делает с вашим звуком.
+
+#### Изменено
+- `/vcd zone delete` сначала спрашивает, удалять ли зону.
+- При неверном значении сказано, что можно, а стены больше 100% не принимаются.
+
 ## [2.3.0] - 2026-09-27
 
 ### English
