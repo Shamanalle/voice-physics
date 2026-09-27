@@ -127,6 +127,8 @@ jobs:
           echo "Simple Voice Chat: ${url}"
           curl -fsSL --retry 4 -o "${mods}/voicechat.jar" "${url}"
       - name: Open the settings screen in a real client
+        # Shorter than the job, so the screenshots and the log are still uploaded when the client hangs
+        timeout-minutes: 18
         run: |
           chmod +x gradlew
           xvfb-run -a -s "-screen 0 1280x960x24" ./gradlew :${{ matrix.module }}:runClientGameTest --no-daemon \
