@@ -375,6 +375,32 @@ public class CommandsTest {
         }
         assertTrue(missing.isEmpty(), "Missing: " + missing);
 
+        // The player's /voicephysics builds its keys from KEY + "..."
+        String client = Files.readString(Path.of("../shared/mc-all/src/main/java/com/kasper/vcdistance/client/ClientCommands.java"),
+                StandardCharsets.UTF_8);
+        Matcher c = Pattern.compile("KEY \\+ \"([a-z_.]+)\"").matcher(client);
+        Set<String> clientKeys = new TreeSet<>();
+        while (c.find()) {
+            if (!c.group(1).endsWith(".")) {
+                clientKeys.add(c.group(1));
+            }
+        }
+        // ok("preset", ...), error(locked ? "a" : "b", ...): the texts of the first argument
+        Matcher calls = Pattern.compile("\\b(?:ok|error)\\(([^;]*?)(?:,|\\)\\s*[);])").matcher(client);
+        while (calls.find()) {
+            Matcher literal = Pattern.compile("\"([a-z_.]+)\"").matcher(calls.group(1));
+            while (literal.find()) {
+                clientKeys.add(literal.group(1));
+            }
+        }
+        for (ServerSettings.ProfileMode mode : ServerSettings.ProfileMode.values()) {
+            clientKeys.add("status.mode." + mode.getId());
+        }
+        assertTrue(clientKeys.size() > 25, clientKeys.toString());
+        for (String k : clientKeys) {
+            assertTrue(english.contains("\"message.vc-audio-distance.cmd." + k + "\""), "Missing message.vc-audio-distance.cmd." + k);
+        }
+
         ServerSettings s = settings("zone.box.stage.world=world\nzone.box.stage.from=0,0,0\nzone.box.stage.to=9,9,9\n");
         for (String language : ServerText.LANGUAGES) {
             ServerPlayers.Info me = new ServerPlayers.Info(admin.id(), "Admin", "world", 1, 1, 1, false, true, false, "", "",

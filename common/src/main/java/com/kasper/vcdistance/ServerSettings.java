@@ -875,7 +875,7 @@ public final class ServerSettings {
     }
 
     /** A preset by the name used in the settings file (or its internal id), or {@code null}. */
-    static Preset presetByName(String name) {
+    public static Preset presetByName(String name) {
         if (name == null) {
             return null;
         }
@@ -896,7 +896,7 @@ public final class ServerSettings {
         }
     }
 
-    static String nameOf(Preset preset) {
+    public static String nameOf(Preset preset) {
         switch (preset) {
             case VANILLA:
                 return "vanilla";

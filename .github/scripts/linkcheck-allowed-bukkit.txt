@@ -15,3 +15,8 @@ method net/kyori/adventure/text/TextComponent$Builder.build()Lnet/kyori/adventur
 # instead of leaving it abstract. The call is invokeinterface either way and a default method resolves
 # the same, so zone borders (/vcd zone show, bukkit/.../AudioDistanceBukkit.java) keep working.
 method org/bukkit/entity/Player.spawnParticle(Lorg/bukkit/Particle;DDDIDDDD)V
+
+# Paper 1.21.9+ gives Player.getTargetBlockExact(int) a default body instead of leaving it abstract.
+# The call is invokeinterface either way and a default method resolves the same, so the block a
+# player looks at (/vcd zone pos1 look, bukkit/.../AudioDistanceBukkit.java) keeps working.
+method org/bukkit/entity/Player.getTargetBlockExact(I)Lorg/bukkit/block/Block;

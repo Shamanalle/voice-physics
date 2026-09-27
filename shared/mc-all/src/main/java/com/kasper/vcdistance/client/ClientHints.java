@@ -25,6 +25,8 @@ public final class ClientHints {
     private static volatile boolean openRequested;
     /** The "server hides nearby players" notice was shown since the monitor was last allowed. */
     private static boolean toldMonitorOff;
+    /** Shows a message in the player's chat; set by the loader every tick (see {@link #tickWelcome}). */
+    private static volatile Consumer<Component> chat;
 
     private ClientHints() {
     }
@@ -36,6 +38,7 @@ public final class ClientHints {
      * @param chat    shows a message in chat
      */
     public static void tickWelcome(boolean inWorld, KeyMapping openKey, Consumer<Component> chat) {
+        ClientHints.chat = inWorld ? chat : null;
         DistanceConfig config = AudioDistancePlugin.CONFIG;
         if (!inWorld) {
             ticksInWorld = 0;
@@ -66,14 +69,16 @@ public final class ClientHints {
     }
 
     /**
-     * The {@code /voicephysics} command for any loader's client command dispatcher. Built with
-     * Brigadier alone, since each loader names its own command helpers differently.
+     * The {@code /voicephysics} command for any loader's client command dispatcher: opens the
+     * settings, and has the player's own quick commands (see {@link ClientCommands}).
      */
     public static <S> LiteralArgumentBuilder<S> openCommand() {
-        return LiteralArgumentBuilder.<S>literal(COMMAND).executes(context -> {
-            requestOpen();
-            return 1;
-        });
+        return ClientCommands.tree(COMMAND);
+    }
+
+    /** Where command replies go: the player's chat, or {@code null} outside a world. */
+    static Consumer<Component> chat() {
+        return chat;
     }
 
     /** Called by the {@code /voicephysics} command: open the settings on the next tick. */
