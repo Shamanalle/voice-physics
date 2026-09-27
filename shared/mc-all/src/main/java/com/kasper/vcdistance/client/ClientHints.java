@@ -76,9 +76,18 @@ public final class ClientHints {
         return ClientCommands.tree(COMMAND);
     }
 
+    /** Also shown each command reply; set by the in-game tests, which cannot read the chat. */
+    private static volatile Consumer<Component> observer;
+
+    public static void observe(Consumer<Component> replies) {
+        observer = replies;
+    }
+
     /** Where command replies go: the player's chat, or {@code null} outside a world. */
     static Consumer<Component> chat() {
-        return chat;
+        Consumer<Component> c = chat;
+        Consumer<Component> o = observer;
+        return c == null || o == null ? c : c.andThen(o);
     }
 
     /** Called by the {@code /voicephysics} command: open the settings on the next tick. */

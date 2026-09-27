@@ -6,7 +6,8 @@
   "environment": "client",
   "entrypoints": {
     "fabric-client-gametest": [
-      "com.kasper.vcdistance.gametest.SettingsScreenGameTest"
+      "com.kasper.vcdistance.gametest.SettingsScreenGameTest",
+      "com.kasper.vcdistance.gametest.CommandsGameTest"
     ]
   },
   "depends": {

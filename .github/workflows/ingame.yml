@@ -95,9 +95,9 @@ jobs:
           if-no-files-found: ignore
 
   client:
-    name: Client ${{ matrix.mc }} (settings screen)
+    name: Client ${{ matrix.mc }} (settings screen, commands)
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 35
     strategy:
       fail-fast: false
       matrix:
@@ -132,9 +132,9 @@ jobs:
             | jq -r '.[0].files | (map(select(.primary)) + .)[0].url')
           echo "Simple Voice Chat: ${url}"
           curl -fsSL --retry 4 -o "${mods}/voicechat.jar" "${url}"
-      - name: Open the settings screen in a real client
+      - name: Open the settings screen and run the commands in a real client
         # Shorter than the job, so the screenshots and the log are still uploaded when the client hangs
-        timeout-minutes: 12
+        timeout-minutes: 20
         run: |
           chmod +x gradlew
           xvfb-run -a -s "-screen 0 1280x960x24 +extension GLX +render" sh -c 'glxinfo -B | head -12 || true'
