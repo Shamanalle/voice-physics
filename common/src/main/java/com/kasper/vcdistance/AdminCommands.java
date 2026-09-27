@@ -270,7 +270,7 @@ public final class AdminCommands {
      * The permission a subcommand needs, or {@code null} when it checks by itself (undo) or is not
      * a command (the reply is then the help).
      */
-    static String permissionFor(String sub, String action) {
+    public static String permissionFor(String sub, String action) {
         return switch (sub.toLowerCase(Locale.ROOT)) {
             case "status", "help", "?", "zones" -> PERM_STATUS;
             case "debug" -> PERM_DEBUG;

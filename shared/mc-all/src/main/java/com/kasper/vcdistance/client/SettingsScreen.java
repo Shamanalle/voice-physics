@@ -137,6 +137,8 @@ public abstract class SettingsScreen extends Screen {
     private Button activeTabButton;
     private RangeSlider strengthSlider;
     private RangeSlider reverbSlider;
+    private RangeSlider waterSlider;
+    private RangeSlider weatherSlider;
     private boolean serverChip;
     /** Current walk-away preview step, or -1 when it is not playing. */
     private int previewStep = -1;
@@ -202,6 +204,8 @@ public abstract class SettingsScreen extends Screen {
         headings.clear();
         strengthSlider = null;
         reverbSlider = null;
+        waterSlider = null;
+        weatherSlider = null;
         listenButton = null;
         copyButton = null;
         pasteButton = null;
@@ -613,20 +617,41 @@ public abstract class SettingsScreen extends Screen {
         reverbSlider.active = shown().isReverbEnabled();
         edit(withTip(reverbSlider, "effects.reverb.strength.tooltip"), DistanceConfig.Part.EFFECTS);
 
+        // Water and weather: on or off, and how strong, like the echo
         edit(Button.builder(onOff("effects.water", shown().isUnderwaterEnabled()), b -> {
             config.setUnderwaterEnabled(!config.isUnderwaterEnabled());
             b.setMessage(onOff("effects.water", config.isUnderwaterEnabled()));
+            if (waterSlider != null) {
+                waterSlider.active = config.isUnderwaterEnabled();
+            }
         }).bounds(left, y + ROW, colW, 20).tooltip(tip("effects.water.tooltip")).build(), DistanceConfig.Part.EFFECTS);
+        waterSlider = new RangeSlider(right - colW, y + ROW, colW, 20,
+                DistanceConfig.EFFECT_STRENGTH_MIN, DistanceConfig.EFFECT_STRENGTH_MAX, 0.05,
+                () -> shown().getUnderwaterStrength(), config::setUnderwaterStrength,
+                v -> tr("effects.water.strength", pct(v)));
+        waterSlider.active = shown().isUnderwaterEnabled();
+        edit(withTip(waterSlider, "effects.water.strength.tooltip"), DistanceConfig.Part.EFFECTS);
+
         edit(Button.builder(onOff("effects.weather", shown().isWeatherEnabled()), b -> {
             config.setWeatherEnabled(!config.isWeatherEnabled());
             b.setMessage(onOff("effects.weather", config.isWeatherEnabled()));
-        }).bounds(right - colW, y + ROW, colW, 20).tooltip(tip("effects.weather.tooltip")).build(), DistanceConfig.Part.EFFECTS);
+            if (weatherSlider != null) {
+                weatherSlider.active = config.isWeatherEnabled();
+            }
+        }).bounds(left, y + ROW * 2, colW, 20).tooltip(tip("effects.weather.tooltip")).build(), DistanceConfig.Part.EFFECTS);
+        weatherSlider = new RangeSlider(right - colW, y + ROW * 2, colW, 20,
+                DistanceConfig.EFFECT_STRENGTH_MIN, DistanceConfig.EFFECT_STRENGTH_MAX, 0.05,
+                () -> shown().getWeatherStrength(), config::setWeatherStrength,
+                v -> tr("effects.weather.strength", pct(v)));
+        weatherSlider.active = shown().isWeatherEnabled();
+        edit(withTip(weatherSlider, "effects.weather.strength.tooltip"), DistanceConfig.Part.EFFECTS);
+
         edit(Button.builder(onOff("effects.corners", shown().isDiffractionEnabled()), b -> {
             config.setDiffractionEnabled(!config.isDiffractionEnabled());
             b.setMessage(onOff("effects.corners", config.isDiffractionEnabled()));
-        }).bounds(left, y + ROW * 2, colW, 20).tooltip(tip("effects.corners.tooltip")).build(), DistanceConfig.Part.EFFECTS);
+        }).bounds(left, y + ROW * 3, colW, 20).tooltip(tip("effects.corners.tooltip")).build(), DistanceConfig.Part.EFFECTS);
 
-        statusY = y + ROW * 3 + 2;
+        statusY = y + ROW * 4 + 2;
         panelTop = statusY + (hasStatusBanner() ? 30 : 0);
         panelBottom = stretch(panelTop, 140);
         contentEnd = panelBottom;
@@ -708,7 +733,7 @@ public abstract class SettingsScreen extends Screen {
     private static final String[] ZONE_ECHO = {"-", "off", "0.5", "0.9"};
     private static final String MEGAPHONE = "minecraft:goat_horn";
     /** What {@code /vcd lock} cycles through on the Server tab. */
-    private static final String[] SERVER_LOCKS = {"all", "curve,walls", "curve", "none"};
+    private static final String[] SERVER_LOCKS = {"all", "curve,walls,materials", "curve", "none"};
 
     private static java.util.Properties serverState() {
         LinkProtocol.AdminReply reply = AudioDistancePlugin.LINK.adminReply();
@@ -777,7 +802,7 @@ public abstract class SettingsScreen extends Screen {
             case "all" -> tr("server.locked.all");
             case "none" -> tr("server.locked.none");
             case "curve" -> tr("server.locked.curve");
-            case "curve,walls" -> tr("server.locked.curve_walls");
+            case "curve,walls,materials", "curve,walls" -> tr("server.locked.curve_walls");
             default -> Component.literal(locked);
         };
     }

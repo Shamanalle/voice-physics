@@ -206,12 +206,21 @@ public final class LinkProtocol {
     }
 
     public static String adminReply(java.util.List<String> lines, ServerSettings settings) {
+        return adminReply(lines, settings, Map.of());
+    }
+
+    /**
+     * @param extra more state for the Server tab: {@code undo} (changes that can be taken back),
+     *              {@code allows.<permission>} and the latest changes {@code log.<n>} = time|who|undo|command
+     */
+    public static String adminReply(java.util.List<String> lines, ServerSettings settings, Map<String, String> extra) {
         Properties p = new Properties();
         p.setProperty("protocol", String.valueOf(VERSION));
         for (int i = 0; i < lines.size(); i++) {
             p.setProperty("line." + i, lines.get(i));
         }
         settings.writeState(p, "state.");
+        extra.forEach((k, v) -> p.setProperty("state." + k, v));
         return write(p);
     }
 

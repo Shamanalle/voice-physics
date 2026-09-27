@@ -114,7 +114,28 @@ public final class ServerHooks {
         if (command == null || !admin) {
             return null;
         }
-        List<String> lines = AdminCommands.run(command, AudioDistancePlugin.SERVER_SETTINGS, ctx);
-        return LinkProtocol.adminReply(lines, AudioDistancePlugin.SERVER_SETTINGS);
+        ServerSettings settings = AudioDistancePlugin.SERVER_SETTINGS;
+        List<String> lines = AdminCommands.run(command, settings, ctx);
+        return LinkProtocol.adminReply(lines, settings, tabState(settings, ctx));
+    }
+
+    /** How many latest changes the Server tab lists. */
+    static final int TAB_LOG = 5;
+
+    /** What the Server tab needs besides the settings: undo, the player's permissions, the latest changes. */
+    static java.util.Map<String, String> tabState(ServerSettings settings, AdminCommands.Context ctx) {
+        java.util.Map<String, String> out = new java.util.LinkedHashMap<>();
+        out.put("undo", String.valueOf(AdminCommands.undoable(settings)));
+        for (String permission : AdminCommands.PERMISSIONS) {
+            out.put("allows." + permission, String.valueOf(ctx.allows(permission)));
+        }
+        if (ctx.allows(AdminCommands.PERM_SETTINGS)) {
+            List<ChangeLog.Entry> log = ChangeLog.read(settings);
+            for (int i = 0; i < Math.min(TAB_LOG, log.size()); i++) {
+                ChangeLog.Entry e = log.get(i);
+                out.put("log." + i, e.time() + "|" + e.who() + "|" + e.undo() + "|" + e.command());
+            }
+        }
+        return out;
     }
 }

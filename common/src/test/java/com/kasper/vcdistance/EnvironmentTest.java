@@ -250,6 +250,32 @@ public class EnvironmentTest {
     }
 
     @Test
+    @DisplayName("Water and weather follow the player's strength setting, and it is saved and sent")
+    void waterAndWeatherStrength(@org.junit.jupiter.api.io.TempDir java.nio.file.Path dir) {
+        EnvironmentEffects.Effect usual = EnvironmentEffects.water(true, false);
+        assertEquals(usual, EnvironmentEffects.water(true, false, 1.0));
+        EnvironmentEffects.Effect strong = EnvironmentEffects.water(false, true, 1.5);
+        assertTrue(strong.muffle() > usual.muffle() && strong.muffle() < 1.0 && strong.lossDb() > usual.lossDb());
+        EnvironmentEffects.Effect soft = EnvironmentEffects.water(true, true, 0.5);
+        assertTrue(soft.muffle() < usual.muffle() && soft.lossDb() < usual.lossDb());
+        assertEquals(EnvironmentEffects.Effect.NONE, EnvironmentEffects.water(true, true, 0.0));
+        assertEquals(EnvironmentEffects.weather(EnvironmentEffects.Weather.RAIN, 0.8).lossDb() * 1.5,
+                EnvironmentEffects.weather(EnvironmentEffects.Weather.RAIN, 0.8, 1.5).lossDb(), 1e-9);
+
+        DistanceConfig c = new DistanceConfig(dir.resolve("c.properties"));
+        c.setUnderwaterStrength(1.3);
+        c.setWeatherStrength(9.0);
+        assertEquals(DistanceConfig.EFFECT_STRENGTH_MAX, c.getWeatherStrength(), 1e-9);
+        java.util.Properties p = new java.util.Properties();
+        c.writeTo(p, "profile.");
+        DistanceConfig back = new DistanceConfig(dir.resolve("d.properties"));
+        back.readFrom(p, "profile.");
+        assertEquals(1.3, back.getUnderwaterStrength(), 1e-9);
+        back.resetPart(DistanceConfig.Part.EFFECTS);
+        assertEquals(1.0, back.getUnderwaterStrength(), 1e-9);
+    }
+
+    @Test
     @DisplayName("Echo glides with time into a cave and out again, taps fading instead of jumping")
     void echoGlidesWithTime() {
         RoomEstimate cave = RoomEstimate.of(box(15, 12, 10, AcousticMaterial.STONE, AcousticMaterial.STONE));

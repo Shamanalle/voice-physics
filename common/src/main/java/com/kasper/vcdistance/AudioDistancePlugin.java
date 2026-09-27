@@ -709,12 +709,13 @@ public class AudioDistancePlugin implements VoicechatPlugin {
             boolean ownPhysics = status != OcclusionStatus.SOUND_PHYSICS && status != OcclusionStatus.UNAVAILABLE;
             ListenerEnvironment env = ENVIRONMENT;
             if (ownPhysics && c.isUnderwaterEnabled()) {
-                effect = effect.plus(EnvironmentEffects.water(env.isUnderWater(), speaker.isUnderWater()));
+                effect = effect.plus(EnvironmentEffects.water(env.isUnderWater(), speaker.isUnderWater(), c.getUnderwaterStrength()));
             }
             if (c.isWeatherEnabled() && speaker.getDistance() >= 0.0) {
                 double range = speaker.getMaxDistance() > 0.0F ? speaker.getMaxDistance() : getServerMaxDistance();
                 effect = effect.plus(EnvironmentEffects.weather(
-                        ListenerEnvironment.worse(env.weather(), speaker.getWeather()), speaker.getDistance() / range));
+                        ListenerEnvironment.worse(env.weather(), speaker.getWeather()), speaker.getDistance() / range,
+                        c.getWeatherStrength()));
             }
 
             // Both stages work on the frame in place

@@ -313,10 +313,10 @@ public final class ServerSettings {
                 .value("profile_mode", profileMode.getId())
                 .comment("With enforce: which parts of the profile players cannot change.",
                         "  all, or any of: curve, walls, materials, effects (e.g. \"curve, walls\").",
-                        "  The parts left out stay the player's own. Default all.",
+                        "  Walls lock the materials' percentages with them. The parts left out stay the player's own. Default all.",
                         "При enforce: какие части профиля игроки не могут менять.",
                         "  all или любые из: curve, walls, materials, effects (например \"curve, walls\").",
-                        "  Остальные части остаются как у игрока. По умолчанию all.")
+                        "  Стены закрепляют вместе с собой и проценты материалов. Остальные части остаются как у игрока. По умолчанию all.")
                 .value("profile_locked", DistanceConfig.Part.format(lockedParts))
                 .comment("false: players with the addon see no monitor, no radar and no nearby players in the HUD",
                         "(no seeing through walls in PvP). Their own talking and how many hear them stay. Default true.",
@@ -996,6 +996,9 @@ public final class ServerSettings {
         java.util.EnumSet<DistanceConfig.Part> copy = java.util.EnumSet.noneOf(DistanceConfig.Part.class);
         if (parts != null) {
             copy.addAll(parts);
+        }
+        if (copy.contains(DistanceConfig.Part.WALLS)) {
+            copy.add(DistanceConfig.Part.MATERIALS); // the walls' own percentages
         }
         this.lockedParts = copy;
     }
