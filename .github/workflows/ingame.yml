@@ -78,6 +78,8 @@ jobs:
           - { loader: forge, mc: '1.21.9', jar: 'voice-physics-forge-*+mc1.21.9-1.21.10.jar', java: '21', version: 'forge12110_version_oldest' }
           - { loader: forge, mc: '1.21.10', jar: 'voice-physics-forge-*+mc1.21.9-1.21.10.jar', java: '21', version: 'forge12110_version' }
           - { loader: forge, mc: '1.21.11', jar: 'voice-physics-forge-*+mc1.21.11.jar', java: '21', version: 'forge12111_version' }
+          - { loader: forge, mc: '26.1', jar: 'voice-physics-forge-*+mc26.x.jar', java: '25', version: 'forge26_version_oldest' }
+          - { loader: forge, mc: '26.3', jar: 'voice-physics-forge-*+mc26.x.jar', java: '25', version: 'forge26_version' }
           - { loader: paper, mc: '1.20.1', jar: 'voice-physics-bukkit-*.jar', java: '21' }
           - { loader: paper, mc: '1.21.11', jar: 'voice-physics-bukkit-*.jar', java: '21' }
           - { loader: paper, mc: 'latest', jar: 'voice-physics-bukkit-*.jar', java: '25' }

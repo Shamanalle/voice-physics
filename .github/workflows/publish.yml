@@ -114,21 +114,37 @@ jobs:
             java: 17
             dependencies: simple-voice-chat(required) fabric-api(optional) modmenu(optional)
             curseforge: true
-          - name: Mod for 1.20.5 – 1.20.6
+          - name: Fabric for 1.20.5 – 1.20.6
             file: fabric-{v}+mc1.20.5-1.20.6.jar
             target: mc1.20.5-1.20.6
-            loaders: fabric quilt neoforge forge
+            loaders: fabric quilt
             game-versions: 1.20.5 1.20.6
             java: 21
-            dependencies: simple-voice-chat(required) fabric-api(optional) modmenu(optional)
+            dependencies: simple-voice-chat(required) fabric-api(required) modmenu(optional)
             curseforge: true
-          - name: Mod for 1.21 – 1.21.11
+          - name: NeoForge for 1.20.5 – 1.20.6
+            file: neoforge-{v}+mc1.20.5-1.20.6.jar
+            target: mc1.20.5-1.20.6-neoforge
+            loaders: neoforge
+            game-versions: 1.20.5 1.20.6
+            java: 21
+            dependencies: simple-voice-chat(required)
+            curseforge: true
+          - name: Forge for 1.20.6
+            file: forge-{v}+mc1.20.6.jar
+            target: mc1.20.6-forge
+            loaders: forge
+            game-versions: 1.20.6
+            java: 21
+            dependencies: simple-voice-chat(required)
+            curseforge: true
+          - name: Fabric for 1.21 – 1.21.11
             file: fabric-{v}+mc1.21.x.jar
             target: mc1.21.x
-            loaders: fabric quilt forge
+            loaders: fabric quilt
             game-versions: 1.21 1.21.1 1.21.2 1.21.3 1.21.4 1.21.5 1.21.6 1.21.7 1.21.8 1.21.9 1.21.10 1.21.11
             java: 21
-            dependencies: simple-voice-chat(required) fabric-api(optional) modmenu(optional)
+            dependencies: simple-voice-chat(required) fabric-api(required) modmenu(optional)
             curseforge: true
           - name: NeoForge for 1.21 – 1.21.1
             file: neoforge-{v}+mc1.21-1.21.1.jar
@@ -138,14 +154,77 @@ jobs:
             java: 21
             dependencies: simple-voice-chat(required)
             curseforge: true
-          - name: NeoForge lite for 1.21.2 – 1.21.11
-            file: neoforge-{v}+mc1.21.x.jar
-            target: mc1.21.2-1.21.11-neoforge
+          - name: NeoForge for 1.21.2 – 1.21.5
+            file: neoforge-{v}+mc1.21.2-1.21.5.jar
+            target: mc1.21.2-1.21.5-neoforge
             loaders: neoforge
-            game-versions: 1.21.2 1.21.3 1.21.4 1.21.5 1.21.6 1.21.7 1.21.8 1.21.9 1.21.10 1.21.11
+            game-versions: 1.21.2 1.21.3 1.21.4 1.21.5
             java: 21
             dependencies: simple-voice-chat(required)
-            repack: true
+            curseforge: true
+          - name: NeoForge for 1.21.6 – 1.21.8
+            file: neoforge-{v}+mc1.21.6-1.21.8.jar
+            target: mc1.21.6-1.21.8-neoforge
+            loaders: neoforge
+            game-versions: 1.21.6 1.21.7 1.21.8
+            java: 21
+            dependencies: simple-voice-chat(required)
+            curseforge: true
+          - name: NeoForge for 1.21.9 – 1.21.10
+            file: neoforge-{v}+mc1.21.9-1.21.10.jar
+            target: mc1.21.9-1.21.10-neoforge
+            loaders: neoforge
+            game-versions: 1.21.9 1.21.10
+            java: 21
+            dependencies: simple-voice-chat(required)
+            curseforge: true
+          - name: NeoForge for 1.21.11
+            file: neoforge-{v}+mc1.21.11.jar
+            target: mc1.21.11-neoforge
+            loaders: neoforge
+            game-versions: 1.21.11
+            java: 21
+            dependencies: simple-voice-chat(required)
+            curseforge: true
+          - name: Forge for 1.21 – 1.21.1
+            file: forge-{v}+mc1.21-1.21.1.jar
+            target: mc1.21-1.21.1-forge
+            loaders: forge
+            game-versions: 1.21 1.21.1
+            java: 21
+            dependencies: simple-voice-chat(required)
+            curseforge: true
+          - name: Forge for 1.21.3 – 1.21.5
+            file: forge-{v}+mc1.21.3-1.21.5.jar
+            target: mc1.21.3-1.21.5-forge
+            loaders: forge
+            game-versions: 1.21.3 1.21.4 1.21.5
+            java: 21
+            dependencies: simple-voice-chat(required)
+            curseforge: true
+          - name: Forge for 1.21.6 – 1.21.8
+            file: forge-{v}+mc1.21.6-1.21.8.jar
+            target: mc1.21.6-1.21.8-forge
+            loaders: forge
+            game-versions: 1.21.6 1.21.7 1.21.8
+            java: 21
+            dependencies: simple-voice-chat(required)
+            curseforge: true
+          - name: Forge for 1.21.9 – 1.21.10
+            file: forge-{v}+mc1.21.9-1.21.10.jar
+            target: mc1.21.9-1.21.10-forge
+            loaders: forge
+            game-versions: 1.21.9 1.21.10
+            java: 21
+            dependencies: simple-voice-chat(required)
+            curseforge: true
+          - name: Forge for 1.21.11
+            file: forge-{v}+mc1.21.11.jar
+            target: mc1.21.11-forge
+            loaders: forge
+            game-versions: 1.21.11
+            java: 21
+            dependencies: simple-voice-chat(required)
             curseforge: true
           - name: Mod for 26.1 – 26.3
             file: fabric-{v}+mc26.x.jar

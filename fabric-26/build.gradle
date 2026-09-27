@@ -3,8 +3,9 @@ plugins {
     id 'java'
 }
 
-// The NeoForge hooks are packed into this jar, so their module is configured first
+// The NeoForge and Forge hooks are packed into this jar, so their modules are configured first
 evaluationDependsOn(':neoforge-26')
+evaluationDependsOn(':forge-26')
 
 // Minecraft 26.3 (unobfuscated, no remapping)
 def target = "mc26.x"
@@ -69,6 +70,11 @@ jar {
     dependsOn ':neoforge-26:classes'
     from(project(':neoforge-26').sourceSets.main.output) {
         include 'com/kasper/vcdistance/neoforge/**'
+    }
+    // Forge entrypoint: loaded only by Forge, which finds it through its own @Mod
+    dependsOn ':forge-26:classes'
+    from(project(':forge-26').sourceSets.main.output) {
+        include 'com/kasper/vcdistance/forge/**'
     }
 }
 

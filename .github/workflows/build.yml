@@ -71,6 +71,7 @@ jobs:
           - { module: forge-1.21.5, key: forge1215_version_oldest }
           - { module: forge-1.21.8, key: forge1218_version_oldest }
           - { module: forge-1.21.10, key: forge12110_version_oldest }
+          - { module: forge-26, key: forge26_version_oldest }
     steps:
       - name: Checkout
         uses: actions/checkout@v4
