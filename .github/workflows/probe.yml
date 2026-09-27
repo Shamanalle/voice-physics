@@ -1,0 +1,34 @@
+name: Probe loaders (temporary)
+
+on:
+  push:
+    branches: [ "claude/addon-analysis-improvement-4olq7u" ]
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '25'
+      - name: Versions
+        run: |
+          nf=$(curl -fsSL https://maven.neoforged.net/releases/net/neoforged/neoforge/maven-metadata.xml | grep -o '<version>[^<]*' | sed 's/<version>//')
+          for p in 20.2 20.3 20.4 20.5 20.6 21.0 21.1 21.2 21.3 21.4 21.5 21.6 21.7 21.8 21.9 21.10 21.11 26.1 26.2 26.3; do
+            echo "neoforge $p: first=$(echo "$nf" | grep "^$p\." | head -1) last=$(echo "$nf" | grep "^$p\." | grep -v beta | tail -1) lastany=$(echo "$nf" | grep "^$p\." | tail -1)"
+          done
+          fg=$(curl -fsSL https://maven.minecraftforge.net/net/minecraftforge/forge/maven-metadata.xml | grep -o '<version>[^<]*' | sed 's/<version>//')
+          for p in 1.20.2 1.20.3 1.20.4 1.20.5 1.20.6 1.21 1.21.1 1.21.2 1.21.3 1.21.4 1.21.5 1.21.6 1.21.7 1.21.8 1.21.9 1.21.10 1.21.11 26.1 26.1.1 26.1.2 26.2 26.3; do
+            echo "forge $p: first=$(echo "$fg" | grep "^$p-" | head -1) last=$(echo "$fg" | grep "^$p-" | tail -1)"
+          done
+          echo "== MDG"; curl -fsSL https://maven.neoforged.net/releases/net/neoforged/moddev/net.neoforged.moddev.gradle.plugin/maven-metadata.xml | grep -o '<version>[^<]*' | tail -5
+          echo "== MDG legacy"; curl -fsSL https://maven.neoforged.net/releases/net/neoforged/moddev/legacyforge/net.neoforged.moddev.legacyforge.gradle.plugin/maven-metadata.xml | grep -o '<version>[^<]*' | tail -3 || true
+          echo "== NeoGradle"; curl -fsSL https://maven.neoforged.net/releases/net/neoforged/gradle/userdev/net.neoforged.gradle.userdev.gradle.plugin/maven-metadata.xml | grep -o '<version>[^<]*' | tail -5 || true
+          echo "== ForgeGradle"; curl -fsSL https://maven.minecraftforge.net/net/minecraftforge/gradle/ForgeGradle/maven-metadata.xml | grep -o '<version>[^<]*' | tail -12
+      - name: Simple Voice Chat on Modrinth
+        run: |
+          curl -fsSL "https://api.modrinth.com/v2/project/simple-voice-chat/version" > svc.json
+          for l in forge neoforge; do
+            echo "$l: $(jq -r --arg l $l '[.[] | select(.loaders | index($l)) | .game_versions[]] | unique | join(" ")' svc.json)"
+          done
