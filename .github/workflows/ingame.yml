@@ -116,7 +116,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
       - name: Simple Voice Chat for the test client
         run: |
-          mods="${{ matrix.module }}/build/run/clientGameTest/mods"
+          mods="${{ matrix.module }}/build/gametest-mods"
           mkdir -p "${mods}"
           url=$(curl -fsSL --retry 4 -G "https://api.modrinth.com/v2/project/simple-voice-chat/version" \
               --data-urlencode 'loaders=["fabric"]' --data-urlencode 'game_versions=["${{ matrix.mc }}"]' \

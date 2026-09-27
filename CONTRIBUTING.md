@@ -64,7 +64,7 @@ The repository description and topics live in `.github/about.json`. The *Reposit
 
 *In-game tests* (`.github/workflows/ingame.yml`) runs on every pull request and before every release:
 - **Servers:** `.github/scripts/server-smoke.sh` starts Fabric, Forge, NeoForge, Paper and Folia servers with Simple Voice Chat and the addon, runs `/vcd` from the console and fails on bare text keys, a setting that was not saved, or an exception from the addon. Locally: `bash .github/scripts/server-smoke.sh fabric 1.21.1 build/libs/voice-physics-fabric-*+mc1.21.x.jar`.
-- **Client:** `./gradlew :fabric-26:runClientGameTest` (or `:fabric-1.21`) opens the settings screen on every tab at two interface sizes and saves screenshots in `build/run/clientGameTest/screenshots/`. Simple Voice Chat goes into `build/run/clientGameTest/mods/`; CI needs `xvfb-run`.
+- **Client:** `./gradlew :fabric-26:runClientGameTest` (or `:fabric-1.21`) opens the settings screen on every tab at two interface sizes and saves screenshots in `build/run/clientGameTest/screenshots/`. Simple Voice Chat's jar goes to `build/gametest-mods/voicechat.jar` of the module; CI needs `xvfb-run`.
 - Logs and screenshots are attached to each run as artifacts.
 
 ### Releases
@@ -155,7 +155,7 @@ README — это два файла: `README.md` на английском и `R
 
 *In-game tests* (`.github/workflows/ingame.yml`) запускается на каждый pull request и перед каждым релизом:
 - **Серверы:** `.github/scripts/server-smoke.sh` запускает серверы Fabric, Forge, NeoForge, Paper и Folia с Simple Voice Chat и аддоном, выполняет `/vcd` из консоли и падает, если ответ — голые ключи текстов, настройка не сохранилась или аддон бросил исключение. Локально: `bash .github/scripts/server-smoke.sh fabric 1.21.1 build/libs/voice-physics-fabric-*+mc1.21.x.jar`.
-- **Клиент:** `./gradlew :fabric-26:runClientGameTest` (или `:fabric-1.21`) открывает экран настроек на каждой вкладке при двух размерах интерфейса и сохраняет скриншоты в `build/run/clientGameTest/screenshots/`. Simple Voice Chat кладётся в `build/run/clientGameTest/mods/`; в CI нужен `xvfb-run`.
+- **Клиент:** `./gradlew :fabric-26:runClientGameTest` (или `:fabric-1.21`) открывает экран настроек на каждой вкладке при двух размерах интерфейса и сохраняет скриншоты в `build/run/clientGameTest/screenshots/`. JAR Simple Voice Chat кладётся в `build/gametest-mods/voicechat.jar` модуля; в CI нужен `xvfb-run`.
 - Логи и скриншоты прикладываются к каждому запуску как артефакты.
 
 ### Релизы

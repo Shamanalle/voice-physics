@@ -71,7 +71,8 @@ remapJar {
 }
 
 // In-game test (Fabric client gametest, run by .github/workflows/ingame.yml): opens the settings screen
-// in a real client on every tab and takes screenshots. Simple Voice Chat goes into the run folder's mods/.
+// in a real client on every tab and takes screenshots. The test client needs Simple Voice Chat: CI puts
+// its jar at build/gametest-mods/voicechat.jar (Loom empties the run folder before every test run).
 fabricApi {
     configureTests {
         createSourceSet = true
@@ -87,5 +88,12 @@ sourceSets {
         java {
             srcDir "${rootDir}/shared/gametest/src/java"
         }
+    }
+}
+
+def gametestVoicechat = file("${projectDir}/build/gametest-mods/voicechat.jar")
+if (gametestVoicechat.exists()) {
+    dependencies {
+        modLocalRuntime files(gametestVoicechat)
     }
 }
