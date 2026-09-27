@@ -1,0 +1,92 @@
+plugins {
+    id 'net.neoforged.moddev.legacyforge' version '2.0.147'
+    id 'java'
+}
+
+// Its jar carries the classes of ':common', so that module is configured first (configure-on-demand)
+evaluationDependsOn(':common')
+
+// Forge 1.20.2 - 1.20.4: the full addon. As on 1.20.1, the code shared with the Fabric builds is
+// compiled against Minecraft's own names and turned into Forge's runtime names by reobfJar. The
+// networking is shared with Forge 1.20.6 and newer (shared/forge); the entrypoint and client hooks
+// (package com.kasper.vcdistance.forge) are this module's own.
+def target = "mc1.20.2-1.20.4"
+version = "${project.mod_version}+${target}"
+
+base {
+    archivesName = "voice-physics-forge"
+}
+
+repositories {
+    mavenCentral()
+    maven {
+        name = "henkelmax.public"
+        url = 'https://maven.maxhenkel.de/repository/public'
+    }
+}
+
+// The build against the oldest Forge of the band (.github/workflows/build.yml) passes -PloaderOverride.forge-1.20.4=<version>
+legacyForge {
+    version = project.findProperty("loaderOverride.${project.name}") ?: project.forge1204_version
+}
+
+// In order of precedence: a file in an earlier folder replaces the file with the same path in a later one
+def ownRoot = file('src/main/java')
+def sharedRoots = [
+        "${rootDir}/shared/forge/src/main/java",
+        "${rootDir}/shared/mc-1.20-1.21/src/main/java",
+        "${rootDir}/shared/mc-all/src/main/java",
+].collect { new File(it) }
+// The Fabric hooks, which Forge replaces with its own
+def fabricOnly = [
+        'com/kasper/vcdistance/AudioDistanceClient.java',
+        'com/kasper/vcdistance/AudioDistanceMod.java',
+        'com/kasper/vcdistance/ModMenuIntegration.java',
+        'com/kasper/vcdistance/client/HudHook.java',
+]
+
+sourceSets {
+    main {
+        java {
+            sharedRoots.each { srcDir it }
+            exclude { FileTreeElement e ->
+                if (e.directory) {
+                    return false
+                }
+                def path = e.relativePath.pathString
+                def index = sharedRoots.findIndexOf { e.file.path.startsWith(it.path + File.separator) }
+                if (index < 0) {
+                    return false
+                }
+                def before = [ownRoot] + sharedRoots.take(index)
+                fabricOnly.contains(path) || before.any { new File(it, path).exists() }
+            }
+        }
+    }
+}
+
+dependencies {
+    implementation project(':common')
+    compileOnly "de.maxhenkel.voicechat:voicechat-api:${project.voicechat_api_version}"
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.release = 17
+    options.encoding = 'UTF-8'
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
+processResources {
+    inputs.property "version", project.version
+    filesMatching("META-INF/mods.toml") {
+        expand "version": project.version
+    }
+}
+
+jar {
+    from project(':common').sourceSets.main.output
+}
