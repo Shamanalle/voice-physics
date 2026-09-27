@@ -13,10 +13,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 #### Added
 - Full Forge version for 1.20.1: walls, echo, corners, the HUD, the monitor, the settings screen and the server side.
 - Full NeoForge version for 1.21 – 1.21.1.
-- Every release is first started on real Fabric, Forge, NeoForge, Paper and Folia servers.
 
 #### Changed
-- On Modrinth and CurseForge the Fabric, Forge and NeoForge files are separate where each has its own build.
 - *Listen* plays the voice at more distances, and its button is small again.
 
 #### Fixed
@@ -29,10 +27,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 #### Добавлено
 - Полная версия для Forge 1.20.1: стены, эхо, углы, HUD, монитор, экран настроек и серверная часть.
 - Полная версия для NeoForge 1.21 – 1.21.1.
-- Каждый релиз сначала запускается на настоящих серверах Fabric, Forge, NeoForge, Paper и Folia.
 
 #### Изменено
-- На Modrinth и CurseForge файлы для Fabric, Forge и NeoForge разделены там, где у каждого своя сборка.
 - «Прослушать» проигрывает голос на большем числе расстояний, а кнопка снова маленькая.
 
 #### Исправлено
@@ -142,17 +138,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Support for Minecraft 1.20.2 – 1.20.6.
 - `/vcd` replies and server messages in each player's game language on 1.20.2+.
 
-#### Changed
-- Files on the stores are named by Minecraft version ("Mod for 1.20 – 1.20.1" and so on).
-
 ### Русский
 
 #### Добавлено
 - Поддержка Minecraft 1.20.2 – 1.20.6.
 - Ответы `/vcd` и сообщения сервера на языке игры каждого игрока на 1.20.2+.
-
-#### Изменено
-- Файлы в магазинах названы по версии Minecraft («Mod for 1.20 – 1.20.1» и т. д.).
 
 ## [2.0.1] - 2026-09-26
 
@@ -378,7 +368,6 @@ First beta.
 
 #### Added
 - Support for Minecraft 26.1 – 26.2.
-- Releases on Modrinth and CurseForge.
 
 #### Fixed
 - The mod icon did not show in Mod Menu.
@@ -387,7 +376,6 @@ First beta.
 
 #### Добавлено
 - Поддержка Minecraft 26.1 – 26.2.
-- Релизы на Modrinth и CurseForge.
 
 #### Исправлено
 - Иконка мода не показывалась в Mod Menu.
