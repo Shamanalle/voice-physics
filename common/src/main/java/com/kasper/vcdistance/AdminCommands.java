@@ -139,6 +139,11 @@ public final class AdminCommands {
         default Collection<String> worlds() {
             return List.of();
         }
+
+        /** Whether claim zones work here (Open Parties and Claims is installed). */
+        default boolean claims() {
+            return false;
+        }
     }
 
     /** A completion for the word being typed, with a short explanation (or {@code null}). */

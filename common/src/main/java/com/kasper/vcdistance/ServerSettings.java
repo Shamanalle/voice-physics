@@ -363,7 +363,9 @@ public final class ServerSettings {
                         "  zone.<kind>.<name>.enter_message     shown to players who enter",
                         "  zone.<kind>.<name>.priority          a whole number, default 0",
                         "  zone.box.<name>.world / from / to    the box: world, and two corners as x,y,z",
-                        "<kind> is world (on Fabric the dimension: the_nether, the_end...), box or region (WorldGuard).",
+                        "<kind> is world (on Fabric the dimension: the_nether, the_end...), box, region (WorldGuard) or claim",
+                        "(Open Parties and Claims: zone.claim.<player> covers that player's claims and, for a party leader, the",
+                        "whole party's; zone.claim.server the server's own claims).",
                         "Мир, бокс или регион WorldGuard (Paper) могут звучать по-своему; чего в зоне нет, берётся из разделов выше.",
                         "Где зоны пересекаются, побеждает высший priority (при равном - регион, затем меньший бокс); зона мира",
                         "действует во всём остальном мире. Боксы проще всего создавать в игре: /vcd zone pos1, /vcd zone pos2,",
@@ -373,7 +375,9 @@ public final class ServerSettings {
                         "  walls_strength - сила стен 0 - 1; echo - auto (как измерено), off или 0.1 - 1: такое эхо везде в зоне;",
                         "  isolated - true: голоса не выходят из зоны и не заходят в неё; enter_message - сообщение при входе;",
                         "  priority - целое число, по умолчанию 0; zone.box.<имя>.world / from / to - мир и два угла бокса x,y,z.",
-                        "<kind> - world (на Fabric измерение: the_nether, the_end...), box или region (WorldGuard).")
+                        "<kind> - world (на Fabric измерение: the_nether, the_end...), box, region (WorldGuard) или claim",
+                        "(Open Parties and Claims: zone.claim.<игрок> - приваты этого игрока, а для лидера группы - всей группы;",
+                        "zone.claim.server - приваты самого сервера).")
                 .comment("Players see the zone's name (or its enter_message) above the hotbar when they enter or leave it,",
                         "with or without the addon. Default true.",
                         "Игроки видят название зоны (или её enter_message) над хотбаром при входе и выходе,",
@@ -526,10 +530,14 @@ public final class ServerSettings {
         return true;
     }
 
-    /** A zone by name, whatever its kind (boxes first), or {@code null}. */
+    /** A zone by name, whatever its kind (boxes first), or by "kind:name" ("claim:steve"); {@code null} when none. */
     public Zone findZone(String name) {
         String n = Zone.normalize(name);
-        for (String kind : new String[]{Zone.BOX, Zone.REGION, Zone.WORLD}) {
+        int colon = n.indexOf(':');
+        if (colon > 0 && Zone.isKind(n.substring(0, colon))) {
+            return zones.get(n);
+        }
+        for (String kind : new String[]{Zone.BOX, Zone.REGION, Zone.WORLD, Zone.CLAIM}) {
             Zone z = zones.get(kind + ":" + n);
             if (z != null) {
                 return z;
@@ -756,14 +764,14 @@ public final class ServerSettings {
             int kindEnd = rest.indexOf('.');
             int fieldStart = rest.lastIndexOf('.');
             if (kindEnd <= 0 || fieldStart <= kindEnd + 1) {
-                DistanceConfig.LOGGER.warn("Ignoring '{}' in {}: expected zone.<world|box|region>.<name>.<setting>", key, file);
+                DistanceConfig.LOGGER.warn("Ignoring '{}' in {}: expected zone.<world|box|region|claim>.<name>.<setting>", key, file);
                 continue;
             }
             String kind = rest.substring(0, kindEnd).toLowerCase(Locale.ROOT);
             String name = Zone.normalize(rest.substring(kindEnd + 1, fieldStart));
             String field = rest.substring(fieldStart + 1).toLowerCase(Locale.ROOT);
-            if (!kind.equals(Zone.WORLD) && !kind.equals(Zone.REGION) && !kind.equals(Zone.BOX)) {
-                DistanceConfig.LOGGER.warn("Ignoring '{}' in {}: a zone is a world, a box or a region", key, file);
+            if (!Zone.isKind(kind)) {
+                DistanceConfig.LOGGER.warn("Ignoring '{}' in {}: a zone is a world, a box, a region or a claim", key, file);
                 continue;
             }
             parts.computeIfAbsent(kind + ":" + name, k -> new LinkedHashMap<>()).put(field, props.getProperty(key).trim());

@@ -34,6 +34,9 @@ public class CommandsTest {
     private final ServerPlayers.Info admin = new ServerPlayers.Info(UUID.randomUUID(), "Admin", "world", 10.5, 64, 10.5,
             false, true, false, "", "", List.of(), "en_us");
 
+    /** Whether the test server has Open Parties and Claims. */
+    private boolean claimsInstalled;
+
     @AfterEach
     void clear() {
         players.clear();
@@ -91,6 +94,10 @@ public class CommandsTest {
 
             public Collection<String> worlds() {
                 return List.of("world", "world_nether");
+            }
+
+            public boolean claims() {
+                return claimsInstalled;
             }
 
             @Override
@@ -229,6 +236,44 @@ public class CommandsTest {
         String page = String.join("\n", AdminCommands.execute("log", s, ctx).plain());
         assertTrue(page.contains("Page 1 of 2"), page);
         assertEquals(ChangeLog.read(s).size(), 18);
+    }
+
+    @Test
+    @DisplayName("Claim zones (Open Parties and Claims): made with claim:<player>, found for the owner or party leader")
+    void claimZones() throws IOException {
+        ServerSettings s = settings("zone.claim.server.voice_range=24\nzone.world.steve.walls_strength=0.2\n");
+        assertEquals(Zone.CLAIM, s.findZone("claim:server").kind());
+        claimsInstalled = true;
+        players.update(new ServerPlayers.Info(UUID.randomUUID(), "Steve", "world", 0, 64, 0, false, true, false, "", "", List.of(), ""));
+        AdminCommands.Context ctx = ctx();
+        List<String> start = AdminCommands.suggestions("zone set cl", s, ctx).stream().map(AdminCommands.Suggestion::text).toList();
+        assertTrue(start.contains("claim:"), start.toString());
+        List<String> owners = AdminCommands.suggestions("zone set claim:", s, ctx).stream().map(AdminCommands.Suggestion::text).toList();
+        assertTrue(owners.contains("claim:steve") && owners.contains("claim:admin"), owners.toString());
+        assertEquals(1, owners.stream().filter("claim:server"::equals).count(), "the existing zone once: " + owners);
+
+        AdminCommands.run("zone set claim:Steve walls_strength 90", s, ctx);
+        Zone steve = s.findZone("claim:steve");
+        assertNotNull(steve);
+        assertEquals(Zone.CLAIM, steve.kind());
+        assertEquals(0.9, steve.rules().wallsStrength(), 1e-9);
+        assertEquals(Zone.WORLD, s.findZone("steve").kind(), "a plain name still finds the world first");
+        ServerSettings again = new ServerSettings(s.getPath());
+        again.load();
+        assertNotNull(again.findZone("claim:steve"), "saved as zone.claim.steve");
+
+        // In a party member's claim, the party leader's zone applies; outside claims the world's
+        assertSame(steve, s.zoneOf(new ServerPlayers.Info(UUID.randomUUID(), "Alex", "world_nether", 0, 64, 0, false, true, false,
+                "", "", List.of("claim:alex", "claim:" + UUID.randomUUID(), "claim:steve"), "")));
+        assertEquals("server", s.zoneOf(new ServerPlayers.Info(UUID.randomUUID(), "Alex", "world", 0, 64, 0, false, true, false,
+                "", "", List.of("claim:server"), "")).name());
+        String card = String.join("\n", AdminCommands.execute("zone info claim:steve", s, ctx).plain());
+        assertTrue(card.contains("Claims steve"), card);
+        CommandReply list = AdminCommands.execute("zones", s, ctx);
+        assertTrue(list.lines().stream().flatMap(l -> l.spans().stream())
+                .anyMatch(sp -> "/vcd zone info claim:steve".equals(sp.action())), "buttons name claims with claim:");
+        assertTrue(AdminCommands.run("zone delete claim:steve confirm", s, ctx).get(0).contains("steve"));
+        assertNull(s.findZone("claim:steve"));
     }
 
     @Test

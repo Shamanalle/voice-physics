@@ -99,12 +99,12 @@ final class ZoneCommands {
         for (Zone z : zones.subList((p - 1) * PAGE, Math.min(zones.size(), p * PAGE))) {
             LineBuilder line = CommandReply.line()
                     .text("• ", Style.MUTED)
-                    .add(new Span(z.name(), Style.VALUE, Click.RUN, "/vcd zone info " + z.name(), describe(z, m)))
+                    .add(new Span(z.name(), Style.VALUE, Click.RUN, "/vcd zone info " + ref(z), describe(z, m)))
                     .text(" " + m.get("zones." + z.kind()) + (z.box() != null ? ", " + z.box().world() : "") + " - " + summary(z, m), Style.MUTED);
-            line.button(m.get("btn.info"), Click.RUN, "/vcd zone info " + z.name(), m.get("hover.run", "/vcd zone info " + z.name()));
+            line.button(m.get("btn.info"), Click.RUN, "/vcd zone info " + ref(z), m.get("hover.run", "/vcd zone info " + ref(z)));
             if (z.box() != null && mayChange) {
-                line.button(m.get("btn.show"), Click.RUN, "/vcd zone show " + z.name(), m.get("hover.run", "/vcd zone show " + z.name()));
-                line.button(m.get("btn.tp"), Click.RUN, "/vcd zone tp " + z.name(), m.get("hover.run", "/vcd zone tp " + z.name()));
+                line.button(m.get("btn.show"), Click.RUN, "/vcd zone show " + ref(z), m.get("hover.run", "/vcd zone show " + ref(z)));
+                line.button(m.get("btn.tp"), Click.RUN, "/vcd zone tp " + ref(z), m.get("hover.run", "/vcd zone tp " + ref(z)));
             }
             r.reply.add(line);
         }
@@ -124,10 +124,15 @@ final class ZoneCommands {
         }
     }
 
-    /** Boxes, then regions, then worlds, each by name. */
+    /** How commands name a zone: its name, or "claim:steve" for claims (a player may share a world's name). */
+    static String ref(Zone z) {
+        return Zone.CLAIM.equals(z.kind()) ? Zone.CLAIM + ":" + z.name() : z.name();
+    }
+
+    /** Boxes, then regions, claims and worlds, each by name. */
     static List<Zone> sorted(ServerSettings settings) {
         List<Zone> zones = new ArrayList<>(settings.zones().values());
-        List<String> order = List.of(Zone.BOX, Zone.REGION, Zone.WORLD);
+        List<String> order = List.of(Zone.BOX, Zone.REGION, Zone.CLAIM, Zone.WORLD);
         zones.sort(Comparator.comparingInt((Zone z) -> order.indexOf(z.kind())).thenComparing(Zone::name));
         return zones;
     }
@@ -183,9 +188,9 @@ final class ZoneCommands {
             String shown = value == null ? "–" : value;
             Style style = value == null ? Style.MUTED : Style.VALUE;
             String hover = (value == null ? m.get("default") + "\n" : "")
-                    + (mayChange ? m.get("hover.change", "/vcd zone set " + z.name() + " " + setting) : "");
+                    + (mayChange ? m.get("hover.change", "/vcd zone set " + ref(z) + " " + setting) : "");
             line.add(mayChange
-                    ? new Span(shown, style, Click.SUGGEST, "/vcd zone set " + z.name() + " " + setting + " ", hover.strip())
+                    ? new Span(shown, style, Click.SUGGEST, "/vcd zone set " + ref(z) + " " + setting + " ", hover.strip())
                     : new Span(shown, style, null, null, hover.isBlank() ? null : hover.strip()));
             inLine++;
         }
@@ -195,12 +200,12 @@ final class ZoneCommands {
         }
         LineBuilder buttons = CommandReply.line();
         if (z.box() != null) {
-            buttons.button(m.get("btn.show"), Click.RUN, "/vcd zone show " + z.name(), m.get("hover.run", "/vcd zone show " + z.name()));
-            buttons.button(m.get("btn.tp"), Click.RUN, "/vcd zone tp " + z.name(), m.get("hover.run", "/vcd zone tp " + z.name()));
-            buttons.button(m.get("btn.rename"), Click.SUGGEST, "/vcd zone rename " + z.name() + " ",
-                    m.get("hover.suggest", "/vcd zone rename " + z.name()));
+            buttons.button(m.get("btn.show"), Click.RUN, "/vcd zone show " + ref(z), m.get("hover.run", "/vcd zone show " + ref(z)));
+            buttons.button(m.get("btn.tp"), Click.RUN, "/vcd zone tp " + ref(z), m.get("hover.run", "/vcd zone tp " + ref(z)));
+            buttons.button(m.get("btn.rename"), Click.SUGGEST, "/vcd zone rename " + ref(z) + " ",
+                    m.get("hover.suggest", "/vcd zone rename " + ref(z)));
         }
-        buttons.danger(m.get("btn.delete"), "/vcd zone delete " + z.name(), m.get("hover.run", "/vcd zone delete " + z.name()));
+        buttons.danger(m.get("btn.delete"), "/vcd zone delete " + ref(z), m.get("hover.run", "/vcd zone delete " + ref(z)));
         r.reply.add(buttons);
     }
 
@@ -433,7 +438,9 @@ final class ZoneCommands {
             return;
         }
         Zone z = r.settings.findZone(r.arg(2));
-        String name = AdminCommands.clean(r.arg(2));
+        // "claim:steve" names the claims of a player (Open Parties and Claims)
+        boolean claim = r.arg(2).toLowerCase(Locale.ROOT).startsWith(Zone.CLAIM + ":");
+        String name = AdminCommands.clean(claim ? r.arg(2).substring(Zone.CLAIM.length() + 1) : r.arg(2));
         if (name.isEmpty()) {
             r.badValue("zone set", r.arg(2), syntax, "zone");
             return;
@@ -453,12 +460,12 @@ final class ZoneCommands {
             return;
         }
         if (r.args.length == 4) {
-            choices(r, z, name, key);
+            choices(r, z, claim ? Zone.CLAIM + ":" + name : name, key);
             return;
         }
         if (z == null) {
-            // A world gets a zone just by setting something on it
-            z = new Zone(Zone.WORLD, name, null, null);
+            // A world, or a player's claims, get a zone just by setting something on them
+            z = new Zone(claim ? Zone.CLAIM : Zone.WORLD, name, null, null);
         }
         String value = r.rest(4).trim();
         boolean reset = value.equalsIgnoreCase("default") || value.equals("-");
@@ -602,7 +609,7 @@ final class ZoneCommands {
         }
         if (!r.arg(3).equalsIgnoreCase(CONFIRM)) {
             LineBuilder line = CommandReply.line().addAll(m.spans("zone.delete_ask", Style.WARN, z.name()));
-            line.danger(m.get("btn.delete"), "/vcd zone delete " + z.name() + " " + CONFIRM, m.get("hover.run", "/vcd zone delete " + z.name()));
+            line.danger(m.get("btn.delete"), "/vcd zone delete " + ref(z) + " " + CONFIRM, m.get("hover.run", "/vcd zone delete " + ref(z)));
             r.reply.add(line);
             return;
         }
