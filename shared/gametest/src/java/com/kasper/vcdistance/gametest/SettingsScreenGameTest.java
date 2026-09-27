@@ -1,13 +1,17 @@
 package com.kasper.vcdistance.gametest;
 
+import com.kasper.vcdistance.AudioDistancePlugin;
 import com.kasper.vcdistance.AudioDistanceScreen;
+import com.kasper.vcdistance.LinkProtocol;
+import com.kasper.vcdistance.ServerSettings;
+import com.kasper.vcdistance.Zone;
 import com.kasper.vcdistance.client.SettingsScreen;
 import net.fabricmc.fabric.api.client.gametest.v1.FabricClientGameTest;
 import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
 import net.fabricmc.fabric.api.client.gametest.v1.context.TestSingleplayerContext;
 
 /**
- * Opens the settings screen in a real client, in a world, on every tab, in English and in Russian (its
+ * Opens the settings screen in a real client, in a world, on every tab (the Server tab as a pretend admin), in English and in Russian (its
  * texts are among the longest) and in two window sizes, scrolls each tab to its end and takes
  * screenshots (uploaded by CI). With the automatic interface size,
  * 854 x 480 gives a 427 x 240 screen and 1280 x 960 the tightest one, 320 x 240. Any exception while
@@ -35,13 +39,33 @@ public class SettingsScreenGameTest implements FabricClientGameTest {
         }
     }
 
+    /**
+     * Tells the client it is an admin of a server with a few settings changed and two zones, so the
+     * Server tab has something to show. Commands from the tab go nowhere.
+     */
+    private static void pretendAdmin() {
+        ServerSettings settings = new ServerSettings();
+        settings.setSneakMultiplier(0.5);
+        settings.setGroupSpectatorsApart(true);
+        settings.setWallsStrength(0.55);
+        settings.putZone(new Zone(Zone.BOX, "spawn", null, null, Zone.Rules.NONE,
+                new Zone.Box("minecraft:overworld", -8, 60, -8, 8, 80, 8), 0));
+        settings.putZone(new Zone(Zone.BOX, "arena-north", null, null,
+                new Zone.Rules(24.0, null, null, 0.8, null, true, null),
+                new Zone.Box("minecraft:overworld", 100, 60, 100, 140, 90, 140), 0));
+        AudioDistancePlugin.LINK.setAdminSender(text -> { });
+        AudioDistancePlugin.LINK.onProfile(LinkProtocol.profile(settings, null, 48.0, 16.0, true));
+        AudioDistancePlugin.LINK.onAdminReply(LinkProtocol.adminReply(java.util.List.of(), settings));
+    }
+
     private static void shootTabs(ClientGameTestContext context, String language, int[] window) {
         context.getInput().resizeWindow(window[0], window[1]);
         context.waitTicks(2);
         String size = language + "-" + window[0] + "x" + window[1];
         for (SettingsScreen.Tab tab : SettingsScreen.Tab.values()) {
             if (tab == SettingsScreen.Tab.SERVER) {
-                continue; // only for admins of a server with the addon
+                // Only for admins of a server with the addon: the client is told it is one
+                context.runOnClient(client -> pretendAdmin());
             }
             String name = tab.name().toLowerCase(java.util.Locale.ROOT) + "-" + size;
             context.runOnClient(client -> {
