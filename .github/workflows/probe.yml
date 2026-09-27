@@ -16,40 +16,25 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '25'
-      - name: Forge MDKs
+      - name: Forge API 2
         run: |
-          exec > >(tee probe-mdk.txt) 2>&1
-          for v in 1.20.4-49.2.9 1.20.6-50.2.10 1.21.1-52.1.16 1.21.5-55.1.14 1.21.8-58.1.22 1.21.11-61.2.1 26.3-66.0.6; do
-            echo "=================== MDK $v"
-            curl -fsSL -A "Mozilla/5.0" -o mdk.zip "https://maven.minecraftforge.net/net/minecraftforge/forge/$v/forge-$v-mdk.zip" || { echo none; continue; }
-            rm -rf mdk; mkdir mdk; (cd mdk && unzip -q ../mdk.zip)
-            for f in build.gradle settings.gradle gradle.properties gradle/wrapper/gradle-wrapper.properties; do echo "--- $f"; grep -v '^\s*//' mdk/$f | grep -v '^\s*$' | head -120; done
-            echo "--- java"; find mdk/src -name '*.java' | head; cat $(find mdk/src -name 'ExampleMod.java') | head -150
-            echo "--- mods.toml"; cat mdk/src/main/resources/META-INF/mods.toml | grep -v '^#' | grep -v '^\s*$' | head -60
-          done
-      - name: Forge API
-        run: |
-          exec > probe-forge.txt 2>&1
-          show() { javap -cp "$1" "$2" 2>&1 | head -60; }
-          for v in 1.20.4-49.2.9 1.20.6-50.2.10 1.21.1-52.1.16 1.21.5-55.1.14 1.21.8-58.1.22 1.21.11-61.2.1 26.3-66.0.6; do
+          exec > probe-forge2.txt 2>&1
+          show() { javap -cp "$1" "$2" 2>&1 | grep -v "^Compiled" | head -40; }
+          M=https://maven.minecraftforge.net/net/minecraftforge
+          for v in 1.20.4-49.2.9 1.20.6-50.2.10 1.21.1-52.1.16 1.21.5-55.1.14 1.21.6-56.0.9 1.21.8-58.1.22 1.21.9-59.0.5 1.21.10-60.1.15 1.21.11-61.2.1 26.3-66.0.6; do
             echo "=================== FORGE $v"
-            curl -fsSL -o f.jar "https://maven.minecraftforge.net/net/minecraftforge/forge/$v/forge-$v-universal.jar" || { echo "no universal"; continue; }
-            unzip -l f.jar | grep -E 'network/(ChannelBuilder|EventNetworkChannel|NetworkRegistry|Channel|PacketDistributor)\.class|event/network/CustomPayloadEvent|client/event/(RegisterGuiOverlaysEvent|AddGuiOverlayLayersEvent|RegisterKeyMappingsEvent|RegisterClientCommandsEvent)|ConfigScreenHandler|event/TickEvent|TickEvent\$|ForgeGui|gui/overlay' | awk '{print $4}' | head -40
-            for c in net.minecraftforge.network.ChannelBuilder net.minecraftforge.network.EventNetworkChannel net.minecraftforge.event.network.CustomPayloadEvent net.minecraftforge.event.network.CustomPayloadEvent\$Context net.minecraftforge.client.event.AddGuiOverlayLayersEvent net.minecraftforge.client.event.RegisterGuiOverlaysEvent net.minecraftforge.client.ConfigScreenHandler\$ConfigScreenFactory net.minecraftforge.event.TickEvent\$ServerTickEvent net.minecraftforge.event.TickEvent\$ServerTickEvent\$Post net.minecraftforge.event.TickEvent\$ClientTickEvent\$Post net.minecraftforge.client.event.RegisterKeyMappingsEvent net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext net.minecraftforge.client.event.ScreenEvent\$Init\$Post net.minecraftforge.event.entity.player.PlayerEvent\$PlayerLoggedInEvent net.minecraftforge.event.RegisterCommandsEvent net.minecraftforge.event.server.ServerStartingEvent net.minecraftforge.client.event.RegisterClientCommandsEvent; do
-              echo "--- $c"; show f.jar "$c"
+            curl -fsSL -o f.jar "$M/forge/$v/forge-$v-universal.jar" || { echo "no universal"; continue; }
+            curl -fsSL -o inst.jar "$M/forge/$v/forge-$v-installer.jar" && unzip -o -q inst.jar version.json install_profile.json 2>/dev/null
+            echo "libs: $(jq -r '.libraries[].name' version.json install_profile.json 2>/dev/null | grep -E 'eventbus|fmlcore|javafmllanguage|fmlloader|lowcodelanguage|mclanguage|securemodules|forgespi' | sort -u | tr '\n' ' ')"
+            for lib in $(jq -r '.libraries[].name' version.json 2>/dev/null | grep -E 'net.minecraftforge:(eventbus|fmlcore|javafmllanguage|fmlloader):'); do
+              g=$(echo $lib | cut -d: -f1 | tr . /); a=$(echo $lib | cut -d: -f2); ver=$(echo $lib | cut -d: -f3)
+              curl -fsSL -o "$a.jar" "https://maven.minecraftforge.net/$g/$a/$ver/$a-$ver.jar" || true
             done
-          done
-      - name: NeoForge API
-        run: |
-          exec > probe-neoforge.txt 2>&1
-          show() { javap -cp "$1" "$2" 2>&1 | head -50; }
-          for v in 20.4.251 20.6.141 21.3.97 21.4.157 21.5.98 21.8.54 21.10.64 21.11.45; do
-            echo "=================== NEOFORGE $v"
-            curl -fsSL -o n.jar "https://maven.neoforged.net/releases/net/neoforged/neoforge/$v/neoforge-$v-universal.jar" || { echo "no universal"; continue; }
-            for c in net.neoforged.neoforge.network.PacketDistributor net.neoforged.neoforge.client.network.ClientPacketDistributor net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent net.neoforged.neoforge.network.event.RegisterPayloadHandlerEvent net.neoforged.neoforge.network.registration.PayloadRegistrar net.neoforged.neoforge.network.registration.IPayloadRegistrar net.neoforged.neoforge.client.event.RegisterGuiLayersEvent net.neoforged.neoforge.client.event.RegisterGuiOverlaysEvent net.neoforged.neoforge.client.gui.IConfigScreenFactory net.neoforged.neoforge.client.ConfigScreenHandler\$ConfigScreenFactory net.neoforged.neoforge.event.tick.ServerTickEvent\$Post net.neoforged.neoforge.event.TickEvent\$ServerTickEvent net.neoforged.neoforge.client.event.ClientTickEvent\$Post net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent net.neoforged.neoforge.client.event.RegisterClientCommandsEvent net.neoforged.neoforge.network.handling.IPayloadContext net.neoforged.neoforge.network.handling.IPlayPayloadHandler; do
-              echo "--- $c"; show n.jar "$c"
+            cp="f.jar:eventbus.jar:fmlcore.jar:javafmllanguage.jar:fmlloader.jar"
+            for c in net.minecraftforge.client.gui.overlay.ForgeLayeredDraw net.minecraftforge.client.event.RegisterGuiOverlaysEvent net.minecraftforge.client.gui.overlay.IGuiOverlay net.minecraftforge.client.event.ScreenEvent\$Init\$Post net.minecraftforge.client.event.ScreenEvent\$Init net.minecraftforge.event.entity.player.PlayerEvent\$PlayerLoggedInEvent net.minecraftforge.event.RegisterCommandsEvent net.minecraftforge.event.server.ServerStartingEvent net.minecraftforge.client.event.RegisterClientCommandsEvent net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext net.minecraftforge.fml.ModLoadingContext net.minecraftforge.fml.ModContainer net.minecraftforge.eventbus.api.bus.EventBus net.minecraftforge.eventbus.api.bus.BusGroup net.minecraftforge.eventbus.api.IEventBus net.minecraftforge.common.MinecraftForge net.minecraftforge.network.NetworkRegistry net.minecraftforge.network.ChannelBuilder net.minecraftforge.network.EventNetworkChannel net.minecraftforge.network.Channel net.minecraftforge.event.network.CustomPayloadEvent net.minecraftforge.event.TickEvent\$ServerTickEvent net.minecraftforge.event.TickEvent\$ClientTickEvent net.minecraftforge.client.event.RegisterKeyMappingsEvent net.minecraftforge.fml.loading.FMLEnvironment net.minecraftforge.server.ServerLifecycleHooks; do
+              echo "--- $c"; show "$cp" "$c"
             done
-            unzip -l n.jar | awk '{print $4}' | grep -E 'client/gui/(GuiLayer|IConfigScreenFactory)|ModConfigSpec' | head
+            rm -f eventbus.jar fmlcore.jar javafmllanguage.jar fmlloader.jar version.json install_profile.json
           done
       - name: Save
         if: always()

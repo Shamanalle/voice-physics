@@ -3,71 +3,8 @@ plugins {
     id 'java'
 }
 
-// NeoForge 1.21 - 1.21.1: the full addon. NeoForge runs with Minecraft's own names, so the code shared
-// with the Fabric builds is compiled here as it is; only the hooks into NeoForge
-// (package com.kasper.vcdistance.neoforge) and a few small version adapters are NeoForge's own.
-def target = "mc1.21-1.21.1"
-version = "${project.mod_version}+${target}"
-
-base {
-    archivesName = "voice-physics-neoforge"
-}
-
-repositories {
-    mavenCentral()
-    maven {
-        name = "henkelmax.public"
-        url = 'https://maven.maxhenkel.de/repository/public'
-    }
-}
-
-neoForge {
-    version = project.nf121_neoforge
-}
-
-// Shared files that need Fabric, or that NeoForge replaces with its own version (same path in this module)
-def sharedRoots = ["${rootDir}/shared/mc-all/src/main/java", "${rootDir}/shared/mc-1.20-1.21/src/main/java"]
-def replaced = [
-        'com/kasper/vcdistance/AudioDistanceClient.java',
-        'com/kasper/vcdistance/AudioDistanceMod.java',
-        'com/kasper/vcdistance/ModMenuIntegration.java',
-        'com/kasper/vcdistance/client/HudHook.java',
-        'com/kasper/vcdistance/server/AdminPermission.java',
-]
-
-sourceSets {
-    main {
-        java {
-            sharedRoots.each { srcDir it }
-            exclude { FileTreeElement e ->
-                replaced.contains(e.relativePath.pathString) && sharedRoots.any { e.file.path.startsWith(new File(it).path) }
-            }
-        }
-    }
-}
-
-dependencies {
-    implementation project(':common')
-    compileOnly "de.maxhenkel.voicechat:voicechat-api:${project.voicechat_api_version}"
-}
-
-tasks.withType(JavaCompile).configureEach {
-    options.release = 21
-    options.encoding = 'UTF-8'
-}
-
-java {
-    sourceCompatibility = JavaVersion.VERSION_21
-    targetCompatibility = JavaVersion.VERSION_21
-}
-
-processResources {
-    inputs.property "version", project.version
-    filesMatching("META-INF/neoforge.mods.toml") {
-        expand "version": project.version
-    }
-}
-
-jar {
-    from project(':common').sourceSets.main.output
-}
+// NeoForge 1.21 - 1.21.1: the full addon (see gradle/neoforge-band.gradle)
+ext.nfTarget = "mc1.21-1.21.1"
+ext.nfVersion = "nf121_neoforge"
+ext.nfJava = 21
+apply from: "${rootDir}/gradle/neoforge-band.gradle"

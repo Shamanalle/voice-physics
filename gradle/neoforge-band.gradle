@@ -1,0 +1,84 @@
+// A full NeoForge build for one band of Minecraft versions (neoforge-1.20.6, neoforge-1.21, ...).
+// NeoForge runs with Minecraft's own names, so the code shared with the Fabric builds is compiled here
+// against the band's Minecraft as it is. The hooks into NeoForge (shared/neoforge) are the same for
+// every band; the few calls that differ between NeoForge versions are in the module's own NeoCompat.
+//
+// The module sets, before applying this file:
+//   nfTarget    the file's version range, "mc1.21-1.21.1"
+//   nfVersion   the gradle.properties key of the NeoForge version it compiles against
+//   nfJava      17 or 21
+//   nfExclude   (optional) shared files the band cannot compile and does not need
+// A file in the module's own src/main/java replaces the shared file with the same path.
+
+version = "${project.mod_version}+${nfTarget}"
+
+base {
+    archivesName = "voice-physics-neoforge"
+}
+
+repositories {
+    mavenCentral()
+    maven {
+        name = "henkelmax.public"
+        url = 'https://maven.maxhenkel.de/repository/public'
+    }
+}
+
+// The build against the oldest NeoForge of the band (.github/workflows/build.yml) passes -PnfOverride=<version>
+neoForge {
+    version = project.findProperty('nfOverride') ?: project.property(nfVersion)
+}
+
+def sharedRoots = [
+        "${rootDir}/shared/mc-all/src/main/java",
+        "${rootDir}/shared/mc-1.20-1.21/src/main/java",
+        "${rootDir}/shared/neoforge/src/main/java",
+]
+// The Fabric hooks, which NeoForge replaces with its own
+def fabricOnly = [
+        'com/kasper/vcdistance/AudioDistanceClient.java',
+        'com/kasper/vcdistance/AudioDistanceMod.java',
+        'com/kasper/vcdistance/ModMenuIntegration.java',
+        'com/kasper/vcdistance/client/HudHook.java',
+]
+def excluded = fabricOnly + (project.hasProperty('nfExclude') ? nfExclude : [])
+def ownRoot = file('src/main/java')
+
+sourceSets {
+    main {
+        java {
+            sharedRoots.each { srcDir it }
+            exclude { FileTreeElement e ->
+                def path = e.relativePath.pathString
+                def fromShared = sharedRoots.any { e.file.path.startsWith(new File(it).path) }
+                fromShared && (excluded.contains(path) || (!e.directory && new File(ownRoot, path).exists()))
+            }
+        }
+    }
+}
+
+dependencies {
+    implementation project(':common')
+    compileOnly "de.maxhenkel.voicechat:voicechat-api:${project.voicechat_api_version}"
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.release = nfJava as int
+    options.encoding = 'UTF-8'
+}
+
+java {
+    sourceCompatibility = JavaVersion.toVersion(nfJava)
+    targetCompatibility = JavaVersion.toVersion(nfJava)
+}
+
+processResources {
+    inputs.property "version", project.version
+    filesMatching("META-INF/neoforge.mods.toml") {
+        expand "version": project.version
+    }
+}
+
+jar {
+    from project(':common').sourceSets.main.output
+}

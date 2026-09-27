@@ -51,3 +51,35 @@ jobs:
         with:
           name: test-report
           path: common/build/reports/tests/
+
+  # Each Forge / NeoForge jar serves a band of Minecraft versions: it is built against the newest loader
+  # of the band, and here also compiled against the oldest, so a call missing there fails the build
+  oldest:
+    name: Oldest loader of ${{ matrix.module }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { module: neoforge-1.20.6, key: nf1206_neoforge_oldest, override: nfOverride }
+          - { module: neoforge-1.21, key: nf121_neoforge_oldest, override: nfOverride }
+          - { module: neoforge-1.21.5, key: nf1215_neoforge_oldest, override: nfOverride }
+          - { module: neoforge-1.21.8, key: nf1218_neoforge_oldest, override: nfOverride }
+          - { module: neoforge-1.21.10, key: nf12110_neoforge_oldest, override: nfOverride }
+          - { module: neoforge-1.21.11, key: nf12111_neoforge_oldest, override: nfOverride }
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up JDK 25
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '25'
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+      - name: Compile against the oldest loader
+        run: |
+          chmod +x gradlew
+          oldest=$(grep "^${{ matrix.key }}=" gradle.properties | cut -d= -f2)
+          echo "${{ matrix.module }} against ${oldest}"
+          ./gradlew :${{ matrix.module }}:compileJava -P${{ matrix.override }}=${oldest} --no-daemon

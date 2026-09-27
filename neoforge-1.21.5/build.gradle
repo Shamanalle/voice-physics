@@ -1,0 +1,10 @@
+plugins {
+    id 'net.neoforged.moddev' version '2.0.147'
+    id 'java'
+}
+
+// NeoForge 1.21.2 - 1.21.5: the full addon (see gradle/neoforge-band.gradle)
+ext.nfTarget = "mc1.21.2-1.21.5"
+ext.nfVersion = "nf1215_neoforge"
+ext.nfJava = 21
+apply from: "${rootDir}/gradle/neoforge-band.gradle"
