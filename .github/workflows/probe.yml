@@ -12,23 +12,35 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '25'
-      - name: Versions
+      - name: Forge MDKs
         run: |
-          nf=$(curl -fsSL https://maven.neoforged.net/releases/net/neoforged/neoforge/maven-metadata.xml | grep -o '<version>[^<]*' | sed 's/<version>//')
-          for p in 20.2 20.3 20.4 20.5 20.6 21.0 21.1 21.2 21.3 21.4 21.5 21.6 21.7 21.8 21.9 21.10 21.11 26.1 26.2 26.3; do
-            echo "neoforge $p: first=$(echo "$nf" | grep "^$p\." | head -1) last=$(echo "$nf" | grep "^$p\." | grep -v beta | tail -1) lastany=$(echo "$nf" | grep "^$p\." | tail -1)"
+          for v in 1.20.4-49.2.9 1.20.6-50.2.10 1.21.1-52.1.16 1.21.5-55.1.14 1.21.8-58.1.22 1.21.11-61.2.1 26.3-66.0.6; do
+            echo "=================== MDK $v"
+            curl -fsSL -o mdk.zip "https://maven.minecraftforge.net/net/minecraftforge/forge/$v/forge-$v-mdk.zip" || { echo none; continue; }
+            rm -rf mdk; mkdir mdk; (cd mdk && unzip -q ../mdk.zip)
+            for f in build.gradle settings.gradle gradle.properties gradle/wrapper/gradle-wrapper.properties; do echo "--- $f"; grep -v '^\s*//' mdk/$f | grep -v '^\s*$' | head -120; done
+            echo "--- java"; find mdk/src -name '*.java' | head; cat $(find mdk/src -name 'ExampleMod.java') | head -150
+            echo "--- mods.toml"; cat mdk/src/main/resources/META-INF/mods.toml | grep -v '^#' | grep -v '^\s*$' | head -60
           done
-          fg=$(curl -fsSL https://maven.minecraftforge.net/net/minecraftforge/forge/maven-metadata.xml | grep -o '<version>[^<]*' | sed 's/<version>//')
-          for p in 1.20.2 1.20.3 1.20.4 1.20.5 1.20.6 1.21 1.21.1 1.21.2 1.21.3 1.21.4 1.21.5 1.21.6 1.21.7 1.21.8 1.21.9 1.21.10 1.21.11 26.1 26.1.1 26.1.2 26.2 26.3; do
-            echo "forge $p: first=$(echo "$fg" | grep "^$p-" | head -1) last=$(echo "$fg" | grep "^$p-" | tail -1)"
-          done
-          echo "== MDG"; curl -fsSL https://maven.neoforged.net/releases/net/neoforged/moddev/net.neoforged.moddev.gradle.plugin/maven-metadata.xml | grep -o '<version>[^<]*' | tail -5
-          echo "== MDG legacy"; curl -fsSL https://maven.neoforged.net/releases/net/neoforged/moddev/legacyforge/net.neoforged.moddev.legacyforge.gradle.plugin/maven-metadata.xml | grep -o '<version>[^<]*' | tail -3 || true
-          echo "== NeoGradle"; curl -fsSL https://maven.neoforged.net/releases/net/neoforged/gradle/userdev/net.neoforged.gradle.userdev.gradle.plugin/maven-metadata.xml | grep -o '<version>[^<]*' | tail -5 || true
-          echo "== ForgeGradle"; curl -fsSL https://maven.minecraftforge.net/net/minecraftforge/gradle/ForgeGradle/maven-metadata.xml | grep -o '<version>[^<]*' | tail -12
-      - name: Simple Voice Chat on Modrinth
+      - name: Forge API
         run: |
-          curl -fsSL "https://api.modrinth.com/v2/project/simple-voice-chat/version" > svc.json
-          for l in forge neoforge; do
-            echo "$l: $(jq -r --arg l $l '[.[] | select(.loaders | index($l)) | .game_versions[]] | unique | join(" ")' svc.json)"
+          show() { javap -cp "$1" "$2" 2>&1 | head -60; }
+          for v in 1.20.4-49.2.9 1.20.6-50.2.10 1.21.1-52.1.16 1.21.5-55.1.14 1.21.8-58.1.22 1.21.11-61.2.1 26.3-66.0.6; do
+            echo "=================== FORGE $v"
+            curl -fsSL -o f.jar "https://maven.minecraftforge.net/net/minecraftforge/forge/$v/forge-$v-universal.jar" || { echo "no universal"; continue; }
+            unzip -l f.jar | grep -E 'network/(ChannelBuilder|EventNetworkChannel|NetworkRegistry|Channel|PacketDistributor)\.class|event/network/CustomPayloadEvent|client/event/(RegisterGuiOverlaysEvent|AddGuiOverlayLayersEvent|RegisterKeyMappingsEvent|RegisterClientCommandsEvent)|ConfigScreenHandler|event/TickEvent|TickEvent\$|ForgeGui|gui/overlay' | awk '{print $4}' | head -40
+            for c in net.minecraftforge.network.ChannelBuilder net.minecraftforge.network.EventNetworkChannel net.minecraftforge.event.network.CustomPayloadEvent net.minecraftforge.event.network.CustomPayloadEvent\$Context net.minecraftforge.client.event.AddGuiOverlayLayersEvent net.minecraftforge.client.event.RegisterGuiOverlaysEvent net.minecraftforge.client.ConfigScreenHandler\$ConfigScreenFactory net.minecraftforge.event.TickEvent\$ServerTickEvent net.minecraftforge.event.TickEvent\$ServerTickEvent\$Post net.minecraftforge.event.TickEvent\$ClientTickEvent\$Post net.minecraftforge.client.event.RegisterKeyMappingsEvent net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext net.minecraftforge.client.event.ScreenEvent\$Init\$Post net.minecraftforge.event.entity.player.PlayerEvent\$PlayerLoggedInEvent net.minecraftforge.event.RegisterCommandsEvent net.minecraftforge.event.server.ServerStartingEvent net.minecraftforge.client.event.RegisterClientCommandsEvent; do
+              echo "--- $c"; show f.jar "$c"
+            done
+          done
+      - name: NeoForge API
+        run: |
+          show() { javap -cp "$1" "$2" 2>&1 | head -50; }
+          for v in 20.4.251 20.6.141 21.3.97 21.4.157 21.5.98 21.8.54 21.10.64 21.11.45; do
+            echo "=================== NEOFORGE $v"
+            curl -fsSL -o n.jar "https://maven.neoforged.net/releases/net/neoforged/neoforge/$v/neoforge-$v-universal.jar" || { echo "no universal"; continue; }
+            for c in net.neoforged.neoforge.network.PacketDistributor net.neoforged.neoforge.client.network.ClientPacketDistributor net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent net.neoforged.neoforge.network.event.RegisterPayloadHandlerEvent net.neoforged.neoforge.network.registration.PayloadRegistrar net.neoforged.neoforge.network.registration.IPayloadRegistrar net.neoforged.neoforge.client.event.RegisterGuiLayersEvent net.neoforged.neoforge.client.event.RegisterGuiOverlaysEvent net.neoforged.neoforge.client.gui.IConfigScreenFactory net.neoforged.neoforge.client.ConfigScreenHandler\$ConfigScreenFactory net.neoforged.neoforge.event.tick.ServerTickEvent\$Post net.neoforged.neoforge.event.TickEvent\$ServerTickEvent net.neoforged.neoforge.client.event.ClientTickEvent\$Post net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent net.neoforged.neoforge.client.event.RegisterClientCommandsEvent net.neoforged.neoforge.network.handling.IPayloadContext net.neoforged.neoforge.network.handling.IPlayPayloadHandler; do
+              echo "--- $c"; show n.jar "$c"
+            done
+            unzip -l n.jar | awk '{print $4}' | grep -E 'client/gui/(GuiLayer|IConfigScreenFactory)|ModConfigSpec' | head
           done
