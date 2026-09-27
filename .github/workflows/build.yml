@@ -61,17 +61,16 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { module: neoforge-1.21, key: nf121_neoforge_oldest, override: nfOverride }
-          - { module: neoforge-1.21.5, key: nf1215_neoforge_oldest, override: nfOverride }
-          - { module: neoforge-1.21.8, key: nf1218_neoforge_oldest, override: nfOverride }
-          - { module: neoforge-1.21.10, key: nf12110_neoforge_oldest, override: nfOverride }
-          - { module: neoforge-1.21.11, key: nf12111_neoforge_oldest, override: nfOverride }
-          - { module: forge-1.20.6, key: forge1206_version_oldest, override: forgeOverride }
-          - { module: forge-1.21, key: forge121_version_oldest, override: forgeOverride }
-          - { module: forge-1.21.5, key: forge1215_version_oldest, override: forgeOverride }
-          - { module: forge-1.21.8, key: forge1218_version_oldest, override: forgeOverride }
-          - { module: forge-1.21.10, key: forge12110_version_oldest, override: forgeOverride }
-          - { module: forge-1.21.11, key: forge12111_version_oldest, override: forgeOverride }
+          - { module: neoforge-1.21, key: nf121_neoforge_oldest }
+          - { module: neoforge-1.21.5, key: nf1215_neoforge_oldest }
+          - { module: neoforge-1.21.8, key: nf1218_neoforge_oldest }
+          - { module: neoforge-1.21.10, key: nf12110_neoforge_oldest }
+          - { module: neoforge-1.21.11, key: nf12111_neoforge_oldest }
+          - { module: forge-1.20.6, key: forge1206_version_oldest }
+          - { module: forge-1.21, key: forge121_version_oldest }
+          - { module: forge-1.21.5, key: forge1215_version_oldest }
+          - { module: forge-1.21.8, key: forge1218_version_oldest }
+          - { module: forge-1.21.10, key: forge12110_version_oldest }
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -87,4 +86,4 @@ jobs:
           chmod +x gradlew
           oldest=$(grep "^${{ matrix.key }}=" gradle.properties | cut -d= -f2)
           echo "${{ matrix.module }} against ${oldest}"
-          ./gradlew :${{ matrix.module }}:compileJava -P${{ matrix.override }}=${oldest} --no-daemon
+          ./gradlew :${{ matrix.module }}:compileJava -PloaderOverride.${{ matrix.module }}=${oldest} --configure-on-demand --no-daemon

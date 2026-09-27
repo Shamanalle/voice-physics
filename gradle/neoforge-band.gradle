@@ -24,9 +24,9 @@ repositories {
     }
 }
 
-// The build against the oldest NeoForge of the band (.github/workflows/build.yml) passes -PnfOverride=<version>
+// The build against the oldest NeoForge of the band (.github/workflows/build.yml) passes -PloaderOverride.<module>=<version>
 neoForge {
-    version = project.findProperty('nfOverride') ?: project.property(nfVersion)
+    version = project.findProperty("loaderOverride.${project.name}") ?: project.property(nfVersion)
 }
 
 // In order of precedence: a file in an earlier folder replaces the file with the same path in a later one

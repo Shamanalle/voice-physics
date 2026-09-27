@@ -17,8 +17,8 @@ base {
     archivesName = "voice-physics-forge"
 }
 
-// The build against the oldest Forge of the band (.github/workflows/build.yml) passes -PforgeOverride=<version>
-def forge = project.findProperty('forgeOverride') ?: project.property(forgeVersion)
+// The build against the oldest Forge of the band (.github/workflows/build.yml) passes -PloaderOverride.<module>=<version>
+def forge = project.findProperty("loaderOverride.${project.name}") ?: project.property(forgeVersion)
 def minecraftVersion = forge.substring(0, forge.indexOf('-'))
 
 minecraft {
