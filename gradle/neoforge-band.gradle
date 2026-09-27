@@ -10,6 +10,9 @@
 //   nfExclude   (optional) shared files the band cannot compile and does not need
 // A file in the module's own src/main/java replaces the shared file with the same path.
 
+// The jar carries the classes of ':common', so that module is configured first (configure-on-demand)
+evaluationDependsOn(':common')
+
 version = "${project.mod_version}+${nfTarget}"
 
 base {

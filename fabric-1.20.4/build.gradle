@@ -3,6 +3,9 @@ plugins {
     id 'java'
 }
 
+// Its jar carries the classes of ':common', so that module is configured first (configure-on-demand)
+evaluationDependsOn(':common')
+
 // Minecraft 1.20.2 - 1.20.4 (compiled against 1.20.4)
 def target = "mc1.20.2-1.20.4"
 version = "${project.mod_version}+${target}"
