@@ -122,6 +122,7 @@ public abstract class SettingsScreen extends Screen {
     private int panelTop;
     private int panelBottom;
     private int materialsHintY = -1;
+    private int wallsHintLines = 1;
     private int noZonesY = -1;
     private final List<Heading> headings = new ArrayList<>();
 
@@ -532,7 +533,8 @@ public abstract class SettingsScreen extends Screen {
             y += 30;
         }
         panelTop = y;
-        panelBottom = y + 20 + EXAMPLES.length * 14 + 18;
+        wallsHintLines = wrap(tr("walls.hint"), w - 16, 2, t -> this.font.width(t)).size();
+        panelBottom = y + 20 + EXAMPLES.length * 14 + 8 + wallsHintLines * 10;
         y = panelBottom + 6;
 
         // Materials: a section that opens under the preview
@@ -543,7 +545,7 @@ public abstract class SettingsScreen extends Screen {
         y += ROW;
         if (materialsOpen) {
             materialsHintY = y;
-            y += 14;
+            y += 4 + 10 * wrap(tr("materials.hint_other"), w, 2, t -> this.font.width(t)).size();
             AcousticMaterial[] materials = AcousticMaterial.values();
             // Materials fill the grid; the reset button takes the cell after the last one
             int cells = materials.length + 1;
@@ -1441,7 +1443,7 @@ public abstract class SettingsScreen extends Screen {
             levelW = Math.max(levelW, c.width(tr(level)));
         }
         labelW = Math.min(labelW, (right - left) * 2 / 5);
-        levelW = Math.min(levelW + 4, (right - left) / 4);
+        levelW = Math.min(levelW + 4, (right - left) / 3);
         int barX1 = left + 8 + labelW + 8;
         int barX2 = right - 8 - levelW;
         if (barX2 - barX1 < 30) {
@@ -1467,10 +1469,11 @@ public abstract class SettingsScreen extends Screen {
             }
             rowY += 14;
         }
-        c.text(fit(c, tr("walls.hint"), right - left - 16), left + 8, panelBottom - 14, Palette.TEXT_MUTED);
+        paragraph(c, tr("walls.hint"), left + 8, panelBottom - 4 - wallsHintLines * 10, right - left - 16, 2,
+                Palette.TEXT_MUTED, false);
 
         if (materialsHintY >= 0) {
-            c.text(fit(c, tr("materials.hint_other"), right - left), left + 1, materialsHintY, Palette.TEXT_MUTED);
+            paragraph(c, tr("materials.hint_other"), left + 1, materialsHintY, right - left, 2, Palette.TEXT_MUTED, false);
         }
     }
 
@@ -1560,7 +1563,10 @@ public abstract class SettingsScreen extends Screen {
                 round > 0 && cornersOn ? Palette.ACCENT_LINE : Palette.TEXT_MUTED);
         rowY += 14;
 
-        if (rowY + 22 <= bottom - 4) {
+        int hintLines = wrap(tr("effects.hint"), w, 2, c::width).size();
+        if (rowY + 12 + hintLines * 10 <= bottom - 4) {
+            paragraph(c, tr("effects.hint"), x, bottom - 4 - hintLines * 10, w, 2, Palette.TEXT_MUTED, false);
+        } else if (rowY + 22 <= bottom - 4) {
             c.text(fit(c, tr("effects.hint"), w), x, bottom - 14, Palette.TEXT_MUTED);
         }
     }
@@ -1631,7 +1637,7 @@ public abstract class SettingsScreen extends Screen {
         if (rows.isEmpty()) {
             int cy = (y + bottom) / 2 - 4;
             c.centered(tr("monitor.empty"), midX, cy, Palette.TEXT_DIM);
-            c.centered(fit(c, tr("monitor.empty_hint"), right - left - 12), midX, cy + 12, Palette.TEXT_MUTED);
+            paragraph(c, tr("monitor.empty_hint"), midX, cy + 12, right - left - 12, 2, Palette.TEXT_MUTED, true);
             return;
         }
 
@@ -1934,6 +1940,59 @@ public abstract class SettingsScreen extends Screen {
             }
         }
         return Component.literal("…");
+    }
+
+    /**
+     * Breaks a text into at most {@code maxLines} lines of {@code maxWidth} pixels; what does not fit
+     * into the last line ends with an ellipsis.
+     */
+    private static List<Component> wrap(Component text, int maxWidth, int maxLines, java.util.function.ToIntFunction<Component> width) {
+        List<Component> lines = new ArrayList<>();
+        String[] words = text.getString().split(" ");
+        StringBuilder line = new StringBuilder();
+        int i = 0;
+        while (i < words.length && lines.size() < maxLines - 1) {
+            String next = line.length() == 0 ? words[i] : line + " " + words[i];
+            if (line.length() > 0 && width.applyAsInt(Component.literal(next)) > maxWidth) {
+                lines.add(Component.literal(line.toString()));
+                line.setLength(0);
+            } else {
+                line.setLength(0);
+                line.append(next);
+                i++;
+            }
+        }
+        StringBuilder rest = new StringBuilder(line);
+        for (; i < words.length; i++) {
+            rest.append(rest.length() == 0 ? "" : " ").append(words[i]);
+        }
+        if (rest.length() > 0) {
+            Component last = Component.literal(rest.toString());
+            if (width.applyAsInt(last) > maxWidth) {
+                String t = rest.toString();
+                for (int len = t.length() - 1; len > 0; len--) {
+                    last = Component.literal(t.substring(0, len).trim() + "…");
+                    if (width.applyAsInt(last) <= maxWidth) {
+                        break;
+                    }
+                }
+            }
+            lines.add(last);
+        }
+        return lines;
+    }
+
+    /** Draws a wrapped text from {@code y} down, one line every 10 pixels; returns the y under it. */
+    private static int paragraph(Canvas c, Component text, int x, int y, int maxWidth, int maxLines, int argb, boolean centered) {
+        for (Component line : wrap(text, maxWidth, maxLines, c::width)) {
+            if (centered) {
+                c.centered(line, x, y, argb);
+            } else {
+                c.text(line, x, y, argb);
+            }
+            y += 10;
+        }
+        return y;
     }
 
     private static <T extends AbstractWidget> T withTip(T widget, String key) {

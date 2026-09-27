@@ -26,6 +26,8 @@ public class SettingsScreenGameTest implements FabricClientGameTest {
                 context.runOnClient(client -> TestScreens.language(client, language));
                 context.waitTicks(5);
                 context.waitFor(TestScreens::loaded, 1200);
+                // The loading screen fades out after the reload
+                context.waitTicks(60);
                 for (int[] window : WINDOWS) {
                     shootTabs(context, language, window);
                 }
