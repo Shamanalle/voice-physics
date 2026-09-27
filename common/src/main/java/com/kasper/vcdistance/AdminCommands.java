@@ -27,6 +27,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * /vcd status                                  what the addon is doing now
  * /vcd help [topic]                            commands, or one command with examples
  * /vcd reload | undo                           re-read the settings file | take back the last change
+ * /vcd log [page]                              who changed the settings, and when
  * /vcd profile off|suggest|enforce             how the profile is offered
  * /vcd preset vanilla|realistic|clear|stealth|custom | export | import &lt;code&gt;
  * /vcd walls 0-100|off                         wall strength for everyone, in %
@@ -72,11 +73,11 @@ public final class AdminCommands {
         return steps;
     }
 
-    static final String[] SUBCOMMANDS = {"status", "help", "reload", "undo", "profile", "preset", "walls", "serverwalls", "lock",
+    static final String[] SUBCOMMANDS = {"status", "help", "reload", "undo", "log", "profile", "preset", "walls", "serverwalls", "lock",
             "monitor", "notices", "zones", "zone", "rule", "group", "require", "debug"};
     /** The topics of {@code /vcd help}, in the order they are listed. */
     static final String[] TOPICS = {"status", "zones", "zone", "profile", "preset", "walls", "serverwalls", "lock", "monitor",
-            "notices", "rule", "group", "require", "debug", "undo", "reload"};
+            "notices", "rule", "group", "require", "debug", "undo", "log", "reload"};
     static final String[] MODES = {"off", "suggest", "enforce"};
     static final String[] PRESETS = {"vanilla", "realistic", "clear", "stealth", "custom", "export", "import"};
     static final String[] LOCK_PARTS = {"all", "none", "curve", "walls", "materials", "effects"};
@@ -183,6 +184,7 @@ public final class AdminCommands {
                 r.ok(r.m.spans("reloaded", Style.OK, settings.getPath().toString()), false);
             }
             case "undo" -> undo(r);
+            case "log" -> log(r, r.args.length > 1 ? parseInt(r.args[1]) : null);
             case "profile" -> {
                 ServerSettings.ProfileMode mode = r.args.length > 1 ? ServerSettings.ProfileMode.fromId(r.args[1], null) : null;
                 if (mode == null) {
@@ -268,7 +270,7 @@ public final class AdminCommands {
             case "status", "help", "?", "zones" -> PERM_STATUS;
             case "debug" -> PERM_DEBUG;
             case "zone" -> ZoneCommands.readOnly(action) ? PERM_STATUS : PERM_ZONE;
-            case "reload", "profile", "preset", "walls", "serverwalls", "lock", "monitor", "notices", "rule", "group", "require" -> PERM_SETTINGS;
+            case "reload", "log", "profile", "preset", "walls", "serverwalls", "lock", "monitor", "notices", "rule", "group", "require" -> PERM_SETTINGS;
             default -> null;
         };
     }
@@ -343,6 +345,7 @@ public final class AdminCommands {
         r.button(buttons, "btn.zones", Click.RUN, "/vcd zones", PERM_STATUS);
         r.button(buttons, "btn.help", Click.RUN, "/vcd help", PERM_STATUS);
         r.button(buttons, "btn.reload", Click.RUN, "/vcd reload", PERM_SETTINGS);
+        r.button(buttons, "btn.log", Click.RUN, "/vcd log", PERM_SETTINGS);
         if (undoable(settings) > 0) {
             r.button(buttons, "btn.undo", Click.RUN, "/vcd undo", null);
         }
@@ -369,12 +372,54 @@ public final class AdminCommands {
         }
         r.ctx.afterSettingsChange();
         r.ctx.resendProfiles();
+        ChangeLog.append(r.settings, new ChangeLog.Entry(java.time.Instant.now(), r.who(), last.command(), true));
         LineBuilder line = CommandReply.line().addAll(r.m.spans("undo.done", Style.OK,
                 new Span(last.command(), Style.VALUE)));
         if (!changes.isEmpty()) {
             line.button(r.m.get("btn.undo_more"), Click.RUN, "/vcd undo", r.m.get("hover.undo", changes.peekFirst().command()));
         }
         r.reply.add(line);
+    }
+
+    /** Lines per page of {@code /vcd log}. */
+    static final int LOG_PAGE = 10;
+    private static final java.time.format.DateTimeFormatter LOG_TIME =
+            java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm").withZone(java.time.ZoneId.systemDefault());
+
+    private static void log(Run r, Integer page) {
+        Messages m = r.m;
+        List<ChangeLog.Entry> entries = ChangeLog.read(r.settings);
+        if (entries.isEmpty()) {
+            r.line(Style.MUTED, m.get("log.none", ChangeLog.FILE));
+            return;
+        }
+        int pages = (entries.size() + LOG_PAGE - 1) / LOG_PAGE;
+        int p = Math.max(1, Math.min(pages, page == null ? 1 : page));
+        r.line(Style.TITLE, m.get("log.title", entries.size()));
+        for (ChangeLog.Entry e : entries.subList((p - 1) * LOG_PAGE, Math.min(entries.size(), p * LOG_PAGE))) {
+            String who = ChangeLog.CONSOLE.equals(e.who()) ? m.get("log.console") : e.who();
+            LineBuilder line = CommandReply.line()
+                    .text("• " + LOG_TIME.format(e.time()) + " ", Style.MUTED)
+                    .text(who + " ", Style.VALUE);
+            if (e.undo()) {
+                line.addAll(m.spans("log.undo", Style.WARN, new Span(e.command(), Style.PLAIN)));
+            } else {
+                line.add(new Span(e.command(), Style.PLAIN, Click.SUGGEST, e.command(), m.get("hover.suggest", e.command())));
+            }
+            r.reply.add(line);
+        }
+        LineBuilder footer = CommandReply.line();
+        if (pages > 1) {
+            footer.text(m.get("zones.page", p, pages), Style.MUTED);
+            if (p > 1) {
+                footer.button("‹", Click.RUN, "/vcd log " + (p - 1), m.get("hover.run", "/vcd log " + (p - 1)));
+            }
+            if (p < pages) {
+                footer.button("›", Click.RUN, "/vcd log " + (p + 1), m.get("hover.run", "/vcd log " + (p + 1)));
+            }
+            r.reply.add(footer);
+        }
+        r.line(Style.MUTED, m.get("log.file", ChangeLog.fileFor(r.settings).getFileName()));
     }
 
     private static void preset(Run r) {
@@ -688,7 +733,16 @@ public final class AdminCommands {
                 }
             }
             before = after;
+            ChangeLog.append(settings, new ChangeLog.Entry(java.time.Instant.now(), who(), "/vcd " + input, false));
             return true;
+        }
+
+        /** Who runs the command, for the change log. */
+        String who() {
+            if (me != null) {
+                return me.name();
+            }
+            return ctx.sender() == null ? ChangeLog.CONSOLE : ctx.sender().toString();
         }
     }
 

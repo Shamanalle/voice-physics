@@ -209,6 +209,26 @@ public class CommandsTest {
         // The same value again is no change to undo
         AdminCommands.run("walls 60", s, ctx);
         assertEquals(0, AdminCommands.undoable(s));
+
+        // Every change and undo is in the log, newest first; nothing was logged for "walls 60" (no change)
+        List<ChangeLog.Entry> log = ChangeLog.read(s);
+        assertEquals(6, log.size(), log.toString());
+        assertTrue(log.get(0).undo() && log.get(0).command().equals("/vcd walls 85"), log.get(0).toString());
+        assertEquals("/vcd zone create stage 5", log.get(3).command());
+        assertFalse(log.get(5).undo());
+        assertTrue(Files.isRegularFile(dir.resolve(ChangeLog.FILE)));
+        CommandReply shown = AdminCommands.execute("log", s, ctx);
+        String text = String.join("\n", shown.text());
+        assertTrue(text.startsWith("Changes to the settings (6)"), text);
+        assertTrue(text.contains("undid /vcd walls 85"), text);
+        assertTrue(AdminCommands.run("log", s, ctx(admin.id(), null, AdminCommands.PERM_STATUS)).get(0).contains("vcd.settings"),
+                "the log needs vcd.settings");
+        for (int i = 0; i < 12; i++) {
+            AdminCommands.run("walls " + (20 + i), s, ctx);
+        }
+        String page = String.join("\n", AdminCommands.execute("log", s, ctx).plain());
+        assertTrue(page.contains("Page 1 of 2"), page);
+        assertEquals(ChangeLog.read(s).size(), 18);
     }
 
     @Test
