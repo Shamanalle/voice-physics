@@ -28,7 +28,7 @@ body:
         - Quilt
         - Forge
         - NeoForge
-        - NeoForge 1.20.2 – 1.20.4 (lite)
+        - Forge / NeoForge 1.20.2 – 1.20.4 (lite)
         - Paper / Purpur / Spigot / Bukkit (server plugin / серверный плагин)
     validations:
       required: true

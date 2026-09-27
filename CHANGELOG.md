@@ -11,7 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### English
 
 #### Added
-- The full addon on Forge 1.20.2 – 1.20.6, 1.21.1 – 1.21.11 and 26.x, and on NeoForge 1.20.5 – 1.21.11: settings screen, walls, echo, HUD, monitor and the server side. There is a file for each range of versions.
+- The full addon on Forge 1.20.6, 1.21.1 – 1.21.11 and 26.x, and on NeoForge 1.20.5 – 1.21.11: settings screen, walls, echo, HUD, monitor and the server side. There is a file for each range of versions.
 
 #### Changed
 - The Fabric files for 1.20.5 – 1.21.11 are for Fabric and Quilt only; Forge and NeoForge have files of their own.
@@ -21,7 +21,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Русский
 
 #### Добавлено
-- Полный аддон на Forge 1.20.2 – 1.20.6, 1.21.1 – 1.21.11 и 26.x и на NeoForge 1.20.5 – 1.21.11: экран настроек, стены, эхо, HUD, монитор и серверная часть. Для каждого диапазона версий — свой файл.
+- Полный аддон на Forge 1.20.6, 1.21.1 – 1.21.11 и 26.x и на NeoForge 1.20.5 – 1.21.11: экран настроек, стены, эхо, HUD, монитор и серверная часть. Для каждого диапазона версий — свой файл.
 
 #### Изменено
 - Файлы для Fabric 1.20.5 – 1.21.11 теперь только для Fabric и Quilt; у Forge и NeoForge свои файлы.
