@@ -75,17 +75,20 @@ final class BlockAcoustics {
     /**
      * How much of the block's weight the ray takes, 0 when it misses the collision shape (slabs, open
      * doors and carpets by their real size). A ray that only grazes a corner counts less than one
-     * crossing the block; doors, trapdoors, fences and bars count fully whenever they are crossed.
+     * crossing the block; doors, trapdoors, fences and bars count fully whenever they are crossed, and
+     * open doors and trapdoors a tenth.
      */
     private static double share(Block block, Material type, AcousticMaterial material, double fromX, double fromY,
                                 double fromZ, double toX, double toY, double toZ) {
-        boolean thin = material == AcousticMaterial.DOOR || material == AcousticMaterial.THIN;
+        boolean thin = material == AcousticMaterial.DOOR || material == AcousticMaterial.THIN
+                || (material == AcousticMaterial.METAL && (Tag.DOORS.isTagged(type) || Tag.TRAPDOORS.isTagged(type)));
+        double panel = thin ? AcousticMaterial.panelShare(block.getBlockData() instanceof Openable o && o.isOpen()) : 1.0;
         int bx = block.getX();
         int by = block.getY();
         int bz = block.getZ();
         if (type.isOccluding()) {
             // Full opaque cube
-            return thin ? 1.0 : RayBundle.chordWeight(VoxelRay.chord(fromX, fromY, fromZ, toX, toY, toZ,
+            return thin ? panel : RayBundle.chordWeight(VoxelRay.chord(fromX, fromY, fromZ, toX, toY, toZ,
                     bx, by, bz, bx + 1.0, by + 1.0, bz + 1.0));
         }
         double best = 0.0;
@@ -98,7 +101,7 @@ final class BlockAcoustics {
                     bx + box.getMinX(), by + box.getMinY(), bz + box.getMinZ(),
                     bx + box.getMaxX(), by + box.getMaxY(), bz + box.getMaxZ())) {
                 if (thin) {
-                    return 1.0;
+                    return panel;
                 }
                 best = Math.max(best, Math.max(0.05, RayBundle.chordWeight(chord)));
             }
@@ -130,7 +133,8 @@ final class BlockAcoustics {
             return AcousticMaterial.LEAVES;
         }
         if (Tag.DOORS.isTagged(m) || Tag.TRAPDOORS.isTagged(m)) {
-            return AcousticMaterial.DOOR;
+            // Iron and copper doors (mined with a pickaxe) are metal
+            return Tag.MINEABLE_PICKAXE.isTagged(m) ? AcousticMaterial.METAL : AcousticMaterial.DOOR;
         }
         if (Tag.FENCES.isTagged(m) || Tag.FENCE_GATES.isTagged(m)) {
             return AcousticMaterial.THIN;

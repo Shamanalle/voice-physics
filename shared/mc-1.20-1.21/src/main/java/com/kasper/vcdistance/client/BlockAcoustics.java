@@ -25,7 +25,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * A block only counts when the ray actually crosses its collision shape, so slabs, open doors,
  * fences and carpets are treated by their real geometry rather than as full cubes. A ray that only
  * grazes a block's corner counts it by the short way it runs inside; doors, trapdoors, fences and
- * bars count fully whenever they are crossed, since they are thin by nature.
+ * bars count fully whenever they are crossed, since they are thin by nature, and open doors and
+ * trapdoors a tenth.
  */
 public final class BlockAcoustics {
 
@@ -49,7 +50,7 @@ public final class BlockAcoustics {
                 VoxelShape shape = state.getCollisionShape(level, pos);
                 if (!shape.isEmpty() && shape.clip(from, to, pos) != null) {
                     AcousticMaterial material = MATERIALS.computeIfAbsent(state, BlockAcoustics::classify);
-                    acc[0] += weights.getMaterialWeight(material) * share(material, shape.bounds(), pos, from, to);
+                    acc[0] += weights.getMaterialWeight(material) * share(state, material, shape.bounds(), pos, from, to);
                 }
             }
             return acc[0] >= WorldAccess.MAX_RAY_THICKNESS ? Boolean.TRUE : null;
@@ -58,13 +59,19 @@ public final class BlockAcoustics {
     }
 
     /** How much of the block's weight the ray takes: grazing a corner counts less than crossing it. */
-    static double share(AcousticMaterial material, AABB box, BlockPos pos, Vec3 from, Vec3 to) {
-        if (material == AcousticMaterial.DOOR || material == AcousticMaterial.THIN) {
-            return 1.0;
+    static double share(BlockState state, AcousticMaterial material, AABB box, BlockPos pos, Vec3 from, Vec3 to) {
+        if (isPanel(state, material)) {
+            return AcousticMaterial.panelShare(state.hasProperty(BlockStateProperties.OPEN) && state.getValue(BlockStateProperties.OPEN));
         }
         return RayBundle.chordWeight(VoxelRay.chord(from.x, from.y, from.z, to.x, to.y, to.z,
                 pos.getX() + box.minX, pos.getY() + box.minY, pos.getZ() + box.minZ,
                 pos.getX() + box.maxX, pos.getY() + box.maxY, pos.getZ() + box.maxZ));
+    }
+
+    /** Doors, trapdoors (wooden or metal), fences and bars: thin by nature. */
+    private static boolean isPanel(BlockState state, AcousticMaterial material) {
+        return material == AcousticMaterial.DOOR || material == AcousticMaterial.THIN
+                || (material == AcousticMaterial.METAL && (state.is(BlockTags.DOORS) || state.is(BlockTags.TRAPDOORS)));
     }
 
     /** {@code true} when sound passes this block freely: air, water, open doors and gates, fences, bars. */
@@ -101,7 +108,8 @@ public final class BlockAcoustics {
             return AcousticMaterial.LEAVES;
         }
         if (state.is(BlockTags.DOORS) || state.is(BlockTags.TRAPDOORS)) {
-            return AcousticMaterial.DOOR;
+            // Iron and copper doors (mined with a pickaxe) are metal
+            return state.is(BlockTags.MINEABLE_WITH_PICKAXE) ? AcousticMaterial.METAL : AcousticMaterial.DOOR;
         }
         if (state.is(BlockTags.FENCES) || state.is(BlockTags.FENCE_GATES)) {
             return AcousticMaterial.THIN;
