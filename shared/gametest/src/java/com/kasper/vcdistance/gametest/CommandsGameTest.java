@@ -26,7 +26,8 @@ public class CommandsGameTest implements FabricClientGameTest {
             {"status", "vcd"},
             {"help", "vcd help zone"},
             {"zone", "vcd zone create gametest 6", "vcd zone info gametest"},
-            {"errors", "vcd walls 150", "vcd zoen", "vcd undo", "vcd log"},
+            // "walls 70" is what undo takes back, so the zone made above stays for the leaving check
+            {"errors", "vcd walls 150", "vcd zoen", "vcd walls 70", "vcd undo", "vcd log"},
             {"player", "voicephysics status", "voicephysics help"},
     };
 
