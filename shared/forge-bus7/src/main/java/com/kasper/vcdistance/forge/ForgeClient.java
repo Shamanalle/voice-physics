@@ -6,8 +6,6 @@ import com.kasper.vcdistance.BuildInfo;
 import com.kasper.vcdistance.DistanceConfig;
 import com.kasper.vcdistance.LinkProtocol;
 import com.kasper.vcdistance.client.ClientHints;
-import com.kasper.vcdistance.client.GuiCanvas;
-import com.kasper.vcdistance.client.HudOverlay;
 import com.kasper.vcdistance.client.MinecraftWorldAccess;
 import com.kasper.vcdistance.client.SpeakerTicker;
 import com.kasper.vcdistance.client.SvcSettingsButton;
@@ -18,7 +16,6 @@ import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.network.chat.Component;
 import net.minecraftforge.client.ConfigScreenHandler;
-import net.minecraftforge.client.event.AddGuiOverlayLayersEvent;
 import net.minecraftforge.client.event.RegisterClientCommandsEvent;
 import net.minecraftforge.client.event.RegisterKeyMappingsEvent;
 import net.minecraftforge.client.event.ScreenEvent;
@@ -60,12 +57,12 @@ final class ForgeClient {
                 e.register(toggleHudKey);
             }
         });
-        AddGuiOverlayLayersEvent.getBus(modBus).addListener(e -> e.getLayeredDraw().add(
-                ForgeCompat.id("vc-audio-distance", "voice_hud"), (graphics, delta) -> {
-                    Minecraft mc = Minecraft.getInstance();
-                    HudOverlay.paint(new GuiCanvas(graphics, mc.font), graphics.guiWidth(), graphics.guiHeight(),
-                            mc.level != null && mc.player != null, mc.options.hideGui);
-                }));
+        try {
+            ForgeHud.register(modBus);
+        } catch (LinkageError e) {
+            // Forge for 1.21.6 - 1.21.7 has no HUD layers event yet: everything but the voice HUD works
+            DistanceConfig.LOGGER.info("This Forge cannot add HUD layers, the voice HUD is off: {}", e.toString());
+        }
 
         TickEvent.ClientTickEvent.Post.BUS.addListener(e -> tick(Minecraft.getInstance()));
         RegisterClientCommandsEvent.BUS.addListener(e -> e.getDispatcher().register(ClientHints.openCommand()));

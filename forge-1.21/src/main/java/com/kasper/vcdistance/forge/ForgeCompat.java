@@ -5,7 +5,7 @@ import net.minecraft.client.KeyMapping;
 import net.minecraft.resources.ResourceLocation;
 
 /**
- * What differs between Forge versions, for Minecraft 1.21 - 1.21.1. The hooks that use it are shared by every
+ * What differs between Forge versions, for Minecraft 1.21.1. The hooks that use it are shared by every
  * Forge build since 1.20.6 (shared/forge, shared/forge-bus6).
  */
 final class ForgeCompat {

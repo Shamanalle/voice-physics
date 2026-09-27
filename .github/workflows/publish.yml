@@ -186,11 +186,11 @@ jobs:
             java: 21
             dependencies: simple-voice-chat(required)
             curseforge: true
-          - name: Forge for 1.21 – 1.21.1
-            file: forge-{v}+mc1.21-1.21.1.jar
-            target: mc1.21-1.21.1-forge
+          - name: Forge for 1.21.1
+            file: forge-{v}+mc1.21.1.jar
+            target: mc1.21.1-forge
             loaders: forge
-            game-versions: 1.21 1.21.1
+            game-versions: 1.21.1
             java: 21
             dependencies: simple-voice-chat(required)
             curseforge: true

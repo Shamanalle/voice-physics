@@ -18,7 +18,7 @@ def releaseTargets = [
 def loaderTargets = [
         [project: ':forge-1.20.1', task: 'reobfJar', file: 'voice-physics-forge-%s+mc1.20.1.jar'],
         [project: ':forge-1.20.6', task: 'jar', file: 'voice-physics-forge-%s+mc1.20.6.jar'],
-        [project: ':forge-1.21', task: 'jar', file: 'voice-physics-forge-%s+mc1.21-1.21.1.jar'],
+        [project: ':forge-1.21', task: 'jar', file: 'voice-physics-forge-%s+mc1.21.1.jar'],
         [project: ':forge-1.21.5', task: 'jar', file: 'voice-physics-forge-%s+mc1.21.3-1.21.5.jar'],
         [project: ':forge-1.21.8', task: 'jar', file: 'voice-physics-forge-%s+mc1.21.6-1.21.8.jar'],
         [project: ':forge-1.21.10', task: 'jar', file: 'voice-physics-forge-%s+mc1.21.9-1.21.10.jar'],
