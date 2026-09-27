@@ -12,10 +12,26 @@ description: >-
   sound zones and game rules, and the server's sound profile for players who have the addon.
 commands:
   vcd:
-    description: Voice Physics - status and settings
+    description: Voice Physics - status, settings and zones
     usage: /vcd help
-    permission: vcd.admin
 permissions:
   vcd.admin:
-    description: Use /vcd
+    description: Every part of /vcd
+    default: op
+    children:
+      vcd.status: true
+      vcd.settings: true
+      vcd.zone: true
+      vcd.debug: true
+  vcd.status:
+    description: /vcd status, help, zones and zone info
+    default: op
+  vcd.settings:
+    description: Change the server's sound settings with /vcd (profile, preset, walls, rules, groups, require, reload, undo)
+    default: op
+  vcd.zone:
+    description: Make, change, show and delete zones with /vcd zone
+    default: op
+  vcd.debug:
+    description: /vcd debug - whom a player hears
     default: op
