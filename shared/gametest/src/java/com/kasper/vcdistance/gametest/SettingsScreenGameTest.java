@@ -7,29 +7,28 @@ import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
 import net.fabricmc.fabric.api.client.gametest.v1.context.TestSingleplayerContext;
 
 /**
- * Opens the settings screen in a real client, in a world, on every tab and at a normal and a large
- * interface size, scrolls each tab to its end and takes screenshots (uploaded by CI). Any exception
- * while the screen is built or drawn fails the test.
+ * Opens the settings screen in a real client, in a world, on every tab and in two window sizes, scrolls
+ * each tab to its end and takes screenshots (uploaded by CI). With the automatic interface size,
+ * 854 x 480 gives a 427 x 240 screen and 1280 x 960 the tightest one, 320 x 240. Any exception while
+ * the screen is built or drawn fails the test.
  */
 public class SettingsScreenGameTest implements FabricClientGameTest {
 
-    private static final int[] GUI_SCALES = {2, 4};
+    private static final int[][] WINDOWS = {{854, 480}, {1280, 960}};
 
     @Override
     public void runTest(ClientGameTestContext context) {
-        context.getInput().resizeWindow(854, 480);
         try (TestSingleplayerContext world = context.worldBuilder().create()) {
-            world.getClientWorld().waitForChunksRender();
-            for (int scale : GUI_SCALES) {
-                context.runOnClient(client -> {
-                    client.options.guiScale().set(scale);
-                    client.resizeDisplay();
-                });
+            context.waitTicks(40);
+            for (int[] window : WINDOWS) {
+                context.getInput().resizeWindow(window[0], window[1]);
+                context.waitTicks(2);
+                String size = window[0] + "x" + window[1];
                 for (SettingsScreen.Tab tab : SettingsScreen.Tab.values()) {
                     if (tab == SettingsScreen.Tab.SERVER) {
                         continue; // only for admins of a server with the addon
                     }
-                    String name = tab.name().toLowerCase(java.util.Locale.ROOT) + "-scale" + scale;
+                    String name = tab.name().toLowerCase(java.util.Locale.ROOT) + "-" + size;
                     context.runOnClient(client -> {
                         SettingsScreen.openOn(tab);
                         TestScreens.open(client, new AudioDistanceScreen(null));
