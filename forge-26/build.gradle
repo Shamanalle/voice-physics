@@ -21,14 +21,18 @@ repositories {
     }
 }
 
+def sharedForge = file("${rootDir}/shared/forge/src/main/java")
+
 sourceSets {
     main {
         java {
             srcDir "${rootDir}/shared/mc-all/src/main/java"
             srcDir "${rootDir}/fabric-26/src/main/java"
-            srcDir("${rootDir}/shared/forge/src/main/java") {
-                // Only the networking: 26.x has its own permission, language and screen adapters
-                include 'com/kasper/vcdistance/forge/**'
+            srcDir sharedForge
+            // From shared/forge only the networking: 26.x has its own permission, language and screen adapters
+            exclude { FileTreeElement e ->
+                !e.directory && e.file.path.startsWith(sharedForge.path + File.separator)
+                        && !e.relativePath.pathString.startsWith('com/kasper/vcdistance/forge/')
             }
             // The Fabric hooks are not needed (and cannot compile) here
             exclude 'com/kasper/vcdistance/AudioDistanceClient.java'
