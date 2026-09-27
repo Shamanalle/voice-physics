@@ -1,0 +1,38 @@
+modLoader = "javafml"
+loaderVersion = "[1,)"
+license = "MIT"
+issueTrackerURL = "https://github.com/Shamanalle/voice-physics/issues"
+
+[[mods]]
+modId = "vc_audio_distance"
+version = "${version}"
+displayName = "Voice Physics"
+displayURL = "https://github.com/Shamanalle/voice-physics"
+logoFile = "assets/vc-audio-distance/icon.png"
+authors = "Shamanalle"
+description = '''
+Shapes how Simple Voice Chat voices fade with distance and muffles them through walls, with echo, water, weather and sound around corners. Client: live curve, voice HUD, monitor. Server (optional): walls for players without the addon, a shared sound profile, zones and /vcd.
+
+Настраивает, как голоса Simple Voice Chat затихают с расстоянием, и глушит их за стенами; эхо, вода, погода и звук из-за угла. Клиент: живой график, HUD голоса, монитор. Сервер (по желанию): стены для игроков без аддона, общий профиль звука, зоны и /vcd.
+'''
+
+[[dependencies.vc_audio_distance]]
+modId = "neoforge"
+type = "required"
+versionRange = "[21.0,)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.vc_audio_distance]]
+modId = "minecraft"
+type = "required"
+versionRange = "[1.21,1.21.2)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.vc_audio_distance]]
+modId = "voicechat"
+type = "required"
+versionRange = "[1.21-2.5.0,)"
+ordering = "AFTER"
+side = "BOTH"

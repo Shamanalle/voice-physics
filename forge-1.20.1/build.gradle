@@ -1,0 +1,74 @@
+plugins {
+    id 'net.neoforged.moddev.legacyforge' version '2.0.147'
+    id 'java'
+}
+
+// Forge 1.20.1: the full addon. The code shared with the Fabric builds is compiled here against
+// Minecraft's own names and turned into Forge's runtime names by reobfJar; only the hooks into Forge
+// (package com.kasper.vcdistance.forge) and a few small version adapters are Forge's own.
+def target = "mc1.20.1"
+version = "${project.mod_version}+${target}"
+
+base {
+    archivesName = "voice-physics-forge"
+}
+
+repositories {
+    mavenCentral()
+    maven {
+        name = "henkelmax.public"
+        url = 'https://maven.maxhenkel.de/repository/public'
+    }
+}
+
+legacyForge {
+    version = project.forge120_version
+}
+
+// Shared files that need Fabric, or that Forge replaces with its own version (same path in this module)
+def sharedRoots = ["${rootDir}/shared/mc-all/src/main/java", "${rootDir}/shared/mc-1.20-1.21/src/main/java"]
+def replaced = [
+        'com/kasper/vcdistance/AudioDistanceClient.java',
+        'com/kasper/vcdistance/AudioDistanceMod.java',
+        'com/kasper/vcdistance/ModMenuIntegration.java',
+        'com/kasper/vcdistance/client/HudHook.java',
+        'com/kasper/vcdistance/client/PoseScaler.java',
+        'com/kasper/vcdistance/server/AdminPermission.java',
+]
+
+sourceSets {
+    main {
+        java {
+            sharedRoots.each { srcDir it }
+            exclude { FileTreeElement e ->
+                replaced.contains(e.relativePath.pathString) && sharedRoots.any { e.file.path.startsWith(new File(it).path) }
+            }
+        }
+    }
+}
+
+dependencies {
+    implementation project(':common')
+    compileOnly "de.maxhenkel.voicechat:voicechat-api:${project.voicechat_api_version}"
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.release = 17
+    options.encoding = 'UTF-8'
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
+processResources {
+    inputs.property "version", project.version
+    filesMatching("META-INF/mods.toml") {
+        expand "version": project.version
+    }
+}
+
+jar {
+    from project(':common').sourceSets.main.output
+}

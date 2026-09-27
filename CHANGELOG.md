@@ -6,6 +6,40 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 *Все заметные изменения проекта описываются в этом файле. Каждая версия описана сначала на английском, затем на русском.*
 
+## [2.3.0] - 2026-09-27
+
+### English
+
+#### Added
+- Full Forge version for 1.20.1: walls, echo, corners, the HUD, the monitor, the settings screen and the server side.
+- Full NeoForge version for 1.21 – 1.21.1.
+- Every release is first started on real Fabric, Forge, NeoForge, Paper and Folia servers.
+
+#### Changed
+- On Modrinth and CurseForge the Fabric, Forge and NeoForge files are separate where each has its own build.
+- *Listen* plays the voice at more distances, and its button is small again.
+
+#### Fixed
+- With falloff below 100% the voice still fades out fully by the edge of hearing.
+- Server tab: long setting names are no longer cut off, and the zones line does not run under its button.
+- Long hints wrap to a second line instead of being cut off; tab names fit in small windows.
+
+### Русский
+
+#### Добавлено
+- Полная версия для Forge 1.20.1: стены, эхо, углы, HUD, монитор, экран настроек и серверная часть.
+- Полная версия для NeoForge 1.21 – 1.21.1.
+- Каждый релиз сначала запускается на настоящих серверах Fabric, Forge, NeoForge, Paper и Folia.
+
+#### Изменено
+- На Modrinth и CurseForge файлы для Fabric, Forge и NeoForge разделены там, где у каждого своя сборка.
+- «Прослушать» проигрывает голос на большем числе расстояний, а кнопка снова маленькая.
+
+#### Исправлено
+- При затухании меньше 100% голос всё равно полностью стихает к краю слышимости.
+- Вкладка «Сервер»: длинные названия настроек больше не обрезаются, линия «Зоны» не заходит под кнопку.
+- Длинные подсказки переносятся на вторую строку, а не обрезаются; названия вкладок помещаются в маленьком окне.
+
 ## [2.2.0] - 2026-09-26
 
 ### English

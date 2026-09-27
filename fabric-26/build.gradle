@@ -83,3 +83,36 @@ tasks.register('writeCompileClasspath') {
         out.get().asFile.text = files.files.join('\n') + '\n'
     }
 }
+
+// In-game test (Fabric client gametest, run by .github/workflows/ingame.yml): opens the settings screen
+// in a real client on every tab and takes screenshots. The test client needs Simple Voice Chat: CI puts
+// its jar at build/gametest-mods/voicechat.jar (Loom empties the run folder before every test run).
+fabricApi {
+    configureTests {
+        createSourceSet = true
+        modId = 'vc-audio-distance-gametest'
+        enableGameTests = false
+        enableClientGameTests = true
+        eula = true
+    }
+}
+
+sourceSets {
+    gametest {
+        java {
+            srcDir "${rootDir}/shared/gametest/src/java"
+        }
+        // The addon's texts: in the dev client ':common' is a plain library, so its assets are not loaded
+        resources {
+            srcDir "${rootDir}/common/src/main/resources"
+            include "assets/**", "fabric.mod.json"
+        }
+    }
+}
+
+def gametestVoicechat = file("${projectDir}/build/gametest-mods/voicechat.jar")
+if (gametestVoicechat.exists()) {
+    dependencies {
+        runtimeOnly files(gametestVoicechat)
+    }
+}

@@ -43,15 +43,34 @@ public final class AudioPhysics {
         } else {
             double remaining = Math.max(0.001, 1.0 - refRatio);
             double x = Math.min(1.0, (distFraction - refRatio) / remaining);
-            gain = switch (model) {
-                case REALISTIC_INVERSE -> inverse(distFraction, refRatio, rolloff, x);
-                case EXPONENTIAL -> 1.0 - rolloff * (1.0 - exponential(x));
-                default -> 1.0 - rolloff * x; // Simple Voice Chat's own linear curve
-            };
+            gain = shape(model, distFraction, refRatio, rolloff, x);
+            // With less than full falloff a curve would end above the edge volume and the voice
+            // would stop short at the range's edge; the last part of the fade takes it down there
+            // smoothly. A curve that already ends there (full falloff) is left as it is.
+            if (rolloff > 0.0 && x > 1.0 - EDGE_FADE) {
+                double end = shape(model, 1.0, refRatio, rolloff, 1.0);
+                if (end > 0.0) {
+                    double t = (x - (1.0 - EDGE_FADE)) / EDGE_FADE;
+                    gain -= end * t * t * (3.0 - 2.0 * t);
+                }
+            }
         }
         gain = Math.max(0.0, Math.min(1.0, gain));
         double floor = Math.max(0.0, Math.min(1.0, minVol));
         return floor + (1.0 - floor) * gain;
+    }
+
+    /** Share of the range over which a curve that would end above the edge volume is brought down to it. */
+    static final double EDGE_FADE = 0.25;
+
+    /** The model's curve at {@code x} (0 - 1 through the fade), clamped to 0 - 1. */
+    private static double shape(AttenuationModel model, double distFraction, double refRatio, double rolloff, double x) {
+        double g = switch (model) {
+            case REALISTIC_INVERSE -> inverse(distFraction, refRatio, rolloff, x);
+            case EXPONENTIAL -> 1.0 - rolloff * (1.0 - exponential(x));
+            default -> 1.0 - rolloff * x; // Simple Voice Chat's own linear curve
+        };
+        return Math.max(0.0, Math.min(1.0, g));
     }
 
     /** Exponential decay from 1 at x = 0 to exactly 0 at x = 1. */
