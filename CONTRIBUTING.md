@@ -25,11 +25,15 @@ cd voice-physics
 | Directory | Compiled into | Contains |
 |---|---|---|
 | `common/` | every jar (Java 17, no Minecraft classes) | Simple Voice Chat plugin, OpenAL curve, config and presets, wall filter (`VoiceFilter`), occlusion model, speaker registry, server walls (`ServerWalls`), server settings, client–server protocol (`LinkProtocol`, `ServerLink`), **translations and icon** |
-| `shared/mc-all/` | every Fabric module | settings screen (`SettingsScreen`), `Canvas`, slider, client tick logic, multi-ray tracer |
-| `shared/mc-1.20-1.21/` | `fabric-1.20`, `fabric-1.20.4`, `fabric-1.20.6`, `fabric-1.21` | client and common entrypoints, screen and canvas adapters, block acoustics, client world access, server wall measuring, key mapping |
+| `shared/mc-all/` | every Fabric, Forge and NeoForge module | settings screen (`SettingsScreen`), `Canvas`, slider, client tick logic, multi-ray tracer |
+| `shared/mc-1.20-1.21/` | `fabric-1.20` … `fabric-1.21`, `forge-1.20.1`, `neoforge-1.21` (without the Fabric hooks) | client and common entrypoints, screen and canvas adapters, block acoustics, client world access, server wall measuring, key mapping |
 | `fabric-1.20/`, `fabric-1.20.4/`, `fabric-1.20.6/`, `fabric-1.21/` | own module (1.20 – 1.20.1, 1.20.2 – 1.20.4, 1.20.5 – 1.20.6, 1.21.x) | `Compat` (screens draw their own background since 1.20.2), networking (channels up to 1.20.4, payloads since 1.20.5), `PlayerLanguage` (since 1.20.2), `fabric.mod.json`, `mods.toml` |
 | `fabric-26/` | own module | 26.x adapters (render-state API, key and screen differences between 26.1 and 26.3, payload names), block acoustics, server wall measuring, metadata. Checked on every 26.x release by *Minecraft 26.x compatibility* (`.github/workflows/compat-26.yml`) |
-| `bukkit/` | own jar (Java 17) | Paper / Purpur / Spigot / Bukkit plugin: server side only. Plugin messaging on the same channels as Fabric, block acoustics through the Bukkit API, `plugin.yml` |
+| `forge-1.20.1/` | own jar (Java 17, ModDevGradle legacyforge) | Forge hooks (`forge/`: entry, networking on the same channels and bytes, client), `PoseScaler` called directly (remapped by `reobfJar`), `AdminPermission`, `mods.toml` |
+| `neoforge-1.21/` | own jar (Java 21, ModDevGradle) | NeoForge 1.21 – 1.21.1 hooks (`neoforge/`), payloads, `AdminPermission`, `neoforge.mods.toml` |
+| `neoforge-26/` | packed into the `fabric-26` jar | NeoForge 26.x hooks |
+| `shared/gametest/` | `fabric-1.21`, `fabric-26` (client gametest) | opens the settings screen on every tab and takes screenshots |
+| `bukkit/` | own jar (Java 17) | Paper / Purpur / Folia / Spigot / Bukkit plugin: server side only. Plugin messaging on the same channels as Fabric, block acoustics through the Bukkit API, `plugin.yml` |
 
 Rules of thumb:
 - Logic that does not need Minecraft goes into `common` and gets a unit test. `ServerWallsTest` shows how to drive Simple Voice Chat events with fake objects.
@@ -37,7 +41,7 @@ Rules of thumb:
 - The 1.21 module is compiled against 1.21.8 but runs on 1.21–1.21.11. Before using a new Minecraft method there, check that its signature is the same on every 1.21.x release (for example with the Yarn mappings of each version). Otherwise use one that is, or reflection as in `KeyMappings`. Examples that are **not** stable: `Entity.level()`, `Entity.position()`, `Camera.getPosition()`, `ServerLevel.getEntity(UUID)`.
 - Never touch the world from audio threads. On the client the tick fills `SpeakerRegistry`; on the server the tick measures walls for `ServerWalls`. The audio side only reads.
 - The server side must never break voice chat: every failure in `ServerWalls` falls back to the original packet.
-- The Bukkit plugin uses only the Bukkit API (no Paper-only or NMS classes), so it runs on Paper, Purpur, Spigot and Bukkit. Ray geometry that has no Bukkit equivalent lives in `common` (`VoxelRay`, `RayBundle`) and is unit-tested.
+- The Bukkit plugin uses only the Bukkit API (no Paper-only or NMS classes), so it runs on Paper, Purpur, Spigot and Bukkit. Folia's schedulers are used only in `FoliaScheduling`, which is loaded only on Folia. Ray geometry that has no Bukkit equivalent lives in `common` (`VoxelRay`, `RayBundle`) and is unit-tested.
 - Client and server exchange `LinkProtocol` messages as one Minecraft string (VarInt byte length, then UTF-8). Fabric writes that with its own buffers; Bukkit uses `LinkProtocol.encode` / `decode`.
 
 ### Translations
@@ -56,10 +60,17 @@ The repository description and topics live in `.github/about.json`. The *Reposit
 3. In this repository: *Settings → Secrets and variables → Actions → New repository secret*, name `REPO_ADMIN_TOKEN`, value: the token.
 4. Run *Actions → Repository about → Run workflow* once, or change `.github/about.json`. When the token expires, generate a new one and update the secret.
 
+### In-game tests
+
+*In-game tests* (`.github/workflows/ingame.yml`) runs on every pull request and before every release:
+- **Servers:** `.github/scripts/server-smoke.sh` starts Fabric, Forge, NeoForge, Paper and Folia servers with Simple Voice Chat and the addon, runs `/vcd` from the console and fails on bare text keys, a setting that was not saved, or an exception from the addon. Locally: `bash .github/scripts/server-smoke.sh fabric 1.21.1 build/libs/voice-physics-fabric-*+mc1.21.x.jar`.
+- **Client:** `./gradlew :fabric-26:runClientGameTest` (or `:fabric-1.21`) opens the settings screen on every tab (the Server tab as a pretend admin), in English and Russian, at two window sizes, and saves screenshots in `build/run/clientGameTest/screenshots/`. Simple Voice Chat's jar goes to `build/gametest-mods/voicechat.jar` of the module. CI runs it under `xvfb-run` with Mesa's software OpenGL and Vulkan; the 1.21 client runs on Java 21.
+- Logs and screenshots are attached to each run as artifacts.
+
 ### Releases
 
 1. Set `mod_version` in `gradle.properties` and add its section to `CHANGELOG.md` (English, then Russian).
-2. Merge into `main` and wait for the green build.
+2. Merge into `main` and wait for the green build. The release runs the in-game tests again and stops when they fail.
 3. *Actions → Publish Release → Run workflow* on `main`, or push the tag `vX.Y.Z`. The workflow builds every jar, creates the tag and the release, and takes the notes from `CHANGELOG.md`.
 4. The same run then uploads the files to Modrinth and CurseForge (see below). To upload an existing release again: *Actions → Publish to Modrinth & CurseForge → Run workflow* with its tag.
 
@@ -105,11 +116,15 @@ cd voice-physics
 | Папка | Куда попадает | Что внутри |
 |---|---|---|
 | `common/` | во все JAR (Java 17, без классов Minecraft) | плагин Simple Voice Chat, кривая OpenAL, конфиг и пресеты, фильтр стен (`VoiceFilter`), модель приглушения, реестр говорящих, стены на сервере (`ServerWalls`), настройки сервера, протокол клиент–сервер (`LinkProtocol`, `ServerLink`), **переводы и иконка** |
-| `shared/mc-all/` | во все модули Fabric | экран настроек (`SettingsScreen`), `Canvas`, слайдер, логика тика клиента, трассировка несколькими лучами |
-| `shared/mc-1.20-1.21/` | `fabric-1.20`, `fabric-1.20.4`, `fabric-1.20.6`, `fabric-1.21` | точки входа клиента и общая, адаптеры экрана и отрисовки, акустика блоков, доступ к миру на клиенте, измерение стен на сервере, регистрация клавиши |
+| `shared/mc-all/` | во все модули Fabric, Forge и NeoForge | экран настроек (`SettingsScreen`), `Canvas`, слайдер, логика тика клиента, трассировка несколькими лучами |
+| `shared/mc-1.20-1.21/` | `fabric-1.20` … `fabric-1.21`, `forge-1.20.1`, `neoforge-1.21` (без хуков Fabric) | точки входа клиента и общая, адаптеры экрана и отрисовки, акустика блоков, доступ к миру на клиенте, измерение стен на сервере, регистрация клавиши |
 | `fabric-1.20/`, `fabric-1.20.4/`, `fabric-1.20.6/`, `fabric-1.21/` | свой модуль (1.20 – 1.20.1, 1.20.2 – 1.20.4, 1.20.5 – 1.20.6, 1.21.x) | `Compat` (с 1.20.2 экран сам рисует фон), сеть (каналы до 1.20.4, payload с 1.20.5), `PlayerLanguage` (с 1.20.2), `fabric.mod.json`, `mods.toml` |
 | `fabric-26/` | свой модуль | адаптеры 26.x (API отрисовки через render state, различия клавиш и экранов между 26.1 и 26.3, имена payload), акустика блоков, измерение стен на сервере, метаданные. Проверяется на каждом релизе 26.x workflow *Minecraft 26.x compatibility* (`.github/workflows/compat-26.yml`) |
-| `bukkit/` | свой JAR (Java 17) | плагин для Paper / Purpur / Spigot / Bukkit: только серверная часть. Сообщения плагина на тех же каналах, что у Fabric, акустика блоков через API Bukkit, `plugin.yml` |
+| `forge-1.20.1/` | свой JAR (Java 17, ModDevGradle legacyforge) | хуки Forge (`forge/`: точка входа, сеть на тех же каналах и в тех же байтах, клиент), `PoseScaler` с прямыми вызовами (переименовывается `reobfJar`), `AdminPermission`, `mods.toml` |
+| `neoforge-1.21/` | свой JAR (Java 21, ModDevGradle) | хуки NeoForge 1.21 – 1.21.1 (`neoforge/`), payload, `AdminPermission`, `neoforge.mods.toml` |
+| `neoforge-26/` | внутри JAR `fabric-26` | хуки NeoForge 26.x |
+| `shared/gametest/` | `fabric-1.21`, `fabric-26` (client gametest) | открывает экран настроек на каждой вкладке и делает скриншоты |
+| `bukkit/` | свой JAR (Java 17) | плагин для Paper / Purpur / Folia / Spigot / Bukkit: только серверная часть. Сообщения плагина на тех же каналах, что у Fabric, акустика блоков через API Bukkit, `plugin.yml` |
 
 Правила:
 - Логика, которой не нужен Minecraft, живёт в `common` и покрывается юнит-тестом. `ServerWallsTest` показывает, как проверять события Simple Voice Chat на поддельных объектах.
@@ -117,7 +132,7 @@ cd voice-physics
 - Модуль 1.21 собирается против 1.21.8, но работает на 1.21–1.21.11. Прежде чем использовать там новый метод Minecraft, проверьте, что его сигнатура одинакова во всех 1.21.x (например, по маппингам Yarn каждой версии). Если нет — возьмите стабильный метод или рефлексию, как в `KeyMappings`. Примеры **нестабильных** методов: `Entity.level()`, `Entity.position()`, `Camera.getPosition()`, `ServerLevel.getEntity(UUID)`.
 - Из аудиопотоков мир не трогаем. На клиенте тик заполняет `SpeakerRegistry`, на сервере тик измеряет стены для `ServerWalls`. Аудиочасть только читает.
 - Серверная часть не должна ломать голосовой чат: при любой ошибке в `ServerWalls` уходит исходный пакет.
-- Плагин для Bukkit использует только API Bukkit (без классов, которые есть только в Paper, и без NMS), поэтому работает на Paper, Purpur, Spigot и Bukkit. Геометрия лучей, которой нет в Bukkit, живёт в `common` (`VoxelRay`, `RayBundle`) и покрыта тестами.
+- Плагин для Bukkit использует только API Bukkit (без классов, которые есть только в Paper, и без NMS), поэтому работает на Paper, Purpur, Spigot и Bukkit. Планировщики Folia используются только в `FoliaScheduling`, который загружается только на Folia. Геометрия лучей, которой нет в Bukkit, живёт в `common` (`VoxelRay`, `RayBundle`) и покрыта тестами.
 - Клиент и сервер обмениваются сообщениями `LinkProtocol` в виде одной строки Minecraft (длина в байтах как VarInt, затем UTF-8). Fabric пишет её своими буферами, Bukkit — через `LinkProtocol.encode` / `decode`.
 
 ### Переводы
@@ -136,10 +151,17 @@ README — это два файла: `README.md` на английском и `R
 3. В этом репозитории: *Settings → Secrets and variables → Actions → New repository secret*, имя `REPO_ADMIN_TOKEN`, значение — токен.
 4. Один раз запустите *Actions → Repository about → Run workflow* или измените `.github/about.json`. Когда срок токена истечёт, создайте новый и обновите секрет.
 
+### Проверки в игре
+
+*In-game tests* (`.github/workflows/ingame.yml`) запускается на каждый pull request и перед каждым релизом:
+- **Серверы:** `.github/scripts/server-smoke.sh` запускает серверы Fabric, Forge, NeoForge, Paper и Folia с Simple Voice Chat и аддоном, выполняет `/vcd` из консоли и падает, если ответ — голые ключи текстов, настройка не сохранилась или аддон бросил исключение. Локально: `bash .github/scripts/server-smoke.sh fabric 1.21.1 build/libs/voice-physics-fabric-*+mc1.21.x.jar`.
+- **Клиент:** `./gradlew :fabric-26:runClientGameTest` (или `:fabric-1.21`) открывает экран настроек на каждой вкладке (вкладку «Сервер» — как будто вы админ), на английском и русском, при двух размерах окна и сохраняет скриншоты в `build/run/clientGameTest/screenshots/`. JAR Simple Voice Chat кладётся в `build/gametest-mods/voicechat.jar` модуля. В CI тест идёт под `xvfb-run` с программными OpenGL и Vulkan из Mesa; клиент 1.21 запускается на Java 21.
+- Логи и скриншоты прикладываются к каждому запуску как артефакты.
+
 ### Релизы
 
 1. Укажите `mod_version` в `gradle.properties` и добавьте раздел этой версии в `CHANGELOG.md` (сначала английский, затем русский).
-2. Слейте изменения в `main` и дождитесь зелёной сборки.
+2. Слейте изменения в `main` и дождитесь зелёной сборки. Релиз ещё раз запускает проверки в игре и останавливается, если они не прошли.
 3. *Actions → Publish Release → Run workflow* на `main` или запушьте тег `vX.Y.Z`. Workflow соберёт все JAR, создаст тег и релиз, а описание возьмёт из `CHANGELOG.md`.
 4. Затем тот же запуск загрузит файлы на Modrinth и CurseForge (см. ниже). Чтобы загрузить уже вышедший релиз заново: *Actions → Publish to Modrinth & CurseForge → Run workflow* с его тегом.
 

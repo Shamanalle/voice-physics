@@ -1,0 +1,151 @@
+name: In-game tests
+
+# Starts real servers with Simple Voice Chat and the addon (.github/scripts/server-smoke.sh): each must
+# come up, answer /vcd with real text, save a setting and log no exception from the addon. The
+# release (release.yml) runs this first and stops when it fails.
+
+on:
+  pull_request:
+    branches: [ "main" ]
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build the jars
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up JDK 25
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '25'
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+      - name: Build
+        run: |
+          chmod +x gradlew
+          ./gradlew build -x test --no-daemon
+      - name: Upload jars
+        uses: actions/upload-artifact@v4
+        with:
+          name: ingame-jars
+          path: build/libs/*.jar
+          if-no-files-found: error
+
+  server:
+    name: ${{ matrix.loader }} ${{ matrix.mc }}
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    # Folia is checked, but Simple Voice Chat itself may not run there yet
+    continue-on-error: ${{ matrix.loader == 'folia' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { loader: fabric, mc: '1.20.1', jar: 'voice-physics-fabric-*+mc1.20.1.jar', java: '21' }
+          - { loader: fabric, mc: '1.20.4', jar: 'voice-physics-fabric-*+mc1.20.2-1.20.4.jar', java: '21' }
+          - { loader: fabric, mc: '1.20.6', jar: 'voice-physics-fabric-*+mc1.20.5-1.20.6.jar', java: '21' }
+          - { loader: fabric, mc: '1.21.1', jar: 'voice-physics-fabric-*+mc1.21.x.jar', java: '21' }
+          - { loader: fabric, mc: '1.21.11', jar: 'voice-physics-fabric-*+mc1.21.x.jar', java: '21' }
+          - { loader: fabric, mc: '26.3', jar: 'voice-physics-fabric-*+mc26.x.jar', java: '25' }
+          - { loader: neoforge, mc: '26.2', jar: 'voice-physics-neoforge-*+mc26.x.jar', java: '25', version: 'nf26_neoforge' }
+          - { loader: neoforge, mc: '1.21.1', jar: 'voice-physics-neoforge-*+mc1.21-1.21.1.jar', java: '21', version: 'nf121_neoforge' }
+          - { loader: forge, mc: '1.20.1', jar: 'voice-physics-forge-*+mc1.20.1.jar', java: '17', version: 'forge120_version' }
+          - { loader: paper, mc: '1.20.1', jar: 'voice-physics-bukkit-*.jar', java: '21' }
+          - { loader: paper, mc: '1.21.11', jar: 'voice-physics-bukkit-*.jar', java: '21' }
+          - { loader: paper, mc: 'latest', jar: 'voice-physics-bukkit-*.jar', java: '25' }
+          - { loader: folia, mc: 'latest', jar: 'voice-physics-bukkit-*.jar', java: '25' }
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up JDK ${{ matrix.java }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: ${{ matrix.java }}
+      - name: Download jars
+        uses: actions/download-artifact@v4
+        with:
+          name: ingame-jars
+          path: jars
+      - name: Start the server and run /vcd
+        run: |
+          jar=$(ls jars/${{ matrix.jar }} | head -1)
+          version=""
+          if [ -n "${{ matrix.version }}" ]; then
+            version=$(grep "^${{ matrix.version }}=" gradle.properties | cut -d= -f2)
+          fi
+          echo "Addon: ${jar} ${version}"
+          bash .github/scripts/server-smoke.sh "${{ matrix.loader }}" "${{ matrix.mc }}" "${jar}" "${version}"
+      - name: Upload the server log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: server-log-${{ matrix.loader }}-${{ matrix.mc }}
+          path: ${{ runner.temp }}/server-*/*.log
+          if-no-files-found: ignore
+
+  client:
+    name: Client ${{ matrix.mc }} (settings screen)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { module: fabric-1.21, mc: '1.21.8' }
+          - { module: fabric-26, mc: '26.3' }
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      # Gradle runs on 25; the 1.21 test client runs on 21 (see fabric-1.21/build.gradle)
+      - name: Set up JDK 21 and 25
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: |
+            21
+            25
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+      # Software OpenGL and Vulkan (Mesa llvmpipe / lavapipe): 26.3 draws through either, and the
+      # runner's X server alone offers neither a matching GLX visual nor a Vulkan surface
+      - name: Software graphics
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq mesa-vulkan-drivers libvulkan1 libgl1-mesa-dri libglx-mesa0 libegl1 mesa-utils > /dev/null
+      - name: Simple Voice Chat for the test client
+        run: |
+          mods="${{ matrix.module }}/build/gametest-mods"
+          mkdir -p "${mods}"
+          url=$(curl -fsSL --retry 4 -G "https://api.modrinth.com/v2/project/simple-voice-chat/version" \
+              --data-urlencode 'loaders=["fabric"]' --data-urlencode 'game_versions=["${{ matrix.mc }}"]' \
+            | jq -r '.[0].files | (map(select(.primary)) + .)[0].url')
+          echo "Simple Voice Chat: ${url}"
+          curl -fsSL --retry 4 -o "${mods}/voicechat.jar" "${url}"
+      - name: Open the settings screen in a real client
+        # Shorter than the job, so the screenshots and the log are still uploaded when the client hangs
+        timeout-minutes: 12
+        run: |
+          chmod +x gradlew
+          xvfb-run -a -s "-screen 0 1280x960x24 +extension GLX +render" sh -c 'glxinfo -B | head -12 || true'
+          xvfb-run -a -s "-screen 0 1280x960x24 +extension GLX +render" ./gradlew :${{ matrix.module }}:runClientGameTest --no-daemon \
+            -Porg.gradle.java.installations.fromEnv=JAVA_HOME_21_X64,JAVA_HOME_25_X64
+      - name: Upload screenshots and logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: client-${{ matrix.module }}
+          path: |
+            ${{ matrix.module }}/build/run/clientGameTest/screenshots/
+            ${{ matrix.module }}/build/run/clientGameTest/logs/latest.log
+          if-no-files-found: ignore

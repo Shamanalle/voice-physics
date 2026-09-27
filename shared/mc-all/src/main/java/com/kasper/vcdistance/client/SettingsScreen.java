@@ -57,8 +57,8 @@ public abstract class SettingsScreen extends Screen {
     private static boolean materialsOpen;
 
     /** Walk-away preview: where the voice is at each step, as a share of the range. */
-    private static final double[] PREVIEW_STEPS = {0.05, 0.25, 0.45, 0.65, 0.85, 1.0};
-    private static final int PREVIEW_STEP_TICKS = 14;
+    private static final double[] PREVIEW_STEPS = {0.03, 0.12, 0.21, 0.3, 0.39, 0.48, 0.57, 0.66, 0.75, 0.84, 0.92, 0.97};
+    private static final int PREVIEW_STEP_TICKS = 10;
 
     public enum Tab {
         DISTANCE("tab.distance"),
@@ -92,8 +92,8 @@ public abstract class SettingsScreen extends Screen {
             new Example("stone3", AcousticMaterial.STONE, 3)
     };
 
-    /** A section title on the Server tab, at a content y. */
-    private record Heading(Component text, int y) {
+    /** A section title on the Server tab, at a content y; its rule runs to {@code lineEnd}. */
+    private record Heading(Component text, int y, int lineEnd) {
     }
 
     protected final Screen parent;
@@ -122,6 +122,7 @@ public abstract class SettingsScreen extends Screen {
     private int panelTop;
     private int panelBottom;
     private int materialsHintY = -1;
+    private int wallsHintLines = 1;
     private int noZonesY = -1;
     private final List<Heading> headings = new ArrayList<>();
 
@@ -160,6 +161,17 @@ public abstract class SettingsScreen extends Screen {
         this.config.ensureLoaded();
         this.snapshot = config.copy();
         this.tab = lastTab;
+    }
+
+    /** The tab the next settings screen opens on (the in-game tests walk through every tab). */
+    public static void openOn(Tab tab) {
+        lastTab = tab;
+    }
+
+    /** Scrolls the open tab to its end (in-game tests). */
+    public void scrollToEnd() {
+        scroll = maxScroll;
+        applyScroll();
     }
 
     /** Shows another screen (the API for this differs between versions). */
@@ -208,11 +220,25 @@ public abstract class SettingsScreen extends Screen {
             tab = Tab.DISTANCE;
         }
         Tab[] tabs = admin ? Tab.values() : java.util.Arrays.copyOf(Tab.values(), Tab.values().length - 1);
-        int tabW = (w - GAP * (tabs.length - 1)) / tabs.length;
+        // Equal tabs; when a name would not fit, each tab gets its name's width plus an equal share of the rest
+        int free = w - GAP * (tabs.length - 1);
+        int[] tabWs = new int[tabs.length];
+        int needed = 0;
+        boolean cut = false;
+        for (int i = 0; i < tabs.length; i++) {
+            tabWs[i] = this.font.width(tr(tabs[i].key)) + 10;
+            needed += tabWs[i];
+            cut |= tabWs[i] > free / tabs.length;
+        }
+        for (int i = 0; i < tabs.length; i++) {
+            tabWs[i] = cut && needed <= free ? tabWs[i] + (free - needed) / tabs.length : free / tabs.length;
+        }
+        int x = left;
         for (int i = 0; i < tabs.length; i++) {
             Tab t = tabs[i];
-            int x = i == tabs.length - 1 ? right - tabW : left + i * (tabW + GAP);
+            int tabW = i == tabs.length - 1 ? right - x : tabWs[i];
             Button b = Button.builder(tr(t.key), btn -> switchTab(t)).bounds(x, 22, tabW, 20).build();
+            x += tabW + GAP;
             addRenderableWidget(b);
             if (t == tab) {
                 activeTabButton = b;
@@ -452,10 +478,10 @@ public abstract class SettingsScreen extends Screen {
         // Header strip above the graph: the summary and legend, and Listen (allowed while the server
         // enforces its profile). One width for both labels so it does not jump when it toggles.
         graphHeaderY = y;
-        int lw = Math.max(this.font.width(tr("listen")), this.font.width(tr("listen.stop"))) + 16;
+        int lw = Math.max(this.font.width(tr("listen")), this.font.width(tr("listen.stop"))) + 12;
         listenButton = content(Button.builder(previewStep >= 0 ? tr("listen.stop") : tr("listen"), b -> togglePreview())
-                .bounds(right - lw, y, lw, 20).tooltip(tip("listen.tooltip")).build());
-        graphTop = y + 22;
+                .bounds(right - lw, y, lw, 14).tooltip(tip("listen.tooltip")).build());
+        graphTop = y + 17;
 
         // The graph keeps a readable shape; on short windows it shrinks down to a minimum and the tab scrolls
         int preferred = Math.max(120, w * 2 / 5);
@@ -521,7 +547,8 @@ public abstract class SettingsScreen extends Screen {
             y += 30;
         }
         panelTop = y;
-        panelBottom = y + 20 + EXAMPLES.length * 14 + 18;
+        wallsHintLines = wrap(tr("walls.hint"), w - 16, 2, t -> this.font.width(t)).size();
+        panelBottom = y + 20 + EXAMPLES.length * 14 + 8 + wallsHintLines * 10;
         y = panelBottom + 6;
 
         // Materials: a section that opens under the preview
@@ -532,7 +559,7 @@ public abstract class SettingsScreen extends Screen {
         y += ROW;
         if (materialsOpen) {
             materialsHintY = y;
-            y += 14;
+            y += 4 + 10 * wrap(tr("materials.hint_other"), w, 2, t -> this.font.width(t)).size();
             AcousticMaterial[] materials = AcousticMaterial.values();
             // Materials fill the grid; the reset button takes the cell after the last one
             int cells = materials.length + 1;
@@ -757,16 +784,16 @@ public abstract class SettingsScreen extends Screen {
 
     /** A section title, then the section's first row. */
     private int heading(String key, int y) {
-        headings.add(new Heading(tr(key), y));
+        headings.add(new Heading(tr(key), y, right));
         return y + 13;
     }
 
     private void initServer() {
         java.util.Properties st = serverState();
         int w = right - left;
-        int third = (w - GAP * 2) / 3;
-        int x2 = left + third + GAP;
-        int x3 = right - third;
+        // Two columns: the labels ("Spectators apart: On") are too long for three
+        int half = (w - GAP) / 2;
+        int x2 = right - half;
         int y = contentTop;
         if (st == null) {
             contentEnd = contentTop + 40;
@@ -778,11 +805,12 @@ public abstract class SettingsScreen extends Screen {
         String mode = st.getProperty("profile_mode", "off");
         String preset = st.getProperty("profile_preset", "custom");
         String locked = st.getProperty("profile_locked", "all");
-        serverButton(tr("server.profile", tr("server.mode." + mode)), "server.profile.tooltip", left, y, third,
+        serverButton(tr("server.profile", tr("server.mode." + mode)), "server.profile.tooltip", left, y, half,
                 "profile " + next(SERVER_MODES, mode));
-        serverButton(tr("server.preset", presetName(preset)), "server.preset.tooltip", x2, y, third,
+        serverButton(tr("server.preset", presetName(preset)), "server.preset.tooltip", x2, y, half,
                 "preset " + next(SERVER_PRESETS, preset));
-        serverButton(tr("server.locked", lockedName(locked)), "server.locked.tooltip", x3, y, third,
+        y += ROW;
+        serverButton(tr("server.locked", lockedName(locked)), "server.locked.tooltip", left, y, half,
                 "lock " + next(SERVER_LOCKS, locked));
         y += ROW + 4;
 
@@ -794,43 +822,44 @@ public abstract class SettingsScreen extends Screen {
         serverButton(Component.literal("−"), "server.walls.tooltip", left, y, 20, down == 0 ? "walls off" : "walls " + down)
                 .active = wallsPct > 0;
         serverButton(tr("server.walls", wallsPct == 0 ? tr("off") : Component.literal(wallsPct + "%")), "server.walls.tooltip",
-                left + 22, y, third - 44, "walls " + up).active = wallsPct < 100;
-        serverButton(Component.literal("+"), "server.walls.tooltip", left + third - 20, y, 20, "walls " + up)
+                left + 22, y, half - 44, "walls " + up).active = wallsPct < 100;
+        serverButton(Component.literal("+"), "server.walls.tooltip", left + half - 20, y, 20, "walls " + up)
                 .active = wallsPct < 100;
-        serverToggle("server.server_walls", st, "server_walls", "false", x2, y, third, "serverwalls");
-        serverToggle("server.monitor", st, "allow_monitor", "true", x3, y, third, "monitor");
+        serverToggle("server.server_walls", st, "server_walls", "false", x2, y, half, "serverwalls");
+        y += ROW;
+        serverToggle("server.monitor", st, "allow_monitor", "true", left, y, half, "monitor");
         y += ROW + 4;
 
         // Game rules
         y = heading("server.section.rules", y);
         String sneak = st.getProperty("sneak_range_multiplier", "1");
-        serverButton(tr("server.sneak", pct(parse(sneak))), "server.sneak.tooltip", left, y, third,
+        serverButton(tr("server.sneak", pct(parse(sneak))), "server.sneak.tooltip", left, y, half,
                 "rule sneak " + next(SERVER_SNEAK, sneak));
-        serverToggle("server.dead", st, "dead_players_silent", "false", x2, y, third, "rule dead");
-        serverToggle("server.spectators", st, "spectators_hear_only_spectators", "false", x3, y, third, "rule spectators");
-        y += ROW;
         String megaphone = st.getProperty("megaphone_item", "");
         serverButton(tr("server.megaphone", megaphone.isEmpty() ? tr("off") : Component.translatable("item.minecraft.goat_horn")),
-                "server.megaphone.tooltip", left, y, third, "rule megaphone " + (megaphone.isEmpty() ? MEGAPHONE : "off"));
+                "server.megaphone.tooltip", x2, y, half, "rule megaphone " + (megaphone.isEmpty() ? MEGAPHONE : "off"));
+        y += ROW;
+        serverToggle("server.dead", st, "dead_players_silent", "false", left, y, half, "rule dead");
+        serverToggle("server.spectators", st, "spectators_hear_only_spectators", "false", x2, y, half, "rule spectators");
         y += ROW + 4;
 
         // Rules inside Simple Voice Chat groups
         y = heading("server.section.groups", y);
-        serverToggle("server.group.dead", st, "group_dead_silent", "false", left, y, third, "group dead");
-        serverToggle("server.group.spectators", st, "group_spectators_apart", "false", x2, y, third, "group spectators");
-        serverToggle("server.group.zones", st, "group_isolated_zones", "false", x3, y, third, "group zones");
+        serverToggle("server.group.dead", st, "group_dead_silent", "false", left, y, half, "group dead");
+        serverToggle("server.group.spectators", st, "group_spectators_apart", "false", x2, y, half, "group spectators");
         y += ROW;
-        serverToggle("server.group.open_range", st, "open_group_range", "true", left, y, third, "group open_range");
+        serverToggle("server.group.zones", st, "group_isolated_zones", "false", left, y, half, "group zones");
+        serverToggle("server.group.open_range", st, "open_group_range", "true", x2, y, half, "group open_range");
         y += ROW + 4;
 
         // Players who have Simple Voice Chat but not this addon
         y = heading("server.section.addon", y);
         String require = st.getProperty("require_addon", "off");
-        serverButton(tr("server.require", tr("server.require." + require)), "server.require.tooltip", left, y, third * 2 + GAP,
+        serverButton(tr("server.require", tr("server.require." + require)), "server.require.tooltip", left, y, half,
                 "require " + next(SERVER_REQUIRE, require));
         y += ROW + 4;
 
-        y = initZones(st, y, w, third);
+        y = initZones(st, y, w, (w - GAP * 2) / 3);
         contentEnd = y;
     }
 
@@ -851,8 +880,8 @@ public abstract class SettingsScreen extends Screen {
         while (names.contains("zone-" + used)) {
             used++;
         }
-        headings.add(new Heading(tr("server.zones"), y + 6));
         int createW = Math.min(third * 2, this.font.width(tr("server.zone.create")) + 16);
+        headings.add(new Heading(tr("server.zones"), y + 6, right - createW - 8));
         serverButton(tr("server.zone.create"), "server.zone.create.tooltip", right - createW, y, createW,
                 "zone create zone-" + used + " 8");
         y += ROW;
@@ -933,7 +962,7 @@ public abstract class SettingsScreen extends Screen {
             parts.add(tr("server.zone.range", Component.literal("×" + z[6])));
         }
         if (!"-".equals(z[4])) {
-            parts.add(tr("server.zone.voice", z[4]));
+            parts.add(tr("server.zone.voice", blocks(parse(z[4]))));
         }
         if (!"-".equals(z[7])) {
             parts.add(tr("server.zone.walls", Component.literal(pct(parse(z[7])))));
@@ -963,8 +992,8 @@ public abstract class SettingsScreen extends Screen {
         for (Heading h : headings) {
             c.text(h.text(), left + 1, h.y(), Palette.ACCENT_LINE);
             int lineX = left + c.width(h.text()) + 8;
-            if (lineX < right) {
-                c.hLine(lineX, right, h.y() + 4, Palette.PANEL_BORDER);
+            if (lineX < h.lineEnd()) {
+                c.hLine(lineX, h.lineEnd(), h.y() + 4, Palette.PANEL_BORDER);
             }
         }
         if (noZonesY >= 0) {
@@ -980,7 +1009,9 @@ public abstract class SettingsScreen extends Screen {
                 ? tr("server.hint") : Component.literal(lines.get(lines.size() - 1));
         int w = right - left;
         int doneW = (w - GAP * 3) / 4;
-        c.text(fit(c, status, w - doneW - GAP - 2), left + 1, footerY + 6, Palette.TEXT_MUTED);
+        // Two lines when it does not fit in one: the footer is 20 high
+        int lines2 = wrap(status, w - doneW - GAP - 2, 2, c::width).size();
+        paragraph(c, status, left + 1, footerY + (lines2 > 1 ? 1 : 6), w - doneW - GAP - 2, 2, Palette.TEXT_MUTED, false);
     }
 
     // =========================================================================
@@ -1216,7 +1247,7 @@ public abstract class SettingsScreen extends Screen {
     private void paintDistance(Canvas c, int mouseX, int mouseY) {
         int x1 = left;
         int x2 = right;
-        int headerY = graphHeaderY + 6;
+        int headerY = graphHeaderY + 3;
         int y1 = graphTop;
         int y2 = graphBottom;
 
@@ -1337,16 +1368,21 @@ public abstract class SettingsScreen extends Screen {
             c.text(label, px2 - c.width(label) - 2, Math.max(py1, fy - 10), Palette.FLOOR);
         }
 
-        // Axis in blocks
+        // Axis in blocks; a middle mark that would run into the last label is left out
+        Component lastMark = tr("blocks", blocks(maxDist));
+        int lastLeft = px2 + 1 - c.width(lastMark);
         for (int i = 0; i <= 4; i++) {
             int x = px1 + pw * i / 4;
             int ly = py2 + 3;
             if (i == 0) {
                 c.text(Component.literal("0"), x, ly, Palette.TEXT_MUTED);
             } else if (i == 4) {
-                c.right(tr("blocks", blocks(maxDist)), x + 1, ly, Palette.TEXT_MUTED);
+                c.right(lastMark, x + 1, ly, Palette.TEXT_MUTED);
             } else {
-                c.centered(Component.literal(blocks(maxDist * i / 4.0)), x, ly, Palette.TEXT_MUTED);
+                Component mark = Component.literal(blocks(maxDist * i / 4.0));
+                if (x + (c.width(mark) + 1) / 2 + 4 <= lastLeft) {
+                    c.centered(mark, x, ly, Palette.TEXT_MUTED);
+                }
             }
         }
 
@@ -1423,7 +1459,7 @@ public abstract class SettingsScreen extends Screen {
             levelW = Math.max(levelW, c.width(tr(level)));
         }
         labelW = Math.min(labelW, (right - left) * 2 / 5);
-        levelW = Math.min(levelW + 4, (right - left) / 4);
+        levelW = Math.min(levelW + 4, (right - left) / 3);
         int barX1 = left + 8 + labelW + 8;
         int barX2 = right - 8 - levelW;
         if (barX2 - barX1 < 30) {
@@ -1449,10 +1485,11 @@ public abstract class SettingsScreen extends Screen {
             }
             rowY += 14;
         }
-        c.text(fit(c, tr("walls.hint"), right - left - 16), left + 8, panelBottom - 14, Palette.TEXT_MUTED);
+        paragraph(c, tr("walls.hint"), left + 8, panelBottom - 4 - wallsHintLines * 10, right - left - 16, 2,
+                Palette.TEXT_MUTED, false);
 
         if (materialsHintY >= 0) {
-            c.text(fit(c, tr("materials.hint_other"), right - left), left + 1, materialsHintY, Palette.TEXT_MUTED);
+            paragraph(c, tr("materials.hint_other"), left + 1, materialsHintY, right - left, 2, Palette.TEXT_MUTED, false);
         }
     }
 
@@ -1542,7 +1579,10 @@ public abstract class SettingsScreen extends Screen {
                 round > 0 && cornersOn ? Palette.ACCENT_LINE : Palette.TEXT_MUTED);
         rowY += 14;
 
-        if (rowY + 22 <= bottom - 4) {
+        int hintLines = wrap(tr("effects.hint"), w, 2, c::width).size();
+        if (rowY + 12 + hintLines * 10 <= bottom - 4) {
+            paragraph(c, tr("effects.hint"), x, bottom - 4 - hintLines * 10, w, 2, Palette.TEXT_MUTED, false);
+        } else if (rowY + 22 <= bottom - 4) {
             c.text(fit(c, tr("effects.hint"), w), x, bottom - 14, Palette.TEXT_MUTED);
         }
     }
@@ -1613,7 +1653,7 @@ public abstract class SettingsScreen extends Screen {
         if (rows.isEmpty()) {
             int cy = (y + bottom) / 2 - 4;
             c.centered(tr("monitor.empty"), midX, cy, Palette.TEXT_DIM);
-            c.centered(fit(c, tr("monitor.empty_hint"), right - left - 12), midX, cy + 12, Palette.TEXT_MUTED);
+            paragraph(c, tr("monitor.empty_hint"), midX, cy + 12, right - left - 12, 2, Palette.TEXT_MUTED, true);
             return;
         }
 
@@ -1916,6 +1956,59 @@ public abstract class SettingsScreen extends Screen {
             }
         }
         return Component.literal("…");
+    }
+
+    /**
+     * Breaks a text into at most {@code maxLines} lines of {@code maxWidth} pixels; what does not fit
+     * into the last line ends with an ellipsis.
+     */
+    private static List<Component> wrap(Component text, int maxWidth, int maxLines, java.util.function.ToIntFunction<Component> width) {
+        List<Component> lines = new ArrayList<>();
+        String[] words = text.getString().split(" ");
+        StringBuilder line = new StringBuilder();
+        int i = 0;
+        while (i < words.length && lines.size() < maxLines - 1) {
+            String next = line.length() == 0 ? words[i] : line + " " + words[i];
+            if (line.length() > 0 && width.applyAsInt(Component.literal(next)) > maxWidth) {
+                lines.add(Component.literal(line.toString()));
+                line.setLength(0);
+            } else {
+                line.setLength(0);
+                line.append(next);
+                i++;
+            }
+        }
+        StringBuilder rest = new StringBuilder(line);
+        for (; i < words.length; i++) {
+            rest.append(rest.length() == 0 ? "" : " ").append(words[i]);
+        }
+        if (rest.length() > 0) {
+            Component last = Component.literal(rest.toString());
+            if (width.applyAsInt(last) > maxWidth) {
+                String t = rest.toString();
+                for (int len = t.length() - 1; len > 0; len--) {
+                    last = Component.literal(t.substring(0, len).trim() + "…");
+                    if (width.applyAsInt(last) <= maxWidth) {
+                        break;
+                    }
+                }
+            }
+            lines.add(last);
+        }
+        return lines;
+    }
+
+    /** Draws a wrapped text from {@code y} down, one line every 10 pixels; returns the y under it. */
+    private static int paragraph(Canvas c, Component text, int x, int y, int maxWidth, int maxLines, int argb, boolean centered) {
+        for (Component line : wrap(text, maxWidth, maxLines, c::width)) {
+            if (centered) {
+                c.centered(line, x, y, argb);
+            } else {
+                c.text(line, x, y, argb);
+            }
+            y += 10;
+        }
+        return y;
     }
 
     private static <T extends AbstractWidget> T withTip(T widget, String key) {

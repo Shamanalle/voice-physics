@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "id": "vc-audio-distance-gametest",
+  "version": "1.0.0",
+  "name": "Voice Physics in-game tests",
+  "environment": "client",
+  "entrypoints": {
+    "fabric-client-gametest": [
+      "com.kasper.vcdistance.gametest.SettingsScreenGameTest"
+    ]
+  },
+  "depends": {
+    "vc-audio-distance": "*",
+    "fabric-client-gametest-api-v1": "*"
+  }
+}

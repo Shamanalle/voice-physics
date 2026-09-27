@@ -28,7 +28,7 @@ An addon for [Simple Voice Chat](https://modrinth.com/plugin/simple-voice-chat) 
 
 ## Quick start
 
-**Which file:** Fabric, Quilt and NeoForge 26.x get the full addon. Paper, Purpur, Folia and Spigot servers get the plugin. Forge, and NeoForge before 26.x, get a lite version with the distance curve only. The exact file for your version is in [Versions and files](#versions-and-files).
+**Which file:** Fabric and Quilt, Forge 1.20.1, and NeoForge 1.21 – 1.21.1 and 26.x get the full addon. Paper, Purpur, Folia and Spigot servers get the plugin. Other Forge and NeoForge versions get a lite version with the distance curve only. The exact file for your version is in [Versions and files](#versions-and-files).
 
 **Player**
 1. Install [Simple Voice Chat](https://modrinth.com/plugin/simple-voice-chat) and, on Fabric, [Fabric API](https://modrinth.com/mod/fabric-api).
@@ -36,7 +36,7 @@ An addon for [Simple Voice Chat](https://modrinth.com/plugin/simple-voice-chat) 
 3. In game press `V` → **Voice Physics…**, or type `/voicephysics` (also in Mod Menu, or on your own key in *Controls*). Changes are heard at once; *Cancel* undoes them.
 
 **Server**
-1. Fabric or NeoForge 26.x: put the same `.jar` into `mods/`. Paper, Purpur, Folia or Spigot: put `voice-physics-bukkit-*.jar` into `plugins/`. Simple Voice Chat must be installed.
+1. Fabric, Forge or NeoForge: put the same `.jar` into `mods/`. Paper, Purpur, Folia or Spigot: put `voice-physics-bukkit-*.jar` into `plugins/`. Simple Voice Chat must be installed.
 2. Start the server once. Walls for players without the addon are already on.
 3. Set up the rest with `/vcd` in game, on the *Server* tab of the settings screen, or in the [settings file](#server-file). The file is re-read without a restart.
 
@@ -93,7 +93,7 @@ These need the addon on your client and work on any server with Simple Voice Cha
 
 ## For servers
 
-Available in the Fabric and NeoForge 26.x mods and as a plugin for Paper, Purpur, Folia, Spigot and Bukkit.
+Available in the full Fabric, Forge and NeoForge mods and as a plugin for Paper, Purpur, Folia, Spigot and Bukkit.
 
 - **Walls for everyone.** Players without the addon also hear voices muffled through walls. Load is capped: above 24 voices at once (adjustable) the rest pass unfiltered, and on any error the original audio is sent, so voice chat never goes silent.
 - **Sound zones.** Draw a box in game with `/vcd zone`, use a whole world, or a WorldGuard region on Paper. A zone can:
@@ -129,20 +129,22 @@ With the addon on both sides the client muffles walls itself and the server skip
 
 | Loader | Minecraft | File | Java | Simple Voice Chat |
 |---|---|---|---|---|
-| **Fabric / Quilt** | 1.20 – 1.20.1 | `voice-physics-fabric-2.2.0+mc1.20.1.jar` | 17+ | 2.4.0+ |
-| **Fabric / Quilt** | 1.20.2 – 1.20.4 | `voice-physics-fabric-2.2.0+mc1.20.2-1.20.4.jar` | 17+ | 2.4.0+ |
-| **Fabric / Quilt** | 1.20.5 – 1.20.6 | `voice-physics-fabric-2.2.0+mc1.20.5-1.20.6.jar` | 21+ | 2.5.0+ |
-| **Fabric / Quilt** | 1.21 – 1.21.11 | `voice-physics-fabric-2.2.0+mc1.21.x.jar` | 21+ | 2.5.0+ |
-| **Fabric** | 26.1 – 26.3 | `voice-physics-fabric-2.2.0+mc26.x.jar` | 25+ | 2.6.0+ |
-| **NeoForge** | 26.1 – 26.3 | `voice-physics-neoforge-2.2.0+mc26.x.jar` | 25+ | 2.6.0+ |
-| **Paper / Purpur / Folia / Spigot / Bukkit** | 1.20.1 – 26.3 | `voice-physics-bukkit-2.2.0.jar` | 17+ | Bukkit version |
-| Forge (lite) | 1.20.1 | `voice-physics-forge-2.2.0+mc1.20.1.jar` | 17+ | 2.4.0+ |
-| NeoForge / Forge (lite) | 1.20.2 – 1.20.4 | `voice-physics-{neoforge,forge}-2.2.0+mc1.20.2-1.20.4.jar` | 17+ | 2.4.0+ |
-| NeoForge / Forge (lite) | 1.20.5 – 1.20.6 | `voice-physics-{neoforge,forge}-2.2.0+mc1.20.5-1.20.6.jar` | 21+ | 2.5.0+ |
-| NeoForge / Forge (lite) | 1.21 – 1.21.11 | `voice-physics-{neoforge,forge}-2.2.0+mc1.21.x.jar` | 21+ | 2.5.0+ |
-| Forge (lite) | 26.1 – 26.3 | `voice-physics-forge-2.2.0+mc26.x.jar` | 25+ | 2.6.0+ |
+| **Fabric / Quilt** | 1.20 – 1.20.1 | `voice-physics-fabric-2.3.0+mc1.20.1.jar` | 17+ | 2.4.0+ |
+| **Fabric / Quilt** | 1.20.2 – 1.20.4 | `voice-physics-fabric-2.3.0+mc1.20.2-1.20.4.jar` | 17+ | 2.4.0+ |
+| **Fabric / Quilt** | 1.20.5 – 1.20.6 | `voice-physics-fabric-2.3.0+mc1.20.5-1.20.6.jar` | 21+ | 2.5.0+ |
+| **Fabric / Quilt** | 1.21 – 1.21.11 | `voice-physics-fabric-2.3.0+mc1.21.x.jar` | 21+ | 2.5.0+ |
+| **Fabric** | 26.1 – 26.3 | `voice-physics-fabric-2.3.0+mc26.x.jar` | 25+ | 2.6.0+ |
+| **Forge** | 1.20.1 | `voice-physics-forge-2.3.0+mc1.20.1.jar` | 17+ | 2.4.0+ |
+| **NeoForge** | 1.21 – 1.21.1 | `voice-physics-neoforge-2.3.0+mc1.21-1.21.1.jar` | 21+ | 2.5.0+ |
+| **NeoForge** | 26.1 – 26.3 | `voice-physics-neoforge-2.3.0+mc26.x.jar` | 25+ | 2.6.0+ |
+| **Paper / Purpur / Folia / Spigot / Bukkit** | 1.20.1 – 26.3 | `voice-physics-bukkit-2.3.0.jar` | 17+ | Bukkit version |
+| NeoForge / Forge (lite) | 1.20.2 – 1.20.4 | `voice-physics-{neoforge,forge}-2.3.0+mc1.20.2-1.20.4.jar` | 17+ | 2.4.0+ |
+| NeoForge / Forge (lite) | 1.20.5 – 1.20.6 | `voice-physics-{neoforge,forge}-2.3.0+mc1.20.5-1.20.6.jar` | 21+ | 2.5.0+ |
+| Forge (lite) | 1.21 – 1.21.11 | `voice-physics-forge-2.3.0+mc1.21.x.jar` | 21+ | 2.5.0+ |
+| NeoForge (lite) | 1.21.2 – 1.21.11 | `voice-physics-neoforge-2.3.0+mc1.21.x.jar` | 21+ | 2.5.0+ |
+| Forge (lite) | 26.1 – 26.3 | `voice-physics-forge-2.3.0+mc26.x.jar` | 25+ | 2.6.0+ |
 
-- **Fabric** and **NeoForge 26.x** are the full addon, for the client and the server. Fabric needs [Fabric API](https://modrinth.com/mod/fabric-api); [Mod Menu](https://modrinth.com/mod/modmenu) is optional.
+- **Fabric**, **Forge 1.20.1** and **NeoForge 1.21 – 1.21.1 and 26.x** are the full addon, for the client and the server. Fabric needs [Fabric API](https://modrinth.com/mod/fabric-api); [Mod Menu](https://modrinth.com/mod/modmenu) is optional.
 - **The plugin** is the server side only. Players can join with the addon, without it, or without mods at all.
 - **Lite** versions have the distance curve only, set in `config/vc-audio-distance.properties`: no settings screen, walls, effects, HUD or server side.
 
@@ -214,7 +216,7 @@ Everything here can also be set in game. Every key in the files has a comment in
 
 ### Server file
 
-`config/vc-audio-distance-server.properties` on Fabric and NeoForge, `plugins/VoicePhysics/vc-audio-distance-server.properties` on Paper (before 2.2.0 `plugins/VoicechatAudioDistance/`, moved automatically). Changes apply within 2 seconds. The voice and whisper range itself is set in Simple Voice Chat (`max_voice_distance`, `whisper_distance`).
+`config/vc-audio-distance-server.properties` on Fabric, Forge and NeoForge, `plugins/VoicePhysics/vc-audio-distance-server.properties` on Paper (before 2.2.0 `plugins/VoicechatAudioDistance/`, moved automatically). Changes apply within 2 seconds. The voice and whisper range itself is set in Simple Voice Chat (`max_voice_distance`, `whisper_distance`).
 
 <details>
 <summary>Walls</summary>
@@ -257,7 +259,7 @@ Everything here can also be set in game. Every key in the files has a comment in
 | `zone.<kind>.<name>.priority` | whole number | Where zones overlap the highest wins (default 0) |
 | `zone.box.<name>.world`, `.from`, `.to` | world, `x,y,z`, `x,y,z` | The box; `/vcd zone create` writes it |
 
-`<kind>` is `world`, `box` or `region` (WorldGuard, Paper). A world is its folder name on Paper (`world_nether`) and its dimension on Fabric and NeoForge (`the_nether`). On equal priority a region wins, then the smaller box. Anything a zone does not set comes from the rest of the file.
+`<kind>` is `world`, `box` or `region` (WorldGuard, Paper). A world is its folder name on Paper (`world_nether`) and its dimension on Fabric, Forge and NeoForge (`the_nether`). On equal priority a region wins, then the smaller box. Anything a zone does not set comes from the rest of the file.
 
 ```properties
 # A stage heard twice as far, and a soundproof booth
