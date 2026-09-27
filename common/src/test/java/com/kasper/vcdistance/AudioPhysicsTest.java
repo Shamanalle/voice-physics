@@ -186,4 +186,24 @@ public class AudioPhysicsTest {
         assertTrue(Preset.REALISTIC.dependsOnRange());
         assertFalse(Preset.VANILLA.dependsOnRange());
     }
+    @Test
+    @DisplayName("With less than full falloff every curve still ends at the edge volume, smoothly")
+    void partialFalloffReachesTheEdge() {
+        for (AttenuationModel model : AttenuationModel.values()) {
+            for (double rolloff : new double[]{0.1, 0.35, 0.7}) {
+                assertEquals(0.0, AudioPhysics.calculateGain(1.0, model, rolloff, 0.0, 0.25), EPSILON, model + " " + rolloff);
+                assertEquals(0.2, AudioPhysics.calculateGain(1.0, model, rolloff, 0.2, 0.25), EPSILON, model + " " + rolloff);
+                double prev = 1.0;
+                for (double d = 0.25; d <= 1.0; d += 0.005) {
+                    double g = AudioPhysics.calculateGain(d, model, rolloff, 0.0, 0.25);
+                    assertTrue(g <= prev + EPSILON, model + " " + rolloff + " rises at " + d);
+                    assertTrue(prev - g < 0.05, model + " " + rolloff + " jumps at " + d);
+                    prev = g;
+                }
+            }
+        }
+        // Simple Voice Chat's own curve stays exactly as it is
+        assertEquals(0.5, AudioPhysics.calculateGain(0.75, AttenuationModel.LINEAR, 1.0, 0.0, 0.5), EPSILON);
+        assertEquals(0.125, AudioPhysics.calculateGain(0.9375, AttenuationModel.LINEAR, 1.0, 0.0, 0.5), EPSILON);
+    }
 }

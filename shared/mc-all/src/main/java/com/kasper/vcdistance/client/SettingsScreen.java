@@ -57,8 +57,8 @@ public abstract class SettingsScreen extends Screen {
     private static boolean materialsOpen;
 
     /** Walk-away preview: where the voice is at each step, as a share of the range. */
-    private static final double[] PREVIEW_STEPS = {0.05, 0.25, 0.45, 0.65, 0.85, 1.0};
-    private static final int PREVIEW_STEP_TICKS = 14;
+    private static final double[] PREVIEW_STEPS = {0.03, 0.12, 0.21, 0.3, 0.39, 0.48, 0.57, 0.66, 0.75, 0.84, 0.92, 0.97};
+    private static final int PREVIEW_STEP_TICKS = 10;
 
     public enum Tab {
         DISTANCE("tab.distance"),
@@ -92,8 +92,8 @@ public abstract class SettingsScreen extends Screen {
             new Example("stone3", AcousticMaterial.STONE, 3)
     };
 
-    /** A section title on the Server tab, at a content y. */
-    private record Heading(Component text, int y) {
+    /** A section title on the Server tab, at a content y; its rule runs to {@code lineEnd}. */
+    private record Heading(Component text, int y, int lineEnd) {
     }
 
     protected final Screen parent;
@@ -463,10 +463,10 @@ public abstract class SettingsScreen extends Screen {
         // Header strip above the graph: the summary and legend, and Listen (allowed while the server
         // enforces its profile). One width for both labels so it does not jump when it toggles.
         graphHeaderY = y;
-        int lw = Math.max(this.font.width(tr("listen")), this.font.width(tr("listen.stop"))) + 16;
+        int lw = Math.max(this.font.width(tr("listen")), this.font.width(tr("listen.stop"))) + 12;
         listenButton = content(Button.builder(previewStep >= 0 ? tr("listen.stop") : tr("listen"), b -> togglePreview())
-                .bounds(right - lw, y, lw, 20).tooltip(tip("listen.tooltip")).build());
-        graphTop = y + 22;
+                .bounds(right - lw, y, lw, 14).tooltip(tip("listen.tooltip")).build());
+        graphTop = y + 17;
 
         // The graph keeps a readable shape; on short windows it shrinks down to a minimum and the tab scrolls
         int preferred = Math.max(120, w * 2 / 5);
@@ -768,16 +768,16 @@ public abstract class SettingsScreen extends Screen {
 
     /** A section title, then the section's first row. */
     private int heading(String key, int y) {
-        headings.add(new Heading(tr(key), y));
+        headings.add(new Heading(tr(key), y, right));
         return y + 13;
     }
 
     private void initServer() {
         java.util.Properties st = serverState();
         int w = right - left;
-        int third = (w - GAP * 2) / 3;
-        int x2 = left + third + GAP;
-        int x3 = right - third;
+        // Two columns: the labels ("Spectators apart: On") are too long for three
+        int half = (w - GAP) / 2;
+        int x2 = right - half;
         int y = contentTop;
         if (st == null) {
             contentEnd = contentTop + 40;
@@ -789,11 +789,12 @@ public abstract class SettingsScreen extends Screen {
         String mode = st.getProperty("profile_mode", "off");
         String preset = st.getProperty("profile_preset", "custom");
         String locked = st.getProperty("profile_locked", "all");
-        serverButton(tr("server.profile", tr("server.mode." + mode)), "server.profile.tooltip", left, y, third,
+        serverButton(tr("server.profile", tr("server.mode." + mode)), "server.profile.tooltip", left, y, half,
                 "profile " + next(SERVER_MODES, mode));
-        serverButton(tr("server.preset", presetName(preset)), "server.preset.tooltip", x2, y, third,
+        serverButton(tr("server.preset", presetName(preset)), "server.preset.tooltip", x2, y, half,
                 "preset " + next(SERVER_PRESETS, preset));
-        serverButton(tr("server.locked", lockedName(locked)), "server.locked.tooltip", x3, y, third,
+        y += ROW;
+        serverButton(tr("server.locked", lockedName(locked)), "server.locked.tooltip", left, y, half,
                 "lock " + next(SERVER_LOCKS, locked));
         y += ROW + 4;
 
@@ -805,43 +806,44 @@ public abstract class SettingsScreen extends Screen {
         serverButton(Component.literal("−"), "server.walls.tooltip", left, y, 20, down == 0 ? "walls off" : "walls " + down)
                 .active = wallsPct > 0;
         serverButton(tr("server.walls", wallsPct == 0 ? tr("off") : Component.literal(wallsPct + "%")), "server.walls.tooltip",
-                left + 22, y, third - 44, "walls " + up).active = wallsPct < 100;
-        serverButton(Component.literal("+"), "server.walls.tooltip", left + third - 20, y, 20, "walls " + up)
+                left + 22, y, half - 44, "walls " + up).active = wallsPct < 100;
+        serverButton(Component.literal("+"), "server.walls.tooltip", left + half - 20, y, 20, "walls " + up)
                 .active = wallsPct < 100;
-        serverToggle("server.server_walls", st, "server_walls", "false", x2, y, third, "serverwalls");
-        serverToggle("server.monitor", st, "allow_monitor", "true", x3, y, third, "monitor");
+        serverToggle("server.server_walls", st, "server_walls", "false", x2, y, half, "serverwalls");
+        y += ROW;
+        serverToggle("server.monitor", st, "allow_monitor", "true", left, y, half, "monitor");
         y += ROW + 4;
 
         // Game rules
         y = heading("server.section.rules", y);
         String sneak = st.getProperty("sneak_range_multiplier", "1");
-        serverButton(tr("server.sneak", pct(parse(sneak))), "server.sneak.tooltip", left, y, third,
+        serverButton(tr("server.sneak", pct(parse(sneak))), "server.sneak.tooltip", left, y, half,
                 "rule sneak " + next(SERVER_SNEAK, sneak));
-        serverToggle("server.dead", st, "dead_players_silent", "false", x2, y, third, "rule dead");
-        serverToggle("server.spectators", st, "spectators_hear_only_spectators", "false", x3, y, third, "rule spectators");
-        y += ROW;
         String megaphone = st.getProperty("megaphone_item", "");
         serverButton(tr("server.megaphone", megaphone.isEmpty() ? tr("off") : Component.translatable("item.minecraft.goat_horn")),
-                "server.megaphone.tooltip", left, y, third, "rule megaphone " + (megaphone.isEmpty() ? MEGAPHONE : "off"));
+                "server.megaphone.tooltip", x2, y, half, "rule megaphone " + (megaphone.isEmpty() ? MEGAPHONE : "off"));
+        y += ROW;
+        serverToggle("server.dead", st, "dead_players_silent", "false", left, y, half, "rule dead");
+        serverToggle("server.spectators", st, "spectators_hear_only_spectators", "false", x2, y, half, "rule spectators");
         y += ROW + 4;
 
         // Rules inside Simple Voice Chat groups
         y = heading("server.section.groups", y);
-        serverToggle("server.group.dead", st, "group_dead_silent", "false", left, y, third, "group dead");
-        serverToggle("server.group.spectators", st, "group_spectators_apart", "false", x2, y, third, "group spectators");
-        serverToggle("server.group.zones", st, "group_isolated_zones", "false", x3, y, third, "group zones");
+        serverToggle("server.group.dead", st, "group_dead_silent", "false", left, y, half, "group dead");
+        serverToggle("server.group.spectators", st, "group_spectators_apart", "false", x2, y, half, "group spectators");
         y += ROW;
-        serverToggle("server.group.open_range", st, "open_group_range", "true", left, y, third, "group open_range");
+        serverToggle("server.group.zones", st, "group_isolated_zones", "false", left, y, half, "group zones");
+        serverToggle("server.group.open_range", st, "open_group_range", "true", x2, y, half, "group open_range");
         y += ROW + 4;
 
         // Players who have Simple Voice Chat but not this addon
         y = heading("server.section.addon", y);
         String require = st.getProperty("require_addon", "off");
-        serverButton(tr("server.require", tr("server.require." + require)), "server.require.tooltip", left, y, third * 2 + GAP,
+        serverButton(tr("server.require", tr("server.require." + require)), "server.require.tooltip", left, y, half,
                 "require " + next(SERVER_REQUIRE, require));
         y += ROW + 4;
 
-        y = initZones(st, y, w, third);
+        y = initZones(st, y, w, (w - GAP * 2) / 3);
         contentEnd = y;
     }
 
@@ -862,8 +864,8 @@ public abstract class SettingsScreen extends Screen {
         while (names.contains("zone-" + used)) {
             used++;
         }
-        headings.add(new Heading(tr("server.zones"), y + 6));
         int createW = Math.min(third * 2, this.font.width(tr("server.zone.create")) + 16);
+        headings.add(new Heading(tr("server.zones"), y + 6, right - createW - 8));
         serverButton(tr("server.zone.create"), "server.zone.create.tooltip", right - createW, y, createW,
                 "zone create zone-" + used + " 8");
         y += ROW;
@@ -974,8 +976,8 @@ public abstract class SettingsScreen extends Screen {
         for (Heading h : headings) {
             c.text(h.text(), left + 1, h.y(), Palette.ACCENT_LINE);
             int lineX = left + c.width(h.text()) + 8;
-            if (lineX < right) {
-                c.hLine(lineX, right, h.y() + 4, Palette.PANEL_BORDER);
+            if (lineX < h.lineEnd()) {
+                c.hLine(lineX, h.lineEnd(), h.y() + 4, Palette.PANEL_BORDER);
             }
         }
         if (noZonesY >= 0) {
@@ -1227,7 +1229,7 @@ public abstract class SettingsScreen extends Screen {
     private void paintDistance(Canvas c, int mouseX, int mouseY) {
         int x1 = left;
         int x2 = right;
-        int headerY = graphHeaderY + 6;
+        int headerY = graphHeaderY + 3;
         int y1 = graphTop;
         int y2 = graphBottom;
 
