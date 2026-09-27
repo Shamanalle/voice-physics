@@ -8,14 +8,21 @@ plugins {
 def releaseTargets = [
         [project: ':fabric-1.20', target: 'mc1.20.1', aliases: []],
         [project: ':fabric-1.20.4', target: 'mc1.20.2-1.20.4', aliases: ['neoforge', 'forge']],
-        [project: ':fabric-1.20.6', target: 'mc1.20.5-1.20.6', aliases: ['forge']],
-        [project: ':fabric-1.21', target: 'mc1.21.x', aliases: ['forge']],
+        [project: ':fabric-1.20.6', target: 'mc1.20.5-1.20.6', aliases: []],
+        [project: ':fabric-1.21', target: 'mc1.21.x', aliases: []],
         [project: ':fabric-26', target: 'mc26.x', aliases: ['neoforge', 'forge']],
 ]
 
-// Full builds of their own: Forge 1.20.1 (remapped to Forge's names by reobfJar) and NeoForge 1.20.5 - 1.21.11
+// Full builds of their own: Forge 1.20.1 (remapped to Forge's names by reobfJar), Forge 1.20.6 - 1.21.11
+// and NeoForge 1.20.5 - 1.21.11
 def loaderTargets = [
         [project: ':forge-1.20.1', task: 'reobfJar', file: 'voice-physics-forge-%s+mc1.20.1.jar'],
+        [project: ':forge-1.20.6', task: 'jar', file: 'voice-physics-forge-%s+mc1.20.6.jar'],
+        [project: ':forge-1.21', task: 'jar', file: 'voice-physics-forge-%s+mc1.21-1.21.1.jar'],
+        [project: ':forge-1.21.5', task: 'jar', file: 'voice-physics-forge-%s+mc1.21.3-1.21.5.jar'],
+        [project: ':forge-1.21.8', task: 'jar', file: 'voice-physics-forge-%s+mc1.21.6-1.21.8.jar'],
+        [project: ':forge-1.21.10', task: 'jar', file: 'voice-physics-forge-%s+mc1.21.9-1.21.10.jar'],
+        [project: ':forge-1.21.11', task: 'jar', file: 'voice-physics-forge-%s+mc1.21.11.jar'],
         [project: ':neoforge-1.20.6', task: 'jar', file: 'voice-physics-neoforge-%s+mc1.20.5-1.20.6.jar'],
         [project: ':neoforge-1.21', task: 'jar', file: 'voice-physics-neoforge-%s+mc1.21-1.21.1.jar'],
         [project: ':neoforge-1.21.5', task: 'jar', file: 'voice-physics-neoforge-%s+mc1.21.2-1.21.5.jar'],
