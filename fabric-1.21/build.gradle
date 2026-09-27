@@ -97,3 +97,10 @@ if (gametestVoicechat.exists()) {
         modLocalRuntime files(gametestVoicechat)
     }
 }
+
+// The loader's Mixin for 1.21 does not run on Java 25, so the test client runs on Java 21
+tasks.matching { it.name == 'runClientGameTest' }.configureEach {
+    javaLauncher = javaToolchains.launcherFor {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
