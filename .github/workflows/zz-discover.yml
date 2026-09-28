@@ -1,0 +1,42 @@
+name: Discover loader versions (temporary)
+
+on:
+  push:
+    paths: [.github/workflows/zz-discover.yml]
+
+permissions:
+  contents: read
+
+jobs:
+  discover:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Loaders and Simple Voice Chat per Minecraft version
+        run: |
+          set +e
+          releases=$(curl -fsSL https://piston-meta.mojang.com/mc/game/version_manifest_v2.json \
+            | jq -r '.versions[] | select(.type == "release") | .id' | sort -V)
+          wanted=$(printf '%s\n' ${releases} | awk -F. '($1=="1" && $2>=20) || $1>=26')
+          echo "Releases: $(echo ${wanted})"
+          forge=$(curl -fsSL https://maven.minecraftforge.net/net/minecraftforge/forge/maven-metadata.xml | grep -oP '<version>\K[^<]+' | cut -d- -f1 | sort -Vu)
+          echo "Forge MC: $(echo ${forge})"
+          nf_old=$(curl -fsSL https://maven.neoforged.net/releases/net/neoforged/forge/maven-metadata.xml | grep -oP '<version>\K[^<]+' | tail -3)
+          echo "NeoForge (old group, 1.20.1) last: $(echo ${nf_old})"
+          nf=$(curl -fsSL https://maven.neoforged.net/releases/net/neoforged/neoforge/maven-metadata.xml | grep -oP '<version>\K[^<]+' | grep -v beta | awk -F. '{print $1"."$2}' | sort -Vu)
+          echo "NeoForge prefixes: $(echo ${nf})"
+          quilt=$(curl -fsSL https://meta.quiltmc.org/v3/versions/game | jq -r '.[] | select(.stable) | .version')
+          echo "Quilt stable games (>=1.20): $(printf '%s\n' ${quilt} | awk -F. '($1=="1" && $2>=20) || $1>=26' | sort -V | tr '\n' ' ')"
+          echo "Quilt loader newest: $(curl -fsSL https://meta.quiltmc.org/v3/versions/loader | jq -r '.[0].version')"
+          for p in paper purpur folia; do :; done
+          echo "Paper: $(curl -fsSL https://api.papermc.io/v2/projects/paper | jq -r '.versions | join(" ")')"
+          echo "Folia: $(curl -fsSL https://api.papermc.io/v2/projects/folia | jq -r '.versions | join(" ")')"
+          echo "Paper (fill): $(curl -fsSL https://fill.papermc.io/v3/projects/paper | jq -c '.versions')"
+          echo "Purpur: $(curl -fsSL https://api.purpurmc.org/v2/purpur | jq -r '.versions | join(" ")')"
+          spigot=$(curl -fsSL https://hub.spigotmc.org/versions/ | grep -oP 'href="\K[0-9][0-9.]*(?=\.json")' | sort -Vu | tr '\n' ' ')
+          echo "Spigot: ${spigot}"
+          svc=$(curl -fsSL "https://api.modrinth.com/v2/project/simple-voice-chat/version")
+          echo "SVC versions on Modrinth: $(jq length <<< "${svc}")"
+          for loader in fabric quilt forge neoforge paper bukkit spigot purpur folia; do
+            have=$(jq -r --arg l "${loader}" '[.[] | select(.loaders | index($l)) | .game_versions[]] | unique | .[]' <<< "${svc}" | awk -F. '($1=="1" && $2>=20) || $1>=26' | sort -V | tr '\n' ' ')
+            echo "SVC ${loader}: ${have}"
+          done
