@@ -1,0 +1,28 @@
+name: Legacy NeoForge build (temporary)
+
+on:
+  push:
+    paths: [ 'legacy/neoforge-1.20.4/**', '.github/workflows/zz-legacy.yml' ]
+
+permissions:
+  contents: read
+
+jobs:
+  neoforge:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Tasks and build
+        working-directory: legacy/neoforge-1.20.4
+        run: |
+          export JAVA_HOME="${JAVA_HOME_21_X64}"
+          sh gradlew tasks --all --no-daemon 2>&1 | grep -iE 'obf|jar|srg' || true
+          sh gradlew build --no-daemon --stacktrace 2>&1 | tail -150
+          ls -la build/libs || true
+      - name: Names in the jar
+        working-directory: legacy/neoforge-1.20.4
+        run: |
+          for jar in build/libs/*.jar; do
+            echo "== ${jar}"
+            "${JAVA_HOME_21_X64}/bin/javap" -c -p -cp "${jar}" com.kasper.vcdistance.client.PoseScaler | grep -E 'Method net/minecraft' || true
+          done
