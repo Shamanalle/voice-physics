@@ -21,6 +21,13 @@ base {
     archivesName = 'voice-physics-neoforge'
 }
 
+// NeoGradle asks for a toolchain; the one Gradle runs on (the classes still target Java 17)
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
 repositories {
     mavenCentral()
     maven {
