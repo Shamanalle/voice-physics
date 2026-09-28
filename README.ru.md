@@ -36,7 +36,7 @@
 3. В игре нажмите `V` → **Voice Physics…** или введите `/voicephysics` (также в Mod Menu или на своей клавише в «Управлении»). Изменения слышны сразу; «Отмена» возвращает как было.
 
 **Сервер**
-1. Fabric, Forge или NeoForge: положите тот же `.jar` в `mods/`. Paper, Purpur, Folia или Spigot: положите `voice-physics-bukkit-*.jar` в `plugins/`. Нужен установленный Simple Voice Chat.
+1. Fabric, Forge или NeoForge: положите тот же `.jar` в `mods/`. Paper, Purpur, Folia или Spigot: положите `voice-physics-bukkit-*.jar` в `plugins/` (на CurseForge у плагина [своя страница](https://www.curseforge.com/projects/1715914)). Нужен установленный Simple Voice Chat.
 2. Запустите сервер один раз. Стены для игроков без аддона уже включены.
 3. Остальное настраивается командой `/vcd` в игре, на вкладке «Сервер» в экране настроек или в [файле настроек](#файл-сервера). Файл перечитывается без перезапуска.
 
