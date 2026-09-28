@@ -67,9 +67,12 @@ jobs:
           - { loader: neoforge, mc: '1.21.9', jar: 'voice-physics-neoforge-*+mc1.21.9-1.21.10.jar', java: '21', version: 'nf12110_neoforge_oldest' }
           - { loader: neoforge, mc: '1.21.10', jar: 'voice-physics-neoforge-*+mc1.21.9-1.21.10.jar', java: '21', version: 'nf12110_neoforge' }
           - { loader: neoforge, mc: '1.21.11', jar: 'voice-physics-neoforge-*+mc1.21.11.jar', java: '21', version: 'nf12111_neoforge' }
+          - { loader: forge, mc: '1.20', jar: 'voice-physics-forge-*+mc1.20.1.jar', java: '17', version: 'forge120_version_oldest' }
           - { loader: forge, mc: '1.20.1', jar: 'voice-physics-forge-*+mc1.20.1.jar', java: '17', version: 'forge120_version' }
+          - { loader: neoforge, mc: '1.20.1', jar: 'voice-physics-forge-*+mc1.20.1.jar', java: '17', version: 'nf1201_forge' }
           - { loader: forge, mc: '1.20.6', jar: 'voice-physics-forge-*+mc1.20.6.jar', java: '21', version: 'forge1206_version' }
-          - { loader: forge, mc: '1.21.1', jar: 'voice-physics-forge-*+mc1.21.1.jar', java: '21', version: 'forge121_version' }
+          - { loader: forge, mc: '1.21', jar: 'voice-physics-forge-*+mc1.21-1.21.1.jar', java: '21', version: 'forge121_version_oldest' }
+          - { loader: forge, mc: '1.21.1', jar: 'voice-physics-forge-*+mc1.21-1.21.1.jar', java: '21', version: 'forge121_version' }
           - { loader: forge, mc: '1.21.3', jar: 'voice-physics-forge-*+mc1.21.3-1.21.5.jar', java: '21', version: 'forge1215_version_oldest' }
           - { loader: forge, mc: '1.21.5', jar: 'voice-physics-forge-*+mc1.21.3-1.21.5.jar', java: '21', version: 'forge1215_version' }
           - { loader: forge, mc: '1.21.6', jar: 'voice-physics-forge-*+mc1.21.6-1.21.8.jar', java: '21', version: 'forge1216_server' }
@@ -79,7 +82,9 @@ jobs:
           - { loader: forge, mc: '1.21.11', jar: 'voice-physics-forge-*+mc1.21.11.jar', java: '21', version: 'forge12111_version' }
           - { loader: forge, mc: '26.1', jar: 'voice-physics-forge-*+mc26.x.jar', java: '25', version: 'forge26_version_oldest' }
           - { loader: forge, mc: '26.3', jar: 'voice-physics-forge-*+mc26.x.jar', java: '25', version: 'forge26_version' }
+          - { loader: paper, mc: '1.20', jar: 'voice-physics-bukkit-*.jar', java: '21' }
           - { loader: paper, mc: '1.20.1', jar: 'voice-physics-bukkit-*.jar', java: '21' }
+          - { loader: paper, mc: '1.20.5', jar: 'voice-physics-bukkit-*.jar', java: '21' }
           - { loader: paper, mc: '1.21.11', jar: 'voice-physics-bukkit-*.jar', java: '21' }
           - { loader: paper, mc: 'latest', jar: 'voice-physics-bukkit-*.jar', java: '25' }
           - { loader: folia, mc: 'latest', jar: 'voice-physics-bukkit-*.jar', java: '25' }

@@ -24,8 +24,9 @@ repositories {
     }
 }
 
+// The build against the oldest Forge it supports (1.20, .github/workflows/build.yml) passes -PloaderOverride.forge-1.20.1=<version>
 legacyForge {
-    version = project.forge120_version
+    version = project.findProperty("loaderOverride.${project.name}") ?: project.forge120_version
 }
 
 // Shared files that need Fabric, or that Forge replaces with its own version (same path in this module)
