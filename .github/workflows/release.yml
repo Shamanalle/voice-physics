@@ -10,6 +10,11 @@ on:
     tags:
       - 'v*'
   workflow_dispatch:
+    inputs:
+      skip_ingame:
+        description: 'Skip the in-game tests (when the same commit already passed them on its pull request)'
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -18,11 +23,14 @@ jobs:
   # Real servers with the addon must start and answer /vcd before anything is published
   ingame:
     name: In-game tests
+    if: ${{ !inputs.skip_ingame }}
     uses: ./.github/workflows/ingame.yml
 
   release:
     name: Build & publish
     needs: ingame
+    # Runs after the in-game tests pass, or without them when they were skipped on purpose
+    if: ${{ !cancelled() && (needs.ingame.result == 'success' || needs.ingame.result == 'skipped') }}
     runs-on: ubuntu-latest
     outputs:
       tag: ${{ steps.meta.outputs.tag }}
