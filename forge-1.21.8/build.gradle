@@ -1,0 +1,10 @@
+plugins {
+    id 'net.minecraftforge.gradle' version '[7.0.17,8)'
+    id 'java'
+}
+
+// Forge 1.21.6 - 1.21.8: the full addon (see gradle/forge-band.gradle)
+ext.forgeTarget = "mc1.21.6-1.21.8"
+ext.forgeVersion = "forge1218_version"
+ext.forgeBus = 7
+apply from: "${rootDir}/gradle/forge-band.gradle"

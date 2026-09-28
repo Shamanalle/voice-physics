@@ -1,0 +1,11 @@
+plugins {
+    id 'net.neoforged.moddev' version '2.0.147'
+    id 'java'
+}
+
+// NeoForge 1.21.11: the full addon (see gradle/neoforge-band.gradle)
+ext.nfTarget = "mc1.21.11"
+ext.nfVersion = "nf12111_neoforge"
+ext.nfJava = 21
+ext.nfExclude = ["com/kasper/vcdistance/client/KeyMappings.java"]
+apply from: "${rootDir}/gradle/neoforge-band.gradle"

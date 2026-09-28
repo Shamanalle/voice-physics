@@ -3,6 +3,9 @@ plugins {
     id 'java'
 }
 
+// Its jar carries the classes of ':common', so that module is configured first (configure-on-demand)
+evaluationDependsOn(':common')
+
 // Minecraft 1.21 - 1.21.11 (compiled against 1.21.8, see gradle.properties)
 def target = "mc1.21.x"
 version = "${project.mod_version}+${target}"
