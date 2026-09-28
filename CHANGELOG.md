@@ -6,6 +6,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 *Все заметные изменения проекта описываются в этом файле. Каждая версия описана сначала на английском, затем на русском.*
 
+## [2.6.1] - 2026-09-28
+
+### English
+
+#### Added
+- Forge 1.20 and 1.21: the Forge 1.20.1 and 1.21.1 files now run there too. The 1.21 – 1.21.1 file has a new name.
+- NeoForge 1.20.1 takes the Forge 1.20.1 file.
+- The 26.x file is listed for Quilt.
+- The plugin is listed for every release from 1.20 to 26.3, including 1.20, 1.20.5, 1.21.2 and 26.1.
+
+### Русский
+
+#### Добавлено
+- Forge 1.20 и 1.21: файлы для Forge 1.20.1 и 1.21.1 теперь работают и там. У файла для 1.21 – 1.21.1 новое имя.
+- NeoForge 1.20.1 берёт файл для Forge 1.20.1.
+- Файл для 26.x отмечен и для Quilt.
+- Плагин отмечен для всех версий с 1.20 по 26.3, включая 1.20, 1.20.5, 1.21.2 и 26.1.
+
 ## [2.6.0] - 2026-09-27
 
 ### English
