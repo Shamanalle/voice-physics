@@ -1,6 +1,6 @@
 An addon for [Simple Voice Chat](https://modrinth.com/plugin/simple-voice-chat) that makes voices behave like sound: they fade with distance, get muffled behind walls, come round corners through doorways and echo in caves.
 
-Install it on your client, on the server, or on both. Each works on its own.
+Install it on your client, on the server, or on both. Each works on its own. On Paper, Purpur, Folia and Spigot servers use the [Voice Physics plugin](https://www.curseforge.com/projects/1715914) instead.
 
 ![The Distance tab: the fade curve and presets](https://raw.githubusercontent.com/Shamanalle/voice-physics/main/docs/images/ui-distance.png)
 
@@ -31,6 +31,8 @@ Install it on your client, on the server, or on both. Each works on its own.
 
 ## For servers
 
+*These need Voice Physics on the server: this mod on Fabric, Forge or NeoForge, or the [plugin](https://www.curseforge.com/projects/1715914) on Paper, Purpur, Folia and Spigot.*
+
 Players **without the addon** also hear voices muffled through walls.
 
 - **Sound zones:** a stage heard twice as far, a quiet library, a soundproof room, a cathedral with echo. Everyone sees the zone's name above the hotbar on entering, even without the addon. WorldGuard regions and Open Parties and Claims claims work too.
@@ -47,67 +49,9 @@ Players **without the addon** also hear voices muffled through walls.
 | Fabric, Quilt | full, needs [Fabric API](https://modrinth.com/mod/fabric-api) |
 | Forge 1.20.1, 1.20.6, 1.21.1 – 1.21.11, 26.x | full |
 | NeoForge 1.20.5 – 1.21.11, 26.x | full |
-| Paper, Purpur, Folia, Spigot | plugin (server only) |
+| Paper, Purpur, Folia, Spigot | the [plugin](https://www.curseforge.com/projects/1715914), a separate project |
 | Forge and NeoForge 1.20.2 – 1.20.4 | lite: distance only |
 
 Minecraft 1.20 – 1.20.6, 1.21 – 1.21.11 and 26.1 – 26.3.
 
 **[All settings, commands and what works where →](https://github.com/Shamanalle/voice-physics#readme)** · [Changelog](https://github.com/Shamanalle/voice-physics/blob/main/CHANGELOG.md) · [Report a bug](https://github.com/Shamanalle/voice-physics/issues)
-
----
-
-## 🇷🇺 Русский
-
-Аддон для [Simple Voice Chat](https://modrinth.com/plugin/simple-voice-chat), с которым голоса ведут себя как звук: затихают с расстоянием, глохнут за стенами, доносятся из-за угла через проёмы и отдаются эхом в пещерах.
-
-Ставится на клиент, на сервер или туда и туда. Каждый вариант работает сам по себе.
-
-## Для игроков
-
-**🗣️ Дистанция**
-- Выберите, как тихнут голоса: как в Simple Voice Chat, реалистично или круче. Без резкого обрыва на краю.
-- Живой график с теми, кого вы слышите сейчас, и кнопка «Прослушать», чтобы услышать спад.
-- Пресеты: **Ваниль**, **Реализм**, **Чётко** (ивенты), **Стелс** (прятки, хоррор). Сами подстраиваются под дальность голоса на сервере.
-
-**🧱 Стены и углы**
-- Голоса за стенами тише и глуше. Шерсть и металл глушат сильнее, стекло и листва слабее, открытые двери пропускают звук.
-- Голос из соседней комнаты идёт через дверной проём и тем глуше, чем круче поворот.
-- Двое рядом в узком тоннеле слышат друг друга чисто.
-
-**🌊 Эхо, вода, дождь**
-- Эхо по месту: короткое в каменной комнате, долгое в пещере, мягкое в деревянном доме, никакого в лесу и в поле.
-- У скал голос возвращается через мгновение.
-- Эхо меняется плавно, когда вы переходите из одного места в другое.
-- Глухие голоса под водой; дождь и гроза заглушают дальние голоса. Силу каждого выбираете вы.
-
-**👀 HUD и монитор**
-- Видно, кто говорит, как далеко, откуда и за стеной ли.
-- Пока говорите вы — сколько игроков вас слышат.
-- Монитор и радар со всеми в радиусе голоса. Цвета для дальтоников.
-
-**🔗 Ещё:** поделитесь настройками с другом одним кодом. Семь языков.
-
-## Для серверов
-
-Игроки **без аддона** тоже слышат голоса за стенами приглушёнными.
-
-- **Звуковые зоны:** сцена, которую слышно вдвое дальше, тихая библиотека, звукоизолированная комната, собор с эхом. При входе все видят название зоны над хотбаром, даже без аддона. Подходят и регионы WorldGuard, и приваты Open Parties and Claims.
-- **Правила игры:** на корточках тише, мёртвые молчат, наблюдатели говорят только между собой, козий рог работает как мегафон.
-- **Один звук для всех:** предложите или закрепите настройки сервера для честного PvP и ивентов.
-- **Без взгляда сквозь стены:** выключите монитор и радар.
-- **Обязательный аддон:** ссылка на скачивание, напоминание при каждом входе или кик.
-- **Вкладка «Сервер» в игре** для админов, кликабельные команды `/vcd` с отменой и журнал того, кто что менял.
-
-## Какой файл нужен?
-
-| Вы играете на | Файл |
-|---|---|
-| Fabric, Quilt | полный, нужен [Fabric API](https://modrinth.com/mod/fabric-api) |
-| Forge 1.20.1, 1.20.6, 1.21.1 – 1.21.11, 26.x | полный |
-| NeoForge 1.20.5 – 1.21.11, 26.x | полный |
-| Paper, Purpur, Folia, Spigot | плагин (только сервер) |
-| Forge и NeoForge 1.20.2 – 1.20.4 | облегчённый: только дистанция |
-
-Minecraft 1.20 – 1.20.6, 1.21 – 1.21.11 и 26.1 – 26.3.
-
-**[Все настройки, команды и что где работает →](https://github.com/Shamanalle/voice-physics/blob/main/README.ru.md)** · [Список изменений](https://github.com/Shamanalle/voice-physics/blob/main/CHANGELOG.md) · [Сообщить об ошибке](https://github.com/Shamanalle/voice-physics/issues)

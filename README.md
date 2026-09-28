@@ -36,7 +36,7 @@ An addon for [Simple Voice Chat](https://modrinth.com/plugin/simple-voice-chat) 
 3. In game press `V` → **Voice Physics…**, or type `/voicephysics` (also in Mod Menu, or on your own key in *Controls*). Changes are heard at once; *Cancel* undoes them.
 
 **Server**
-1. Fabric, Forge or NeoForge: put the same `.jar` into `mods/`. Paper, Purpur, Folia or Spigot: put `voice-physics-bukkit-*.jar` into `plugins/`. Simple Voice Chat must be installed.
+1. Fabric, Forge or NeoForge: put the same `.jar` into `mods/`. Paper, Purpur, Folia or Spigot: put `voice-physics-bukkit-*.jar` into `plugins/` (on CurseForge the plugin has [its own page](https://www.curseforge.com/projects/1715914)). Simple Voice Chat must be installed.
 2. Start the server once. Walls for players without the addon are already on.
 3. Set up the rest with `/vcd` in game, on the *Server* tab of the settings screen, or in the [settings file](#server-file). The file is re-read without a restart.
 

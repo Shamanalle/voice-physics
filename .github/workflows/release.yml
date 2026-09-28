@@ -104,6 +104,8 @@ jobs:
   stores:
     name: Modrinth & CurseForge
     needs: release
+    # Without this it would be skipped along with the in-game tests when they are skipped
+    if: ${{ !cancelled() && needs.release.result == 'success' }}
     uses: ./.github/workflows/publish.yml
     with:
       tag: ${{ needs.release.outputs.tag }}
