@@ -81,7 +81,8 @@ final class ForgeCompat {
         }
         Consumer<Event> listener = event -> {
             try {
-                ((LayeredDraw) layers.invoke(event)).add(id, layer);
+                // Minecraft's own add(Layer): Forge 52's named add(id, layer) is not in Forge 51
+                ((LayeredDraw) layers.invoke(event)).add(layer);
             } catch (ReflectiveOperationException | RuntimeException e) {
                 DistanceConfig.LOGGER.warn("Could not add the voice HUD: {}", e.toString());
             }

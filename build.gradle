@@ -7,7 +7,7 @@ plugins {
 // (distance curves, configured through config/vc-audio-distance.properties) without the other features.
 def releaseTargets = [
         [project: ':fabric-1.20', target: 'mc1.20.1', aliases: []],
-        [project: ':fabric-1.20.4', target: 'mc1.20.2-1.20.4', aliases: ['neoforge', 'forge']],
+        [project: ':fabric-1.20.4', target: 'mc1.20.2-1.20.4', aliases: ['neoforge']],
         [project: ':fabric-1.20.6', target: 'mc1.20.5-1.20.6', aliases: []],
         [project: ':fabric-1.21', target: 'mc1.21.x', aliases: []],
         [project: ':fabric-26', target: 'mc26.x', aliases: ['neoforge', 'forge']],
@@ -31,12 +31,48 @@ def loaderTargets = [
         [project: ':neoforge-1.21.11', task: 'jar', file: 'voice-physics-neoforge-%s+mc1.21.11.jar'],
 ]
 
+// Builds of their own, with Gradle 8 (legacy/*): Forge 1.20.2 - 1.20.4 runs with SRG names, which only
+// ForgeGradle 6 remaps to, and ForgeGradle 6 cannot share this build with ForgeGradle 7. They need a
+// JDK 17 or 21 for their Gradle: LEGACY_JAVA_HOME, or the JAVA_HOME_21_X64 / JAVA_HOME_17_X64 that
+// GitHub's runners set.
+def legacyTargets = [
+        [dir: 'legacy/forge-1.20.4', file: 'voice-physics-forge-%s+mc1.20.2-1.20.4.jar'],
+]
+
+def legacyJavaHome = {
+    def home = ['LEGACY_JAVA_HOME', 'JAVA_HOME_21_X64', 'JAVA_HOME_17_X64'].collect { System.getenv(it) }.find { it }
+    if (home == null) {
+        throw new GradleException('The legacy/ builds need Gradle 8 on Java 17 or 21: set LEGACY_JAVA_HOME to such a JDK')
+    }
+    home
+}
+
+legacyTargets.each { t ->
+    def name = 'buildLegacy_' + t.dir.replaceAll('[^A-Za-z0-9]', '_')
+    tasks.register(name, Exec) {
+        group = 'build'
+        description = "Builds ${t.dir} with its own Gradle"
+        workingDir = file(t.dir)
+        commandLine 'sh', 'gradlew', 'build', '--no-daemon', '--stacktrace'
+        doFirst {
+            environment 'JAVA_HOME', legacyJavaHome()
+        }
+    }
+}
+
+tasks.register('buildLegacy') {
+    group = 'build'
+    description = 'Builds the legacy/ projects'
+    dependsOn legacyTargets.collect { 'buildLegacy_' + it.dir.replaceAll('[^A-Za-z0-9]', '_') }
+}
+
 tasks.register('buildAll') {
     group = 'build'
     description = 'Builds and collects the release jars for every Minecraft version and loader into build/libs'
     dependsOn releaseTargets.collect { "${it.project}:build" }
     dependsOn ':bukkit:build'
     dependsOn loaderTargets.collect { "${it.project}:${it.task}" }
+    dependsOn 'buildLegacy'
 
     doLast {
         def outDir = layout.buildDirectory.dir("libs").get().asFile
@@ -68,6 +104,17 @@ tasks.register('buildAll') {
                 from built
                 into outDir
                 rename { String.format(t.file, project.mod_version) }
+            }
+        }
+        legacyTargets.each { t ->
+            def name = String.format(t.file, project.mod_version)
+            def built = file("${t.dir}/build/libs/${name}")
+            if (!built.exists()) {
+                throw new GradleException("Expected release jar is missing: ${built}")
+            }
+            copy {
+                from built
+                into outDir
             }
         }
         // Bukkit / Spigot / Paper / Purpur plugin (server side, every supported Minecraft version)

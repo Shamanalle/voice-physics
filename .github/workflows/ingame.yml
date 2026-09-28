@@ -70,6 +70,8 @@ jobs:
           - { loader: forge, mc: '1.20', jar: 'voice-physics-forge-*+mc1.20.1.jar', java: '17', version: 'forge120_version_oldest' }
           - { loader: forge, mc: '1.20.1', jar: 'voice-physics-forge-*+mc1.20.1.jar', java: '17', version: 'forge120_version' }
           - { loader: neoforge, mc: '1.20.1', jar: 'voice-physics-forge-*+mc1.20.1.jar', java: '17', version: 'nf1201_forge' }
+          - { loader: forge, mc: '1.20.2', jar: 'voice-physics-forge-*+mc1.20.2-1.20.4.jar', java: '17', version: 'forge1204_version_oldest' }
+          - { loader: forge, mc: '1.20.4', jar: 'voice-physics-forge-*+mc1.20.2-1.20.4.jar', java: '17', version: 'forge1204_version' }
           - { loader: forge, mc: '1.20.6', jar: 'voice-physics-forge-*+mc1.20.6.jar', java: '21', version: 'forge1206_version' }
           - { loader: forge, mc: '1.21', jar: 'voice-physics-forge-*+mc1.21-1.21.1.jar', java: '21', version: 'forge121_version_oldest' }
           - { loader: forge, mc: '1.21.1', jar: 'voice-physics-forge-*+mc1.21-1.21.1.jar', java: '21', version: 'forge121_version' }

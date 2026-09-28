@@ -72,6 +72,8 @@ jobs:
           - { module: forge-1.21.5, key: forge1215_version_oldest }
           - { module: forge-1.21.10, key: forge12110_version_oldest }
           - { module: forge-26, key: forge26_version_oldest }
+          # A build of its own (Gradle 8 on Java 21)
+          - { module: legacy/forge-1.20.4, key: forge1204_version_oldest }
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -87,4 +89,10 @@ jobs:
           chmod +x gradlew
           oldest=$(grep "^${{ matrix.key }}=" gradle.properties | cut -d= -f2)
           echo "${{ matrix.module }} against ${oldest}"
-          ./gradlew :${{ matrix.module }}:compileJava -PloaderOverride.${{ matrix.module }}=${oldest} --configure-on-demand --no-daemon
+          case "${{ matrix.module }}" in
+            legacy/*)
+              cd "${{ matrix.module }}"
+              JAVA_HOME="${JAVA_HOME_21_X64}" sh gradlew compileJava -PloaderOverride=${oldest} --no-daemon ;;
+            *)
+              ./gradlew :${{ matrix.module }}:compileJava -PloaderOverride.${{ matrix.module }}=${oldest} --configure-on-demand --no-daemon ;;
+          esac
