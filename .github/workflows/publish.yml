@@ -9,8 +9,8 @@ name: Publish to Modrinth & CurseForge
 # secrets. A store whose id or token is missing is skipped with a warning.
 #
 # Modrinth gets the mod (one file per Minecraft version, for every loader) and the
-# Paper/Purpur/Spigot plugin. CurseForge gets the mod only: Bukkit plugins need a separate project
-# in its Bukkit section.
+# Paper/Purpur/Spigot plugin. CurseForge keeps the plugin in a separate project in its Bukkit Plugins
+# section ("curseforge_plugin" in publish.json), uploaded by .github/scripts/curseforge-bukkit.sh.
 
 on:
   workflow_call:
@@ -27,7 +27,8 @@ on:
       stores:
         description: 'Where to upload'
         type: choice
-        options: [both, modrinth, curseforge]
+        # curseforge-plugin: only the plugin, to its CurseForge project
+        options: [both, modrinth, curseforge, curseforge-plugin]
         default: both
 
 permissions:
@@ -40,6 +41,7 @@ jobs:
     outputs:
       modrinth: ${{ steps.ids.outputs.modrinth }}
       curseforge: ${{ steps.ids.outputs.curseforge }}
+      curseforge_plugin: ${{ steps.ids.outputs.curseforge_plugin }}
       channel: ${{ steps.ids.outputs.channel }}
     steps:
       - name: Checkout
@@ -57,6 +59,7 @@ jobs:
         run: |
           modrinth=$(jq -r '.modrinth // ""' .github/publish.json)
           curseforge=$(jq -r '.curseforge // ""' .github/publish.json)
+          curseforge_plugin=$(jq -r '.curseforge_plugin // ""' .github/publish.json)
           if [ -z "${modrinth}" ] || [ -z "${MODRINTH_TOKEN}" ]; then
             echo "::warning::Modrinth skipped: set \"modrinth\" in .github/publish.json and the MODRINTH_TOKEN secret"
             modrinth=""
@@ -65,21 +68,25 @@ jobs:
             echo "::warning::CurseForge skipped: set \"curseforge\" in .github/publish.json and the CURSEFORGE_TOKEN secret"
             curseforge=""
           fi
-          if [ "${STORES}" = "curseforge" ]; then
-            modrinth=""
+          if [ -z "${curseforge_plugin}" ] || [ -z "${CURSEFORGE_TOKEN}" ]; then
+            echo "::warning::CurseForge plugin skipped: set \"curseforge_plugin\" in .github/publish.json and the CURSEFORGE_TOKEN secret"
+            curseforge_plugin=""
           fi
-          if [ "${STORES}" = "modrinth" ]; then
-            curseforge=""
-          fi
+          case "${STORES}" in
+            modrinth) curseforge=""; curseforge_plugin="" ;;
+            curseforge) modrinth="" ;;
+            curseforge-plugin) modrinth=""; curseforge="" ;;
+          esac
           echo "modrinth=${modrinth}" >> "$GITHUB_OUTPUT"
           echo "curseforge=${curseforge}" >> "$GITHUB_OUTPUT"
+          echo "curseforge_plugin=${curseforge_plugin}" >> "$GITHUB_OUTPUT"
           # release, beta or alpha
           echo "channel=$(jq -r '.channel // "release"' .github/publish.json)" >> "$GITHUB_OUTPUT"
 
   publish:
     name: ${{ matrix.name }}
     needs: config
-    if: needs.config.outputs.modrinth != '' || needs.config.outputs.curseforge != ''
+    if: needs.config.outputs.modrinth != '' || needs.config.outputs.curseforge != '' || needs.config.outputs.curseforge_plugin != ''
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -106,7 +113,7 @@ jobs:
             java: 17
             dependencies: simple-voice-chat(required)
             curseforge: true
-          - name: Mod for 1.20.2 – 1.20.4
+          - name: Fabric/Forge/NeoForge (lite) for 1.20.2 – 1.20.4
             file: fabric-{v}+mc1.20.2-1.20.4.jar
             target: mc1.20.2-1.20.4
             loaders: fabric quilt neoforge forge
@@ -226,7 +233,7 @@ jobs:
             java: 21
             dependencies: simple-voice-chat(required)
             curseforge: true
-          - name: Mod for 26.1 – 26.3
+          - name: Fabric/Forge/NeoForge for 26.1 – 26.3
             file: fabric-{v}+mc26.x.jar
             target: mc26.x
             loaders: fabric neoforge forge
@@ -250,6 +257,8 @@ jobs:
 
       - name: Download the release file and notes
         id: files
+        # Nothing to do for a mod file when only the CurseForge plugin is chosen
+        if: needs.config.outputs.modrinth != '' || (matrix.curseforge && needs.config.outputs.curseforge != '') || (matrix.target == 'bukkit' && needs.config.outputs.curseforge_plugin != '')
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG: ${{ inputs.tag }}
@@ -294,7 +303,7 @@ jobs:
           echo "version=${version}" >> "$GITHUB_OUTPUT"
 
       - name: Upload
-        # The plugin goes to Modrinth only, so it has nothing to do when only CurseForge is chosen
+        # The plugin goes to Modrinth here and to its own CurseForge project in the next step
         if: needs.config.outputs.modrinth != '' || (matrix.curseforge && needs.config.outputs.curseforge != '')
         uses: Kir-Antipov/mc-publish@v3.3
         with:
@@ -313,3 +322,16 @@ jobs:
           game-versions: ${{ steps.files.outputs.game-versions }}
           java: ${{ matrix.java }}
           dependencies: ${{ steps.files.outputs.dependencies }}
+
+      - name: Upload the plugin to CurseForge
+        if: matrix.target == 'bukkit' && needs.config.outputs.curseforge_plugin != ''
+        env:
+          CURSEFORGE_TOKEN: ${{ secrets.CURSEFORGE_TOKEN }}
+          PROJECT: ${{ needs.config.outputs.curseforge_plugin }}
+          FILE: ${{ steps.files.outputs.file }}
+          NAME: ${{ steps.files.outputs.version }} · ${{ matrix.name }}
+          CHANNEL: ${{ needs.config.outputs.channel }}
+          GAME_VERSIONS: ${{ matrix.game-versions }}
+        run: |
+          # shellcheck disable=SC2086
+          bash .github/scripts/curseforge-bukkit.sh "${PROJECT}" "${FILE}" "${NAME}" "${CHANNEL}" dist/notes.md ${GAME_VERSIONS}
