@@ -1,0 +1,64 @@
+plugins {
+    id 'net.minecraftforge.gradle' version '[7.0.17,8)'
+    id 'java'
+}
+
+// Forge hooks for the 26.x jar. Minecraft 26.x is not obfuscated, so this module only compiles the
+// classes in com.kasper.vcdistance.forge against Forge; fabric-26 packs them into the same jar as the
+// Fabric build and the NeoForge hooks, next to the shared code they call.
+
+// The build against the oldest Forge 26.x (.github/workflows/build.yml) passes -PloaderOverride.forge-26=<version>
+def forge = project.findProperty("loaderOverride.${project.name}") ?: project.forge26_version
+
+repositories {
+    minecraft.mavenizer(it)
+    maven fg.forgeMaven
+    maven fg.minecraftLibsMaven
+    mavenCentral()
+    maven {
+        name = "henkelmax.public"
+        url = 'https://maven.maxhenkel.de/repository/public'
+    }
+}
+
+def sharedForge = file("${rootDir}/shared/forge/src/main/java")
+
+sourceSets {
+    main {
+        java {
+            srcDir "${rootDir}/shared/mc-all/src/main/java"
+            srcDir "${rootDir}/fabric-26/src/main/java"
+            srcDir sharedForge
+            // From shared/forge only the networking: 26.x has its own permission, language and screen adapters
+            exclude { FileTreeElement e ->
+                !e.directory && e.file.path.startsWith(sharedForge.path + File.separator)
+                        && !e.relativePath.pathString.startsWith('com/kasper/vcdistance/forge/')
+            }
+            // The Fabric hooks are not needed (and cannot compile) here
+            exclude 'com/kasper/vcdistance/AudioDistanceClient.java'
+            exclude 'com/kasper/vcdistance/AudioDistanceMod.java'
+            exclude 'com/kasper/vcdistance/ModClientNetworking.java'
+            exclude 'com/kasper/vcdistance/ModNetworking.java'
+            exclude 'com/kasper/vcdistance/ModMenuIntegration.java'
+            exclude 'com/kasper/vcdistance/client/HudHook.java'
+        }
+        // The resources ship with the fabric-26 jar
+        resources.srcDirs = []
+    }
+}
+
+dependencies {
+    implementation minecraft.dependency("net.minecraftforge:forge:${forge}")
+    implementation project(':common')
+    compileOnly "de.maxhenkel.voicechat:voicechat-api:${project.voicechat_api_version}"
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.release = 25
+    options.encoding = 'UTF-8'
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_25
+    targetCompatibility = JavaVersion.VERSION_25
+}

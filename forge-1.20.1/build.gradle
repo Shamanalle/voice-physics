@@ -3,6 +3,9 @@ plugins {
     id 'java'
 }
 
+// Its jar carries the classes of ':common', so that module is configured first (configure-on-demand)
+evaluationDependsOn(':common')
+
 // Forge 1.20.1: the full addon. The code shared with the Fabric builds is compiled here against
 // Minecraft's own names and turned into Forge's runtime names by reobfJar; only the hooks into Forge
 // (package com.kasper.vcdistance.forge) and a few small version adapters are Forge's own.

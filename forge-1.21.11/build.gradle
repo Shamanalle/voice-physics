@@ -1,0 +1,11 @@
+plugins {
+    id 'net.minecraftforge.gradle' version '[7.0.17,8)'
+    id 'java'
+}
+
+// Forge 1.21.11: the full addon (see gradle/forge-band.gradle)
+ext.forgeTarget = "mc1.21.11"
+ext.forgeVersion = "forge12111_version"
+ext.forgeBus = 7
+ext.forgeExclude = ["com/kasper/vcdistance/client/KeyMappings.java"]
+apply from: "${rootDir}/gradle/forge-band.gradle"

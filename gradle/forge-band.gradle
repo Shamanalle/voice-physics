@@ -1,0 +1,104 @@
+// A full Forge build for one band of Minecraft versions (forge-1.20.6, forge-1.21, ...), with
+// ForgeGradle 7. Since 1.20.6 Forge runs with Minecraft's own names, so the code shared with the
+// Fabric builds is compiled here as it is. The hooks into Forge are shared: shared/forge (networking)
+// and shared/forge-bus6 or shared/forge-bus7 (Forge's first or second event bus); the few calls that
+// differ between Forge versions are in the module's own ForgeCompat.
+//
+// The module sets, before applying this file:
+//   forgeTarget   the file's version range, "mc1.21-1.21.1"
+//   forgeVersion  the gradle.properties key of the Forge version it compiles against ("1.21.1-52.1.16")
+//   forgeBus      6 or 7
+//   forgeExclude  (optional) shared files the band cannot compile and does not need
+// A file in the module's own src/main/java replaces the shared file with the same path.
+
+// The jar carries the classes of ':common', so that module is configured first (configure-on-demand)
+evaluationDependsOn(':common')
+
+version = "${project.mod_version}+${forgeTarget}"
+
+base {
+    archivesName = "voice-physics-forge"
+}
+
+// The build against the oldest Forge of the band (.github/workflows/build.yml) passes -PloaderOverride.<module>=<version>
+def forge = project.findProperty("loaderOverride.${project.name}") ?: project.property(forgeVersion)
+def minecraftVersion = forge.substring(0, forge.indexOf('-'))
+
+minecraft {
+    mappings channel: 'official', version: minecraftVersion
+}
+
+repositories {
+    minecraft.mavenizer(it)
+    maven fg.forgeMaven
+    maven fg.minecraftLibsMaven
+    mavenCentral()
+    maven {
+        name = "henkelmax.public"
+        url = 'https://maven.maxhenkel.de/repository/public'
+    }
+}
+
+// In order of precedence: a file in an earlier folder replaces the file with the same path in a later one
+def ownRoot = file('src/main/java')
+def sharedRoots = [
+        "${rootDir}/shared/forge-bus${forgeBus}/src/main/java",
+        "${rootDir}/shared/forge/src/main/java",
+        "${rootDir}/shared/mc-1.20-1.21/src/main/java",
+        "${rootDir}/shared/mc-all/src/main/java",
+].collect { new File(it) }
+// The Fabric hooks, which Forge replaces with its own
+def fabricOnly = [
+        'com/kasper/vcdistance/AudioDistanceClient.java',
+        'com/kasper/vcdistance/AudioDistanceMod.java',
+        'com/kasper/vcdistance/ModMenuIntegration.java',
+        'com/kasper/vcdistance/client/HudHook.java',
+]
+def excluded = fabricOnly + (project.hasProperty('forgeExclude') ? forgeExclude : [])
+
+sourceSets {
+    main {
+        java {
+            sharedRoots.each { srcDir it }
+            exclude { FileTreeElement e ->
+                if (e.directory) {
+                    return false
+                }
+                def path = e.relativePath.pathString
+                def index = sharedRoots.findIndexOf { e.file.path.startsWith(it.path + File.separator) }
+                if (index < 0) {
+                    return false
+                }
+                def before = [ownRoot] + sharedRoots.take(index)
+                excluded.contains(path) || before.any { new File(it, path).exists() }
+            }
+        }
+    }
+}
+
+dependencies {
+    implementation minecraft.dependency("net.minecraftforge:forge:${forge}")
+    implementation project(':common')
+    compileOnly "de.maxhenkel.voicechat:voicechat-api:${project.voicechat_api_version}"
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.release = 21
+    options.encoding = 'UTF-8'
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+}
+
+processResources {
+    inputs.property "version", project.version
+    filesMatching("META-INF/mods.toml") {
+        expand "version": project.version
+    }
+}
+
+jar {
+    from project(':common').sourceSets.main.output
+}
