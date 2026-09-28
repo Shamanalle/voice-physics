@@ -113,7 +113,7 @@ jobs:
             java: 17
             dependencies: simple-voice-chat(required)
             curseforge: true
-          - name: Mod for 1.20.2 – 1.20.4
+          - name: Fabric/Forge/NeoForge (lite) for 1.20.2 – 1.20.4
             file: fabric-{v}+mc1.20.2-1.20.4.jar
             target: mc1.20.2-1.20.4
             loaders: fabric quilt neoforge forge
@@ -233,7 +233,7 @@ jobs:
             java: 21
             dependencies: simple-voice-chat(required)
             curseforge: true
-          - name: Mod for 26.1 – 26.3
+          - name: Fabric/Forge/NeoForge for 26.1 – 26.3
             file: fabric-{v}+mc26.x.jar
             target: mc26.x
             loaders: fabric neoforge forge
