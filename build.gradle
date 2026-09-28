@@ -37,6 +37,7 @@ def loaderTargets = [
 // GitHub's runners set.
 def legacyTargets = [
         [dir: 'legacy/forge-1.20.4', file: 'voice-physics-forge-%s+mc1.20.2-1.20.4.jar'],
+        [dir: 'legacy/neoforge-1.20.4', file: 'voice-physics-neoforge-%s+mc1.20.4.jar'],
 ]
 
 def legacyJavaHome = {
