@@ -335,3 +335,13 @@ jobs:
         run: |
           # shellcheck disable=SC2086
           bash .github/scripts/curseforge-bukkit.sh "${PROJECT}" "${FILE}" "${NAME}" "${CHANNEL}" dist/notes.md ${GAME_VERSIONS}
+
+  verify:
+    name: Check the stores
+    needs: publish
+    if: ${{ !cancelled() && needs.publish.result != 'skipped' }}
+    # Warnings only: CurseForge's file list (via cfwidget) can lag a few minutes behind the upload
+    uses: ./.github/workflows/check-stores.yml
+    with:
+      tag: ${{ inputs.tag }}
+      warn-only: true
