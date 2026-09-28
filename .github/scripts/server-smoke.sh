@@ -32,13 +32,15 @@ fetch() {
   curl -fsSL --retry 4 --retry-delay 3 -o "$2" "$1"
 }
 
-# The newest file of a Modrinth project for this loader and Minecraft version
+# The newest file of a Modrinth project for this loader and Minecraft version. A file built for exactly
+# this version ("forge-1.21-2.5.20") comes first: one listed for 1.21 - 1.21.1 may need 1.21.1.
 modrinth() {
   local slug="$1" loaders="$2" out="$3"
   local url
   url=$(curl -fsSL --retry 4 -G "https://api.modrinth.com/v2/project/${slug}/version" \
       --data-urlencode "loaders=${loaders}" --data-urlencode "game_versions=[\"${mc}\"]" \
-    | jq -r '[.[] | select(.version_type == "release" or .version_type == "beta")][0].files
+    | jq -r --arg mc "${mc}" '[.[] | select(.version_type == "release" or .version_type == "beta")]
+             | ([.[] | select(.version_number | test("(^|[^0-9.])" + ($mc | gsub("\\."; "\\.")) + "-[0-9]"))] + .)[0].files
              | (map(select(.primary)) + .)[0].url // empty')
   if [ -z "${url}" ]; then
     echo "No ${slug} on Modrinth for ${loaders} ${mc}"
@@ -182,6 +184,9 @@ for command in "vcd status" "vcd help" "vcd help zone" "vcd zones" "vcd walls 55
 done
 stop_server
 trap - EXIT
+
+# Some consoles (Paper 1.20) colour the log with ANSI codes, which split the answers below
+sed -i 's/\x1b\[[0-9;]*m//g' "${log}"
 
 failed=false
 if ! grep -q 'Voice Physics [0-9]' "${log}"; then
