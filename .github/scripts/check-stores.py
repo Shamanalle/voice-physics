@@ -25,17 +25,20 @@ import yaml
 CF_LOADERS = {"fabric": "Fabric", "quilt": "Quilt", "forge": "Forge", "neoforge": "NeoForge"}
 
 
-def get_json(url, attempts=6):
+def get_json(url, token=None, attempts=6):
     """GETs a JSON document; cfwidget answers 202 while it fetches a project for the first time."""
+    headers = {"User-Agent": "Shamanalle/voice-physics store check"}
+    if token:
+        headers["Authorization"] = token
     for attempt in range(attempts):
-        request = urllib.request.Request(url, headers={"User-Agent": "Shamanalle/voice-physics store check"})
+        request = urllib.request.Request(url, headers=headers)
         try:
             with urllib.request.urlopen(request, timeout=30) as response:
                 if response.status == 200:
                     return json.load(response)
         except urllib.error.HTTPError as error:
             if error.code not in (202, 429, 500, 502, 503, 504):
-                raise
+                raise RuntimeError(f"{url}: HTTP {error.code}") from None
         time.sleep(10 * (attempt + 1))
     raise RuntimeError(f"No answer from {url}")
 
@@ -53,7 +56,9 @@ def main():
     with open(".github/workflows/publish.yml") as f:
         rows = yaml.safe_load(f)["jobs"]["publish"]["strategy"]["matrix"]["include"]
 
-    modrinth = get_json(f"https://api.modrinth.com/v2/project/{ids['modrinth']}/version")
+    # With the token, as a project still in review is not public
+    modrinth = get_json(f"https://api.modrinth.com/v2/project/{ids['modrinth']}/version",
+                        os.environ.get("MODRINTH_TOKEN"))
     modrinth = {v["version_number"]: v for v in modrinth}
     curseforge = {}
     for key in ("curseforge", "curseforge_plugin"):

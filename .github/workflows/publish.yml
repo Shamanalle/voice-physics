@@ -345,3 +345,4 @@ jobs:
     with:
       tag: ${{ inputs.tag }}
       warn-only: true
+    secrets: inherit
