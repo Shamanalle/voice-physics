@@ -6,6 +6,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 *Все заметные изменения проекта описываются в этом файле. Каждая версия описана сначала на английском, затем на русском.*
 
+## [2.6.2] - 2026-09-29
+
+### English
+
+#### Added
+- The full addon on NeoForge 1.20.2 – 1.20.3: settings screen, walls, echo, HUD, monitor and the server side.
+
+#### Changed
+- There is no lite file any more: every Minecraft version from 1.20 has the full addon on every loader.
+
+### Русский
+
+#### Добавлено
+- Полный аддон на NeoForge 1.20.2 – 1.20.3: экран настроек, стены, эхо, HUD, монитор и серверная часть.
+
+#### Изменено
+- Облегчённого файла больше нет: на каждой версии Minecraft с 1.20 на каждом загрузчике полный аддон.
+
 ## [2.6.1] - 2026-09-29
 
 ### English

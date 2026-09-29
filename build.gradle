@@ -5,9 +5,10 @@ plugins {
 // Every release target: the Fabric jar is the full addon. Where a loader has no build of its own, its
 // file is the same jar under the loader's name ("lite"): it loads the Simple Voice Chat plugin
 // (distance curves, configured through config/vc-audio-distance.properties) without the other features.
+// Every loader has a build of its own now, so only the Fabric jar and its Quilt listing are left here.
 def releaseTargets = [
         [project: ':fabric-1.20', target: 'mc1.20.1', aliases: []],
-        [project: ':fabric-1.20.4', target: 'mc1.20.2-1.20.4', aliases: ['neoforge']],
+        [project: ':fabric-1.20.4', target: 'mc1.20.2-1.20.4', aliases: []],
         [project: ':fabric-1.20.6', target: 'mc1.20.5-1.20.6', aliases: []],
         [project: ':fabric-1.21', target: 'mc1.21.x', aliases: []],
         [project: ':fabric-26', target: 'mc26.x', aliases: ['neoforge', 'forge']],
@@ -32,12 +33,14 @@ def loaderTargets = [
 ]
 
 // Builds of their own, with Gradle 8 (legacy/*): Forge 1.20.2 - 1.20.4 runs with SRG names, which only
-// ForgeGradle 6 remaps to, and ForgeGradle 6 cannot share this build with ForgeGradle 7. NeoForge 1.20.4
-// needs NeoGradle 7, which cannot share it either. They need a
+// ForgeGradle 6 remaps to, and ForgeGradle 6 cannot share this build with ForgeGradle 7. NeoForge 1.20.2 -
+// 1.20.4 need NeoGradle 7, which cannot share it either. A legacy/ project without a Gradle wrapper of its
+// own runs the wrapper of legacy/neoforge-1.20.4. They need a
 // JDK 17 or 21 for their Gradle: LEGACY_JAVA_HOME, or the JAVA_HOME_21_X64 / JAVA_HOME_17_X64 that
 // GitHub's runners set.
 def legacyTargets = [
         [dir: 'legacy/forge-1.20.4', file: 'voice-physics-forge-%s+mc1.20.2-1.20.4.jar'],
+        [dir: 'legacy/neoforge-1.20.2', file: 'voice-physics-neoforge-%s+mc1.20.2-1.20.3.jar'],
         [dir: 'legacy/neoforge-1.20.4', file: 'voice-physics-neoforge-%s+mc1.20.4.jar'],
 ]
 
@@ -55,7 +58,8 @@ legacyTargets.each { t ->
         group = 'build'
         description = "Builds ${t.dir} with its own Gradle"
         workingDir = file(t.dir)
-        commandLine 'sh', 'gradlew', 'build', '--no-daemon', '--stacktrace'
+        def wrapper = file("${t.dir}/gradlew").exists() ? 'gradlew' : '../neoforge-1.20.4/gradlew'
+        commandLine 'sh', wrapper, 'build', '--no-daemon', '--stacktrace'
         doFirst {
             environment 'JAVA_HOME', legacyJavaHome()
         }
