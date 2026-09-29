@@ -167,18 +167,19 @@ public class SettingsScreenGameTest implements FabricClientGameTest {
                 SettingsScreen.openOn(tab);
                 TestScreens.open(client, new AudioDistanceScreen(null));
             });
-            context.waitTicks(3);
+            parkCursor(context);
             context.takeScreenshot("store-" + tab.name().toLowerCase(java.util.Locale.ROOT));
             context.runOnClient(client -> TestScreens.open(client, null));
             context.waitTicks(1);
         }
         context.runOnClient(client -> TestScreens.open(client, new AudioDistanceLogScreen(null)));
-        context.waitTicks(4);
+        parkCursor(context);
         context.takeScreenshot("store-log");
         context.runOnClient(client -> TestScreens.open(client, null));
         context.waitTicks(1);
         // A server that enforces its profile: the curve and the walls are locked
         context.runOnClient(client -> {
+            TestScreens.clearChat(client);
             ServerSettings settings = new ServerSettings();
             settings.setProfileMode(ServerSettings.ProfileMode.ENFORCE);
             settings.setLockedParts(java.util.EnumSet.of(DistanceConfig.Part.CURVE, DistanceConfig.Part.WALLS));
@@ -187,12 +188,20 @@ public class SettingsScreenGameTest implements FabricClientGameTest {
             SettingsScreen.openOn(SettingsScreen.Tab.DISTANCE);
             TestScreens.open(client, new AudioDistanceScreen(null));
         });
-        context.waitTicks(3);
+        context.runOnClient(client -> TestScreens.clearChat(client));
+        parkCursor(context);
         context.takeScreenshot("store-locked");
         context.runOnClient(client -> {
             TestScreens.open(client, null);
             AudioDistancePlugin.LINK.reset();
         });
         context.waitTicks(1);
+    }
+
+    /** Moves the pointer to an empty corner, so no tooltip or hover highlight is in the picture. */
+    private static void parkCursor(ClientGameTestContext context) {
+        context.waitTicks(3);
+        context.getInput().setCursorPos(1880, 1060);
+        context.waitTicks(3);
     }
 }
