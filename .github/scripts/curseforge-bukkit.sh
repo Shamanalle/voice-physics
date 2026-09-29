@@ -60,7 +60,9 @@ for base in https://dev.bukkit.org https://minecraft.curseforge.com; do
         "$(jq -r --argjson ids "$(printf '%s\n' "${ids[@]}" | jq -s .)" '[.[] | select(.id as $i | $ids | index($i)) | .name] | unique | join(" ")' versions.json)"
       exit 0
     fi
-    rejected=$(jq -r '.errorMessage // ""' upload.json 2>/dev/null | sed -n 's/^Invalid game version ID: \([0-9]*\).*/\1/p')
+    echo "Upload answered ${status}: $(head -c 600 upload.json 2>/dev/null)"
+    # The body is not always a JSON object (an error page, a bare string): read it defensively
+    rejected=$( (jq -r 'try (.errorMessage // "") catch ""' upload.json 2>/dev/null || true) | sed -n 's/^Invalid game version ID: \([0-9]*\).*/\1/p')
     if [ "${status}" != "400" ] || [ -z "${rejected}" ]; then
       break
     fi
