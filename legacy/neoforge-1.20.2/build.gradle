@@ -1,0 +1,96 @@
+plugins {
+    id 'java'
+    id 'net.neoforged.gradle.userdev' version '[7.0.80,7.1)'
+}
+
+// NeoForge 1.20.2 - 1.20.3: the full addon. These NeoForge versions have the event channels of Forge 1.20.1
+// (NetworkRegistry.newEventChannel) and no payload registration, which 1.20.4 introduced; everything else
+// in the hooks is the same as in ../neoforge-1.20.4.
+def repoRoot = file('../..')
+def props = new Properties()
+new File(repoRoot, 'gradle.properties').withInputStream { props.load(it) }
+
+// The build against the oldest NeoForge it supports (.github/workflows/build.yml) passes -PloaderOverride=<version>
+def neoforge = project.findProperty('loaderOverride') ?: props.getProperty('nf1202_neoforge')
+def modVersion = props.getProperty('mod_version')
+
+version = "${modVersion}+mc1.20.2-1.20.3"
+group = props.getProperty('maven_group')
+
+base {
+    archivesName = 'voice-physics-neoforge'
+}
+
+// NeoGradle asks for a toolchain; the one Gradle runs on (the classes still target Java 17)
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+repositories {
+    mavenCentral()
+    maven {
+        name = 'henkelmax.public'
+        url = 'https://maven.maxhenkel.de/repository/public'
+    }
+}
+
+// In order of precedence: a file in an earlier folder replaces the file with the same path in a later one
+def ownRoot = file('src/main/java')
+def sharedRoots = [
+        "${repoRoot}/shared/neoforge/src/main/java",
+        "${repoRoot}/shared/mc-1.20-1.21/src/main/java",
+        "${repoRoot}/shared/mc-all/src/main/java",
+        "${repoRoot}/common/src/main/java",
+].collect { new File(it) }
+// The Fabric hooks, which NeoForge replaces with its own
+def fabricOnly = [
+        'com/kasper/vcdistance/AudioDistanceClient.java',
+        'com/kasper/vcdistance/AudioDistanceMod.java',
+        'com/kasper/vcdistance/ModMenuIntegration.java',
+        'com/kasper/vcdistance/client/HudHook.java',
+]
+
+sourceSets {
+    main {
+        java {
+            sharedRoots.each { srcDir it }
+            exclude { FileTreeElement e ->
+                if (e.directory) {
+                    return false
+                }
+                def path = e.relativePath.pathString
+                def index = sharedRoots.findIndexOf { e.file.path.startsWith(it.path + File.separator) }
+                if (index < 0) {
+                    return false
+                }
+                def before = [ownRoot] + sharedRoots.take(index)
+                fabricOnly.contains(path) || before.any { new File(it, path).exists() }
+            }
+        }
+        resources {
+            srcDir "${repoRoot}/common/src/main/resources"
+        }
+    }
+}
+
+dependencies {
+    implementation "net.neoforged:neoforge:${neoforge}"
+    compileOnly "de.maxhenkel.voicechat:voicechat-api:${props.getProperty('voicechat_api_version')}"
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.release = 17
+    options.encoding = 'UTF-8'
+}
+
+processResources {
+    inputs.property 'version', version
+    filesMatching('META-INF/mods.toml') {
+        expand 'version': version
+    }
+    filesMatching('vc-audio-distance-build.properties') {
+        expand 'version': modVersion
+    }
+}
