@@ -239,6 +239,58 @@ public class CommandsTest {
     }
 
     @Test
+    @DisplayName("The log is read as [page] [player]; a page travels to the Log screen and back whole")
+    void logPages() throws IOException {
+        ServerSettings s = settings("");
+        AdminCommands.Context ctx = ctx();
+        for (int i = 0; i < 23; i++) {
+            AdminCommands.run("walls " + (20 + i * 3), s, ctx);
+        }
+        String who = ChangeLog.read(s).get(0).who();
+
+        // Words in any order: a number is the page, anything else the player
+        ChangeLog.View both = ChangeLog.parseView(new String[]{"log", "Steve", "2"});
+        assertEquals(2, both.page());
+        assertEquals("Steve", both.who());
+        assertEquals(both, ChangeLog.parseView(new String[]{"log", "2", "Steve"}));
+        assertEquals(1, ChangeLog.parseView(new String[]{"log"}).page());
+        assertNull(ChangeLog.parseView(new String[]{"log"}).who());
+        assertEquals(ChangeLog.CONSOLE, ChangeLog.parseView(new String[]{"log", "console"}).who());
+
+        // Ten to a page, the last one shorter, and a page out of range is the nearest one
+        List<ChangeLog.Entry> all = ChangeLog.read(s);
+        ChangeLog.Page third = ChangeLog.page(all, new ChangeLog.View(3, null));
+        assertEquals(3, third.pages());
+        assertEquals(3, third.entries().size());
+        assertEquals(23, third.total());
+        assertEquals(3, ChangeLog.page(all, new ChangeLog.View(99, null)).page());
+        assertEquals(1, ChangeLog.page(all, new ChangeLog.View(-4, null)).page());
+
+        // One player's changes, whatever the case of the name; nobody's gives an empty page, not a broken one
+        assertEquals(23, ChangeLog.page(all, new ChangeLog.View(1, who.toUpperCase())).total());
+        ChangeLog.Page nobody = ChangeLog.page(all, new ChangeLog.View(1, "Nobody"));
+        assertEquals(0, nobody.total());
+        assertTrue(nobody.entries().isEmpty());
+        assertEquals(1, nobody.pages());
+        assertTrue(AdminCommands.run("log Nobody", s, ctx).get(0).contains("Nobody"));
+        assertTrue(AdminCommands.run("log 2 " + who, s, ctx).stream().anyMatch(l -> l.contains("Page 2 of 3")));
+
+        // The reply of the server: the page written into the state and read back by the client
+        java.util.Map<String, String> state = new java.util.LinkedHashMap<>();
+        ChangeLog.writePage(ChangeLog.page(all, new ChangeLog.View(2, null)), state);
+        java.util.Properties sent = new java.util.Properties();
+        sent.putAll(state);
+        ChangeLog.Page received = ChangeLog.readPage(sent);
+        assertNotNull(received);
+        assertEquals(2, received.page());
+        assertEquals(3, received.pages());
+        assertEquals(23, received.total());
+        assertEquals(10, received.entries().size());
+        assertEquals(all.get(10), received.entries().get(0));
+        assertNull(ChangeLog.readPage(new java.util.Properties()), "a reply of another command carries no page");
+    }
+
+    @Test
     @DisplayName("Server tab: its reply carries undo, the player's permissions and the latest changes")
     void serverTabState() throws IOException {
         ServerSettings s = settings("");

@@ -26,6 +26,11 @@ public class AudioDistanceScreen extends SettingsScreen {
     }
 
     @Override
+    protected Screen newLogScreen(Screen parent) {
+        return new AudioDistanceLogScreen(parent);
+    }
+
+    @Override
     protected void playPreview(float volume) {
         Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.VILLAGER_AMBIENT, 1.0F, volume));
     }

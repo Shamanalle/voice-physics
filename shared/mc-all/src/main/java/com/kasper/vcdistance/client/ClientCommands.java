@@ -35,6 +35,7 @@ import java.util.function.Consumer;
  * /voicephysics code [code]                                     copy your profile code, or load one
  * /voicephysics reset curve|walls|materials|effects|hud|all     back to the defaults
  * /voicephysics status                                          what the server does to your sound
+ * /voicephysics log                                             the server's change log (admins)
  * /voicephysics help
  * </pre>
  * Built with Brigadier alone, since each loader names its own command helpers differently.
@@ -77,6 +78,7 @@ final class ClientCommands {
                 .then(RequiredArgumentBuilder.<S, String>argument("part", StringArgumentType.word())
                         .suggests(words(RESET))
                         .executes(c -> reset(StringArgumentType.getString(c, "part")))));
+        root.then(LiteralArgumentBuilder.<S>literal("log").executes(c -> openLog()));
         root.then(LiteralArgumentBuilder.<S>literal("status").executes(c -> status()));
         root.then(LiteralArgumentBuilder.<S>literal("help").executes(c -> help()));
         return root;
@@ -102,6 +104,16 @@ final class ClientCommands {
         if (chosen) {
             SettingsScreen.openOn(tab);
         }
+        ClientHints.requestOpen();
+        return 1;
+    }
+
+    private static int openLog() {
+        if (!AudioDistancePlugin.LINK.isAdmin()) {
+            say(error("log.admin"));
+            return 0;
+        }
+        SettingsScreen.openLogNext();
         ClientHints.requestOpen();
         return 1;
     }
@@ -254,7 +266,8 @@ final class ClientCommands {
                 {"hud", base + " hud "},
                 {"code", base + " code"},
                 {"reset", base + " reset "},
-                {"status", base + " status"}};
+                {"status", base + " status"},
+                {"log", base + " log"}};
         for (String[] l : lines) {
             String[] parts = Component.translatable(KEY + "help." + l[0]).getString().split(" - ", 2);
             MutableComponent line = Component.literal(parts[0]).withStyle(Style.EMPTY.withColor(ChatFormatting.WHITE)

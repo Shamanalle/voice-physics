@@ -18,7 +18,7 @@ final class CommandHelp {
             Map.entry("status", new String[]{"status"}),
             Map.entry("reload", new String[]{"reload"}),
             Map.entry("undo", new String[]{"undo"}),
-            Map.entry("log", new String[]{"log", "log 2"}),
+            Map.entry("log", new String[]{"log", "log 2", "log Steve"}),
             Map.entry("profile", new String[]{"profile suggest", "profile enforce", "profile off"}),
             Map.entry("preset", new String[]{"preset realistic", "preset stealth", "preset export", "preset import VP1:"}),
             Map.entry("walls", new String[]{"walls 60", "walls 85", "walls off"}),

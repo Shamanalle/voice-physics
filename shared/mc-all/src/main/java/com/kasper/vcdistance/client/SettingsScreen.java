@@ -53,6 +53,7 @@ public abstract class SettingsScreen extends Screen {
     private static final int SCROLL_STEP = 18;
 
     private static Tab lastTab = Tab.DISTANCE;
+    private static boolean logRequested;
     /** Monitor as a list (false) or a radar seen from above (true); kept while the game runs. */
     private static boolean radarView;
     /** The materials section of the Walls tab is open; kept while the game runs. */
@@ -174,6 +175,11 @@ public abstract class SettingsScreen extends Screen {
         lastTab = tab;
     }
 
+    /** {@code /voicephysics log}: the next settings screen goes straight on to the change log (admins only). */
+    public static void openLogNext() {
+        logRequested = true;
+    }
+
     /** Scrolls the open tab to its end (in-game tests). */
     public void scrollToEnd() {
         scroll = maxScroll;
@@ -182,6 +188,9 @@ public abstract class SettingsScreen extends Screen {
 
     /** Shows another screen (the API for this differs between versions). */
     protected abstract void openScreen(Screen screen);
+
+    /** The change log screen of this version; {@code parent} is where its Back goes. */
+    protected abstract Screen newLogScreen(Screen parent);
 
     /** Plays the preview voice (a villager's "hmm") at {@code volume}, 0 - 1. */
     protected abstract void playPreview(float volume);
@@ -914,9 +923,14 @@ public abstract class SettingsScreen extends Screen {
             return y;
         }
         int undoW = Math.min(w / 3, this.font.width(tr("server.log.undo")) + 16);
-        headings.add(new Heading(tr("server.section.log"), y + 6, undo > 0 ? right - undoW - 8 : right));
+        int openW = Math.min(w / 3, this.font.width(tr("server.log.open")) + 16);
+        int buttons = openW + (undo > 0 ? undoW + GAP : 0);
+        headings.add(new Heading(tr("server.section.log"), y + 6, right - buttons - 8));
+        Button open = content(Button.builder(tr("server.log.open"), btn -> openScreen(newLogScreen(this)))
+                .bounds(right - openW, y, openW, 20).tooltip(tip("server.log.open.tooltip")).build());
+        open.active = mayRun(st, "log");
         if (undo > 0) {
-            serverButton(tr("server.log.undo"), "server.log.undo.tooltip", right - undoW, y, undoW, "undo");
+            serverButton(tr("server.log.undo"), "server.log.undo.tooltip", right - openW - GAP - undoW, y, undoW, "undo");
         }
         y += ROW;
         java.time.format.DateTimeFormatter time = java.time.format.DateTimeFormatter.ofPattern("dd.MM HH:mm")
@@ -1206,6 +1220,14 @@ public abstract class SettingsScreen extends Screen {
     @Override
     public void tick() {
         super.tick();
+        if (logRequested) {
+            logRequested = false;
+            if (AudioDistancePlugin.LINK.isAdmin()) {
+                // Back leaves the settings too: the log was asked for, not the settings
+                openScreen(newLogScreen(parent));
+                return;
+            }
+        }
         if (tab == Tab.SERVER && AudioDistancePlugin.LINK.adminReplyCount() != seenAdminReplies) {
             seenAdminReplies = AudioDistancePlugin.LINK.adminReplyCount();
             rebuild();

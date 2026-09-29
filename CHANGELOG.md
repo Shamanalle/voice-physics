@@ -6,6 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 *Все заметные изменения проекта описываются в этом файле. Каждая версия описана сначала на английском, затем на русском.*
 
+## [2.7.0] - 2026-09-29
+
+### English
+
+#### Added
+- The server's change log on a screen of its own, for admins: *Server* tab → *Full log*, or `/voicephysics log`. Ten changes a page, one player's changes by name, undo of the last change, and a button that copies the page.
+- `/vcd log [page] [player]`: the log of one player's changes (`console` for the console).
+
+### Русский
+
+#### Добавлено
+- Журнал изменений сервера на отдельном экране для админов: вкладка «Сервер» → «Весь журнал» или `/voicephysics log`. По десять изменений на странице, изменения одного игрока по нику, отмена последнего изменения и кнопка, которая копирует страницу.
+- `/vcd log [страница] [игрок]`: журнал изменений одного игрока (`console` — консоль).
+
 ## [2.6.2] - 2026-09-29
 
 ### English
