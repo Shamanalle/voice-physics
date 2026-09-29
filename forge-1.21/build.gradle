@@ -3,8 +3,8 @@ plugins {
     id 'java'
 }
 
-// Forge 1.21.1 (Forge for 1.21 itself is too old for the addon): the full addon (see gradle/forge-band.gradle)
-ext.forgeTarget = "mc1.21.1"
+// Forge 1.21 - 1.21.1: the full addon (see gradle/forge-band.gradle)
+ext.forgeTarget = "mc1.21-1.21.1"
 ext.forgeVersion = "forge121_version"
 ext.forgeBus = 6
 apply from: "${rootDir}/gradle/forge-band.gradle"

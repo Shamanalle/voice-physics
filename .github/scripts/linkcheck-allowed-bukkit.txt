@@ -1,4 +1,4 @@
-# Differences between the Paper API the plugin is built against (1.20.1) and later releases that
+# Differences between the Paper API the plugin is built against (1.20.1) and other releases that
 # were reviewed and are safe. One key per line, as LinkCheck prints it after "DIFF".
 
 # Paper 1.21.3 turned Sound from an enum into an interface. The plugin never calls a method on
@@ -20,3 +20,21 @@ method org/bukkit/entity/Player.spawnParticle(Lorg/bukkit/Particle;DDDIDDDD)V
 # The call is invokeinterface either way and a default method resolves the same, so the block a
 # player looks at (/vcd zone pos1 look, bukkit/.../AudioDistanceBukkit.java) keeps working.
 method org/bukkit/entity/Player.getTargetBlockExact(I)Lorg/bukkit/block/Block;
+
+# Paper 1.20 has no region schedulers yet (Paper 1.20.1 added them for Folia). The plugin calls them
+# only on Folia: FoliaScheduling is created only when Scheduling.isFolia() finds Folia's classes, and
+# BukkitThickness asks about regions only when that scheduling is regionized. Folia itself starts
+# at 1.20.1, so on Paper 1.20 the plugin uses the Bukkit scheduler (bukkit/.../BukkitScheduling.java).
+type io/papermc/paper/threadedregions/scheduler/EntityScheduler
+type io/papermc/paper/threadedregions/scheduler/GlobalRegionScheduler
+type io/papermc/paper/threadedregions/scheduler/ScheduledTask
+type io/papermc/paper/threadedregions/scheduler/ScheduledTask$CancelledState
+method io/papermc/paper/threadedregions/scheduler/EntityScheduler.run(Lorg/bukkit/plugin/Plugin;Ljava/util/function/Consumer;Ljava/lang/Runnable;)Lio/papermc/paper/threadedregions/scheduler/ScheduledTask;
+method io/papermc/paper/threadedregions/scheduler/EntityScheduler.runAtFixedRate(Lorg/bukkit/plugin/Plugin;Ljava/util/function/Consumer;Ljava/lang/Runnable;JJ)Lio/papermc/paper/threadedregions/scheduler/ScheduledTask;
+method io/papermc/paper/threadedregions/scheduler/GlobalRegionScheduler.cancelTasks(Lorg/bukkit/plugin/Plugin;)V
+method io/papermc/paper/threadedregions/scheduler/GlobalRegionScheduler.runAtFixedRate(Lorg/bukkit/plugin/Plugin;Ljava/util/function/Consumer;JJ)Lio/papermc/paper/threadedregions/scheduler/ScheduledTask;
+method io/papermc/paper/threadedregions/scheduler/ScheduledTask.cancel()Lio/papermc/paper/threadedregions/scheduler/ScheduledTask$CancelledState;
+method org/bukkit/Bukkit.getGlobalRegionScheduler()Lio/papermc/paper/threadedregions/scheduler/GlobalRegionScheduler;
+method org/bukkit/Bukkit.isOwnedByCurrentRegion(Lorg/bukkit/Location;)Z
+method org/bukkit/Bukkit.isOwnedByCurrentRegion(Lorg/bukkit/entity/Entity;)Z
+method org/bukkit/entity/Player.getScheduler()Lio/papermc/paper/threadedregions/scheduler/EntityScheduler;
