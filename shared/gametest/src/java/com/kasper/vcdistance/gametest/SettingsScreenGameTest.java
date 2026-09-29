@@ -5,6 +5,7 @@ import com.kasper.vcdistance.AudioDistancePlugin;
 import com.kasper.vcdistance.AudioDistanceScreen;
 import com.kasper.vcdistance.BlockRules;
 import com.kasper.vcdistance.ChangeLog;
+import com.kasper.vcdistance.DistanceConfig;
 import com.kasper.vcdistance.LinkProtocol;
 import com.kasper.vcdistance.ServerSettings;
 import com.kasper.vcdistance.Zone;
@@ -37,6 +38,9 @@ public class SettingsScreenGameTest implements FabricClientGameTest {
                 context.waitTicks(60);
                 for (int[] window : WINDOWS) {
                     shootTabs(context, language, window);
+                }
+                if (language.equals("en_us")) {
+                    shootStore(context);
                 }
             }
         }
@@ -142,6 +146,53 @@ public class SettingsScreenGameTest implements FabricClientGameTest {
         context.waitTicks(4);
         context.takeScreenshot("log-" + size);
         context.runOnClient(client -> TestScreens.open(client, null));
+        context.waitTicks(1);
+    }
+
+    /**
+     * The pictures for the store pages and the README: one look (1920 x 1080, English, empty chat),
+     * named {@code store-<name>}. The folded parts are still open from the shots above.
+     */
+    private static void shootStore(ClientGameTestContext context) {
+        context.getInput().resizeWindow(1920, 1080);
+        context.waitTicks(4);
+        context.runOnClient(client -> {
+            TestScreens.clearChat(client);
+            pretendAdmin();
+            pretendLog();
+        });
+        for (SettingsScreen.Tab tab : new SettingsScreen.Tab[]{SettingsScreen.Tab.DISTANCE, SettingsScreen.Tab.WALLS,
+                SettingsScreen.Tab.EFFECTS, SettingsScreen.Tab.HUD, SettingsScreen.Tab.SERVER}) {
+            context.runOnClient(client -> {
+                SettingsScreen.openOn(tab);
+                TestScreens.open(client, new AudioDistanceScreen(null));
+            });
+            context.waitTicks(3);
+            context.takeScreenshot("store-" + tab.name().toLowerCase(java.util.Locale.ROOT));
+            context.runOnClient(client -> TestScreens.open(client, null));
+            context.waitTicks(1);
+        }
+        context.runOnClient(client -> TestScreens.open(client, new AudioDistanceLogScreen(null)));
+        context.waitTicks(4);
+        context.takeScreenshot("store-log");
+        context.runOnClient(client -> TestScreens.open(client, null));
+        context.waitTicks(1);
+        // A server that enforces its profile: the curve and the walls are locked
+        context.runOnClient(client -> {
+            ServerSettings settings = new ServerSettings();
+            settings.setProfileMode(ServerSettings.ProfileMode.ENFORCE);
+            settings.setLockedParts(java.util.EnumSet.of(DistanceConfig.Part.CURVE, DistanceConfig.Part.WALLS));
+            settings.setWallsStrength(0.7);
+            AudioDistancePlugin.LINK.onProfile(LinkProtocol.profile(settings, null, 32.0, 12.0, false));
+            SettingsScreen.openOn(SettingsScreen.Tab.DISTANCE);
+            TestScreens.open(client, new AudioDistanceScreen(null));
+        });
+        context.waitTicks(3);
+        context.takeScreenshot("store-locked");
+        context.runOnClient(client -> {
+            TestScreens.open(client, null);
+            AudioDistancePlugin.LINK.reset();
+        });
         context.waitTicks(1);
     }
 }
