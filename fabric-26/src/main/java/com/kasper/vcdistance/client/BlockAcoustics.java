@@ -3,6 +3,9 @@ package com.kasper.vcdistance.client;
 import com.kasper.vcdistance.AcousticMaterial;
 import com.kasper.vcdistance.BlockRules;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.Identifier;
+import net.minecraft.tags.TagKey;
 import com.kasper.vcdistance.DistanceConfig;
 import com.kasper.vcdistance.RayBundle;
 import com.kasper.vcdistance.VoxelRay;
@@ -56,7 +59,10 @@ public final class BlockAcoustics {
             return null;
         }
         String id = String.valueOf(BuiltInRegistries.BLOCK.getKey(state.getBlock()));
-        return rules.find(id, tag -> state.getTags().anyMatch(t -> tag.equals(String.valueOf(t.location()))));
+        return rules.find(id, tag -> {
+            Identifier location = Identifier.tryParse(tag);
+            return location != null && state.is(TagKey.create(Registries.BLOCK, location));
+        });
     }
 
     private BlockAcoustics() {
