@@ -74,6 +74,7 @@ jobs:
           - { module: forge-26, key: forge26_version_oldest }
           # Builds of their own (Gradle 8 on Java 21)
           - { module: legacy/forge-1.20.4, key: forge1204_version_oldest }
+          - { module: legacy/neoforge-1.20.2, key: nf1202_neoforge_oldest }
           - { module: legacy/neoforge-1.20.4, key: nf1204_neoforge_oldest }
     steps:
       - name: Checkout
@@ -93,7 +94,8 @@ jobs:
           case "${{ matrix.module }}" in
             legacy/*)
               cd "${{ matrix.module }}"
-              JAVA_HOME="${JAVA_HOME_21_X64}" sh gradlew compileJava -PloaderOverride=${oldest} --no-daemon ;;
+              wrapper=gradlew; [ -f gradlew ] || wrapper=../neoforge-1.20.4/gradlew
+              JAVA_HOME="${JAVA_HOME_21_X64}" sh "${wrapper}" compileJava -PloaderOverride=${oldest} --no-daemon ;;
             *)
               ./gradlew :${{ matrix.module }}:compileJava -PloaderOverride.${{ matrix.module }}=${oldest} --configure-on-demand --no-daemon ;;
           esac
