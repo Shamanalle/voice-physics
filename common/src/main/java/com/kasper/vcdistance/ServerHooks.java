@@ -116,7 +116,13 @@ public final class ServerHooks {
         }
         ServerSettings settings = AudioDistancePlugin.SERVER_SETTINGS;
         List<String> lines = AdminCommands.run(command, settings, ctx);
-        return LinkProtocol.adminReply(lines, settings, tabState(settings, ctx));
+        java.util.Map<String, String> state = tabState(settings, ctx);
+        // The Log screen asks with /vcd log [page] [player] and gets that page with the reply
+        String[] words = command.trim().split("\\s+");
+        if (words[0].equalsIgnoreCase("log") && ctx.allows(AdminCommands.PERM_SETTINGS)) {
+            ChangeLog.writePage(ChangeLog.page(ChangeLog.read(settings), ChangeLog.parseView(words)), state);
+        }
+        return LinkProtocol.adminReply(lines, settings, state);
     }
 
     /** How many latest changes the Server tab lists. */

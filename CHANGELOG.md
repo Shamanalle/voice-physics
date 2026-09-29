@@ -6,6 +6,32 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 *Все заметные изменения проекта описываются в этом файле. Каждая версия описана сначала на английском, затем на русском.*
 
+## [2.7.0] - 2026-09-29
+
+### English
+
+#### Added
+- Custom blocks: blocks from other mods, or ones that are guessed wrong, can count as a material you choose. On the *Walls* tab, under the materials: add the block you look at, the block in your hand or an id or `#tag`, change its material, remove it. Servers do the same for everyone: *Server* tab or `/vcd block add|remove|list|clear`. Locked together with the materials.
+- The server's change log on a screen of its own, for admins: *Server* tab → *Full log*, or `/voicephysics log`. Ten changes a page, one player's changes by name, undo of the last change, and a button that copies the page.
+- `/vcd log [page] [player]`: the log of one player's changes (`console` for the console).
+- Monitor: point at a talking player to see why the voice is as loud as it is (distance, whisper, wall, the way round a corner).
+
+#### Changed
+- *Distance* tab: falloff and whisper first; the curve's shape, edge volume and full-volume range are under *More curve settings*.
+- *Server* tab: the sections fold, and a folded one shows what it is set to.
+
+### Русский
+
+#### Добавлено
+- Свои блоки: блоки из других модов или те, что определились неверно, можно посчитать выбранным материалом. На вкладке «Стены» под материалами: добавить блок под прицелом, блок в руке или id/`#тег`, сменить материал, удалить. Сервер делает то же для всех: вкладка «Сервер» или `/vcd block add|remove|list|clear`. Закрепляется вместе с материалами.
+- Журнал изменений сервера на отдельном экране для админов: вкладка «Сервер» → «Весь журнал» или `/voicephysics log`. По десять изменений на странице, изменения одного игрока по нику, отмена последнего изменения и кнопка, которая копирует страницу.
+- `/vcd log [страница] [игрок]`: журнал изменений одного игрока (`console` — консоль).
+- Монитор: наведите на говорящего игрока, чтобы увидеть, почему голос такой громкий (расстояние, шёпот, стена, обход угла).
+
+#### Изменено
+- Вкладка «Дистанция»: сначала спад и шёпот; форма кривой, громкость на краю и зона полной громкости — в разделе «Ещё настройки кривой».
+- Вкладка «Сервер»: разделы сворачиваются, свёрнутый показывает своё значение.
+
 ## [2.6.2] - 2026-09-29
 
 ### English

@@ -52,6 +52,7 @@ final class CommandSuggest {
                 case "rule" -> addAll(out, AdminCommands.RULES, typed);
                 case "group" -> addAll(out, AdminCommands.GROUP_RULES, typed);
                 case "require" -> addAll(out, AdminCommands.REQUIRE, typed);
+                case "block" -> addAll(out, new String[]{"list", "add", "remove", "clear"}, typed);
                 case "debug" -> players(out, ctx, typed);
                 case "zones" -> pages(out, settings, typed);
                 case "zone" -> {
@@ -78,12 +79,38 @@ final class CommandSuggest {
             }, typed);
         } else if (sub.equals("group") && args.length == 3) {
             addAll(out, AdminCommands.ON_OFF, typed);
+        } else if (sub.equals("block") && args.length >= 3) {
+            blockArgs(out, args, action, typed, settings);
         } else if (sub.equals("require") && args.length == 3) {
             addAll(out, new String[]{"-", BuildInfo.version()}, typed);
         } else if (sub.equals("zone")) {
             zone(out, args, action, typed, settings, ctx, m);
         }
         return out;
+    }
+
+    /** {@code block add <id> <material>} and {@code block remove <rule>}. */
+    private static void blockArgs(List<Suggestion> out, String[] args, String action, String typed, ServerSettings settings) {
+        switch (action) {
+            case "add", "set" -> {
+                if (args.length == 3) {
+                    addAll(out, new String[]{"minecraft:", "#minecraft:", "#c:"}, typed);
+                } else if (args.length == 4) {
+                    for (AcousticMaterial m : AcousticMaterial.values()) {
+                        add(out, m.getId(), typed, null);
+                    }
+                }
+            }
+            case "remove", "delete" -> {
+                if (args.length == 3 && settings != null) {
+                    for (BlockRules.Rule rule : settings.getBlockRules().rules()) {
+                        add(out, rule.key(), typed, rule.material().getId());
+                    }
+                }
+            }
+            default -> {
+            }
+        }
     }
 
     private static void zone(List<Suggestion> out, String[] args, String action, String typed, ServerSettings settings, Context ctx,

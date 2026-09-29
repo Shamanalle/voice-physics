@@ -6,6 +6,7 @@ import com.kasper.vcdistance.AttenuationModel;
 import com.kasper.vcdistance.AudioDistancePlugin;
 import com.kasper.vcdistance.AudioPhysics;
 import com.kasper.vcdistance.Bearing;
+import com.kasper.vcdistance.BlockRules;
 import com.kasper.vcdistance.DistanceConfig;
 import com.kasper.vcdistance.EnvironmentEffects;
 import com.kasper.vcdistance.HudMode;
@@ -53,10 +54,13 @@ public abstract class SettingsScreen extends Screen {
     private static final int SCROLL_STEP = 18;
 
     private static Tab lastTab = Tab.DISTANCE;
+    private static boolean logRequested;
     /** Monitor as a list (false) or a radar seen from above (true); kept while the game runs. */
     private static boolean radarView;
     /** The materials section of the Walls tab is open; kept while the game runs. */
     private static boolean materialsOpen;
+    /** The tuning part of the Distance tab (model, edge volume, full-volume range) is open; kept while the game runs. */
+    private static boolean distanceMoreOpen;
 
     /** Walk-away preview: where the voice is at each step, as a share of the range. */
     private static final double[] PREVIEW_STEPS = {0.03, 0.12, 0.21, 0.3, 0.39, 0.48, 0.57, 0.66, 0.75, 0.84, 0.92, 0.97};
@@ -129,6 +133,10 @@ public abstract class SettingsScreen extends Screen {
     private final List<Heading> headings = new ArrayList<>();
     /** Plain text lines of the Server tab (the latest changes). */
     private final List<Heading> notes = new ArrayList<>();
+    /** The block ids of the custom block rules, drawn beside their buttons; the line end is where the text must stop. */
+    private final List<Heading> ruleLabels = new ArrayList<>();
+    /** What the last click in the custom blocks list said (added, no block in the crosshair...). */
+    private Component blockMessage;
 
     /** Widgets below the tabs, with the content y they were laid out at. */
     private final List<AbstractWidget> scrolled = new ArrayList<>();
@@ -174,6 +182,18 @@ public abstract class SettingsScreen extends Screen {
         lastTab = tab;
     }
 
+    /** Unfolds every section (the in-game tests shoot the tabs with everything open). */
+    public static void unfoldAll() {
+        distanceMoreOpen = true;
+        materialsOpen = true;
+        closedSections.clear();
+    }
+
+    /** {@code /voicephysics log}: the next settings screen goes straight on to the change log (admins only). */
+    public static void openLogNext() {
+        logRequested = true;
+    }
+
     /** Scrolls the open tab to its end (in-game tests). */
     public void scrollToEnd() {
         scroll = maxScroll;
@@ -182,6 +202,9 @@ public abstract class SettingsScreen extends Screen {
 
     /** Shows another screen (the API for this differs between versions). */
     protected abstract void openScreen(Screen screen);
+
+    /** The change log screen of this version; {@code parent} is where its Back goes. */
+    protected abstract Screen newLogScreen(Screen parent);
 
     /** Plays the preview voice (a villager's "hmm") at {@code volume}, 0 - 1. */
     protected abstract void playPreview(float volume);
@@ -207,6 +230,7 @@ public abstract class SettingsScreen extends Screen {
         presetOrder.clear();
         headings.clear();
         notes.clear();
+        ruleLabels.clear();
         strengthSlider = null;
         reverbSlider = null;
         waterSlider = null;
@@ -494,38 +518,49 @@ public abstract class SettingsScreen extends Screen {
 
         // The graph keeps a readable shape; on short windows it shrinks down to a minimum and the tab scrolls
         int preferred = Math.max(120, w * 2 / 5);
-        int room = viewBottom - graphTop - 6 - (ROW * 3 - GAP) - 3;
+        int room = viewBottom - graphTop - 6 - (ROW * 2 - GAP) - 3;
         graphBottom = graphTop + Math.max(100, Math.min(room, preferred));
         int rows = graphBottom + 6;
 
-        edit(Button.builder(modelLabel(), b -> {
-            config.setModel(config.getModel().next());
-            b.setMessage(modelLabel());
-            b.setTooltip(Tooltip.create(Component.translatable(config.getModel().getTooltipKey())));
-        }).bounds(left, rows, colW, 20).tooltip(Tooltip.create(Component.translatable(shown().getModel().getTooltipKey()))).build(),
-                DistanceConfig.Part.CURVE);
-
-        edit(withTip(new RangeSlider(col2, rows, colW, 20,
+        // What most players touch: how fast voices fade and how far a whisper carries
+        edit(withTip(new RangeSlider(left, rows, colW, 20,
                 DistanceConfig.ROLLOFF_MIN, DistanceConfig.ROLLOFF_MAX, 0.01,
                 () -> shown().getAttenuationFactor(), config::setAttenuationFactor,
                 v -> tr("falloff", pct(v))), "falloff.tooltip"), DistanceConfig.Part.CURVE);
 
-        edit(withTip(new RangeSlider(left, rows + ROW, colW, 20,
-                DistanceConfig.REFERENCE_MIN, DistanceConfig.REFERENCE_MAX, 0.01,
-                () -> shown().getOpenalReferenceRatio(), config::setOpenalReferenceRatio,
-                v -> tr("reference", blocks(v * AudioDistancePlugin.getServerMaxDistance()))), "reference.tooltip"),
+        edit(withTip(new RangeSlider(col2, rows, colW, 20,
+                DistanceConfig.WHISPER_MIN, DistanceConfig.WHISPER_MAX, 0.05,
+                () -> shown().getWhisperMultiplier(), config::setWhisperMultiplier,
+                v -> tr("whisper", pct(v))), "whisper.tooltip"), DistanceConfig.Part.CURVE);
+
+        // The rest of the curve is for tuning: a section that opens, like the materials
+        content(Button.builder(Component.literal(distanceMoreOpen ? "▾ " : "▸ ").append(tr("distance.more")), b -> {
+            distanceMoreOpen = !distanceMoreOpen;
+            rebuild();
+        }).bounds(left, rows + ROW, w, 20).tooltip(tip("distance.more.tooltip")).build());
+        contentEnd = rows + ROW + 20;
+        if (!distanceMoreOpen) {
+            return;
+        }
+        int more = rows + ROW * 2;
+        edit(Button.builder(modelLabel(), b -> {
+            config.setModel(config.getModel().next());
+            b.setMessage(modelLabel());
+            b.setTooltip(Tooltip.create(Component.translatable(config.getModel().getTooltipKey())));
+        }).bounds(left, more, colW, 20).tooltip(Tooltip.create(Component.translatable(shown().getModel().getTooltipKey()))).build(),
                 DistanceConfig.Part.CURVE);
 
-        edit(withTip(new RangeSlider(col2, rows + ROW, colW, 20,
+        edit(withTip(new RangeSlider(col2, more, colW, 20,
                 DistanceConfig.MIN_VOLUME_MIN, DistanceConfig.MIN_VOLUME_MAX, 0.01,
                 () -> shown().getMinVolumeFraction(), config::setMinVolumeFraction,
                 v -> tr("floor", pct(v))), "floor.tooltip"), DistanceConfig.Part.CURVE);
 
-        edit(withTip(new RangeSlider(left, rows + ROW * 2, w, 20,
-                DistanceConfig.WHISPER_MIN, DistanceConfig.WHISPER_MAX, 0.05,
-                () -> shown().getWhisperMultiplier(), config::setWhisperMultiplier,
-                v -> tr("whisper", pct(v))), "whisper.tooltip"), DistanceConfig.Part.CURVE);
-        contentEnd = rows + ROW * 2 + 20;
+        edit(withTip(new RangeSlider(left, more + ROW, colW, 20,
+                DistanceConfig.REFERENCE_MIN, DistanceConfig.REFERENCE_MAX, 0.01,
+                () -> shown().getOpenalReferenceRatio(), config::setOpenalReferenceRatio,
+                v -> tr("reference", blocks(v * AudioDistancePlugin.getServerMaxDistance()))), "reference.tooltip"),
+                DistanceConfig.Part.CURVE);
+        contentEnd = more + ROW + 20;
     }
 
     // ---- Walls --------------------------------------------------------------
@@ -593,8 +628,123 @@ public abstract class SettingsScreen extends Screen {
                 edit(slider, DistanceConfig.Part.MATERIALS);
             }
             y += ((cells + cols - 1) / cols) * ROW;
+            y = initBlockRules(y, w, false, null);
         }
         contentEnd = y - GAP;
+    }
+
+    // ---- Custom blocks (the Walls tab, and the Server tab for admins) -------
+
+    /**
+     * The list of blocks and block tags that count as a material of their own, with the buttons to add the
+     * block you look at or hold, or one typed in, and to change or remove a rule. On the Walls tab it edits
+     * the player's own list (locked with the materials); on the Server tab it sends {@code /vcd block ...}.
+     *
+     * @return the y below the list
+     */
+    private int initBlockRules(int y, int w, boolean server, java.util.Properties st) {
+        BlockRules rules = server ? BlockRules.parse(st.getProperty("block_rules")) : shown().getBlockRules();
+        if (server) {
+            y += 2;
+        } else {
+            y += 6;
+            headings.add(new Heading(tr("blocks.section"), y, right));
+            y += 13;
+        }
+        notes.add(new Heading(tr("blocks.hint"), y, right));
+        y += 12;
+        int third = (w - GAP * 2) / 3;
+        blockWidget(Button.builder(tr("blocks.look"), b -> addBlock(BlockPicker.lookedAt(), "blocks.none_looked", rules, server))
+                .bounds(left, y, third, 20).tooltip(tip("blocks.look.tooltip")).build(), server, st);
+        blockWidget(Button.builder(tr("blocks.hand"), b -> addBlock(BlockPicker.inHand(), "blocks.none_held", rules, server))
+                .bounds(left + third + GAP, y, third, 20).tooltip(tip("blocks.hand.tooltip")).build(), server, st);
+        Button clear = Button.builder(tr("blocks.clear"), b -> {
+            if (server) {
+                AudioDistancePlugin.LINK.sendAdmin("block clear");
+            } else {
+                config.setBlockRules(BlockRules.EMPTY);
+            }
+            blockMessage = null;
+            rebuild();
+        }).bounds(right - third, y, third, 20).tooltip(tip("blocks.clear.tooltip")).build();
+        clear.active = !rules.isEmpty();
+        blockWidget(clear, server, st);
+        y += ROW;
+
+        int addW = Math.min(third, this.font.width(tr("blocks.add")) + 16);
+        EditBox field = new EditBox(this.font, left, y, w - addW - GAP, 20, tr("blocks.field"));
+        field.setMaxLength(100);
+        field.setTooltip(tip("blocks.field.tooltip"));
+        blockWidget(field, server, st);
+        blockWidget(Button.builder(tr("blocks.add"), b -> addBlock(field.getValue(), "blocks.invalid", rules, server))
+                .bounds(right - addW, y, addW, 20).tooltip(tip("blocks.add.tooltip")).build(), server, st);
+        y += ROW;
+
+        if (blockMessage != null) {
+            notes.add(new Heading(blockMessage, y, right));
+            y += 12;
+        }
+        int matW = Math.min(110, w / 3);
+        int matX = right - matW - 20 - GAP;
+        for (BlockRules.Rule rule : rules.rules()) {
+            ruleLabels.add(new Heading(Component.literal(rule.key()), y + 6, matX - GAP));
+            blockWidget(Button.builder(Component.translatable(rule.material().getTranslationKey()), b -> {
+                AcousticMaterial[] all = AcousticMaterial.values();
+                AcousticMaterial next = all[(rule.material().ordinal() + 1) % all.length];
+                if (server) {
+                    AudioDistancePlugin.LINK.sendAdmin("block add " + rule.key() + " " + next.getId());
+                } else {
+                    config.setBlockRules(rules.with(rule.key(), next));
+                    rebuild();
+                }
+            }).bounds(matX, y, matW, 20).tooltip(tip("blocks.material.tooltip")).build(), server, st);
+            blockWidget(Button.builder(Component.literal("×"), b -> {
+                if (server) {
+                    AudioDistancePlugin.LINK.sendAdmin("block remove " + rule.key());
+                } else {
+                    config.setBlockRules(rules.without(rule.key()));
+                    rebuild();
+                }
+            }).bounds(right - 20, y, 20, 20).tooltip(tip("blocks.remove.tooltip")).build(), server, st);
+            y += ROW;
+        }
+        if (rules.isEmpty()) {
+            notes.add(new Heading(tr("blocks.none"), y, right));
+            y += 12;
+        }
+        return y;
+    }
+
+    /** A control of the custom blocks list: locked with the materials on the Walls tab, follows the permissions on the Server tab. */
+    private void blockWidget(AbstractWidget widget, boolean server, java.util.Properties st) {
+        if (server) {
+            boolean wasActive = widget.active;
+            content(widget);
+            widget.active = wasActive && mayRun(st, "block add");
+        } else {
+            edit(widget, DistanceConfig.Part.MATERIALS);
+        }
+    }
+
+    private void addBlock(String text, String noneKey, BlockRules rules, boolean server) {
+        String key = text == null || text.isBlank() ? null : BlockRules.normalize(text);
+        if (text == null || text.isBlank()) {
+            blockMessage = tr(noneKey);
+        } else if (key == null) {
+            blockMessage = tr("blocks.invalid");
+        } else if (rules.get(key) != null) {
+            blockMessage = tr("blocks.exists", key);
+        } else if (rules.size() >= BlockRules.MAX_RULES) {
+            blockMessage = tr("blocks.full", BlockRules.MAX_RULES);
+        } else {
+            if (server) {
+                AudioDistancePlugin.LINK.sendAdmin("block add " + key + " stone");
+            } else {
+                config.setBlockRules(rules.with(key, AcousticMaterial.STONE));
+            }
+            blockMessage = tr("blocks.added", key);
+        }
+        rebuild();
     }
 
     private static boolean hasStatusBanner() {
@@ -823,6 +973,32 @@ public abstract class SettingsScreen extends Screen {
         };
     }
 
+    /** Server tab sections the admin has closed; kept while the game runs. Groups and the addon requirement start closed. */
+    private static final java.util.Set<String> closedSections = new java.util.HashSet<>(java.util.List.of("groups", "addon", "blocks"));
+
+    private static boolean sectionOpen(String id) {
+        return !closedSections.contains(id);
+    }
+
+    /**
+     * A section's title as a button that folds it; a folded section says what it is set to. Returns the y
+     * of the section's first row.
+     */
+    private int sectionHead(String id, String key, Component summary, int y) {
+        boolean open = sectionOpen(id);
+        Component label = Component.literal(open ? "▾ " : "▸ ").append(tr(key));
+        if (!open && summary != null) {
+            label = label.copy().append(Component.literal("  ·  ")).append(summary);
+        }
+        content(Button.builder(label, b -> {
+            if (!closedSections.remove(id)) {
+                closedSections.add(id);
+            }
+            rebuild();
+        }).bounds(left, y, right - left, 16).tooltip(tip("server.section.fold")).build());
+        return y + 20;
+    }
+
     /** A section title, then the section's first row. */
     private int heading(String key, int y) {
         headings.add(new Heading(tr(key), y, right));
@@ -842,64 +1018,87 @@ public abstract class SettingsScreen extends Screen {
         }
 
         // Profile: how it reaches players, which sound, what they cannot change
-        y = heading("server.section.profile", y);
         String mode = st.getProperty("profile_mode", "off");
         String preset = st.getProperty("profile_preset", "custom");
         String locked = st.getProperty("profile_locked", "all");
-        serverButton(tr("server.profile", tr("server.mode." + mode)), "server.profile.tooltip", left, y, half,
-                "profile " + next(SERVER_MODES, mode));
-        serverButton(tr("server.preset", presetName(preset)), "server.preset.tooltip", x2, y, half,
-                "preset " + next(SERVER_PRESETS, preset));
-        y += ROW;
-        serverButton(tr("server.locked", lockedName(locked)), "server.locked.tooltip", left, y, half,
-                "lock " + next(SERVER_LOCKS, locked));
-        y += ROW + 4;
+        y = sectionHead("profile", "server.section.profile", tr("server.mode." + mode), y);
+        if (sectionOpen("profile")) {
+            serverButton(tr("server.profile", tr("server.mode." + mode)), "server.profile.tooltip", left, y, half,
+                    "profile " + next(SERVER_MODES, mode));
+            serverButton(tr("server.preset", presetName(preset)), "server.preset.tooltip", x2, y, half,
+                    "preset " + next(SERVER_PRESETS, preset));
+            y += ROW;
+            serverButton(tr("server.locked", lockedName(locked)), "server.locked.tooltip", left, y, half,
+                    "lock " + next(SERVER_LOCKS, locked));
+            y += ROW;
+        }
+        y += 4;
 
         // Walls: − and + in 5% steps either side of the value
-        y = heading("server.section.walls", y);
         int wallsPct = (int) Math.round(parse(st.getProperty("walls_strength", "0")) * 100.0);
-        int down = Math.max(0, (wallsPct + 4) / 5 * 5 - 5);
-        int up = Math.min(100, wallsPct / 5 * 5 + 5);
-        serverButton(Component.literal("−"), "server.walls.tooltip", left, y, 20, down == 0 ? "walls off" : "walls " + down)
-                .active &= wallsPct > 0;
-        serverButton(tr("server.walls", wallsPct == 0 ? tr("off") : Component.literal(wallsPct + "%")), "server.walls.tooltip",
-                left + 22, y, half - 44, "walls " + up).active &= wallsPct < 100;
-        serverButton(Component.literal("+"), "server.walls.tooltip", left + half - 20, y, 20, "walls " + up)
-                .active &= wallsPct < 100;
-        serverToggle("server.server_walls", st, "server_walls", "false", x2, y, half, "serverwalls");
-        y += ROW;
-        serverToggle("server.monitor", st, "allow_monitor", "true", left, y, half, "monitor");
-        serverToggle("server.notices", st, "zone_notices", "true", x2, y, half, "notices");
-        y += ROW + 4;
+        y = sectionHead("walls", "server.section.walls", wallsPct == 0 ? tr("off") : Component.literal(wallsPct + "%"), y);
+        if (sectionOpen("walls")) {
+            int down = Math.max(0, (wallsPct + 4) / 5 * 5 - 5);
+            int up = Math.min(100, wallsPct / 5 * 5 + 5);
+            serverButton(Component.literal("−"), "server.walls.tooltip", left, y, 20, down == 0 ? "walls off" : "walls " + down)
+                    .active &= wallsPct > 0;
+            serverButton(tr("server.walls", wallsPct == 0 ? tr("off") : Component.literal(wallsPct + "%")), "server.walls.tooltip",
+                    left + 22, y, half - 44, "walls " + up).active &= wallsPct < 100;
+            serverButton(Component.literal("+"), "server.walls.tooltip", left + half - 20, y, 20, "walls " + up)
+                    .active &= wallsPct < 100;
+            serverToggle("server.server_walls", st, "server_walls", "false", x2, y, half, "serverwalls");
+            y += ROW;
+            serverToggle("server.monitor", st, "allow_monitor", "true", left, y, half, "monitor");
+            serverToggle("server.notices", st, "zone_notices", "true", x2, y, half, "notices");
+            y += ROW;
+        }
+        y += 4;
 
         // Game rules
-        y = heading("server.section.rules", y);
         String sneak = st.getProperty("sneak_range_multiplier", "1");
-        serverButton(tr("server.sneak", pct(parse(sneak))), "server.sneak.tooltip", left, y, half,
-                "rule sneak " + next(SERVER_SNEAK, sneak));
-        String megaphone = st.getProperty("megaphone_item", "");
-        serverButton(tr("server.megaphone", megaphone.isEmpty() ? tr("off") : Component.translatable("item.minecraft.goat_horn")),
-                "server.megaphone.tooltip", x2, y, half, "rule megaphone " + (megaphone.isEmpty() ? MEGAPHONE : "off"));
-        y += ROW;
-        serverToggle("server.dead", st, "dead_players_silent", "false", left, y, half, "rule dead");
-        serverToggle("server.spectators", st, "spectators_hear_only_spectators", "false", x2, y, half, "rule spectators");
-        y += ROW + 4;
+        y = sectionHead("rules", "server.section.rules", tr("server.sneak", pct(parse(sneak))), y);
+        if (sectionOpen("rules")) {
+            serverButton(tr("server.sneak", pct(parse(sneak))), "server.sneak.tooltip", left, y, half,
+                    "rule sneak " + next(SERVER_SNEAK, sneak));
+            String megaphone = st.getProperty("megaphone_item", "");
+            serverButton(tr("server.megaphone", megaphone.isEmpty() ? tr("off") : Component.translatable("item.minecraft.goat_horn")),
+                    "server.megaphone.tooltip", x2, y, half, "rule megaphone " + (megaphone.isEmpty() ? MEGAPHONE : "off"));
+            y += ROW;
+            serverToggle("server.dead", st, "dead_players_silent", "false", left, y, half, "rule dead");
+            serverToggle("server.spectators", st, "spectators_hear_only_spectators", "false", x2, y, half, "rule spectators");
+            y += ROW;
+        }
+        y += 4;
 
         // Rules inside Simple Voice Chat groups
-        y = heading("server.section.groups", y);
-        serverToggle("server.group.dead", st, "group_dead_silent", "false", left, y, half, "group dead");
-        serverToggle("server.group.spectators", st, "group_spectators_apart", "false", x2, y, half, "group spectators");
-        y += ROW;
-        serverToggle("server.group.zones", st, "group_isolated_zones", "false", left, y, half, "group zones");
-        serverToggle("server.group.open_range", st, "open_group_range", "true", x2, y, half, "group open_range");
-        y += ROW + 4;
+        y = sectionHead("groups", "server.section.groups", null, y);
+        if (sectionOpen("groups")) {
+            serverToggle("server.group.dead", st, "group_dead_silent", "false", left, y, half, "group dead");
+            serverToggle("server.group.spectators", st, "group_spectators_apart", "false", x2, y, half, "group spectators");
+            y += ROW;
+            serverToggle("server.group.zones", st, "group_isolated_zones", "false", left, y, half, "group zones");
+            serverToggle("server.group.open_range", st, "open_group_range", "true", x2, y, half, "group open_range");
+            y += ROW;
+        }
+        y += 4;
 
         // Players who have Simple Voice Chat but not this addon
-        y = heading("server.section.addon", y);
         String require = st.getProperty("require_addon", "off");
-        serverButton(tr("server.require", tr("server.require." + require)), "server.require.tooltip", left, y, half,
-                "require " + next(SERVER_REQUIRE, require));
-        y += ROW + 4;
+        y = sectionHead("addon", "server.section.addon", tr("server.require." + require), y);
+        if (sectionOpen("addon")) {
+            serverButton(tr("server.require", tr("server.require." + require)), "server.require.tooltip", left, y, half,
+                    "require " + next(SERVER_REQUIRE, require));
+            y += ROW;
+        }
+        y += 4;
+
+        // Blocks (often from other mods) that count as a material of their own
+        BlockRules serverRules = BlockRules.parse(st.getProperty("block_rules"));
+        y = sectionHead("blocks", "blocks.section", Component.literal(String.valueOf(serverRules.size())), y);
+        if (sectionOpen("blocks")) {
+            y = initBlockRules(y, w, true, st);
+        }
+        y += 4;
 
         y = initZones(st, y, w, (w - GAP * 2) / 3);
         y = initLog(st, y + 4, w);
@@ -914,9 +1113,14 @@ public abstract class SettingsScreen extends Screen {
             return y;
         }
         int undoW = Math.min(w / 3, this.font.width(tr("server.log.undo")) + 16);
-        headings.add(new Heading(tr("server.section.log"), y + 6, undo > 0 ? right - undoW - 8 : right));
+        int openW = Math.min(w / 3, this.font.width(tr("server.log.open")) + 16);
+        int buttons = openW + (undo > 0 ? undoW + GAP : 0);
+        headings.add(new Heading(tr("server.section.log"), y + 6, right - buttons - 8));
+        Button open = content(Button.builder(tr("server.log.open"), btn -> openScreen(newLogScreen(this)))
+                .bounds(right - openW, y, openW, 20).tooltip(tip("server.log.open.tooltip")).build());
+        open.active = mayRun(st, "log");
         if (undo > 0) {
-            serverButton(tr("server.log.undo"), "server.log.undo.tooltip", right - undoW, y, undoW, "undo");
+            serverButton(tr("server.log.undo"), "server.log.undo.tooltip", right - openW - GAP - undoW, y, undoW, "undo");
         }
         y += ROW;
         java.time.format.DateTimeFormatter time = java.time.format.DateTimeFormatter.ofPattern("dd.MM HH:mm")
@@ -1106,8 +1310,16 @@ public abstract class SettingsScreen extends Screen {
         if (noZonesY >= 0) {
             c.text(fit(c, tr("server.zones.none"), right - left), left + 1, noZonesY, Palette.TEXT_MUTED);
         }
+        paintNotes(c);
+    }
+
+    /** The muted lines and the block ids of the lists (the Server tab and the custom blocks of the Walls tab). */
+    private void paintNotes(Canvas c) {
         for (Heading n : notes) {
             c.text(fit(c, n.text(), right - left - 2), left + 1, n.y() + 1, Palette.TEXT_MUTED);
+        }
+        for (Heading label : ruleLabels) {
+            c.text(fit(c, label.text(), label.lineEnd() - left - 2), left + 1, label.y() - 1, Palette.TEXT);
         }
     }
 
@@ -1206,6 +1418,14 @@ public abstract class SettingsScreen extends Screen {
     @Override
     public void tick() {
         super.tick();
+        if (logRequested) {
+            logRequested = false;
+            if (AudioDistancePlugin.LINK.isAdmin()) {
+                // Back leaves the settings too: the log was asked for, not the settings
+                openScreen(newLogScreen(parent));
+                return;
+            }
+        }
         if (tab == Tab.SERVER && AudioDistancePlugin.LINK.adminReplyCount() != seenAdminReplies) {
             seenAdminReplies = AudioDistancePlugin.LINK.adminReplyCount();
             rebuild();
@@ -1236,6 +1456,7 @@ public abstract class SettingsScreen extends Screen {
         tab = t;
         lastTab = t;
         confirmDelete = null;
+        blockMessage = null;
         if (t == Tab.SERVER) {
             // Fresh settings from the server; the tab fills in when the reply arrives
             AudioDistancePlugin.LINK.sendAdmin("status");
@@ -1598,6 +1819,14 @@ public abstract class SettingsScreen extends Screen {
         paragraph(c, tr("walls.hint"), left + 8, panelBottom - 4 - wallsHintLines * 10, right - left - 16, 2,
                 Palette.TEXT_MUTED, false);
 
+        for (Heading h : headings) {
+            c.text(h.text(), left + 1, h.y(), Palette.ACCENT_LINE);
+            int lineX = left + c.width(h.text()) + 8;
+            if (lineX < h.lineEnd()) {
+                c.hLine(lineX, h.lineEnd(), h.y() + 4, Palette.PANEL_BORDER);
+            }
+        }
+        paintNotes(c);
         if (materialsHintY >= 0) {
             paragraph(c, tr("materials.hint_other"), left + 1, materialsHintY, right - left, 2, Palette.TEXT_MUTED, false);
         }
@@ -1791,10 +2020,16 @@ public abstract class SettingsScreen extends Screen {
 
         int rowY = hy + 16;
         int shownRows = 0;
+        NearbyPlayers.Row hoveredRow = null;
+        int hoveredY = 0;
         for (NearbyPlayers.Row row : rows) {
             if (rowY + 10 > bottom - 4 - footer) {
                 c.text(tr("monitor.more", rows.size() - shownRows), nameLeft, rowY - 2, Palette.TEXT_MUTED);
                 break;
+            }
+            if (row.isTalking() && mouseX >= left && mouseX < right && mouseY >= rowY - 1 && mouseY < rowY + 11) {
+                hoveredRow = row;
+                hoveredY = rowY;
             }
             // Distance and, after it, an arrow towards the player
             String arrow = Bearing.arrow(row.bearing());
@@ -1810,6 +2045,40 @@ public abstract class SettingsScreen extends Screen {
             rowY += 13;
             shownRows++;
         }
+        if (hoveredRow != null) {
+            badge(c, fit(c, whyQuiet(hoveredRow.speaker(), wallsActive), right - left - 12), midX, hoveredY - 14);
+        }
+    }
+
+    /**
+     * Why a voice is as loud as it is, in a line: how far the voice is and what the curve makes of it,
+     * then what takes more away (the wall, the longer way round, the whisper).
+     */
+    private Component whyQuiet(SpeakerRegistry.Speaker s, boolean wallsActive) {
+        List<Component> parts = new ArrayList<>();
+        if (s.getDistance() >= 0.0) {
+            double curve = AudioDistancePlugin.curveGain(s.getDistance(), s.getMaxDistance(), s.isWhispering());
+            parts.add(tr("monitor.why.distance", blocks(s.getDistance()), blocks(s.getMaxDistance()), pct(curve)));
+        }
+        if (s.isWhispering()) {
+            parts.add(tr("monitor.why.whisper"));
+        }
+        float lossDb = wallsActive ? s.getFilter().getDisplayLossDb() : 0.0F;
+        if (lossDb >= 1.5F) {
+            parts.add(tr("monitor.why.wall", tr(wallLevel(lossDb))));
+        }
+        SoundBlend blend = wallsActive ? s.getBlend() : null;
+        if (blend != null && blend.extraDistance() >= 1.0) {
+            parts.add(tr("monitor.why.round", blocks(blend.extraDistance())));
+        }
+        if (parts.size() == 1 || (parts.size() == 2 && s.isWhispering() && lossDb < 1.5F)) {
+            parts.add(tr("monitor.why.clear"));
+        }
+        net.minecraft.network.chat.MutableComponent line = Component.empty();
+        for (int i = 0; i < parts.size(); i++) {
+            line.append(i == 0 ? parts.get(i) : Component.literal("  ·  ").append(parts.get(i)));
+        }
+        return line;
     }
 
     /** Top-down view: you in the middle looking up, the voice and whisper ranges as rings. */

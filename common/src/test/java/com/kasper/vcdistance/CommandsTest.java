@@ -239,6 +239,113 @@ public class CommandsTest {
     }
 
     @Test
+    @DisplayName("/vcd block adds, lists and removes block rules; they are saved, sent in the profile and undone")
+    void blockRules() throws IOException {
+        ServerSettings s = settings("");
+        AdminCommands.Context ctx = ctx();
+        assertTrue(AdminCommands.run("block", s, ctx).get(0).startsWith("No block rules"));
+
+        List<String> added = AdminCommands.run("block add Create:Andesite_Casing metal", s, ctx);
+        assertTrue(added.get(0).contains("create:andesite_casing") && added.get(0).contains("metal"), added.toString());
+        AdminCommands.run("block add #c:glass_blocks glass", s, ctx);
+        assertEquals(AcousticMaterial.METAL, s.getBlockRules().get("create:andesite_casing").material());
+        assertEquals(2, s.getBlockRules().size());
+        assertEquals(2, AdminCommands.undoable(s));
+
+        // A wrong block or material says what is allowed and changes nothing
+        assertTrue(AdminCommands.run("block add two words metal", s, ctx).get(0).contains("block add"));
+        List<String> unknown = AdminCommands.run("block add create:x marble", s, ctx);
+        assertTrue(unknown.get(0).contains("marble") && unknown.get(0).contains("stone|metal"), unknown.toString());
+        assertEquals(2, s.getBlockRules().size());
+
+        String listing = String.join("\n", AdminCommands.run("block list", s, ctx));
+        assertTrue(listing.contains("Block rules (2)") && listing.contains("#c:glass_blocks"), listing);
+
+        // Saved in the file and sent to the players in the profile
+        ServerSettings again = new ServerSettings(s.getPath());
+        again.load();
+        assertEquals(s.getBlockRules(), again.getBlockRules());
+        DistanceConfig sent = new DistanceConfig();
+        java.util.Properties props = new java.util.Properties();
+        s.profile().writeTo(props, "profile.");
+        sent.readFrom(props, "profile.");
+        assertEquals(s.getBlockRules(), sent.getBlockRules());
+
+        // Locked with the materials, a player's own rules give way to the server's
+        DistanceConfig player = new DistanceConfig();
+        player.setBlockRules(BlockRules.EMPTY.with("mod:a", AcousticMaterial.WOOL));
+        player.copyPart(DistanceConfig.Part.CURVE, s.profile());
+        assertEquals(AcousticMaterial.WOOL, player.getBlockRules().get("mod:a").material());
+        player.copyPart(DistanceConfig.Part.MATERIALS, s.profile());
+        assertNull(player.getBlockRules().get("mod:a"));
+        assertEquals(s.getBlockRules(), player.getBlockRules());
+        player.resetMaterials();
+        assertTrue(player.getBlockRules().isEmpty());
+
+        assertTrue(AdminCommands.run("block remove nonsense:x", s, ctx).get(0).contains("block remove"));
+        AdminCommands.run("block remove #c:glass_blocks", s, ctx);
+        assertEquals(1, s.getBlockRules().size());
+        AdminCommands.run("undo", s, ctx);
+        assertEquals(2, s.getBlockRules().size(), "undo takes the removal back");
+        AdminCommands.run("block clear", s, ctx);
+        assertTrue(s.getBlockRules().isEmpty());
+        assertTrue(AdminCommands.run("block add stone wool", s, ctx(admin.id(), null, AdminCommands.PERM_STATUS)).get(0)
+                .contains("vcd.settings"), "block rules need vcd.settings");
+    }
+
+    @Test
+    @DisplayName("The log is read as [page] [player]; a page travels to the Log screen and back whole")
+    void logPages() throws IOException {
+        ServerSettings s = settings("");
+        AdminCommands.Context ctx = ctx();
+        for (int i = 0; i < 23; i++) {
+            AdminCommands.run("walls " + (20 + i * 3), s, ctx);
+        }
+        String who = ChangeLog.read(s).get(0).who();
+
+        // Words in any order: a number is the page, anything else the player
+        ChangeLog.View both = ChangeLog.parseView(new String[]{"log", "Steve", "2"});
+        assertEquals(2, both.page());
+        assertEquals("Steve", both.who());
+        assertEquals(both, ChangeLog.parseView(new String[]{"log", "2", "Steve"}));
+        assertEquals(1, ChangeLog.parseView(new String[]{"log"}).page());
+        assertNull(ChangeLog.parseView(new String[]{"log"}).who());
+        assertEquals(ChangeLog.CONSOLE, ChangeLog.parseView(new String[]{"log", "console"}).who());
+
+        // Ten to a page, the last one shorter, and a page out of range is the nearest one
+        List<ChangeLog.Entry> all = ChangeLog.read(s);
+        ChangeLog.Page third = ChangeLog.page(all, new ChangeLog.View(3, null));
+        assertEquals(3, third.pages());
+        assertEquals(3, third.entries().size());
+        assertEquals(23, third.total());
+        assertEquals(3, ChangeLog.page(all, new ChangeLog.View(99, null)).page());
+        assertEquals(1, ChangeLog.page(all, new ChangeLog.View(-4, null)).page());
+
+        // One player's changes, whatever the case of the name; nobody's gives an empty page, not a broken one
+        assertEquals(23, ChangeLog.page(all, new ChangeLog.View(1, who.toUpperCase())).total());
+        ChangeLog.Page nobody = ChangeLog.page(all, new ChangeLog.View(1, "Nobody"));
+        assertEquals(0, nobody.total());
+        assertTrue(nobody.entries().isEmpty());
+        assertEquals(1, nobody.pages());
+        assertTrue(AdminCommands.run("log Nobody", s, ctx).get(0).contains("Nobody"));
+        assertTrue(AdminCommands.run("log 2 " + who, s, ctx).stream().anyMatch(l -> l.contains("Page 2 of 3")));
+
+        // The reply of the server: the page written into the state and read back by the client
+        java.util.Map<String, String> state = new java.util.LinkedHashMap<>();
+        ChangeLog.writePage(ChangeLog.page(all, new ChangeLog.View(2, null)), state);
+        java.util.Properties sent = new java.util.Properties();
+        sent.putAll(state);
+        ChangeLog.Page received = ChangeLog.readPage(sent);
+        assertNotNull(received);
+        assertEquals(2, received.page());
+        assertEquals(3, received.pages());
+        assertEquals(23, received.total());
+        assertEquals(10, received.entries().size());
+        assertEquals(all.get(10), received.entries().get(0));
+        assertNull(ChangeLog.readPage(new java.util.Properties()), "a reply of another command carries no page");
+    }
+
+    @Test
     @DisplayName("Server tab: its reply carries undo, the player's permissions and the latest changes")
     void serverTabState() throws IOException {
         ServerSettings s = settings("");

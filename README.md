@@ -108,7 +108,7 @@ Available in the full Fabric, Forge and NeoForge mods and as a plugin for Paper,
 - **One sound for everyone.** Offer the server's sound profile with a button, or enforce it while players are on the server (fair PvP and events). Lock all of it or only some parts: curve, walls, materials, effects. Locked walls lock each block's percentage too.
 - **No seeing through walls.** Turn off the monitor, the radar and nearby players in the HUD.
 - **Require the addon.** Players with Simple Voice Chat but without the addon can get a download link once, on every join, or be kicked. Players without voice chat are never affected.
-- **Admin tools.** A *Server* tab in the settings screen, [`/vcd`](#commands) with clickable replies, examples in its help, undo and separate permissions, a log of who changed what (`/vcd log`), `/vcd debug <player>` to see whom a player hears and why not, and messages in each player's own language (all texts can be edited).
+- **Admin tools.** A *Server* tab in the settings screen, [`/vcd`](#commands) with clickable replies, examples in its help, undo and separate permissions, a log of who changed what, on a screen of its own (*Server* tab → *Full log*, or `/voicephysics log`) and as `/vcd log`, `/vcd debug <player>` to see whom a player hears and why not, and messages in each player's own language (all texts can be edited).
 
 ## What works where
 
@@ -131,31 +131,31 @@ With the addon on both sides the client muffles walls itself and the server skip
 
 | Loader | Minecraft | File | Java | Simple Voice Chat |
 |---|---|---|---|---|
-| **Fabric / Quilt** | 1.20 – 1.20.1 | `voice-physics-fabric-2.6.2+mc1.20.1.jar` | 17+ | 2.4.0+ |
-| **Fabric / Quilt** | 1.20.2 – 1.20.4 | `voice-physics-fabric-2.6.2+mc1.20.2-1.20.4.jar` | 17+ | 2.4.0+ |
-| **Fabric / Quilt** | 1.20.5 – 1.20.6 | `voice-physics-fabric-2.6.2+mc1.20.5-1.20.6.jar` | 21+ | 2.5.0+ |
-| **Fabric / Quilt** | 1.21 – 1.21.11 | `voice-physics-fabric-2.6.2+mc1.21.x.jar` | 21+ | 2.5.0+ |
-| **Fabric / Quilt** | 26.1 – 26.3 | `voice-physics-fabric-2.6.2+mc26.x.jar` | 25+ | 2.6.0+ |
-| **Forge** | 1.20 – 1.20.1 | `voice-physics-forge-2.6.2+mc1.20.1.jar` | 17+ | 2.4.0+ |
-| **Forge** | 1.20.2 – 1.20.4 | `voice-physics-forge-2.6.2+mc1.20.2-1.20.4.jar` | 17+ | 2.4.0+ |
-| **Forge** | 1.20.6 | `voice-physics-forge-2.6.2+mc1.20.6.jar` | 21+ | 2.5.0+ |
-| **Forge** | 1.21 – 1.21.1 | `voice-physics-forge-2.6.2+mc1.21-1.21.1.jar` | 21+ | 2.5.0+ |
-| **Forge** | 1.21.3 – 1.21.5 | `voice-physics-forge-2.6.2+mc1.21.3-1.21.5.jar` | 21+ | 2.5.0+ |
-| **Forge** | 1.21.6 – 1.21.8 | `voice-physics-forge-2.6.2+mc1.21.6-1.21.8.jar` | 21+ | 2.5.0+ |
-| **Forge** | 1.21.9 – 1.21.10 | `voice-physics-forge-2.6.2+mc1.21.9-1.21.10.jar` | 21+ | 2.5.0+ |
-| **Forge** | 1.21.11 | `voice-physics-forge-2.6.2+mc1.21.11.jar` | 21+ | 2.5.0+ |
-| **Forge** | 26.1 – 26.3 | `voice-physics-forge-2.6.2+mc26.x.jar` | 25+ | 2.6.0+ |
-| **NeoForge** | 1.20.1 | `voice-physics-forge-2.6.2+mc1.20.1.jar` | 17+ | 2.4.0+ |
-| **NeoForge** | 1.20.2 – 1.20.3 | `voice-physics-neoforge-2.6.2+mc1.20.2-1.20.3.jar` | 17+ | 2.4.0+ |
-| **NeoForge** | 1.20.4 | `voice-physics-neoforge-2.6.2+mc1.20.4.jar` | 17+ | 2.4.0+ |
-| **NeoForge** | 1.20.5 – 1.20.6 | `voice-physics-neoforge-2.6.2+mc1.20.5-1.20.6.jar` | 21+ | 2.5.0+ |
-| **NeoForge** | 1.21 – 1.21.1 | `voice-physics-neoforge-2.6.2+mc1.21-1.21.1.jar` | 21+ | 2.5.0+ |
-| **NeoForge** | 1.21.2 – 1.21.5 | `voice-physics-neoforge-2.6.2+mc1.21.2-1.21.5.jar` | 21+ | 2.5.0+ |
-| **NeoForge** | 1.21.6 – 1.21.8 | `voice-physics-neoforge-2.6.2+mc1.21.6-1.21.8.jar` | 21+ | 2.5.0+ |
-| **NeoForge** | 1.21.9 – 1.21.10 | `voice-physics-neoforge-2.6.2+mc1.21.9-1.21.10.jar` | 21+ | 2.5.0+ |
-| **NeoForge** | 1.21.11 | `voice-physics-neoforge-2.6.2+mc1.21.11.jar` | 21+ | 2.5.0+ |
-| **NeoForge** | 26.1 – 26.3 | `voice-physics-neoforge-2.6.2+mc26.x.jar` | 25+ | 2.6.0+ |
-| **Paper / Purpur / Folia / Spigot / Bukkit** | 1.20 – 26.3 | `voice-physics-bukkit-2.6.2.jar` | 17+ | Bukkit version |
+| **Fabric / Quilt** | 1.20 – 1.20.1 | `voice-physics-fabric-2.7.0+mc1.20.1.jar` | 17+ | 2.4.0+ |
+| **Fabric / Quilt** | 1.20.2 – 1.20.4 | `voice-physics-fabric-2.7.0+mc1.20.2-1.20.4.jar` | 17+ | 2.4.0+ |
+| **Fabric / Quilt** | 1.20.5 – 1.20.6 | `voice-physics-fabric-2.7.0+mc1.20.5-1.20.6.jar` | 21+ | 2.5.0+ |
+| **Fabric / Quilt** | 1.21 – 1.21.11 | `voice-physics-fabric-2.7.0+mc1.21.x.jar` | 21+ | 2.5.0+ |
+| **Fabric / Quilt** | 26.1 – 26.3 | `voice-physics-fabric-2.7.0+mc26.x.jar` | 25+ | 2.6.0+ |
+| **Forge** | 1.20 – 1.20.1 | `voice-physics-forge-2.7.0+mc1.20.1.jar` | 17+ | 2.4.0+ |
+| **Forge** | 1.20.2 – 1.20.4 | `voice-physics-forge-2.7.0+mc1.20.2-1.20.4.jar` | 17+ | 2.4.0+ |
+| **Forge** | 1.20.6 | `voice-physics-forge-2.7.0+mc1.20.6.jar` | 21+ | 2.5.0+ |
+| **Forge** | 1.21 – 1.21.1 | `voice-physics-forge-2.7.0+mc1.21-1.21.1.jar` | 21+ | 2.5.0+ |
+| **Forge** | 1.21.3 – 1.21.5 | `voice-physics-forge-2.7.0+mc1.21.3-1.21.5.jar` | 21+ | 2.5.0+ |
+| **Forge** | 1.21.6 – 1.21.8 | `voice-physics-forge-2.7.0+mc1.21.6-1.21.8.jar` | 21+ | 2.5.0+ |
+| **Forge** | 1.21.9 – 1.21.10 | `voice-physics-forge-2.7.0+mc1.21.9-1.21.10.jar` | 21+ | 2.5.0+ |
+| **Forge** | 1.21.11 | `voice-physics-forge-2.7.0+mc1.21.11.jar` | 21+ | 2.5.0+ |
+| **Forge** | 26.1 – 26.3 | `voice-physics-forge-2.7.0+mc26.x.jar` | 25+ | 2.6.0+ |
+| **NeoForge** | 1.20.1 | `voice-physics-forge-2.7.0+mc1.20.1.jar` | 17+ | 2.4.0+ |
+| **NeoForge** | 1.20.2 – 1.20.3 | `voice-physics-neoforge-2.7.0+mc1.20.2-1.20.3.jar` | 17+ | 2.4.0+ |
+| **NeoForge** | 1.20.4 | `voice-physics-neoforge-2.7.0+mc1.20.4.jar` | 17+ | 2.4.0+ |
+| **NeoForge** | 1.20.5 – 1.20.6 | `voice-physics-neoforge-2.7.0+mc1.20.5-1.20.6.jar` | 21+ | 2.5.0+ |
+| **NeoForge** | 1.21 – 1.21.1 | `voice-physics-neoforge-2.7.0+mc1.21-1.21.1.jar` | 21+ | 2.5.0+ |
+| **NeoForge** | 1.21.2 – 1.21.5 | `voice-physics-neoforge-2.7.0+mc1.21.2-1.21.5.jar` | 21+ | 2.5.0+ |
+| **NeoForge** | 1.21.6 – 1.21.8 | `voice-physics-neoforge-2.7.0+mc1.21.6-1.21.8.jar` | 21+ | 2.5.0+ |
+| **NeoForge** | 1.21.9 – 1.21.10 | `voice-physics-neoforge-2.7.0+mc1.21.9-1.21.10.jar` | 21+ | 2.5.0+ |
+| **NeoForge** | 1.21.11 | `voice-physics-neoforge-2.7.0+mc1.21.11.jar` | 21+ | 2.5.0+ |
+| **NeoForge** | 26.1 – 26.3 | `voice-physics-neoforge-2.7.0+mc26.x.jar` | 25+ | 2.6.0+ |
+| **Paper / Purpur / Folia / Spigot / Bukkit** | 1.20 – 26.3 | `voice-physics-bukkit-2.7.0.jar` | 17+ | Bukkit version |
 
 - **Fabric**, **Forge** and **NeoForge** are the full addon, for the client and the server. Fabric needs [Fabric API](https://modrinth.com/mod/fabric-api); [Mod Menu](https://modrinth.com/mod/modmenu) is optional. On Forge for 1.21.6 – 1.21.7 the voice HUD is off: that Forge cannot add it. NeoForge 1.20.1 is a fork of Forge 1.20.1 and takes the Forge file. The NeoForge 1.20.4 file needs NeoForge 20.4.80 or newer.
 - **The plugin** is the server side only. Players can join with the addon, without it, or without mods at all.
@@ -182,6 +182,7 @@ Works on any server, with or without the addon there.
 | `/voicephysics code <code>` | Load a profile code |
 | `/voicephysics reset curve\|walls\|materials\|effects\|hud\|all` | Back to the defaults |
 | `/voicephysics status` | What this server does to your sound: its profile, what it locks, your zone, the voice range |
+| `/voicephysics log` | The server's change log on its own screen (admins): pages, one player's changes, undo, copy |
 | `/voicephysics help` | These commands, clickable |
 
 Parts the server locks cannot be changed from here either.
@@ -195,7 +196,8 @@ Replies are coloured and clickable: values in `/vcd status` put the command that
 | `/vcd` or `/vcd status` | Version, voice range, walls, players with the addon, profile, zones |
 | `/vcd help [command]` | Every command, or one with examples to click |
 | `/vcd undo` | Take back the last change (up to 10) |
-| `/vcd log [page]` | Who changed the settings and when, newest first (also kept in `vc-audio-distance-changes.log` next to the settings file) |
+| `/vcd log [page] [player]` | Who changed the settings and when, newest first, ten to a page; a name shows only that player's changes (also kept in `vc-audio-distance-changes.log` next to the settings file) |
+| `/vcd block add\|remove\|list\|clear` | Blocks and block tags (`create:andesite_casing`, `#c:glass_blocks`) that count as a material of their own, for everyone on the server; players can also add their own on the *Walls* tab |
 | `/vcd reload` | Re-read the settings file |
 | `/vcd profile off\|suggest\|enforce` | How the server profile is offered |
 | `/vcd preset vanilla\|realistic\|clear\|stealth\|custom` | The server's sound |
