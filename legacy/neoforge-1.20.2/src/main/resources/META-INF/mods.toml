@@ -1,5 +1,6 @@
 modLoader = "javafml"
-loaderVersion = "[2,)"
+# NeoForge 20.2 ships javafml 1.0, 20.3 later ones
+loaderVersion = "[1,)"
 license = "MIT"
 issueTrackerURL = "https://github.com/Shamanalle/voice-physics/issues"
 
