@@ -731,6 +731,7 @@ public final class ServerSettings {
         p.setProperty(prefix + "open_group_range", String.valueOf(openGroupRange));
         p.setProperty(prefix + "require_addon", requireAddon.getId());
         p.setProperty(prefix + "min_addon_version", minAddonVersion);
+        p.setProperty(prefix + "block_rules", profile.getBlockRules().serialize());
         int n = 0;
         for (Zone z : zones.values()) {
             Zone.Rules r = z.rules();

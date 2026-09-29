@@ -6,6 +6,7 @@ import com.kasper.vcdistance.AttenuationModel;
 import com.kasper.vcdistance.AudioDistancePlugin;
 import com.kasper.vcdistance.AudioPhysics;
 import com.kasper.vcdistance.Bearing;
+import com.kasper.vcdistance.BlockRules;
 import com.kasper.vcdistance.DistanceConfig;
 import com.kasper.vcdistance.EnvironmentEffects;
 import com.kasper.vcdistance.HudMode;
@@ -132,6 +133,10 @@ public abstract class SettingsScreen extends Screen {
     private final List<Heading> headings = new ArrayList<>();
     /** Plain text lines of the Server tab (the latest changes). */
     private final List<Heading> notes = new ArrayList<>();
+    /** The block ids of the custom block rules, drawn beside their buttons; the line end is where the text must stop. */
+    private final List<Heading> ruleLabels = new ArrayList<>();
+    /** What the last click in the custom blocks list said (added, no block in the crosshair...). */
+    private Component blockMessage;
 
     /** Widgets below the tabs, with the content y they were laid out at. */
     private final List<AbstractWidget> scrolled = new ArrayList<>();
@@ -225,6 +230,7 @@ public abstract class SettingsScreen extends Screen {
         presetOrder.clear();
         headings.clear();
         notes.clear();
+        ruleLabels.clear();
         strengthSlider = null;
         reverbSlider = null;
         waterSlider = null;
@@ -622,8 +628,123 @@ public abstract class SettingsScreen extends Screen {
                 edit(slider, DistanceConfig.Part.MATERIALS);
             }
             y += ((cells + cols - 1) / cols) * ROW;
+            y = initBlockRules(y, w, false, null);
         }
         contentEnd = y - GAP;
+    }
+
+    // ---- Custom blocks (the Walls tab, and the Server tab for admins) -------
+
+    /**
+     * The list of blocks and block tags that count as a material of their own, with the buttons to add the
+     * block you look at or hold, or one typed in, and to change or remove a rule. On the Walls tab it edits
+     * the player's own list (locked with the materials); on the Server tab it sends {@code /vcd block ...}.
+     *
+     * @return the y below the list
+     */
+    private int initBlockRules(int y, int w, boolean server, java.util.Properties st) {
+        BlockRules rules = server ? BlockRules.parse(st.getProperty("block_rules")) : shown().getBlockRules();
+        if (server) {
+            y += 2;
+        } else {
+            y += 6;
+            headings.add(new Heading(tr("blocks.section"), y, right));
+            y += 13;
+        }
+        notes.add(new Heading(tr("blocks.hint"), y, right));
+        y += 12;
+        int third = (w - GAP * 2) / 3;
+        blockWidget(Button.builder(tr("blocks.look"), b -> addBlock(BlockPicker.lookedAt(), "blocks.none_looked", rules, server))
+                .bounds(left, y, third, 20).tooltip(tip("blocks.look.tooltip")).build(), server, st);
+        blockWidget(Button.builder(tr("blocks.hand"), b -> addBlock(BlockPicker.inHand(), "blocks.none_held", rules, server))
+                .bounds(left + third + GAP, y, third, 20).tooltip(tip("blocks.hand.tooltip")).build(), server, st);
+        Button clear = Button.builder(tr("blocks.clear"), b -> {
+            if (server) {
+                AudioDistancePlugin.LINK.sendAdmin("block clear");
+            } else {
+                config.setBlockRules(BlockRules.EMPTY);
+            }
+            blockMessage = null;
+            rebuild();
+        }).bounds(right - third, y, third, 20).tooltip(tip("blocks.clear.tooltip")).build();
+        clear.active = !rules.isEmpty();
+        blockWidget(clear, server, st);
+        y += ROW;
+
+        int addW = Math.min(third, this.font.width(tr("blocks.add")) + 16);
+        EditBox field = new EditBox(this.font, left, y, w - addW - GAP, 20, tr("blocks.field"));
+        field.setMaxLength(100);
+        field.setTooltip(tip("blocks.field.tooltip"));
+        blockWidget(field, server, st);
+        blockWidget(Button.builder(tr("blocks.add"), b -> addBlock(field.getValue(), "blocks.invalid", rules, server))
+                .bounds(right - addW, y, addW, 20).tooltip(tip("blocks.add.tooltip")).build(), server, st);
+        y += ROW;
+
+        if (blockMessage != null) {
+            notes.add(new Heading(blockMessage, y, right));
+            y += 12;
+        }
+        int matW = Math.min(110, w / 3);
+        int matX = right - matW - 20 - GAP;
+        for (BlockRules.Rule rule : rules.rules()) {
+            ruleLabels.add(new Heading(Component.literal(rule.key()), y + 6, matX - GAP));
+            blockWidget(Button.builder(Component.translatable(rule.material().getTranslationKey()), b -> {
+                AcousticMaterial[] all = AcousticMaterial.values();
+                AcousticMaterial next = all[(rule.material().ordinal() + 1) % all.length];
+                if (server) {
+                    AudioDistancePlugin.LINK.sendAdmin("block add " + rule.key() + " " + next.getId());
+                } else {
+                    config.setBlockRules(rules.with(rule.key(), next));
+                    rebuild();
+                }
+            }).bounds(matX, y, matW, 20).tooltip(tip("blocks.material.tooltip")).build(), server, st);
+            blockWidget(Button.builder(Component.literal("×"), b -> {
+                if (server) {
+                    AudioDistancePlugin.LINK.sendAdmin("block remove " + rule.key());
+                } else {
+                    config.setBlockRules(rules.without(rule.key()));
+                    rebuild();
+                }
+            }).bounds(right - 20, y, 20, 20).tooltip(tip("blocks.remove.tooltip")).build(), server, st);
+            y += ROW;
+        }
+        if (rules.isEmpty()) {
+            notes.add(new Heading(tr("blocks.none"), y, right));
+            y += 12;
+        }
+        return y;
+    }
+
+    /** A control of the custom blocks list: locked with the materials on the Walls tab, follows the permissions on the Server tab. */
+    private void blockWidget(AbstractWidget widget, boolean server, java.util.Properties st) {
+        if (server) {
+            boolean wasActive = widget.active;
+            content(widget);
+            widget.active = wasActive && mayRun(st, "block add");
+        } else {
+            edit(widget, DistanceConfig.Part.MATERIALS);
+        }
+    }
+
+    private void addBlock(String text, String noneKey, BlockRules rules, boolean server) {
+        String key = text == null || text.isBlank() ? null : BlockRules.normalize(text);
+        if (text == null || text.isBlank()) {
+            blockMessage = tr(noneKey);
+        } else if (key == null) {
+            blockMessage = tr("blocks.invalid");
+        } else if (rules.get(key) != null) {
+            blockMessage = tr("blocks.exists", key);
+        } else if (rules.size() >= BlockRules.MAX_RULES) {
+            blockMessage = tr("blocks.full", BlockRules.MAX_RULES);
+        } else {
+            if (server) {
+                AudioDistancePlugin.LINK.sendAdmin("block add " + key + " stone");
+            } else {
+                config.setBlockRules(rules.with(key, AcousticMaterial.STONE));
+            }
+            blockMessage = tr("blocks.added", key);
+        }
+        rebuild();
     }
 
     private static boolean hasStatusBanner() {
@@ -853,7 +974,7 @@ public abstract class SettingsScreen extends Screen {
     }
 
     /** Server tab sections the admin has closed; kept while the game runs. Groups and the addon requirement start closed. */
-    private static final java.util.Set<String> closedSections = new java.util.HashSet<>(java.util.List.of("groups", "addon"));
+    private static final java.util.Set<String> closedSections = new java.util.HashSet<>(java.util.List.of("groups", "addon", "blocks"));
 
     private static boolean sectionOpen(String id) {
         return !closedSections.contains(id);
@@ -968,6 +1089,14 @@ public abstract class SettingsScreen extends Screen {
             serverButton(tr("server.require", tr("server.require." + require)), "server.require.tooltip", left, y, half,
                     "require " + next(SERVER_REQUIRE, require));
             y += ROW;
+        }
+        y += 4;
+
+        // Blocks (often from other mods) that count as a material of their own
+        BlockRules serverRules = BlockRules.parse(st.getProperty("block_rules"));
+        y = sectionHead("blocks", "blocks.section", Component.literal(String.valueOf(serverRules.size())), y);
+        if (sectionOpen("blocks")) {
+            y = initBlockRules(y, w, true, st);
         }
         y += 4;
 
@@ -1181,8 +1310,16 @@ public abstract class SettingsScreen extends Screen {
         if (noZonesY >= 0) {
             c.text(fit(c, tr("server.zones.none"), right - left), left + 1, noZonesY, Palette.TEXT_MUTED);
         }
+        paintNotes(c);
+    }
+
+    /** The muted lines and the block ids of the lists (the Server tab and the custom blocks of the Walls tab). */
+    private void paintNotes(Canvas c) {
         for (Heading n : notes) {
             c.text(fit(c, n.text(), right - left - 2), left + 1, n.y() + 1, Palette.TEXT_MUTED);
+        }
+        for (Heading label : ruleLabels) {
+            c.text(fit(c, label.text(), label.lineEnd() - left - 2), left + 1, label.y() - 1, Palette.TEXT);
         }
     }
 
@@ -1319,6 +1456,7 @@ public abstract class SettingsScreen extends Screen {
         tab = t;
         lastTab = t;
         confirmDelete = null;
+        blockMessage = null;
         if (t == Tab.SERVER) {
             // Fresh settings from the server; the tab fills in when the reply arrives
             AudioDistancePlugin.LINK.sendAdmin("status");
@@ -1681,6 +1819,14 @@ public abstract class SettingsScreen extends Screen {
         paragraph(c, tr("walls.hint"), left + 8, panelBottom - 4 - wallsHintLines * 10, right - left - 16, 2,
                 Palette.TEXT_MUTED, false);
 
+        for (Heading h : headings) {
+            c.text(h.text(), left + 1, h.y(), Palette.ACCENT_LINE);
+            int lineX = left + c.width(h.text()) + 8;
+            if (lineX < h.lineEnd()) {
+                c.hLine(lineX, h.lineEnd(), h.y() + 4, Palette.PANEL_BORDER);
+            }
+        }
+        paintNotes(c);
         if (materialsHintY >= 0) {
             paragraph(c, tr("materials.hint_other"), left + 1, materialsHintY, right - left, 2, Palette.TEXT_MUTED, false);
         }

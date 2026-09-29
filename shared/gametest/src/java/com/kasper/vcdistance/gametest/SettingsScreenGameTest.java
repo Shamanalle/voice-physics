@@ -3,6 +3,7 @@ package com.kasper.vcdistance.gametest;
 import com.kasper.vcdistance.AudioDistanceLogScreen;
 import com.kasper.vcdistance.AudioDistancePlugin;
 import com.kasper.vcdistance.AudioDistanceScreen;
+import com.kasper.vcdistance.BlockRules;
 import com.kasper.vcdistance.ChangeLog;
 import com.kasper.vcdistance.LinkProtocol;
 import com.kasper.vcdistance.ServerSettings;
@@ -50,6 +51,7 @@ public class SettingsScreenGameTest implements FabricClientGameTest {
         settings.setSneakMultiplier(0.5);
         settings.setGroupSpectatorsApart(true);
         settings.setWallsStrength(0.55);
+        settings.setBlockRules(BlockRules.parse("create:andesite_casing=metal,#c:glass_blocks=glass,some_mod:a_block_with_a_long_name=wool"));
         settings.putZone(new Zone(Zone.BOX, "spawn", null, null, Zone.Rules.NONE,
                 new Zone.Box("minecraft:overworld", -8, 60, -8, 8, 80, 8), 0));
         settings.putZone(new Zone(Zone.BOX, "arena-north", null, null,
@@ -109,6 +111,7 @@ public class SettingsScreenGameTest implements FabricClientGameTest {
         // The folded parts open: the curve's tuning, the materials, the Server tab's sections
         context.runOnClient(client -> {
             pretendAdmin();
+            AudioDistancePlugin.CONFIG.setBlockRules(BlockRules.parse("create:andesite_casing=metal,#c:glass_blocks=glass,mc:x=door"));
             SettingsScreen.unfoldAll();
         });
         for (SettingsScreen.Tab tab : new SettingsScreen.Tab[]{SettingsScreen.Tab.DISTANCE, SettingsScreen.Tab.WALLS,
