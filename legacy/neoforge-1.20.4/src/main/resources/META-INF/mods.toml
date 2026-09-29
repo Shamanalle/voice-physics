@@ -19,7 +19,7 @@ Voices that behave like sound for Simple Voice Chat: they fade with distance, ge
 [[dependencies.vc_audio_distance]]
 modId = "neoforge"
 type = "required"
-versionRange = "[20.4,)"
+versionRange = "[20.4.80-beta,)"
 ordering = "NONE"
 side = "BOTH"
 

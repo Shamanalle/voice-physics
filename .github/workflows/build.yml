@@ -72,8 +72,9 @@ jobs:
           - { module: forge-1.21.5, key: forge1215_version_oldest }
           - { module: forge-1.21.10, key: forge12110_version_oldest }
           - { module: forge-26, key: forge26_version_oldest }
-          # A build of its own (Gradle 8 on Java 21)
+          # Builds of their own (Gradle 8 on Java 21)
           - { module: legacy/forge-1.20.4, key: forge1204_version_oldest }
+          - { module: legacy/neoforge-1.20.4, key: nf1204_neoforge_oldest }
     steps:
       - name: Checkout
         uses: actions/checkout@v4

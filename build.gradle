@@ -32,7 +32,8 @@ def loaderTargets = [
 ]
 
 // Builds of their own, with Gradle 8 (legacy/*): Forge 1.20.2 - 1.20.4 runs with SRG names, which only
-// ForgeGradle 6 remaps to, and ForgeGradle 6 cannot share this build with ForgeGradle 7. They need a
+// ForgeGradle 6 remaps to, and ForgeGradle 6 cannot share this build with ForgeGradle 7. NeoForge 1.20.4
+// needs NeoGradle 7, which cannot share it either. They need a
 // JDK 17 or 21 for their Gradle: LEGACY_JAVA_HOME, or the JAVA_HOME_21_X64 / JAVA_HOME_17_X64 that
 // GitHub's runners set.
 def legacyTargets = [

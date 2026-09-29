@@ -3,9 +3,8 @@ plugins {
     id 'net.neoforged.gradle.userdev' version '[7.0.80,7.1)'
 }
 
-// NeoForge 1.20.4: the full addon. The code shared with the other builds is compiled here against
-// Minecraft's own names and turned into the loader's runtime (SRG) names by NeoGradle, as for Forge
-// 1.20.1 - 1.20.4. The NeoForge hooks are this module's own: 1.20.4 has NeoForge's first payload API.
+// NeoForge 1.20.4: the full addon. NeoForge 1.20.4 runs with Minecraft's own names, so the jar needs no
+// remapping. The NeoForge hooks are this module's own: 1.20.4 has NeoForge's first payload API.
 def repoRoot = file('../..')
 def props = new Properties()
 new File(repoRoot, 'gradle.properties').withInputStream { props.load(it) }
