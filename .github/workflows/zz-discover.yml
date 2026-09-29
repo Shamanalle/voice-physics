@@ -18,33 +18,24 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '21'
-      - name: Published builds and NeoGradle versions
+      - name: Builds, artifacts and NeoGradle
         run: |
           curl -fsSL https://maven.neoforged.net/releases/net/neoforged/neoforge/maven-metadata.xml -o meta.xml
-          echo "20.2 / 20.3 builds:"
-          grep -o '<version>20\.[23]\.[^<]*' meta.xml | sed 's/<version>//' | tr '\n' ' '
-          echo
-          curl -fsSL https://maven.neoforged.net/releases/net/neoforged/gradle/userdev/maven-metadata.xml -o gradle-meta.xml || true
-          echo "NeoGradle userdev:"
-          grep -o '<version>[^<]*' gradle-meta.xml | sed 's/<version>//' | tr '\n' ' ' || true
-          echo
-      - name: Networking API of the oldest and newest build of each
+          echo "B20.2 builds:"; grep -o '<version>20\.2\.[^<]*' meta.xml | sed 's/<version>//' | tr '\n' ' '; echo
+          echo "B20.3 builds:"; grep -o '<version>20\.3\.[^<]*' meta.xml | sed 's/<version>//' | tr '\n' ' '; echo
+          echo "Files of 20.2.93:"
+          curl -fsSL https://maven.neoforged.net/releases/net/neoforged/neoforge/20.2.93/ | grep -o 'href="[^"]*"' | tr '\n' ' ' || true; echo
+          echo "GRADLE userdev versions:"
+          curl -fsSL https://maven.neoforged.net/releases/net/neoforged/gradle/net.neoforged.gradle.userdev.gradle.plugin/maven-metadata.xml | grep -o '<version>[^<]*' | sed 's/<version>//' | tr '\n' ' ' || echo "no plugin metadata"; echo
+          echo "GRADLE 7.0 pom deps of 20.2.93 (module file):"
+          curl -fsSL https://maven.neoforged.net/releases/net/neoforged/neoforge/20.2.93/neoforge-20.2.93.pom | grep -E 'artifactId|version' | head -20 || true
+      - name: API of 20.2.93 and 20.3.8-beta
         run: |
-          for series in 20.2 20.3; do
-            list=$(grep -o "<version>${series}\.[^<]*" meta.xml | sed 's/<version>//')
-            [ -z "${list}" ] && { echo "no ${series} builds"; continue; }
-            for v in $(echo "${list}" | head -1) $(echo "${list}" | tail -1); do
-              echo "=================== ${v}"
-              curl -fsSL -o "nf-${v}.jar" "https://maven.neoforged.net/releases/net/neoforged/neoforge/${v}/neoforge-${v}-universal.jar" || { echo "no universal jar"; continue; }
-              echo "-- network classes:"
-              unzip -l "nf-${v}.jar" | awk '{print $4}' | grep -E '^net/neoforged/neoforge/network/[^$]*\.class$' | sort | head -80
-              echo "-- overlay / config screen classes:"
-              unzip -l "nf-${v}.jar" | awk '{print $4}' | grep -E 'client/gui/overlay/[^$]*\.class$|ConfigScreenHandler\.class$|client/event/RegisterGuiOverlaysEvent' | sort | head -30
-              for c in net.neoforged.neoforge.network.NetworkRegistry net.neoforged.neoforge.network.NetworkEvent net.neoforged.neoforge.network.event.EventNetworkChannel net.neoforged.neoforge.network.PacketDistributor net.neoforged.neoforge.network.simple.SimpleChannel net.neoforged.neoforge.network.ChannelBuilder net.neoforged.neoforge.network.registration.IPayloadRegistrar net.neoforged.neoforge.network.event.RegisterPayloadHandlerEvent net.neoforged.neoforge.network.handling.PlayPayloadContext; do
-                if unzip -l "nf-${v}.jar" | grep -q "$(echo $c | tr . /).class"; then
-                  echo "-- javap ${c}"
-                  javap -public -cp "nf-${v}.jar" "${c}" | head -60
-                fi
-              done
+          for v in 20.2.93 20.3.8-beta; do
+            echo "=================== ${v}"
+            curl -fsSL -o "nf-${v}.jar" "https://maven.neoforged.net/releases/net/neoforged/neoforge/${v}/neoforge-${v}-universal.jar"
+            for c in net.neoforged.neoforge.network.PlayNetworkDirection net.neoforged.neoforge.network.INetworkDirection net.neoforged.neoforge.network.ICustomPacketPayloadWithBuffer net.neoforged.neoforge.network.custom.payload.SimplePayload net.neoforged.neoforge.network.NetworkEvent 'net.neoforged.neoforge.network.NetworkEvent$Context' 'net.neoforged.neoforge.network.NetworkEvent$ClientCustomPayloadEvent' 'net.neoforged.neoforge.network.NetworkEvent$ServerCustomPayloadEvent' net.neoforged.neoforge.network.PacketDistributor 'net.neoforged.neoforge.network.PacketDistributor$PacketTarget' net.neoforged.neoforge.network.NetworkInstance; do
+              echo "-- javap ${c}"
+              javap -public -cp "nf-${v}.jar" "${c}" 2>&1 | head -40
             done
           done
