@@ -10,9 +10,13 @@ An addon for [Simple Voice Chat](https://modrinth.com/plugin/simple-voice-chat) 
 [![Minecraft](https://img.shields.io/badge/Minecraft-1.20%20%E2%80%93%2026.3-blue.svg)](#versions-and-files)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-| Distance | Walls | Monitor | Server profile |
+| Distance | Walls | Effects | HUD |
 |---|---|---|---|
-| ![Distance tab: curve graph and presets](docs/images/ui-distance.png) | ![Walls tab: strength and materials](docs/images/ui-walls.png) | ![Monitor: nearby players and radar](docs/images/ui-monitor.png) | ![Settings locked by the server](docs/images/ui-server-enforced.png) |
+| ![Distance tab: curve graph and presets](docs/images/ui-distance.png) | ![Walls tab: strength and materials](docs/images/ui-walls.png) | ![Effects tab: echo, water, rain](docs/images/ui-effects.png) | ![HUD tab: who is talking and who hears you](docs/images/ui-hud.png) |
+
+| Server | Change log | Settings locked by the server |
+|---|---|---|
+| ![Server tab for admins](docs/images/ui-server.png) | ![The server's change log on its own screen](docs/images/ui-log.png) | ![Settings locked by the server](docs/images/ui-locked.png) |
 
 ## Contents
 
