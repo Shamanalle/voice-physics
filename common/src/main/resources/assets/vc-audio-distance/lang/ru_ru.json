@@ -467,6 +467,7 @@
   "gui.vc-audio-distance.server.notices": "Названия зон: %s",
   "gui.vc-audio-distance.server.notices.tooltip": "Игроки видят название зоны над хотбаром при входе и выходе, с аддоном и без.",
   "gui.vc-audio-distance.server.section.log": "Последние изменения",
+  "gui.vc-audio-distance.server.section.fold": "Нажмите, чтобы свернуть или развернуть раздел.",
   "gui.vc-audio-distance.server.log.undo": "Отменить последнее",
   "gui.vc-audio-distance.server.log.undo.tooltip": "Отменяет последнее изменение через /vcd или на этой вкладке (до 10 подряд).",
   "gui.vc-audio-distance.server.log.console": "консоль",

@@ -106,6 +106,30 @@ public class SettingsScreenGameTest implements FabricClientGameTest {
             context.runOnClient(client -> TestScreens.open(client, null));
             context.waitTicks(1);
         }
+        // The folded parts open: the curve's tuning, the materials, the Server tab's sections
+        context.runOnClient(client -> {
+            pretendAdmin();
+            SettingsScreen.unfoldAll();
+        });
+        for (SettingsScreen.Tab tab : new SettingsScreen.Tab[]{SettingsScreen.Tab.DISTANCE, SettingsScreen.Tab.WALLS,
+                SettingsScreen.Tab.SERVER}) {
+            String name = tab.name().toLowerCase(java.util.Locale.ROOT) + "-open-" + size;
+            context.runOnClient(client -> {
+                SettingsScreen.openOn(tab);
+                TestScreens.open(client, new AudioDistanceScreen(null));
+            });
+            context.waitTicks(3);
+            context.takeScreenshot("settings-" + name);
+            context.runOnClient(client -> {
+                if (TestScreens.current(client) instanceof SettingsScreen screen) {
+                    screen.scrollToEnd();
+                }
+            });
+            context.waitTicks(2);
+            context.takeScreenshot("settings-" + name + "-end");
+            context.runOnClient(client -> TestScreens.open(client, null));
+            context.waitTicks(1);
+        }
         // The change log on its own screen, with a page of changes
         context.runOnClient(client -> {
             pretendAdmin();

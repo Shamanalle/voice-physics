@@ -177,6 +177,13 @@ public abstract class SettingsScreen extends Screen {
         lastTab = tab;
     }
 
+    /** Unfolds every section (the in-game tests shoot the tabs with everything open). */
+    public static void unfoldAll() {
+        distanceMoreOpen = true;
+        materialsOpen = true;
+        closedSections.clear();
+    }
+
     /** {@code /voicephysics log}: the next settings screen goes straight on to the change log (admins only). */
     public static void openLogNext() {
         logRequested = true;
@@ -845,6 +852,32 @@ public abstract class SettingsScreen extends Screen {
         };
     }
 
+    /** Server tab sections the admin has closed; kept while the game runs. Groups and the addon requirement start closed. */
+    private static final java.util.Set<String> closedSections = new java.util.HashSet<>(java.util.List.of("groups", "addon"));
+
+    private static boolean sectionOpen(String id) {
+        return !closedSections.contains(id);
+    }
+
+    /**
+     * A section's title as a button that folds it; a folded section says what it is set to. Returns the y
+     * of the section's first row.
+     */
+    private int sectionHead(String id, String key, Component summary, int y) {
+        boolean open = sectionOpen(id);
+        Component label = Component.literal(open ? "▾ " : "▸ ").append(tr(key));
+        if (!open && summary != null) {
+            label = label.copy().append(Component.literal("  ·  ")).append(summary);
+        }
+        content(Button.builder(label, b -> {
+            if (!closedSections.remove(id)) {
+                closedSections.add(id);
+            }
+            rebuild();
+        }).bounds(left, y, right - left, 16).tooltip(tip("server.section.fold")).build());
+        return y + 20;
+    }
+
     /** A section title, then the section's first row. */
     private int heading(String key, int y) {
         headings.add(new Heading(tr(key), y, right));
@@ -864,64 +897,79 @@ public abstract class SettingsScreen extends Screen {
         }
 
         // Profile: how it reaches players, which sound, what they cannot change
-        y = heading("server.section.profile", y);
         String mode = st.getProperty("profile_mode", "off");
         String preset = st.getProperty("profile_preset", "custom");
         String locked = st.getProperty("profile_locked", "all");
-        serverButton(tr("server.profile", tr("server.mode." + mode)), "server.profile.tooltip", left, y, half,
-                "profile " + next(SERVER_MODES, mode));
-        serverButton(tr("server.preset", presetName(preset)), "server.preset.tooltip", x2, y, half,
-                "preset " + next(SERVER_PRESETS, preset));
-        y += ROW;
-        serverButton(tr("server.locked", lockedName(locked)), "server.locked.tooltip", left, y, half,
-                "lock " + next(SERVER_LOCKS, locked));
-        y += ROW + 4;
+        y = sectionHead("profile", "server.section.profile", tr("server.mode." + mode), y);
+        if (sectionOpen("profile")) {
+            serverButton(tr("server.profile", tr("server.mode." + mode)), "server.profile.tooltip", left, y, half,
+                    "profile " + next(SERVER_MODES, mode));
+            serverButton(tr("server.preset", presetName(preset)), "server.preset.tooltip", x2, y, half,
+                    "preset " + next(SERVER_PRESETS, preset));
+            y += ROW;
+            serverButton(tr("server.locked", lockedName(locked)), "server.locked.tooltip", left, y, half,
+                    "lock " + next(SERVER_LOCKS, locked));
+            y += ROW;
+        }
+        y += 4;
 
         // Walls: − and + in 5% steps either side of the value
-        y = heading("server.section.walls", y);
         int wallsPct = (int) Math.round(parse(st.getProperty("walls_strength", "0")) * 100.0);
-        int down = Math.max(0, (wallsPct + 4) / 5 * 5 - 5);
-        int up = Math.min(100, wallsPct / 5 * 5 + 5);
-        serverButton(Component.literal("−"), "server.walls.tooltip", left, y, 20, down == 0 ? "walls off" : "walls " + down)
-                .active &= wallsPct > 0;
-        serverButton(tr("server.walls", wallsPct == 0 ? tr("off") : Component.literal(wallsPct + "%")), "server.walls.tooltip",
-                left + 22, y, half - 44, "walls " + up).active &= wallsPct < 100;
-        serverButton(Component.literal("+"), "server.walls.tooltip", left + half - 20, y, 20, "walls " + up)
-                .active &= wallsPct < 100;
-        serverToggle("server.server_walls", st, "server_walls", "false", x2, y, half, "serverwalls");
-        y += ROW;
-        serverToggle("server.monitor", st, "allow_monitor", "true", left, y, half, "monitor");
-        serverToggle("server.notices", st, "zone_notices", "true", x2, y, half, "notices");
-        y += ROW + 4;
+        y = sectionHead("walls", "server.section.walls", wallsPct == 0 ? tr("off") : Component.literal(wallsPct + "%"), y);
+        if (sectionOpen("walls")) {
+            int down = Math.max(0, (wallsPct + 4) / 5 * 5 - 5);
+            int up = Math.min(100, wallsPct / 5 * 5 + 5);
+            serverButton(Component.literal("−"), "server.walls.tooltip", left, y, 20, down == 0 ? "walls off" : "walls " + down)
+                    .active &= wallsPct > 0;
+            serverButton(tr("server.walls", wallsPct == 0 ? tr("off") : Component.literal(wallsPct + "%")), "server.walls.tooltip",
+                    left + 22, y, half - 44, "walls " + up).active &= wallsPct < 100;
+            serverButton(Component.literal("+"), "server.walls.tooltip", left + half - 20, y, 20, "walls " + up)
+                    .active &= wallsPct < 100;
+            serverToggle("server.server_walls", st, "server_walls", "false", x2, y, half, "serverwalls");
+            y += ROW;
+            serverToggle("server.monitor", st, "allow_monitor", "true", left, y, half, "monitor");
+            serverToggle("server.notices", st, "zone_notices", "true", x2, y, half, "notices");
+            y += ROW;
+        }
+        y += 4;
 
         // Game rules
-        y = heading("server.section.rules", y);
         String sneak = st.getProperty("sneak_range_multiplier", "1");
-        serverButton(tr("server.sneak", pct(parse(sneak))), "server.sneak.tooltip", left, y, half,
-                "rule sneak " + next(SERVER_SNEAK, sneak));
-        String megaphone = st.getProperty("megaphone_item", "");
-        serverButton(tr("server.megaphone", megaphone.isEmpty() ? tr("off") : Component.translatable("item.minecraft.goat_horn")),
-                "server.megaphone.tooltip", x2, y, half, "rule megaphone " + (megaphone.isEmpty() ? MEGAPHONE : "off"));
-        y += ROW;
-        serverToggle("server.dead", st, "dead_players_silent", "false", left, y, half, "rule dead");
-        serverToggle("server.spectators", st, "spectators_hear_only_spectators", "false", x2, y, half, "rule spectators");
-        y += ROW + 4;
+        y = sectionHead("rules", "server.section.rules", tr("server.sneak", pct(parse(sneak))), y);
+        if (sectionOpen("rules")) {
+            serverButton(tr("server.sneak", pct(parse(sneak))), "server.sneak.tooltip", left, y, half,
+                    "rule sneak " + next(SERVER_SNEAK, sneak));
+            String megaphone = st.getProperty("megaphone_item", "");
+            serverButton(tr("server.megaphone", megaphone.isEmpty() ? tr("off") : Component.translatable("item.minecraft.goat_horn")),
+                    "server.megaphone.tooltip", x2, y, half, "rule megaphone " + (megaphone.isEmpty() ? MEGAPHONE : "off"));
+            y += ROW;
+            serverToggle("server.dead", st, "dead_players_silent", "false", left, y, half, "rule dead");
+            serverToggle("server.spectators", st, "spectators_hear_only_spectators", "false", x2, y, half, "rule spectators");
+            y += ROW;
+        }
+        y += 4;
 
         // Rules inside Simple Voice Chat groups
-        y = heading("server.section.groups", y);
-        serverToggle("server.group.dead", st, "group_dead_silent", "false", left, y, half, "group dead");
-        serverToggle("server.group.spectators", st, "group_spectators_apart", "false", x2, y, half, "group spectators");
-        y += ROW;
-        serverToggle("server.group.zones", st, "group_isolated_zones", "false", left, y, half, "group zones");
-        serverToggle("server.group.open_range", st, "open_group_range", "true", x2, y, half, "group open_range");
-        y += ROW + 4;
+        y = sectionHead("groups", "server.section.groups", null, y);
+        if (sectionOpen("groups")) {
+            serverToggle("server.group.dead", st, "group_dead_silent", "false", left, y, half, "group dead");
+            serverToggle("server.group.spectators", st, "group_spectators_apart", "false", x2, y, half, "group spectators");
+            y += ROW;
+            serverToggle("server.group.zones", st, "group_isolated_zones", "false", left, y, half, "group zones");
+            serverToggle("server.group.open_range", st, "open_group_range", "true", x2, y, half, "group open_range");
+            y += ROW;
+        }
+        y += 4;
 
         // Players who have Simple Voice Chat but not this addon
-        y = heading("server.section.addon", y);
         String require = st.getProperty("require_addon", "off");
-        serverButton(tr("server.require", tr("server.require." + require)), "server.require.tooltip", left, y, half,
-                "require " + next(SERVER_REQUIRE, require));
-        y += ROW + 4;
+        y = sectionHead("addon", "server.section.addon", tr("server.require." + require), y);
+        if (sectionOpen("addon")) {
+            serverButton(tr("server.require", tr("server.require." + require)), "server.require.tooltip", left, y, half,
+                    "require " + next(SERVER_REQUIRE, require));
+            y += ROW;
+        }
+        y += 4;
 
         y = initZones(st, y, w, (w - GAP * 2) / 3);
         y = initLog(st, y + 4, w);

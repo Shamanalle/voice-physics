@@ -467,6 +467,7 @@
   "gui.vc-audio-distance.server.notices": "Nombres de zona: %s",
   "gui.vc-audio-distance.server.notices.tooltip": "Los jugadores ven el nombre de la zona sobre la barra rápida al entrar y salir, con o sin el addon.",
   "gui.vc-audio-distance.server.section.log": "Últimos cambios",
+  "gui.vc-audio-distance.server.section.fold": "Haz clic para plegar o desplegar esta sección.",
   "gui.vc-audio-distance.server.log.undo": "Deshacer el último",
   "gui.vc-audio-distance.server.log.undo.tooltip": "Deshace el último cambio hecho con /vcd o en esta pestaña (hasta 10 seguidos).",
   "gui.vc-audio-distance.server.log.console": "consola",

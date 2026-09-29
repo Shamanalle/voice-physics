@@ -467,6 +467,7 @@
   "gui.vc-audio-distance.server.notices": "Zonennamen: %s",
   "gui.vc-audio-distance.server.notices.tooltip": "Spieler sehen den Zonennamen über der Hotbar beim Betreten und Verlassen, mit oder ohne Addon.",
   "gui.vc-audio-distance.server.section.log": "Letzte Änderungen",
+  "gui.vc-audio-distance.server.section.fold": "Klicken, um den Abschnitt ein- oder auszuklappen.",
   "gui.vc-audio-distance.server.log.undo": "Letzte rückgängig",
   "gui.vc-audio-distance.server.log.undo.tooltip": "Nimmt die letzte Änderung mit /vcd oder in diesem Tab zurück (bis zu 10 hintereinander).",
   "gui.vc-audio-distance.server.log.console": "Konsole",

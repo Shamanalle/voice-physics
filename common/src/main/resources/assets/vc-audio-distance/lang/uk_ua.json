@@ -467,6 +467,7 @@
   "gui.vc-audio-distance.server.notices": "Назви зон: %s",
   "gui.vc-audio-distance.server.notices.tooltip": "Гравці бачать назву зони над хотбаром при вході та виході, з аддоном і без.",
   "gui.vc-audio-distance.server.section.log": "Останні зміни",
+  "gui.vc-audio-distance.server.section.fold": "Натисніть, щоб згорнути або розгорнути розділ.",
   "gui.vc-audio-distance.server.log.undo": "Скасувати останнє",
   "gui.vc-audio-distance.server.log.undo.tooltip": "Скасовує останню зміну через /vcd або на цій вкладці (до 10 поспіль).",
   "gui.vc-audio-distance.server.log.console": "консоль",

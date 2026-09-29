@@ -467,6 +467,7 @@
   "gui.vc-audio-distance.server.notices": "区域名称：%s",
   "gui.vc-audio-distance.server.notices.tooltip": "玩家进入或离开区域时会在快捷栏上方看到区域名称，无论是否安装附属模组。",
   "gui.vc-audio-distance.server.section.log": "最近的更改",
+  "gui.vc-audio-distance.server.section.fold": "点击折叠或展开此部分。",
   "gui.vc-audio-distance.server.log.undo": "撤销上一次",
   "gui.vc-audio-distance.server.log.undo.tooltip": "撤销通过 /vcd 或此标签页做的上一次更改（最多连续 10 次）。",
   "gui.vc-audio-distance.server.log.console": "控制台",

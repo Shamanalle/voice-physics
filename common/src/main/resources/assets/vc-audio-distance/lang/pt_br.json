@@ -467,6 +467,7 @@
   "gui.vc-audio-distance.server.notices": "Nomes de zona: %s",
   "gui.vc-audio-distance.server.notices.tooltip": "Os jogadores veem o nome da zona acima da hotbar ao entrar e sair, com ou sem o addon.",
   "gui.vc-audio-distance.server.section.log": "Últimas mudanças",
+  "gui.vc-audio-distance.server.section.fold": "Clique para recolher ou expandir esta seção.",
   "gui.vc-audio-distance.server.log.undo": "Desfazer o último",
   "gui.vc-audio-distance.server.log.undo.tooltip": "Desfaz a última mudança feita com /vcd ou nesta aba (até 10 seguidas).",
   "gui.vc-audio-distance.server.log.console": "console",
