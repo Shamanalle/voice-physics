@@ -41,7 +41,7 @@ jobs:
           if-no-files-found: error
 
   server:
-    name: ${{ matrix.loader }} ${{ matrix.mc }}
+    name: ${{ matrix.loader }} ${{ matrix.mc }}${{ matrix.label && format(' ({0})', matrix.label) || '' }}
     needs: build
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -58,6 +58,8 @@ jobs:
           - { loader: fabric, mc: '1.21.11', jar: 'voice-physics-fabric-*+mc1.21.x.jar', java: '21' }
           - { loader: fabric, mc: '26.3', jar: 'voice-physics-fabric-*+mc26.x.jar', java: '25' }
           - { loader: neoforge, mc: '26.2', jar: 'voice-physics-neoforge-*+mc26.x.jar', java: '25', version: 'nf26_neoforge' }
+          - { loader: neoforge, mc: '1.20.4', jar: 'voice-physics-neoforge-*+mc1.20.4.jar', java: '17', version: 'nf1204_server_oldest', label: 'oldest' }
+          - { loader: neoforge, mc: '1.20.4', jar: 'voice-physics-neoforge-*+mc1.20.4.jar', java: '17', version: 'nf1204_neoforge' }
           - { loader: neoforge, mc: '1.20.6', jar: 'voice-physics-neoforge-*+mc1.20.5-1.20.6.jar', java: '21', version: 'nf1206_neoforge' }
           - { loader: neoforge, mc: '1.21.1', jar: 'voice-physics-neoforge-*+mc1.21-1.21.1.jar', java: '21', version: 'nf121_neoforge' }
           - { loader: neoforge, mc: '1.21.3', jar: 'voice-physics-neoforge-*+mc1.21.2-1.21.5.jar', java: '21', version: 'nf1215_neoforge_oldest' }
@@ -67,9 +69,14 @@ jobs:
           - { loader: neoforge, mc: '1.21.9', jar: 'voice-physics-neoforge-*+mc1.21.9-1.21.10.jar', java: '21', version: 'nf12110_neoforge_oldest' }
           - { loader: neoforge, mc: '1.21.10', jar: 'voice-physics-neoforge-*+mc1.21.9-1.21.10.jar', java: '21', version: 'nf12110_neoforge' }
           - { loader: neoforge, mc: '1.21.11', jar: 'voice-physics-neoforge-*+mc1.21.11.jar', java: '21', version: 'nf12111_neoforge' }
+          - { loader: forge, mc: '1.20', jar: 'voice-physics-forge-*+mc1.20.1.jar', java: '17', version: 'forge120_version_oldest' }
           - { loader: forge, mc: '1.20.1', jar: 'voice-physics-forge-*+mc1.20.1.jar', java: '17', version: 'forge120_version' }
+          - { loader: neoforge, mc: '1.20.1', jar: 'voice-physics-forge-*+mc1.20.1.jar', java: '17', version: 'nf1201_forge' }
+          - { loader: forge, mc: '1.20.2', jar: 'voice-physics-forge-*+mc1.20.2-1.20.4.jar', java: '17', version: 'forge1204_version_oldest' }
+          - { loader: forge, mc: '1.20.4', jar: 'voice-physics-forge-*+mc1.20.2-1.20.4.jar', java: '17', version: 'forge1204_version' }
           - { loader: forge, mc: '1.20.6', jar: 'voice-physics-forge-*+mc1.20.6.jar', java: '21', version: 'forge1206_version' }
-          - { loader: forge, mc: '1.21.1', jar: 'voice-physics-forge-*+mc1.21.1.jar', java: '21', version: 'forge121_version' }
+          - { loader: forge, mc: '1.21', jar: 'voice-physics-forge-*+mc1.21-1.21.1.jar', java: '21', version: 'forge121_version_oldest' }
+          - { loader: forge, mc: '1.21.1', jar: 'voice-physics-forge-*+mc1.21-1.21.1.jar', java: '21', version: 'forge121_version' }
           - { loader: forge, mc: '1.21.3', jar: 'voice-physics-forge-*+mc1.21.3-1.21.5.jar', java: '21', version: 'forge1215_version_oldest' }
           - { loader: forge, mc: '1.21.5', jar: 'voice-physics-forge-*+mc1.21.3-1.21.5.jar', java: '21', version: 'forge1215_version' }
           - { loader: forge, mc: '1.21.6', jar: 'voice-physics-forge-*+mc1.21.6-1.21.8.jar', java: '21', version: 'forge1216_server' }
@@ -79,7 +86,9 @@ jobs:
           - { loader: forge, mc: '1.21.11', jar: 'voice-physics-forge-*+mc1.21.11.jar', java: '21', version: 'forge12111_version' }
           - { loader: forge, mc: '26.1', jar: 'voice-physics-forge-*+mc26.x.jar', java: '25', version: 'forge26_version_oldest' }
           - { loader: forge, mc: '26.3', jar: 'voice-physics-forge-*+mc26.x.jar', java: '25', version: 'forge26_version' }
+          - { loader: paper, mc: '1.20', jar: 'voice-physics-bukkit-*.jar', java: '21' }
           - { loader: paper, mc: '1.20.1', jar: 'voice-physics-bukkit-*.jar', java: '21' }
+          - { loader: paper, mc: '1.20.5', jar: 'voice-physics-bukkit-*.jar', java: '21' }
           - { loader: paper, mc: '1.21.11', jar: 'voice-physics-bukkit-*.jar', java: '21' }
           - { loader: paper, mc: 'latest', jar: 'voice-physics-bukkit-*.jar', java: '25' }
           - { loader: folia, mc: 'latest', jar: 'voice-physics-bukkit-*.jar', java: '25' }
@@ -109,7 +118,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: server-log-${{ matrix.loader }}-${{ matrix.mc }}
+          name: server-log-${{ matrix.loader }}-${{ matrix.mc }}${{ matrix.label && format('-{0}', matrix.label) || '' }}
           path: ${{ runner.temp }}/server-*/*.log
           if-no-files-found: ignore
 

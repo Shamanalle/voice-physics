@@ -18,7 +18,6 @@ import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.network.chat.Component;
 import net.minecraftforge.client.ConfigScreenHandler;
-import net.minecraftforge.client.event.AddGuiOverlayLayersEvent;
 import net.minecraftforge.client.event.RegisterClientCommandsEvent;
 import net.minecraftforge.client.event.RegisterKeyMappingsEvent;
 import net.minecraftforge.client.event.ScreenEvent;
@@ -50,8 +49,7 @@ final class ForgeClient {
         openSettingsKey = ForgeCompat.key("key.vc-audio-distance.open_settings");
         toggleHudKey = ForgeCompat.key("key.vc-audio-distance.toggle_hud");
         AudioDistancePlugin.LINK.setAdminSender(text -> send(ForgeNetworking.ADMIN, text));
-        context.registerExtensionPoint(ConfigScreenHandler.ConfigScreenFactory.class,
-                () -> new ConfigScreenHandler.ConfigScreenFactory((mc, parent) -> new AudioDistanceScreen(parent)));
+        ForgeCompat.configScreen(context, new ConfigScreenHandler.ConfigScreenFactory((mc, parent) -> new AudioDistanceScreen(parent)));
 
         modBus.addListener((RegisterKeyMappingsEvent e) -> {
             if (openSettingsKey != null) {
@@ -61,12 +59,11 @@ final class ForgeClient {
                 e.register(toggleHudKey);
             }
         });
-        modBus.addListener((AddGuiOverlayLayersEvent e) -> e.getLayeredDraw().add(
-                ForgeCompat.id("vc-audio-distance", "voice_hud"), (graphics, delta) -> {
-                    Minecraft mc = Minecraft.getInstance();
-                    HudOverlay.paint(new GuiCanvas(graphics, mc.font), graphics.guiWidth(), graphics.guiHeight(),
-                            mc.level != null && mc.player != null, mc.options.hideGui);
-                }));
+        ForgeCompat.hud(modBus, ForgeCompat.id("vc-audio-distance", "voice_hud"), (graphics, delta) -> {
+            Minecraft mc = Minecraft.getInstance();
+            HudOverlay.paint(new GuiCanvas(graphics, mc.font), graphics.guiWidth(), graphics.guiHeight(),
+                    mc.level != null && mc.player != null, mc.options.hideGui);
+        });
 
         MinecraftForge.EVENT_BUS.addListener((TickEvent.ClientTickEvent.Post e) -> tick(Minecraft.getInstance()));
         MinecraftForge.EVENT_BUS.addListener((RegisterClientCommandsEvent e) -> e.getDispatcher().register(ClientHints.openCommand()));

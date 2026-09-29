@@ -105,21 +105,48 @@ jobs:
             java: 17
             dependencies: simple-voice-chat(required) fabric-api(required) modmenu(optional)
             curseforge: true
-          - name: Forge for 1.20.1
+          # NeoForge for 1.20.1 is a fork of Forge 1.20.1 and loads its jar
+          - name: Forge for 1.20 – 1.20.1, NeoForge for 1.20.1
             file: forge-{v}+mc1.20.1.jar
             target: mc1.20.1-forge
-            loaders: forge
-            game-versions: 1.20.1
+            loaders: forge neoforge
+            game-versions: 1.20 1.20.1
             java: 17
             dependencies: simple-voice-chat(required)
             curseforge: true
-          - name: Fabric/Forge/NeoForge (lite) for 1.20.2 – 1.20.4
+          - name: Fabric for 1.20.2 – 1.20.4
             file: fabric-{v}+mc1.20.2-1.20.4.jar
             target: mc1.20.2-1.20.4
-            loaders: fabric quilt neoforge forge
+            loaders: fabric quilt
             game-versions: 1.20.2 1.20.3 1.20.4
             java: 17
-            dependencies: simple-voice-chat(required) fabric-api(optional) modmenu(optional)
+            dependencies: simple-voice-chat(required) fabric-api(required) modmenu(optional)
+            curseforge: true
+          # The same Fabric jar, which NeoForge 1.20.2 - 1.20.3 loads with the distance curve only
+          - name: NeoForge (lite) for 1.20.2 – 1.20.3
+            file: neoforge-{v}+mc1.20.2-1.20.4.jar
+            target: mc1.20.2-1.20.3-neoforge
+            loaders: neoforge
+            game-versions: 1.20.2 1.20.3
+            java: 17
+            dependencies: simple-voice-chat(required)
+            repack: true
+            curseforge: true
+          - name: NeoForge for 1.20.4
+            file: neoforge-{v}+mc1.20.4.jar
+            target: mc1.20.4-neoforge
+            loaders: neoforge
+            game-versions: 1.20.4
+            java: 17
+            dependencies: simple-voice-chat(required)
+            curseforge: true
+          - name: Forge for 1.20.2 – 1.20.4
+            file: forge-{v}+mc1.20.2-1.20.4.jar
+            target: mc1.20.2-1.20.4-forge
+            loaders: forge
+            game-versions: 1.20.2 1.20.3 1.20.4
+            java: 17
+            dependencies: simple-voice-chat(required)
             curseforge: true
           - name: Fabric for 1.20.5 – 1.20.6
             file: fabric-{v}+mc1.20.5-1.20.6.jar
@@ -193,11 +220,11 @@ jobs:
             java: 21
             dependencies: simple-voice-chat(required)
             curseforge: true
-          - name: Forge for 1.21.1
-            file: forge-{v}+mc1.21.1.jar
-            target: mc1.21.1-forge
+          - name: Forge for 1.21 – 1.21.1
+            file: forge-{v}+mc1.21-1.21.1.jar
+            target: mc1.21-1.21.1-forge
             loaders: forge
-            game-versions: 1.21.1
+            game-versions: 1.21 1.21.1
             java: 21
             dependencies: simple-voice-chat(required)
             curseforge: true
@@ -233,10 +260,10 @@ jobs:
             java: 21
             dependencies: simple-voice-chat(required)
             curseforge: true
-          - name: Fabric/Forge/NeoForge for 26.1 – 26.3
+          - name: Fabric/Quilt/Forge/NeoForge for 26.1 – 26.3
             file: fabric-{v}+mc26.x.jar
             target: mc26.x
-            loaders: fabric neoforge forge
+            loaders: fabric quilt neoforge forge
             game-versions: 26.1 26.1.1 26.1.2 26.2 26.3
             java: 25
             dependencies: simple-voice-chat(required) fabric-api(optional) modmenu(optional)
@@ -245,8 +272,9 @@ jobs:
             file: bukkit-{v}.jar
             target: bukkit
             loaders: paper purpur folia spigot bukkit
-            # The releases compat-bukkit.yml checks (1.20.5 cannot be checked; 1.21.2 and 26.1 have no Paper build)
-            game-versions: 1.20.1 1.20.2 1.20.3 1.20.4 1.20.6 1.21 1.21.1 1.21.3 1.21.4 1.21.5 1.21.6 1.21.7 1.21.8 1.21.9 1.21.10 1.21.11 26.1.1 26.1.2 26.2 26.3
+            # Every release since 1.20. compat-bukkit.yml checks them against Paper's API, except 1.20.5
+            # (its API can no longer be resolved) and 1.21.2 and 26.1 (Spigot only: Paper skipped them)
+            game-versions: 1.20 1.20.1 1.20.2 1.20.3 1.20.4 1.20.5 1.20.6 1.21 1.21.1 1.21.2 1.21.3 1.21.4 1.21.5 1.21.6 1.21.7 1.21.8 1.21.9 1.21.10 1.21.11 26.1 26.1.1 26.1.2 26.2 26.3
             java: 17
             dependencies: simple-voice-chat(required)
             curseforge: false
@@ -335,3 +363,14 @@ jobs:
         run: |
           # shellcheck disable=SC2086
           bash .github/scripts/curseforge-bukkit.sh "${PROJECT}" "${FILE}" "${NAME}" "${CHANNEL}" dist/notes.md ${GAME_VERSIONS}
+
+  verify:
+    name: Check the stores
+    needs: publish
+    if: ${{ !cancelled() && needs.publish.result != 'skipped' }}
+    # Warnings only: CurseForge's file list (via cfwidget) can lag a few minutes behind the upload
+    uses: ./.github/workflows/check-stores.yml
+    with:
+      tag: ${{ inputs.tag }}
+      warn-only: true
+    secrets: inherit
