@@ -1,0 +1,7 @@
+{
+  "pack": {
+    "description": "Voice Physics",
+    "pack_format": 18,
+    "supported_formats": [18, 22]
+  }
+}

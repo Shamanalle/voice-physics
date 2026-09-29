@@ -122,15 +122,13 @@ jobs:
             java: 17
             dependencies: simple-voice-chat(required) fabric-api(required) modmenu(optional)
             curseforge: true
-          # The same Fabric jar, which NeoForge 1.20.2 - 1.20.3 loads with the distance curve only
-          - name: NeoForge (lite) for 1.20.2 – 1.20.3
-            file: neoforge-{v}+mc1.20.2-1.20.4.jar
+          - name: NeoForge for 1.20.2 – 1.20.3
+            file: neoforge-{v}+mc1.20.2-1.20.3.jar
             target: mc1.20.2-1.20.3-neoforge
             loaders: neoforge
             game-versions: 1.20.2 1.20.3
             java: 17
             dependencies: simple-voice-chat(required)
-            repack: true
             curseforge: true
           - name: NeoForge for 1.20.4
             file: neoforge-{v}+mc1.20.4.jar
