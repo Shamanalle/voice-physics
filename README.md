@@ -197,6 +197,7 @@ Replies are coloured and clickable: values in `/vcd status` put the command that
 | `/vcd help [command]` | Every command, or one with examples to click |
 | `/vcd undo` | Take back the last change (up to 10) |
 | `/vcd log [page] [player]` | Who changed the settings and when, newest first, ten to a page; a name shows only that player's changes (also kept in `vc-audio-distance-changes.log` next to the settings file) |
+| `/vcd block add\|remove\|list\|clear` | Blocks and block tags (`create:andesite_casing`, `#c:glass_blocks`) that count as a material of their own, for everyone on the server; players can also add their own on the *Walls* tab |
 | `/vcd reload` | Re-read the settings file |
 | `/vcd profile off\|suggest\|enforce` | How the server profile is offered |
 | `/vcd preset vanilla\|realistic\|clear\|stealth\|custom` | The server's sound |
