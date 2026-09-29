@@ -58,6 +58,8 @@ public abstract class SettingsScreen extends Screen {
     private static boolean radarView;
     /** The materials section of the Walls tab is open; kept while the game runs. */
     private static boolean materialsOpen;
+    /** The tuning part of the Distance tab (model, edge volume, full-volume range) is open; kept while the game runs. */
+    private static boolean distanceMoreOpen;
 
     /** Walk-away preview: where the voice is at each step, as a share of the range. */
     private static final double[] PREVIEW_STEPS = {0.03, 0.12, 0.21, 0.3, 0.39, 0.48, 0.57, 0.66, 0.75, 0.84, 0.92, 0.97};
@@ -503,38 +505,49 @@ public abstract class SettingsScreen extends Screen {
 
         // The graph keeps a readable shape; on short windows it shrinks down to a minimum and the tab scrolls
         int preferred = Math.max(120, w * 2 / 5);
-        int room = viewBottom - graphTop - 6 - (ROW * 3 - GAP) - 3;
+        int room = viewBottom - graphTop - 6 - (ROW * 2 - GAP) - 3;
         graphBottom = graphTop + Math.max(100, Math.min(room, preferred));
         int rows = graphBottom + 6;
 
-        edit(Button.builder(modelLabel(), b -> {
-            config.setModel(config.getModel().next());
-            b.setMessage(modelLabel());
-            b.setTooltip(Tooltip.create(Component.translatable(config.getModel().getTooltipKey())));
-        }).bounds(left, rows, colW, 20).tooltip(Tooltip.create(Component.translatable(shown().getModel().getTooltipKey()))).build(),
-                DistanceConfig.Part.CURVE);
-
-        edit(withTip(new RangeSlider(col2, rows, colW, 20,
+        // What most players touch: how fast voices fade and how far a whisper carries
+        edit(withTip(new RangeSlider(left, rows, colW, 20,
                 DistanceConfig.ROLLOFF_MIN, DistanceConfig.ROLLOFF_MAX, 0.01,
                 () -> shown().getAttenuationFactor(), config::setAttenuationFactor,
                 v -> tr("falloff", pct(v))), "falloff.tooltip"), DistanceConfig.Part.CURVE);
 
-        edit(withTip(new RangeSlider(left, rows + ROW, colW, 20,
-                DistanceConfig.REFERENCE_MIN, DistanceConfig.REFERENCE_MAX, 0.01,
-                () -> shown().getOpenalReferenceRatio(), config::setOpenalReferenceRatio,
-                v -> tr("reference", blocks(v * AudioDistancePlugin.getServerMaxDistance()))), "reference.tooltip"),
+        edit(withTip(new RangeSlider(col2, rows, colW, 20,
+                DistanceConfig.WHISPER_MIN, DistanceConfig.WHISPER_MAX, 0.05,
+                () -> shown().getWhisperMultiplier(), config::setWhisperMultiplier,
+                v -> tr("whisper", pct(v))), "whisper.tooltip"), DistanceConfig.Part.CURVE);
+
+        // The rest of the curve is for tuning: a section that opens, like the materials
+        content(Button.builder(Component.literal(distanceMoreOpen ? "▾ " : "▸ ").append(tr("distance.more")), b -> {
+            distanceMoreOpen = !distanceMoreOpen;
+            rebuild();
+        }).bounds(left, rows + ROW, w, 20).tooltip(tip("distance.more.tooltip")).build());
+        contentEnd = rows + ROW + 20;
+        if (!distanceMoreOpen) {
+            return;
+        }
+        int more = rows + ROW * 2;
+        edit(Button.builder(modelLabel(), b -> {
+            config.setModel(config.getModel().next());
+            b.setMessage(modelLabel());
+            b.setTooltip(Tooltip.create(Component.translatable(config.getModel().getTooltipKey())));
+        }).bounds(left, more, colW, 20).tooltip(Tooltip.create(Component.translatable(shown().getModel().getTooltipKey()))).build(),
                 DistanceConfig.Part.CURVE);
 
-        edit(withTip(new RangeSlider(col2, rows + ROW, colW, 20,
+        edit(withTip(new RangeSlider(col2, more, colW, 20,
                 DistanceConfig.MIN_VOLUME_MIN, DistanceConfig.MIN_VOLUME_MAX, 0.01,
                 () -> shown().getMinVolumeFraction(), config::setMinVolumeFraction,
                 v -> tr("floor", pct(v))), "floor.tooltip"), DistanceConfig.Part.CURVE);
 
-        edit(withTip(new RangeSlider(left, rows + ROW * 2, w, 20,
-                DistanceConfig.WHISPER_MIN, DistanceConfig.WHISPER_MAX, 0.05,
-                () -> shown().getWhisperMultiplier(), config::setWhisperMultiplier,
-                v -> tr("whisper", pct(v))), "whisper.tooltip"), DistanceConfig.Part.CURVE);
-        contentEnd = rows + ROW * 2 + 20;
+        edit(withTip(new RangeSlider(left, more + ROW, colW, 20,
+                DistanceConfig.REFERENCE_MIN, DistanceConfig.REFERENCE_MAX, 0.01,
+                () -> shown().getOpenalReferenceRatio(), config::setOpenalReferenceRatio,
+                v -> tr("reference", blocks(v * AudioDistancePlugin.getServerMaxDistance()))), "reference.tooltip"),
+                DistanceConfig.Part.CURVE);
+        contentEnd = more + ROW + 20;
     }
 
     // ---- Walls --------------------------------------------------------------
@@ -1813,10 +1826,16 @@ public abstract class SettingsScreen extends Screen {
 
         int rowY = hy + 16;
         int shownRows = 0;
+        NearbyPlayers.Row hoveredRow = null;
+        int hoveredY = 0;
         for (NearbyPlayers.Row row : rows) {
             if (rowY + 10 > bottom - 4 - footer) {
                 c.text(tr("monitor.more", rows.size() - shownRows), nameLeft, rowY - 2, Palette.TEXT_MUTED);
                 break;
+            }
+            if (row.isTalking() && mouseX >= left && mouseX < right && mouseY >= rowY - 1 && mouseY < rowY + 11) {
+                hoveredRow = row;
+                hoveredY = rowY;
             }
             // Distance and, after it, an arrow towards the player
             String arrow = Bearing.arrow(row.bearing());
@@ -1832,6 +1851,40 @@ public abstract class SettingsScreen extends Screen {
             rowY += 13;
             shownRows++;
         }
+        if (hoveredRow != null) {
+            badge(c, fit(c, whyQuiet(hoveredRow.speaker(), wallsActive), right - left - 12), midX, hoveredY - 14);
+        }
+    }
+
+    /**
+     * Why a voice is as loud as it is, in a line: how far the voice is and what the curve makes of it,
+     * then what takes more away (the wall, the longer way round, the whisper).
+     */
+    private Component whyQuiet(SpeakerRegistry.Speaker s, boolean wallsActive) {
+        List<Component> parts = new ArrayList<>();
+        if (s.getDistance() >= 0.0) {
+            double curve = AudioDistancePlugin.curveGain(s.getDistance(), s.getMaxDistance(), s.isWhispering());
+            parts.add(tr("monitor.why.distance", blocks(s.getDistance()), blocks(s.getMaxDistance()), pct(curve)));
+        }
+        if (s.isWhispering()) {
+            parts.add(tr("monitor.why.whisper"));
+        }
+        float lossDb = wallsActive ? s.getFilter().getDisplayLossDb() : 0.0F;
+        if (lossDb >= 1.5F) {
+            parts.add(tr("monitor.why.wall", tr(wallLevel(lossDb))));
+        }
+        SoundBlend blend = wallsActive ? s.getBlend() : null;
+        if (blend != null && blend.extraDistance() >= 1.0) {
+            parts.add(tr("monitor.why.round", blocks(blend.extraDistance())));
+        }
+        if (parts.size() == 1 || (parts.size() == 2 && s.isWhispering() && lossDb < 1.5F)) {
+            parts.add(tr("monitor.why.clear"));
+        }
+        net.minecraft.network.chat.MutableComponent line = Component.empty();
+        for (int i = 0; i < parts.size(); i++) {
+            line.append(i == 0 ? parts.get(i) : Component.literal("  ·  ").append(parts.get(i)));
+        }
+        return line;
     }
 
     /** Top-down view: you in the middle looking up, the voice and whisper ranges as rings. */
