@@ -1,1 +1,44 @@
-[]
+[
+  {
+    "file": "docs/images/ui-distance.png",
+    "title": "The Distance tab",
+    "description": "The fade curve with the players you hear, presets and a Listen button.",
+    "featured": true
+  },
+  {
+    "file": "docs/images/ui-walls.png",
+    "title": "The Walls tab",
+    "description": "How a voice sounds behind glass, leaves, wood, dirt, stone, iron and wool.",
+    "featured": false
+  },
+  {
+    "file": "docs/images/ui-effects.png",
+    "title": "The Effects tab",
+    "description": "Echo, water, rain and sound round corners, with what applies around you right now.",
+    "featured": false
+  },
+  {
+    "file": "docs/images/ui-hud.png",
+    "title": "The HUD",
+    "description": "Who is talking, how far, behind a wall or whispering, and how many hear you.",
+    "featured": false
+  },
+  {
+    "file": "docs/images/ui-server.png",
+    "title": "The Server tab",
+    "description": "For admins: profile, walls, game rules and zones, saved on the server right away.",
+    "featured": false
+  },
+  {
+    "file": "docs/images/ui-log.png",
+    "title": "The change log",
+    "description": "Every change to the server's settings, ten a page, filtered by player, with undo.",
+    "featured": false
+  },
+  {
+    "file": "docs/images/ui-locked.png",
+    "title": "Settings locked by the server",
+    "description": "When a server enforces its profile, the locked controls show a padlock.",
+    "featured": false
+  }
+]
