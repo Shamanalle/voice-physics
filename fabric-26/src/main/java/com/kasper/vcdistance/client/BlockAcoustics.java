@@ -1,6 +1,11 @@
 package com.kasper.vcdistance.client;
 
 import com.kasper.vcdistance.AcousticMaterial;
+import com.kasper.vcdistance.BlockRules;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.Identifier;
+import net.minecraft.tags.TagKey;
 import com.kasper.vcdistance.DistanceConfig;
 import com.kasper.vcdistance.RayBundle;
 import com.kasper.vcdistance.VoxelRay;
@@ -36,6 +41,30 @@ public final class BlockAcoustics {
     private static final Object NONE = new Object();
     private static final Map<BlockState, Object> MATERIALS = new ConcurrentHashMap<>();
 
+    /** The block rules the cached materials were worked out with; a change of rules drops the cache. */
+    private static volatile BlockRules appliedRules = BlockRules.EMPTY;
+
+    /** Takes the rules of the settings the trace runs with (the player's, or the server's when the server does the walls). */
+    private static void refreshRules(BlockRules rules) {
+        if (rules != appliedRules) {
+            appliedRules = rules;
+            MATERIALS.clear();
+        }
+    }
+
+    /** The material the player's or the server's block rules give this block, or {@code null}. */
+    private static AcousticMaterial custom(BlockState state) {
+        BlockRules rules = appliedRules;
+        if (rules.isEmpty()) {
+            return null;
+        }
+        String id = String.valueOf(BuiltInRegistries.BLOCK.getKey(state.getBlock()));
+        return rules.find(id, tag -> {
+            Identifier location = Identifier.tryParse(tag);
+            return location != null && state.is(TagKey.create(Registries.BLOCK, location));
+        });
+    }
+
     private BlockAcoustics() {
     }
 
@@ -44,6 +73,7 @@ public final class BlockAcoustics {
         if (level == null) {
             return 0.0;
         }
+        refreshRules(weights.getBlockRules());
         double[] thickness = {0.0};
         BlockGetter.traverseBlocks(from, to, thickness, (acc, pos) -> {
             BlockState state = level.getBlockState(pos);
@@ -110,6 +140,10 @@ public final class BlockAcoustics {
      * @return the material, or {@code null} for blocks that do not stop sound (plants, carpets, rails...)
      */
     static AcousticMaterial classify(BlockState state) {
+        AcousticMaterial custom = custom(state);
+        if (custom != null) {
+            return custom;
+        }
         Block block = state.getBlock();
         if (state.is(BlockTags.WOOL)) {
             return AcousticMaterial.WOOL;

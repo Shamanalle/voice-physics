@@ -1,10 +1,14 @@
 package com.kasper.vcdistance.bukkit;
 
 import com.kasper.vcdistance.AcousticMaterial;
+import com.kasper.vcdistance.AudioDistancePlugin;
+import com.kasper.vcdistance.BlockRules;
 import com.kasper.vcdistance.DistanceConfig;
 import com.kasper.vcdistance.RayBundle;
 import com.kasper.vcdistance.VoxelRay;
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.Sound;
 import org.bukkit.SoundGroup;
 import org.bukkit.Tag;
@@ -32,12 +36,36 @@ final class BlockAcoustics {
 
     private static final Map<Material, AcousticMaterial> MATERIALS = new HashMap<>();
 
+    /** The block rules the cached materials were worked out with; a change of rules drops the cache. */
+    private static BlockRules appliedRules = BlockRules.EMPTY;
+
+    private static void refreshRules() {
+        BlockRules rules = AudioDistancePlugin.SERVER_SETTINGS.getBlockRules();
+        if (rules != appliedRules) {
+            appliedRules = rules;
+            MATERIALS.clear();
+        }
+    }
+
+    /** The material the server's block rules give this block, or {@code null}. */
+    private static AcousticMaterial custom(Material m) {
+        if (appliedRules.isEmpty()) {
+            return null;
+        }
+        return appliedRules.find(m.getKey().toString(), tag -> {
+            NamespacedKey key = NamespacedKey.fromString(tag);
+            Tag<Material> blockTag = key == null ? null : Bukkit.getTag(Tag.REGISTRY_BLOCKS, key, Material.class);
+            return blockTag != null && blockTag.isTagged(m);
+        });
+    }
+
     private BlockAcoustics() {
     }
 
     /** Acoustic thickness (in stone blocks) along one straight ray, using {@code weights} per material. */
     static double traceRay(World world, double fromX, double fromY, double fromZ, double toX, double toY, double toZ,
                            DistanceConfig weights) {
+        refreshRules();
         int minY = world.getMinHeight();
         int maxY = world.getMaxHeight();
         double[] thickness = {0.0};
@@ -111,6 +139,7 @@ final class BlockAcoustics {
 
     /** {@code true} when sound passes this block freely: air, water, open doors and gates, fences, bars. */
     static boolean isOpenForSound(World world, int x, int y, int z) {
+        refreshRules();
         if (y < world.getMinHeight() || y >= world.getMaxHeight() || !world.isChunkLoaded(x >> 4, z >> 4)) {
             return true;
         }
@@ -126,6 +155,10 @@ final class BlockAcoustics {
 
     static AcousticMaterial classify(Block block) {
         Material m = block.getType();
+        AcousticMaterial custom = custom(m);
+        if (custom != null) {
+            return custom;
+        }
         if (Tag.WOOL.isTagged(m) || Tag.WOOL_CARPETS.isTagged(m)) {
             return AcousticMaterial.WOOL;
         }

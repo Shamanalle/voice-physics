@@ -74,10 +74,10 @@ public final class AdminCommands {
     }
 
     static final String[] SUBCOMMANDS = {"status", "help", "reload", "undo", "log", "profile", "preset", "walls", "serverwalls", "lock",
-            "monitor", "notices", "zones", "zone", "rule", "group", "require", "debug"};
+            "monitor", "notices", "zones", "zone", "rule", "group", "require", "block", "debug"};
     /** The topics of {@code /vcd help}, in the order they are listed. */
     static final String[] TOPICS = {"status", "zones", "zone", "profile", "preset", "walls", "serverwalls", "lock", "monitor",
-            "notices", "rule", "group", "require", "debug", "undo", "log", "reload"};
+            "notices", "rule", "group", "require", "block", "debug", "undo", "log", "reload"};
     static final String[] MODES = {"off", "suggest", "enforce"};
     static final String[] PRESETS = {"vanilla", "realistic", "clear", "stealth", "custom", "export", "import"};
     static final String[] LOCK_PARTS = {"all", "none", "curve", "walls", "materials", "effects"};
@@ -189,7 +189,7 @@ public final class AdminCommands {
                 r.ok(r.m.spans("reloaded", Style.OK, settings.getPath().toString()), false);
             }
             case "undo" -> undo(r);
-            case "log" -> log(r, r.args.length > 1 ? parseInt(r.args[1]) : null);
+            case "log" -> log(r, ChangeLog.parseView(r.args));
             case "profile" -> {
                 ServerSettings.ProfileMode mode = r.args.length > 1 ? ServerSettings.ProfileMode.fromId(r.args[1], null) : null;
                 if (mode == null) {
@@ -231,6 +231,7 @@ public final class AdminCommands {
             case "rule" -> rule(r);
             case "group" -> group(r);
             case "require" -> require(r);
+            case "block" -> block(r);
             case "debug" -> debug(r);
             default -> CommandHelp.unknown(r, sub);
         }
@@ -275,7 +276,7 @@ public final class AdminCommands {
             case "status", "help", "?", "zones" -> PERM_STATUS;
             case "debug" -> PERM_DEBUG;
             case "zone" -> ZoneCommands.readOnly(action) ? PERM_STATUS : PERM_ZONE;
-            case "reload", "log", "profile", "preset", "walls", "serverwalls", "lock", "monitor", "notices", "rule", "group", "require" -> PERM_SETTINGS;
+            case "reload", "log", "profile", "preset", "walls", "serverwalls", "lock", "monitor", "notices", "rule", "group", "require", "block" -> PERM_SETTINGS;
             default -> null;
         };
     }
@@ -283,7 +284,7 @@ public final class AdminCommands {
     /** Subcommands that may change the settings (their state before is kept for undo). */
     private static boolean changes(String sub) {
         return switch (sub) {
-            case "profile", "preset", "walls", "serverwalls", "lock", "monitor", "notices", "zone", "rule", "group", "require" -> true;
+            case "profile", "preset", "walls", "serverwalls", "lock", "monitor", "notices", "zone", "rule", "group", "require", "block" -> true;
             default -> false;
         };
     }
@@ -386,22 +387,27 @@ public final class AdminCommands {
         r.reply.add(line);
     }
 
-    /** Lines per page of {@code /vcd log}. */
-    static final int LOG_PAGE = 10;
     private static final java.time.format.DateTimeFormatter LOG_TIME =
             java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm").withZone(java.time.ZoneId.systemDefault());
 
-    private static void log(Run r, Integer page) {
+    /** {@code /vcd log [page] [player]}: the changes, ten to a page, everyone's or one player's. */
+    private static void log(Run r, ChangeLog.View view) {
         Messages m = r.m;
-        List<ChangeLog.Entry> entries = ChangeLog.read(r.settings);
-        if (entries.isEmpty()) {
+        List<ChangeLog.Entry> all = ChangeLog.read(r.settings);
+        if (all.isEmpty()) {
             r.line(Style.MUTED, m.get("log.none", ChangeLog.FILE));
             return;
         }
-        int pages = (entries.size() + LOG_PAGE - 1) / LOG_PAGE;
-        int p = Math.max(1, Math.min(pages, page == null ? 1 : page));
-        r.line(Style.TITLE, m.get("log.title", entries.size()));
-        for (ChangeLog.Entry e : entries.subList((p - 1) * LOG_PAGE, Math.min(entries.size(), p * LOG_PAGE))) {
+        ChangeLog.Page shown = ChangeLog.page(all, view);
+        if (shown.total() == 0) {
+            r.line(Style.MUTED, m.get("log.none_by", view.who()));
+            return;
+        }
+        int pages = shown.pages();
+        int p = shown.page();
+        String suffix = view.who() == null ? "" : " " + view.who();
+        r.line(Style.TITLE, m.get("log.title", shown.total()));
+        for (ChangeLog.Entry e : shown.entries()) {
             String who = ChangeLog.CONSOLE.equals(e.who()) ? m.get("log.console") : e.who();
             LineBuilder line = CommandReply.line()
                     .text("• " + LOG_TIME.format(e.time()) + " ", Style.MUTED)
@@ -417,14 +423,91 @@ public final class AdminCommands {
         if (pages > 1) {
             footer.text(m.get("zones.page", p, pages), Style.MUTED);
             if (p > 1) {
-                footer.button("‹", Click.RUN, "/vcd log " + (p - 1), m.get("hover.run", "/vcd log " + (p - 1)));
+                footer.button("‹", Click.RUN, "/vcd log " + (p - 1) + suffix, m.get("hover.run", "/vcd log " + (p - 1) + suffix));
             }
             if (p < pages) {
-                footer.button("›", Click.RUN, "/vcd log " + (p + 1), m.get("hover.run", "/vcd log " + (p + 1)));
+                footer.button("›", Click.RUN, "/vcd log " + (p + 1) + suffix, m.get("hover.run", "/vcd log " + (p + 1) + suffix));
             }
             r.reply.add(footer);
         }
         r.line(Style.MUTED, m.get("log.file", ChangeLog.fileFor(r.settings).getFileName()));
+    }
+
+    /** {@code /vcd block add|remove|list|clear}: blocks and block tags that count as a material of their own. */
+    private static void block(Run r) {
+        ServerSettings settings = r.settings;
+        String action = r.arg(1).toLowerCase(Locale.ROOT);
+        BlockRules rules = settings.getBlockRules();
+        switch (action) {
+            case "", "list" -> {
+                if (rules.isEmpty()) {
+                    r.line(Style.MUTED, r.m.get("block_none"));
+                    return;
+                }
+                r.line(Style.TITLE, r.m.get("block_list", rules.size()));
+                for (BlockRules.Rule rule : rules.rules()) {
+                    String material = rule.material().getId();
+                    r.reply.add(CommandReply.line()
+                            .text("• " + rule.key() + " → ", Style.PLAIN)
+                            .text(material + " ", Style.VALUE)
+                            .button("×", Click.SUGGEST, "/vcd block remove " + rule.key(),
+                                    r.m.get("hover.suggest", "/vcd block remove " + rule.key())));
+                }
+            }
+            case "add", "set" -> {
+                String key = BlockRules.normalize(r.arg(2));
+                AcousticMaterial material = BlockRules.materialOf(r.arg(3));
+                if (key == null) {
+                    r.badValue("block add", r.arg(2), "<namespace:block>|#<namespace:tag> <material>", "block");
+                    return;
+                }
+                if (material == null) {
+                    r.badValue("block add " + r.arg(2), r.arg(3), materialIds(), "block");
+                    return;
+                }
+                BlockRules next = rules.with(key, material);
+                if (next == null) {
+                    r.error("block_full", BlockRules.MAX_RULES);
+                    return;
+                }
+                settings.setBlockRules(next);
+                r.saved("block_added", key, material.getId());
+            }
+            case "remove", "delete" -> {
+                String key = BlockRules.normalize(r.arg(2));
+                if (key == null || rules.get(key) == null) {
+                    r.badValue("block remove", r.arg(2), rules.isEmpty() ? "-" : blockKeys(rules), "block");
+                    return;
+                }
+                settings.setBlockRules(rules.without(key));
+                r.saved("block_removed", key);
+            }
+            case "clear" -> {
+                if (rules.isEmpty()) {
+                    r.line(Style.MUTED, r.m.get("block_none"));
+                    return;
+                }
+                settings.setBlockRules(BlockRules.EMPTY);
+                r.saved("block_cleared");
+            }
+            default -> r.badValue("block", r.arg(1), "list|add|remove|clear", "block");
+        }
+    }
+
+    static String materialIds() {
+        StringBuilder sb = new StringBuilder();
+        for (AcousticMaterial m : AcousticMaterial.values()) {
+            sb.append(sb.length() == 0 ? "" : "|").append(m.getId());
+        }
+        return sb.toString();
+    }
+
+    private static String blockKeys(BlockRules rules) {
+        StringBuilder sb = new StringBuilder();
+        for (BlockRules.Rule rule : rules.rules()) {
+            sb.append(sb.length() == 0 ? "" : "|").append(rule.key());
+        }
+        return sb.toString();
     }
 
     private static void preset(Run r) {

@@ -1,6 +1,8 @@
 package com.kasper.vcdistance.client;
 
 import com.kasper.vcdistance.AcousticMaterial;
+import com.kasper.vcdistance.BlockRules;
+import net.minecraft.core.registries.BuiltInRegistries;
 import com.kasper.vcdistance.DistanceConfig;
 import com.kasper.vcdistance.RayBundle;
 import com.kasper.vcdistance.VoxelRay;
@@ -32,6 +34,27 @@ public final class BlockAcoustics {
 
     private static final Map<BlockState, AcousticMaterial> MATERIALS = new ConcurrentHashMap<>();
 
+    /** The block rules the cached materials were worked out with; a change of rules drops the cache. */
+    private static volatile BlockRules appliedRules = BlockRules.EMPTY;
+
+    /** Takes the rules of the settings the trace runs with (the player's, or the server's when the server does the walls). */
+    private static void refreshRules(BlockRules rules) {
+        if (rules != appliedRules) {
+            appliedRules = rules;
+            MATERIALS.clear();
+        }
+    }
+
+    /** The material the player's or the server's block rules give this block, or {@code null}. */
+    private static AcousticMaterial custom(BlockState state) {
+        BlockRules rules = appliedRules;
+        if (rules.isEmpty()) {
+            return null;
+        }
+        String id = String.valueOf(BuiltInRegistries.BLOCK.getKey(state.getBlock()));
+        return rules.find(id, tag -> state.getTags().anyMatch(t -> tag.equals(String.valueOf(t.location()))));
+    }
+
     private BlockAcoustics() {
     }
 
@@ -40,6 +63,7 @@ public final class BlockAcoustics {
         if (level == null) {
             return 0.0;
         }
+        refreshRules(weights.getBlockRules());
         double[] thickness = {0.0};
         BlockGetter.traverseBlocks(from, to, thickness, (acc, pos) -> {
             BlockState state = level.getBlockState(pos);
@@ -101,6 +125,10 @@ public final class BlockAcoustics {
     }
 
     static AcousticMaterial classify(BlockState state) {
+        AcousticMaterial custom = custom(state);
+        if (custom != null) {
+            return custom;
+        }
         if (state.is(BlockTags.WOOL) || state.is(BlockTags.WOOL_CARPETS)) {
             return AcousticMaterial.WOOL;
         }
