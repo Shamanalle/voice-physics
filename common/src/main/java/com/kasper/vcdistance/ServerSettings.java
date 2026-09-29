@@ -259,6 +259,7 @@ public final class ServerSettings {
         for (AcousticMaterial m : AcousticMaterial.values()) {
             profile.setMaterialWeight(m, DistanceConfig.parseDouble(props, "material." + m.getId(), profile.getMaterialWeight(m)));
         }
+        profile.setBlockRules(BlockRules.parse(props.getProperty("block_rules")));
 
         if (DistanceConfig.parseDouble(props, "settings_version", 1) < SETTINGS_VERSION) {
             save();
@@ -989,6 +990,16 @@ public final class ServerSettings {
         profile.copyFrom(imported);
         profilePreset = CUSTOM_PRESET;
         return true;
+    }
+
+    /** The blocks and block tags with a material of their own, which the walls use for everyone. */
+    public BlockRules getBlockRules() {
+        return profile.getBlockRules();
+    }
+
+    /** Replaces the block rules; call {@link #save()} to keep them. */
+    public void setBlockRules(BlockRules rules) {
+        profile.setBlockRules(rules);
     }
 
     /** The parts players cannot change while the profile is enforced; call {@link #save()} to keep it. */

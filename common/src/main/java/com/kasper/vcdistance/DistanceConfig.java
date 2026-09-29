@@ -78,6 +78,8 @@ public final class DistanceConfig {
     private volatile double weatherStrength = DEFAULT_WEATHER_STRENGTH;
     private volatile boolean diffractionEnabled = DEFAULT_DIFFRACTION_ENABLED;
     private final double[] materialWeights = new double[AcousticMaterial.values().length];
+    /** Blocks and block tags with a material of their own; replaced as a whole, never changed in place. */
+    private volatile BlockRules blockRules = BlockRules.EMPTY;
 
     // Interface: only ever read from the player's own file, never part of a server profile
     public static final HudMode DEFAULT_HUD_MODE = HudMode.TALKING;
@@ -269,6 +271,17 @@ public final class DistanceConfig {
                 materialWeights[m.ordinal()] = m.getDefaultWeight();
             }
         }
+        blockRules = BlockRules.EMPTY;
+        changed();
+    }
+
+    /** The blocks and tags that count as a material of their own (an immutable list). */
+    public BlockRules getBlockRules() {
+        return blockRules;
+    }
+
+    public void setBlockRules(BlockRules rules) {
+        blockRules = rules == null ? BlockRules.EMPTY : rules;
         changed();
     }
 
@@ -476,6 +489,7 @@ public final class DistanceConfig {
                 materialWeights[m.ordinal()] = w;
             }
         }
+        blockRules = other.blockRules;
         changed();
     }
 
@@ -582,6 +596,7 @@ public final class DistanceConfig {
                         materialWeights[m.ordinal()] = w;
                     }
                 }
+                blockRules = other.blockRules;
             }
             case EFFECTS -> {
                 reverbEnabled = other.reverbEnabled;
@@ -799,6 +814,19 @@ public final class DistanceConfig {
             w.comment(m.getDescription())
                     .value(prefix + "material." + m.getId(), getMaterialWeight(m));
         }
+        w.comment("Blocks and block tags that count as a material of their own, e.g. blocks from other mods: id=material or #tag=material, separated by commas.",
+                        "A block's own id wins over a tag. Materials: " + materialIds() + ". Example: create:andesite_casing=metal,#c:glass_blocks=glass",
+                        "Блоки и теги блоков, которые считаются отдельным материалом, например блоки из других модов: id=материал или #тег=материал через запятую.",
+                        "Id самого блока сильнее тега. Материалы: " + materialIds() + ". Пример: create:andesite_casing=metal,#c:glass_blocks=glass")
+                .value(prefix + "block_rules", blockRules.serialize());
+    }
+
+    private static String materialIds() {
+        StringBuilder sb = new StringBuilder();
+        for (AcousticMaterial m : AcousticMaterial.values()) {
+            sb.append(sb.length() == 0 ? "" : ", ").append(m.getId());
+        }
+        return sb.toString();
     }
 
     /** Writes every setting under {@code prefix} (e.g. {@code "profile."}), for the client-server protocol. */
@@ -820,6 +848,7 @@ public final class DistanceConfig {
         for (AcousticMaterial m : AcousticMaterial.values()) {
             props.setProperty(prefix + "material." + m.getId(), format(getMaterialWeight(m)));
         }
+        props.setProperty(prefix + "block_rules", blockRules.serialize());
     }
 
     /** Reads every setting under {@code prefix}; missing or broken values fall back to the defaults. */
@@ -845,6 +874,7 @@ public final class DistanceConfig {
                 materialWeights[m.ordinal()] = clamp(parseDouble(props, prefix + "material." + m.getId(), m.getDefaultWeight()), 0.0, AcousticMaterial.MAX_WEIGHT);
             }
         }
+        blockRules = BlockRules.parse(props.getProperty(prefix + "block_rules"));
         changed();
     }
 

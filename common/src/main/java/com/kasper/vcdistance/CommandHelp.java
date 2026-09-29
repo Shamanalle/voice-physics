@@ -24,6 +24,7 @@ final class CommandHelp {
             Map.entry("walls", new String[]{"walls 60", "walls 85", "walls off"}),
             Map.entry("serverwalls", new String[]{"serverwalls on", "serverwalls off"}),
             Map.entry("lock", new String[]{"lock all", "lock curve,walls", "lock none"}),
+            Map.entry("block", new String[]{"block list", "block add create:andesite_casing metal", "block add #c:glass_blocks glass", "block remove create:andesite_casing"}),
             Map.entry("monitor", new String[]{"monitor on", "monitor off"}),
             Map.entry("notices", new String[]{"notices on", "notices off"}),
             Map.entry("zones", new String[]{"zones", "zones 2"}),

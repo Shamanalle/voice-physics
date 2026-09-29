@@ -239,6 +239,61 @@ public class CommandsTest {
     }
 
     @Test
+    @DisplayName("/vcd block adds, lists and removes block rules; they are saved, sent in the profile and undone")
+    void blockRules() throws IOException {
+        ServerSettings s = settings("");
+        AdminCommands.Context ctx = ctx();
+        assertTrue(AdminCommands.run("block", s, ctx).get(0).startsWith("No block rules"));
+
+        List<String> added = AdminCommands.run("block add Create:Andesite_Casing metal", s, ctx);
+        assertTrue(added.get(0).contains("create:andesite_casing") && added.get(0).contains("metal"), added.toString());
+        AdminCommands.run("block add #c:glass_blocks glass", s, ctx);
+        assertEquals(AcousticMaterial.METAL, s.getBlockRules().get("create:andesite_casing").material());
+        assertEquals(2, s.getBlockRules().size());
+        assertEquals(2, AdminCommands.undoable(s));
+
+        // A wrong block or material says what is allowed and changes nothing
+        assertTrue(AdminCommands.run("block add two words metal", s, ctx).get(0).contains("block add"));
+        List<String> unknown = AdminCommands.run("block add create:x marble", s, ctx);
+        assertTrue(unknown.get(0).contains("marble") && unknown.get(0).contains("stone|metal"), unknown.toString());
+        assertEquals(2, s.getBlockRules().size());
+
+        String listing = String.join("\n", AdminCommands.run("block list", s, ctx));
+        assertTrue(listing.contains("Block rules (2)") && listing.contains("#c:glass_blocks"), listing);
+
+        // Saved in the file and sent to the players in the profile
+        ServerSettings again = new ServerSettings(s.getPath());
+        again.load();
+        assertEquals(s.getBlockRules(), again.getBlockRules());
+        DistanceConfig sent = new DistanceConfig();
+        java.util.Properties props = new java.util.Properties();
+        s.profile().writeTo(props, "profile.");
+        sent.readFrom(props, "profile.");
+        assertEquals(s.getBlockRules(), sent.getBlockRules());
+
+        // Locked with the materials, a player's own rules give way to the server's
+        DistanceConfig player = new DistanceConfig();
+        player.setBlockRules(BlockRules.EMPTY.with("mod:a", AcousticMaterial.WOOL));
+        player.copyPart(DistanceConfig.Part.CURVE, s.profile());
+        assertEquals(AcousticMaterial.WOOL, player.getBlockRules().get("mod:a").material());
+        player.copyPart(DistanceConfig.Part.MATERIALS, s.profile());
+        assertNull(player.getBlockRules().get("mod:a"));
+        assertEquals(s.getBlockRules(), player.getBlockRules());
+        player.resetMaterials();
+        assertTrue(player.getBlockRules().isEmpty());
+
+        assertTrue(AdminCommands.run("block remove nonsense:x", s, ctx).get(0).contains("block remove"));
+        AdminCommands.run("block remove #c:glass_blocks", s, ctx);
+        assertEquals(1, s.getBlockRules().size());
+        AdminCommands.run("undo", s, ctx);
+        assertEquals(2, s.getBlockRules().size(), "undo takes the removal back");
+        AdminCommands.run("block clear", s, ctx);
+        assertTrue(s.getBlockRules().isEmpty());
+        assertTrue(AdminCommands.run("block add stone wool", s, ctx(admin.id(), null, AdminCommands.PERM_STATUS)).get(0)
+                .contains("vcd.settings"), "block rules need vcd.settings");
+    }
+
+    @Test
     @DisplayName("The log is read as [page] [player]; a page travels to the Log screen and back whole")
     void logPages() throws IOException {
         ServerSettings s = settings("");
