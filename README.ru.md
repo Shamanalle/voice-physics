@@ -10,9 +10,13 @@
 [![Minecraft](https://img.shields.io/badge/Minecraft-1.20%20%E2%80%93%2026.3-blue.svg)](#версии-и-файлы)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-| Дистанция | Стены | Монитор | Профиль сервера |
+| Дистанция | Стены | Эффекты | HUD |
 |---|---|---|---|
-| ![Вкладка «Дистанция»: график кривой и пресеты](docs/images/ui-distance.png) | ![Вкладка «Стены»: сила и материалы](docs/images/ui-walls.png) | ![Монитор: игроки рядом и радар](docs/images/ui-monitor.png) | ![Настройки закреплены сервером](docs/images/ui-server-enforced.png) |
+| ![Вкладка «Дистанция»: график кривой и пресеты](docs/images/ui-distance.png) | ![Вкладка «Стены»: сила и материалы](docs/images/ui-walls.png) | ![Вкладка «Эффекты»: эхо, вода, дождь](docs/images/ui-effects.png) | ![Вкладка HUD: кто говорит и кто слышит вас](docs/images/ui-hud.png) |
+
+| Сервер | Журнал изменений | Настройки закреплены сервером |
+|---|---|---|
+| ![Вкладка «Сервер» для админов](docs/images/ui-server.png) | ![Журнал изменений сервера на отдельном экране](docs/images/ui-log.png) | ![Настройки закреплены сервером](docs/images/ui-locked.png) |
 
 ## Содержание
 
