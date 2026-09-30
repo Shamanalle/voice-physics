@@ -16,7 +16,10 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/** /vcd mute, unmute and mutes: the command, the file, undo, the voice rules and what the muted player is told. */
+/**
+ * /vcd mute, unmute and mutes (the command, the file, undo, the voice rules and what the muted player is told),
+ * and /vcd report for bug reports.
+ */
 public class ModerationTest {
 
     @TempDir
@@ -284,5 +287,30 @@ public class ModerationTest {
         s.unmute(steve.id());
         ServerHooks.refresh(List.of(steve), platform);
         assertEquals("You can talk in voice chat again.", chat.get(chat.size() - 1));
+    }
+
+    @Test
+    @DisplayName("/vcd report: one text with a Copy button, the settings and recent problems, no player or zone names")
+    void report() throws IOException {
+        ServerSettings s = settings();
+        s.putZone(new Zone(Zone.BOX, "secret_base", null, null, Zone.Rules.NONE, new Zone.Box("world", 0, 0, 0, 5, 5, 5), 0));
+        s.mute(new VoiceMute(steve.id(), "Steve", 0L, "Admin", "spam"));
+        Problems.clear();
+        Problems.record("Server voice processing", new IllegalStateException("boom"));
+        Problems.record("Server voice processing", new IllegalStateException("boom"));
+        AdminCommands.Context ctx = ctx();
+        CommandReply reply = AdminCommands.execute("report", s, ctx);
+        assertEquals("Report for a bug report: [Copy]", reply.plain().get(0));
+        Span copy = reply.lines().get(0).spans().stream().filter(sp -> sp.click() == Click.COPY).findFirst().orElseThrow();
+        String text = copy.action();
+        assertTrue(text.startsWith("Voice Physics " + BuildInfo.version() + " on Test"), text);
+        assertTrue(text.contains("Walls: 60%, server_walls on"), text);
+        assertTrue(text.contains("Effects: server_effects off, server_air off"), text);
+        assertTrue(text.contains("mutes 1"), text);
+        assertTrue(text.contains("x2 Server voice processing: java.lang.IllegalStateException: boom"), text);
+        assertFalse(text.contains("Steve") || text.contains("secret_base") || text.contains("spam"), "no names: " + text);
+        assertTrue(AdminCommands.run("report", s, ctx(AdminCommands.PERM_STATUS)).get(0).contains(AdminCommands.PERM_DEBUG));
+        Problems.clear();
+        assertTrue(String.join("\n", AdminCommands.run("report", s, ctx)).contains("Problems: none since the start"));
     }
 }

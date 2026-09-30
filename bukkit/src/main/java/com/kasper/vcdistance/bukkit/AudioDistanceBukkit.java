@@ -514,6 +514,11 @@ public final class AudioDistanceBukkit extends JavaPlugin implements Listener {
             }
 
             @Override
+            public String serverVersion() {
+                return getServer().getName() + " " + getServer().getVersion();
+            }
+
+@Override
             public java.util.Collection<String> worlds() {
                 List<String> names = new ArrayList<>();
                 for (org.bukkit.World w : getServer().getWorlds()) {

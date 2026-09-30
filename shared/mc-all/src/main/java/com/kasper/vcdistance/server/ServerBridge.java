@@ -204,6 +204,15 @@ public final class ServerBridge {
             public boolean claims() {
                 return Claims.installed();
             }
+
+            @Override
+            public String serverVersion() {
+                try {
+                    return server.getServerModName() + " " + server.getServerVersion();
+                } catch (Throwable t) {
+                    return "";
+                }
+            }
         };
     }
 

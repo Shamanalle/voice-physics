@@ -717,6 +717,7 @@ public final class ServerWalls {
     }
 
     private void logFailure(Throwable t) {
+        Problems.record("Server voice processing", t);
         if (!loggedFailure) {
             loggedFailure = true;
             DistanceConfig.LOGGER.warn("Server-side wall muffling failed, passing voices through unchanged: {}", t.toString());

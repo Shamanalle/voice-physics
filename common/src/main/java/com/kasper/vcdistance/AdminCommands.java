@@ -76,10 +76,10 @@ public final class AdminCommands {
     }
 
     static final String[] SUBCOMMANDS = {"status", "help", "reload", "undo", "log", "profile", "preset", "walls", "serverwalls", "effects", "lock",
-            "monitor", "notices", "zones", "zone", "rule", "group", "require", "block", "mute", "unmute", "mutes", "debug"};
+            "monitor", "notices", "zones", "zone", "rule", "group", "require", "block", "mute", "unmute", "mutes", "debug", "report"};
     /** The topics of {@code /vcd help}, in the order they are listed. */
     static final String[] TOPICS = {"status", "zones", "zone", "profile", "preset", "walls", "serverwalls", "effects", "lock", "monitor",
-            "notices", "rule", "group", "require", "block", "mute", "unmute", "mutes", "debug", "undo", "log", "reload"};
+            "notices", "rule", "group", "require", "block", "mute", "unmute", "mutes", "debug", "report", "undo", "log", "reload"};
     /** Times offered for {@code /vcd mute <player>}. */
     static final String[] MUTE_TIMES = {"10m", "30m", "1h", "1d", "7d", "perm"};
     static final String[] MODES = {"off", "suggest", "enforce"};
@@ -151,6 +151,11 @@ public final class AdminCommands {
         /** Whether claim zones work here (Open Parties and Claims is installed). */
         default boolean claims() {
             return false;
+        }
+
+        /** The server software and game version, for {@code /vcd report}; "" when unknown. */
+        default String serverVersion() {
+            return "";
         }
     }
 
@@ -246,6 +251,7 @@ public final class AdminCommands {
             case "unmute" -> unmute(r);
             case "mutes" -> mutes(r);
             case "debug" -> debug(r);
+            case "report" -> report(r);
             default -> CommandHelp.unknown(r, sub);
         }
         return r.reply;
@@ -287,7 +293,7 @@ public final class AdminCommands {
     public static String permissionFor(String sub, String action) {
         return switch (sub.toLowerCase(Locale.ROOT)) {
             case "status", "help", "?", "zones" -> PERM_STATUS;
-            case "debug" -> PERM_DEBUG;
+            case "debug", "report" -> PERM_DEBUG;
             case "mute", "unmute", "mutes" -> PERM_MUTE;
             case "zone" -> ZoneCommands.readOnly(action) ? PERM_STATUS : PERM_ZONE;
             case "effects" -> action.isEmpty() || action.equalsIgnoreCase("info") || action.equalsIgnoreCase("status") ? PERM_STATUS : PERM_SETTINGS;
@@ -609,6 +615,22 @@ public final class AdminCommands {
         } catch (IllegalArgumentException e) {
             return null;
         }
+    }
+
+    /**
+     * {@code /vcd report}: versions, settings, load and the last problems as one text to copy into a bug
+     * report. The text itself is in English, so whoever reads the report can read it.
+     */
+    private static void report(Run r) {
+        List<String> lines = ServerReport.lines(r.settings, r.ctx);
+        String text = String.join("\n", lines);
+        LineBuilder title = CommandReply.line().text(r.m.get("report.title"), Style.TITLE);
+        title.button(r.m.get("btn.copy"), Click.COPY, text, r.m.get("hover.copy"));
+        r.reply.add(title);
+        for (String line : lines) {
+            r.line(Style.MUTED, line);
+        }
+        r.line(Style.PLAIN, r.m.get("report.hint"));
     }
 
     private static void undo(Run r) {

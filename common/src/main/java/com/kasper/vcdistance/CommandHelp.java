@@ -41,7 +41,8 @@ final class CommandHelp {
             Map.entry("mute", new String[]{"mute Steve", "mute Steve 10m", "mute Steve 1h spam in voice", "mute Steve perm"}),
             Map.entry("unmute", new String[]{"unmute Steve"}),
             Map.entry("mutes", new String[]{"mutes"}),
-            Map.entry("debug", new String[]{"debug", "debug Steve"}));
+            Map.entry("debug", new String[]{"debug", "debug Steve"}),
+            Map.entry("report", new String[]{"report"}));
 
     private CommandHelp() {
     }

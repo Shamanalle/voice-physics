@@ -96,6 +96,7 @@ final class ConfigWriter {
             }
         } catch (IOException e) {
             DistanceConfig.LOGGER.error("Failed to save {}: {}", file, e.getMessage());
+            Problems.record("Saving " + file.getFileName() + ": " + e.getMessage());
         }
     }
 

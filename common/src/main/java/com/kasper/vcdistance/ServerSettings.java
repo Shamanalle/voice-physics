@@ -244,6 +244,7 @@ public final class ServerSettings {
             props = ConfigWriter.load(file);
         } catch (IOException e) {
             DistanceConfig.LOGGER.error("Failed to read {}, keeping previous server settings: {}", file, e.getMessage());
+            Problems.record("Reading " + file.getFileName() + ": " + e.getMessage());
             return;
         }
         profileMode = ProfileMode.fromId(props.getProperty("profile_mode"), ProfileMode.OFF);
