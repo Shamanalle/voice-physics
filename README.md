@@ -28,6 +28,7 @@ An addon for [Simple Voice Chat](https://modrinth.com/plugin/simple-voice-chat) 
 - [Compatibility](#compatibility)
 - [Commands](#commands)
 - [Settings files](#settings-files)
+- [Questions and problems](#questions-and-problems)
 - [Building](#building)
 
 ## Quick start
@@ -65,6 +66,7 @@ These need the addon on your client and work on any server with Simple Voice Cha
 - A voice behind a wall is quieter and duller; the thicker the wall, the more.
 - Materials differ: wool and metal block more than stone, glass and leaves less. Open doors and trapdoors count a tenth of a closed one; slabs, fences and carpets let sound past by their shape. Iron and copper doors count as metal. Every material's weight can be changed on the *Walls* tab, under *Materials*.
 - Players side by side in a narrow tunnel hear each other clearly.
+- Blocks from other mods: the addon guesses a material from the block's name and sound. When it is wrong, pick the block you look at or hold on the *Walls* tab, or let a resource pack or mod list it in a [data file](#block-materials-for-modders).
 
 ### Round corners
 - A voice from the next room comes through the doorway or window, from its direction and at the length of the way round.
@@ -76,6 +78,7 @@ These need the addon on your client and work on any server with Simple Voice Cha
 - Near cliffs and in canyons the voice comes back a moment later.
 - The speaker's surroundings count too: a friend in a cave echoes even when you are outside. A voice right next to you stays clear.
 - The echo changes smoothly, over about a second and a half, as you walk from a field into a cave or out of a hall.
+- *By place* (on by default): the dimension, biome and depth tune the sound a little. Deep caves and the deep dark ring longer, the Nether's smoke dulls far voices, the End's open void has no echo, snow and dense jungle swallow sound. It is mild and comes on top of what is measured; a switch on the *Effects* tab turns it off.
 - Under water voices are dull and quieter.
 - Rain and thunder cover far voices under the open sky.
 - The *Effects* tab has a switch for each, sliders for how strong the echo, water and rain are, and shows what kind of place you are in.
@@ -83,7 +86,8 @@ These need the addon on your client and work on any server with Simple Voice Cha
 ### HUD
 - A small panel in a screen corner: who is talking, how far away, from which side, and whether they whisper, are behind a wall or round a corner.
 - While you talk: how many players hear you and how many cannot (no voice chat, sound off). In a Simple Voice Chat group it counts the group (needs the addon on the server).
-- Modes: off, while someone talks, always. Size, corner, background, a compact one-line mode, with a preview on the *HUD* tab. A key cycles the modes.
+- Modes: off, while someone talks, always. Size (50–200%), corner, background, a compact one-line mode, with a preview on the *HUD* tab. A key cycles the modes.
+- **Easier to see and follow:** *High contrast* draws the HUD on a solid dark panel with bright text. *Direction marks* add a subtitle-style line for someone talking off to the side, such as `◀ Sam 3m`, so you can tell where a voice comes from without stereo hearing.
 
 ### Monitor and radar
 - Everyone within voice range, talking or not: distance, direction, how loud they reach you and how much the walls take.
@@ -94,6 +98,8 @@ These need the addon on your client and work on any server with Simple Voice Cha
 ### Also
 - **Profile codes:** copy all your sound settings as one line and send it to a friend, who pastes it.
 - **Colorblind colors** for the HUD, monitor and radar, on the *HUD* tab.
+- **Smooth on busy machines:** the addon shares one block lookup between all its measurements and slows its own measuring down, step by step, when the game gets busy. `/voicephysics report` shows the load.
+- **A bug report in one click:** `/voicephysics report` gives a short text (versions, settings, load, the last problems; no names) with a *Copy* button.
 - **Seven languages:** English, Russian, Ukrainian, German, Spanish, Brazilian Portuguese, Chinese (Simplified).
 
 ## For servers
@@ -113,7 +119,11 @@ Available in the full Fabric, Forge and NeoForge mods and as a plugin for Paper,
 - **No seeing through walls.** Turn off the monitor, the radar and nearby players in the HUD.
 - **Require the addon.** Players with Simple Voice Chat but without the addon can get a download link once, on every join, or be kicked. Players without voice chat are never affected.
 - **Controls for players without the mod (Paper, Folia).** `/voice` lets anyone choose how loud they talk (quiet, normal, shout), turn wall muffling off for themselves, set how loud each player is to them or ignore one, and show who is talking nearby above the hotbar. The choices are kept per player; shouting needs the `vcd.shout` permission (operators by default).
-- **Admin tools.** A *Server* tab in the settings screen, [`/vcd`](#commands) with clickable replies, examples in its help, undo and separate permissions, a log of who changed what, on a screen of its own (*Server* tab → *Full log*, or `/voicephysics log`) and as `/vcd log`, `/vcd debug <player>` to see whom a player hears and why not, and messages in each player's own language (all texts can be edited).
+- **Realism for players without the addon (off by default).** `/vcd effects on` makes the server dull voices under water, cover far ones in rain and thunder, and echo the room a speaker or listener is in, the same physics the addon does at home. `/vcd effects air on` also dulls voices a little as they near the edge of their range. Water, rain and air work on every platform; measuring a room for the echo needs block access and is Paper only, while a zone with its own echo works everywhere. The strengths are the profile's (`/vcd effects water|weather|echo <0-150>`). It costs some load, so it is off until you turn it on.
+- **Mute.** `/vcd mute <player> [time] [reason]` silences a player's voice for everyone, for a time (`10m`, `2h`, `1d`, `perm`) or until `/vcd unmute`. `/vcd mutes` lists who is muted and why, with an *Unmute* button. Mutes survive restarts and appear in the change log.
+- **PlaceholderAPI (Paper).** With [PlaceholderAPI](https://modrinth.com/plugin/placeholderapi) installed, scoreboards, tab lists, holograms and chat formats can show [`%vcd_...%` placeholders](#placeholders): who talks, the mode, the range, whether someone is muted.
+- **Statistics (plugin).** The plugin sends anonymous usage numbers to [bStats](https://bstats.org) (server size and versions, which options are in use; no names, addresses or chat), so work goes where people use it. Turn it off with `metrics=false` in the server file, or for all plugins in `plugins/bStats/config.yml`.
+- **Admin tools.** A *Server* tab in the settings screen, [`/vcd`](#commands) with clickable replies, examples in its help, undo and separate permissions, a log of who changed what, on a screen of its own (*Server* tab → *Full log*, or `/voicephysics log`) and as `/vcd log`, `/vcd debug <player>` to see whom a player hears and why not, `/vcd report` for a bug report to copy, and messages in each player's own language (all texts can be edited).
 
 ## What works where
 
@@ -121,12 +131,15 @@ Available in the full Fabric, Forge and NeoForge mods and as a plugin for Paper,
 |---|:---:|:---:|:---:|
 | Distance curve, presets | ✅ | — | ✅ + server profile |
 | Walls | ✅ for you | ✅ for players without the addon | ✅ |
-| Round corners, echo, water, rain | ✅ | — | ✅ |
+| Round corners, echo, water, rain | ✅ | ✅ water, rain, air (echo: Paper), if turned on | ✅ |
+| Echo by place (caves, Nether, End) | ✅ | — | ✅ |
 | HUD, monitor, radar | ✅ | — | ✅ + voice chat state of every player |
 | Zones: range, walls, isolation | — | ✅ | ✅ |
 | Zones: names above the hotbar | — | ✅ | ✅ |
 | Zones: echo | — | — | ✅ |
 | Game rules, addon requirement, `/vcd` | — | ✅ | ✅ |
+| Mute, `/vcd report` | — | ✅ | ✅ |
+| `/voice`, PlaceholderAPI | — | Paper | Paper |
 | Server tab, locked settings, monitor off | — | — | ✅ |
 | Exact whisper range on the graph | approximate | — | ✅ |
 
@@ -136,31 +149,31 @@ With the addon on both sides the client muffles walls itself and the server skip
 
 | Loader | Minecraft | File | Java | Simple Voice Chat |
 |---|---|---|---|---|
-| **Fabric / Quilt** | 1.20 – 1.20.1 | `voice-physics-fabric-2.8.0+mc1.20.1.jar` | 17+ | 2.4.0+ |
-| **Fabric / Quilt** | 1.20.2 – 1.20.4 | `voice-physics-fabric-2.8.0+mc1.20.2-1.20.4.jar` | 17+ | 2.4.0+ |
-| **Fabric / Quilt** | 1.20.5 – 1.20.6 | `voice-physics-fabric-2.8.0+mc1.20.5-1.20.6.jar` | 21+ | 2.5.0+ |
-| **Fabric / Quilt** | 1.21 – 1.21.11 | `voice-physics-fabric-2.8.0+mc1.21.x.jar` | 21+ | 2.5.0+ |
-| **Fabric / Quilt** | 26.1 – 26.3 | `voice-physics-fabric-2.8.0+mc26.x.jar` | 25+ | 2.6.0+ |
-| **Forge** | 1.20 – 1.20.1 | `voice-physics-forge-2.8.0+mc1.20.1.jar` | 17+ | 2.4.0+ |
-| **Forge** | 1.20.2 – 1.20.4 | `voice-physics-forge-2.8.0+mc1.20.2-1.20.4.jar` | 17+ | 2.4.0+ |
-| **Forge** | 1.20.6 | `voice-physics-forge-2.8.0+mc1.20.6.jar` | 21+ | 2.5.0+ |
-| **Forge** | 1.21 – 1.21.1 | `voice-physics-forge-2.8.0+mc1.21-1.21.1.jar` | 21+ | 2.5.0+ |
-| **Forge** | 1.21.3 – 1.21.5 | `voice-physics-forge-2.8.0+mc1.21.3-1.21.5.jar` | 21+ | 2.5.0+ |
-| **Forge** | 1.21.6 – 1.21.8 | `voice-physics-forge-2.8.0+mc1.21.6-1.21.8.jar` | 21+ | 2.5.0+ |
-| **Forge** | 1.21.9 – 1.21.10 | `voice-physics-forge-2.8.0+mc1.21.9-1.21.10.jar` | 21+ | 2.5.0+ |
-| **Forge** | 1.21.11 | `voice-physics-forge-2.8.0+mc1.21.11.jar` | 21+ | 2.5.0+ |
-| **Forge** | 26.1 – 26.3 | `voice-physics-forge-2.8.0+mc26.x.jar` | 25+ | 2.6.0+ |
-| **NeoForge** | 1.20.1 | `voice-physics-forge-2.8.0+mc1.20.1.jar` | 17+ | 2.4.0+ |
-| **NeoForge** | 1.20.2 – 1.20.3 | `voice-physics-neoforge-2.8.0+mc1.20.2-1.20.3.jar` | 17+ | 2.4.0+ |
-| **NeoForge** | 1.20.4 | `voice-physics-neoforge-2.8.0+mc1.20.4.jar` | 17+ | 2.4.0+ |
-| **NeoForge** | 1.20.5 – 1.20.6 | `voice-physics-neoforge-2.8.0+mc1.20.5-1.20.6.jar` | 21+ | 2.5.0+ |
-| **NeoForge** | 1.21 – 1.21.1 | `voice-physics-neoforge-2.8.0+mc1.21-1.21.1.jar` | 21+ | 2.5.0+ |
-| **NeoForge** | 1.21.2 – 1.21.5 | `voice-physics-neoforge-2.8.0+mc1.21.2-1.21.5.jar` | 21+ | 2.5.0+ |
-| **NeoForge** | 1.21.6 – 1.21.8 | `voice-physics-neoforge-2.8.0+mc1.21.6-1.21.8.jar` | 21+ | 2.5.0+ |
-| **NeoForge** | 1.21.9 – 1.21.10 | `voice-physics-neoforge-2.8.0+mc1.21.9-1.21.10.jar` | 21+ | 2.5.0+ |
-| **NeoForge** | 1.21.11 | `voice-physics-neoforge-2.8.0+mc1.21.11.jar` | 21+ | 2.5.0+ |
-| **NeoForge** | 26.1 – 26.3 | `voice-physics-neoforge-2.8.0+mc26.x.jar` | 25+ | 2.6.0+ |
-| **Paper / Purpur / Folia / Spigot / Bukkit** | 1.20 – 26.3 | `voice-physics-bukkit-2.8.0.jar` | 17+ | Bukkit version |
+| **Fabric / Quilt** | 1.20 – 1.20.1 | `voice-physics-fabric-2.9.0+mc1.20.1.jar` | 17+ | 2.4.0+ |
+| **Fabric / Quilt** | 1.20.2 – 1.20.4 | `voice-physics-fabric-2.9.0+mc1.20.2-1.20.4.jar` | 17+ | 2.4.0+ |
+| **Fabric / Quilt** | 1.20.5 – 1.20.6 | `voice-physics-fabric-2.9.0+mc1.20.5-1.20.6.jar` | 21+ | 2.5.0+ |
+| **Fabric / Quilt** | 1.21 – 1.21.11 | `voice-physics-fabric-2.9.0+mc1.21.x.jar` | 21+ | 2.5.0+ |
+| **Fabric / Quilt** | 26.1 – 26.3 | `voice-physics-fabric-2.9.0+mc26.x.jar` | 25+ | 2.6.0+ |
+| **Forge** | 1.20 – 1.20.1 | `voice-physics-forge-2.9.0+mc1.20.1.jar` | 17+ | 2.4.0+ |
+| **Forge** | 1.20.2 – 1.20.4 | `voice-physics-forge-2.9.0+mc1.20.2-1.20.4.jar` | 17+ | 2.4.0+ |
+| **Forge** | 1.20.6 | `voice-physics-forge-2.9.0+mc1.20.6.jar` | 21+ | 2.5.0+ |
+| **Forge** | 1.21 – 1.21.1 | `voice-physics-forge-2.9.0+mc1.21-1.21.1.jar` | 21+ | 2.5.0+ |
+| **Forge** | 1.21.3 – 1.21.5 | `voice-physics-forge-2.9.0+mc1.21.3-1.21.5.jar` | 21+ | 2.5.0+ |
+| **Forge** | 1.21.6 – 1.21.8 | `voice-physics-forge-2.9.0+mc1.21.6-1.21.8.jar` | 21+ | 2.5.0+ |
+| **Forge** | 1.21.9 – 1.21.10 | `voice-physics-forge-2.9.0+mc1.21.9-1.21.10.jar` | 21+ | 2.5.0+ |
+| **Forge** | 1.21.11 | `voice-physics-forge-2.9.0+mc1.21.11.jar` | 21+ | 2.5.0+ |
+| **Forge** | 26.1 – 26.3 | `voice-physics-forge-2.9.0+mc26.x.jar` | 25+ | 2.6.0+ |
+| **NeoForge** | 1.20.1 | `voice-physics-forge-2.9.0+mc1.20.1.jar` | 17+ | 2.4.0+ |
+| **NeoForge** | 1.20.2 – 1.20.3 | `voice-physics-neoforge-2.9.0+mc1.20.2-1.20.3.jar` | 17+ | 2.4.0+ |
+| **NeoForge** | 1.20.4 | `voice-physics-neoforge-2.9.0+mc1.20.4.jar` | 17+ | 2.4.0+ |
+| **NeoForge** | 1.20.5 – 1.20.6 | `voice-physics-neoforge-2.9.0+mc1.20.5-1.20.6.jar` | 21+ | 2.5.0+ |
+| **NeoForge** | 1.21 – 1.21.1 | `voice-physics-neoforge-2.9.0+mc1.21-1.21.1.jar` | 21+ | 2.5.0+ |
+| **NeoForge** | 1.21.2 – 1.21.5 | `voice-physics-neoforge-2.9.0+mc1.21.2-1.21.5.jar` | 21+ | 2.5.0+ |
+| **NeoForge** | 1.21.6 – 1.21.8 | `voice-physics-neoforge-2.9.0+mc1.21.6-1.21.8.jar` | 21+ | 2.5.0+ |
+| **NeoForge** | 1.21.9 – 1.21.10 | `voice-physics-neoforge-2.9.0+mc1.21.9-1.21.10.jar` | 21+ | 2.5.0+ |
+| **NeoForge** | 1.21.11 | `voice-physics-neoforge-2.9.0+mc1.21.11.jar` | 21+ | 2.5.0+ |
+| **NeoForge** | 26.1 – 26.3 | `voice-physics-neoforge-2.9.0+mc26.x.jar` | 25+ | 2.6.0+ |
+| **Paper / Purpur / Folia / Spigot / Bukkit** | 1.20 – 26.3 | `voice-physics-bukkit-2.9.0.jar` | 17+ | Bukkit version |
 
 - **Fabric**, **Forge** and **NeoForge** are the full addon, for the client and the server. Fabric needs [Fabric API](https://modrinth.com/mod/fabric-api); [Mod Menu](https://modrinth.com/mod/modmenu) is optional. On Forge for 1.21.6 – 1.21.7 the voice HUD is off: that Forge cannot add it. NeoForge 1.20.1 is a fork of Forge 1.20.1 and takes the Forge file. The NeoForge 1.20.4 file needs NeoForge 20.4.80 or newer.
 - **The plugin** is the server side only. Players can join with the addon, without it, or without mods at all.
@@ -187,6 +200,7 @@ Works on any server, with or without the addon there.
 | `/voicephysics code <code>` | Load a profile code |
 | `/voicephysics reset curve\|walls\|materials\|effects\|hud\|all` | Back to the defaults |
 | `/voicephysics status` | What this server does to your sound: its profile, what it locks, your zone, the voice range |
+| `/voicephysics report` | A bug report to copy: versions, your settings, load, the last problems (no names) |
 | `/voicephysics log` | The server's change log on its own screen (admins): pages, one player's changes, undo, copy |
 | `/voicephysics help` | These commands, clickable |
 
@@ -196,15 +210,39 @@ Parts the server locks cannot be changed from here either.
 
 | Command | What it does |
 |---|---|
-| `/voice` | Your choices |
+| `/voice` or `/voice status` | Your choices as clickable buttons: each value changes on a click, with an *Undo* |
 | `/voice mode quiet\|normal\|shout` | How far your voice carries: half, normal, double (`shout` needs `vcd.shout`) |
 | `/voice walls on\|off` | Whether walls muffle the voices you hear |
 | `/voice volume <player> <0-100>` | How loud that player is to you (not for players with the addon: their volume is in the voice chat menu) |
 | `/voice ignore <player>`, `/voice unignore <player>` | Stop hearing a player, and undo it (works for everyone) |
 | `/voice hud on\|off` | The names and distances of players talking near you, above the hotbar (players without the addon) |
+| `/voice menu` | The same choices as an inventory menu |
+| `/voice undo` | Take back your last change |
 | `/voice reset` | Back to the defaults |
 
-Everyone may use `/voice` (permission `vcd.player`). The choices are saved in `vc-audio-distance-players.properties` next to the server settings.
+Everyone may use `/voice` (permission `vcd.player`); each part has its own permission under it (`vcd.player.mode`, `.walls`, `.hud`, `.volume`, `.menu`), so a server can take one away. The choices are saved in `vc-audio-distance-players.properties` next to the server settings.
+
+### Placeholders
+
+With [PlaceholderAPI](https://modrinth.com/plugin/placeholderapi) on Paper, these work in scoreboards, tab lists, holograms and chat formats. Nothing else is needed: the plugin adds them by itself.
+
+| Placeholder | Shows |
+|---|---|
+| `%vcd_mode%` | The player's `/voice` mode: `quiet`, `normal` or `shout` |
+| `%vcd_mode_name%` | The same, as a word in the player's language |
+| `%vcd_talking%` | `true` while the player is speaking (never for a muted player) |
+| `%vcd_muted%` | `true` when the player is muted |
+| `%vcd_mute_left%` | How long the mute lasts (`1h`, `perm`), or empty |
+| `%vcd_mute_reason%` | Why the player is muted, or empty |
+| `%vcd_range%` | How far the player's voice carries now, in blocks (mode, zone, sneaking and megaphone counted) |
+| `%vcd_whisper_range%` | The same for a whisper |
+| `%vcd_walls%` | `true` when walls muffle the voices this player hears |
+| `%vcd_zone%` | The name of the sound zone the player is in, or empty |
+| `%vcd_addon%` | `true` when the player has the addon |
+| `%vcd_talking_near%` | Who is talking near the player and can be heard, nearest first, for example `» Bob 4m, Anna 10m`; empty when the server hides this (`allow_monitor=false`) or the people are hidden by a vanish plugin |
+| `%vcd_muted_count%` | How many players are muted (the same for everyone) |
+
+A name PlaceholderAPI does not know stays as typed.
 
 ### For servers: `/vcd`
 
@@ -223,6 +261,9 @@ Replies are coloured and clickable: values in `/vcd status` put the command that
 | `/vcd preset export` / `import <code>` | The server's profile as a profile code |
 | `/vcd walls 0-100\|off` | Wall strength for everyone, in % |
 | `/vcd serverwalls on\|off` | Walls for players without the addon |
+| `/vcd effects [on\|off]` | The server's water, rain and echo for players without the addon (off by default); with no value: what is on, with buttons |
+| `/vcd effects air on\|off` | Voices dull a little as they near the edge of their range (players without the addon) |
+| `/vcd effects water\|weather\|echo <0-150>\|off` | How strong each is; these are the server profile's values, so players with the addon get them too |
 | `/vcd lock all\|none\|curve,walls,materials,effects` | What players cannot change while the profile is enforced |
 | `/vcd monitor on\|off` | Monitor, radar and nearby players in the HUD |
 | `/vcd notices on\|off` | A zone's name above the hotbar when players enter or leave it |
@@ -238,16 +279,21 @@ Replies are coloured and clickable: values in `/vcd status` put the command that
 | `/vcd rule sneak 0.1-1\|dead on\|off\|spectators on\|off\|megaphone <item>\|megaphone_range 1-10` | Game rules |
 | `/vcd group dead\|spectators\|zones\|open_range on\|off` | Rules inside Simple Voice Chat groups |
 | `/vcd require off\|suggest\|warn\|kick [version]` | Addon requirement |
+| `/vcd mute <player> [time] [reason]` | Nobody hears the player for `30s`, `10m`, `2h`, `1d`, `1w` or `perm` (no time: until unmuted); muting again changes the time and reason |
+| `/vcd unmute <player>` | Let the player be heard again |
+| `/vcd mutes` | Who is muted, for how long and why, each with an *Unmute* button |
 | `/vcd debug [player]` | Whom a player hears, who hears them, and why not (without a name: you) |
+| `/vcd report` | A bug report to copy: versions, settings that change how voices sound, load, the last problems (no player or zone names) |
 
 **Permissions.** The console may do everything. On Paper each part of `/vcd` has its own permission; operators have all of them:
 
 | Permission | Allows |
 |---|---|
-| `vcd.status` | `status`, `help`, `zones`, `zone info` |
-| `vcd.settings` | `profile`, `preset`, `walls`, `serverwalls`, `lock`, `monitor`, `notices`, `rule`, `group`, `require`, `reload`, `undo`, `log` |
+| `vcd.status` | `status`, `help`, `zones`, `zone info`, `effects` (looking) |
+| `vcd.settings` | `profile`, `preset`, `walls`, `serverwalls`, `effects` (changing), `lock`, `monitor`, `notices`, `rule`, `group`, `require`, `block`, `reload`, `undo`, `log` |
 | `vcd.zone` | Making, changing, showing and deleting zones |
-| `vcd.debug` | `debug` |
+| `vcd.debug` | `debug`, `report` |
+| `vcd.mute` | `mute`, `unmute`, `mutes` |
 | `vcd.admin` | All of the above |
 
 On Fabric, Forge and NeoForge `/vcd` is for operators (level 2+). With LuckPerms or another mod that uses fabric-permissions-api, Fabric checks the same permissions. The *Server* tab shows to anyone who may use any part of `/vcd`.
@@ -280,11 +326,14 @@ Everything here can also be set in game. Every key in the files has a comment in
 | `weather_enabled` | true / false | true | Rain and thunder cover far voices |
 | `weather_strength` | 0 – 1.5 | 1 | How much rain and thunder cover them |
 | `diffraction_enabled` | true / false | true | Voices come round corners |
+| `place_tuning` | true / false | true | The dimension, biome and depth tune echo and air a little |
 | `hud_mode` | `off` / `talking` / `always` | `talking` | When the HUD is shown |
 | `hud_corner` | `top_left` / `top_right` / `bottom_left` / `bottom_right` | `top_right` | HUD corner |
-| `hud_scale` | 0.5 – 1.5 | 1.0 | HUD size |
+| `hud_scale` | 0.5 – 2 | 1.0 | HUD size |
 | `hud_background` | 0 – 1 | 0.55 | HUD background opacity |
 | `hud_compact` | true / false | false | One HUD line for everyone talking |
+| `hud_contrast` | true / false | false | The HUD on a solid dark panel with bright text |
+| `hud_markers` | true / false | false | A subtitle-style line with an arrow for voices off to the side |
 | `colorblind` | true / false | false | Colors for red-green color blindness |
 
 </details>
@@ -314,7 +363,7 @@ Everything here can also be set in game. Every key in the files has a comment in
 | `profile_locked` | `all`, `none`, or any of `curve,walls,materials,effects` | `all` | With `enforce`: what players cannot change; `walls` brings `materials` along |
 | `profile_preset` | `vanilla` / `realistic` / `clear` / `stealth` / `custom` | `custom` | The server's sound; `custom` uses the `profile.*` keys |
 | `profile.distance_model`, `.attenuation_factor`, `.openal_reference_ratio`, `.min_volume_fraction`, `.whisper_multiplier` | as in the client file | client defaults | The custom curve |
-| `profile.reverb_enabled`, `.reverb_strength`, `.underwater_enabled`, `.underwater_strength`, `.weather_enabled`, `.weather_strength`, `.diffraction_enabled` | as in the client file | client defaults | Effects; always part of the profile, whatever the preset |
+| `profile.reverb_enabled`, `.reverb_strength`, `.underwater_enabled`, `.underwater_strength`, `.weather_enabled`, `.weather_strength`, `.diffraction_enabled`, `.place_tuning` | as in the client file | client defaults | Effects; always part of the profile, whatever the preset |
 | `allow_monitor` | true / false | true | `false`: no monitor, radar or nearby players in the HUD |
 | `zone_notices` | true / false | true | A zone's name above the hotbar on entering and leaving, for every player |
 
@@ -353,6 +402,18 @@ zone.box.booth.isolated=true
 </details>
 
 <details>
+<summary>Realism for players without the addon, mutes and statistics</summary>
+
+| Key | Values | Default | What it does |
+|---|---|---|---|
+| `server_effects` | true / false | false | The server dulls voices under water, covers far ones in rain and thunder and echoes the room (echo: Paper); strengths come from `profile.underwater_*`, `profile.weather_*` and `profile.reverb_*` |
+| `server_air` | true / false | false | Voices dull a little as they near the edge of their range |
+| `mute.<uuid>` | `end\|name\|muted by\|reason` | none | A muted player; `end` is the time in milliseconds since 1970, 0 until unmuted. `/vcd mute` writes these; expired ones are dropped |
+| `metrics` | true / false | true | Plugin only: anonymous usage numbers to [bStats](https://bstats.org) |
+
+</details>
+
+<details>
 <summary>Game rules and groups</summary>
 
 | Key | Values | Default | What it does |
@@ -382,6 +443,51 @@ zone.box.booth.isolated=true
 The texts are in `vc-audio-distance-lang/<language>.json` next to the settings file. Edit any line, or add a file such as `fr_fr.json` for a new language; missing lines fall back to the built-in ones.
 
 </details>
+
+### Block materials for modders
+
+A resource pack, a data pack or a mod's own jar can tell the addon what a block is made of, for blocks the automatic guess gets wrong. Nothing is needed for vanilla blocks.
+
+- `assets/<namespace>/voice_physics/materials.json` is read by the client (resource packs and mod jars);
+- `data/<namespace>/voice_physics/materials.json` is read by the server that measures the walls (data packs, mod jars, the world's `datapacks/`).
+
+```json
+{
+  "replace": false,
+  "blocks": {
+    "create:andesite_casing": "metal",
+    "#minecraft:beds": "wool"
+  }
+}
+```
+
+A key is a block id or a block tag (`#namespace:tag`); a value is one of the materials on the *Walls* tab: `stone`, `metal`, `earth`, `wood`, `wool`, `soft`, `glass`, `ice`, `door`, `leaves`, `thin`, `liquid`, `other`. A pack higher in the list wins for the same block, and `"replace": true` drops what lower packs said. Mistakes (an unknown material, broken JSON) skip that entry, are written to the log (the first five) and show under *Problems* in `/voicephysics report` and `/vcd report`; up to 4096 rules are read in all.
+
+Who wins when several say something about one block: the server's own rules (`/vcd block`) and the player's (*Walls* tab), then data packs, then resource packs and mod jars, then the automatic guess. Walls locked by a server profile lock each block's percentage as well.
+
+## Questions and problems
+
+**I hear no walls muffling.**
+- Check that *Walls* is on and above 0% on the *Walls* tab. `/voicephysics status` says when the server locks walls for everyone or turns them off.
+- Voices inside one Simple Voice Chat group ignore walls and range on purpose.
+- With [Sound Physics Remastered](https://modrinth.com/mod/sound-physics-remastered) installed, the addon leaves walls, echo and water to it.
+- Without the addon, the server muffles walls only with `server_walls` on, and only up to 24 voices at once (`server_walls_max_streams`); `/voice walls` may be off for that player.
+
+**A setting is greyed out or changes back.** The server has enforced its profile and locked that part. `/voicephysics status` lists what is locked; it is fixed on the server with `/vcd lock`.
+
+**There is no HUD.** `/voicephysics hud talking` turns it on. The server can hide the monitor and nearby players (`allow_monitor=false`). On Forge for 1.21.6 – 1.21.7 the HUD does not exist.
+
+**The addon does nothing at all.** Simple Voice Chat must be on both the server and your game, in the version the [table](#versions-and-files) says, and Fabric also needs Fabric API. The server log and `/vcd status` show whether the voice chat is connected.
+
+**A block from another mod muffles wrongly.** On the *Walls* tab add the block you look at or hold and pick its material; for the whole server use `/vcd block add <id> <material>`. Mod and pack authors can ship a [data file](#block-materials-for-modders).
+
+**Players without the addon hear no water, rain or echo.** These are off by default: `/vcd effects on`. Water, rain and air work on every platform; the echo of a room is measured on Paper only, but a zone with its own echo works everywhere. Changes need no restart.
+
+**The game stutters with many voices.** The addon slows its own measuring down when the game is busy; `/voicephysics report` shows the load. Turn the corners switch off on the *Effects* tab, or the server's `server_walls_max_streams` down, if it is still too much.
+
+**How do I report a bug?** Run `/voicephysics report` (game) or `/vcd report` (server), press *Copy* and paste the text into an [issue](https://github.com/Shamanalle/voice-physics/issues). It holds versions, the settings that change how voices sound, load and the last problems; it has no player or zone names, addresses or chat.
+
+**What does the plugin send to bStats?** Only what bStats itself collects for every plugin (server software and versions, player count, country) and four switches of this plugin: the server profile mode, whether server walls and server realism are on, and whether there are any zones. Names, addresses, chat and settings values are never sent. Turn it off with `metrics=false` in the server file.
 
 ## Building
 

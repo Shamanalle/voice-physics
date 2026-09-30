@@ -10,16 +10,21 @@ Players don't need to install anything. Those who also install the [Voice Physic
 - **One sound for everyone:** offer or enforce the server's settings for players with the mod, for fair PvP and events.
 - **No seeing through walls:** turn off the monitor and radar of players with the mod.
 - **Require the mod:** send a download link, remind on every join, or kick.
-- **Player controls:** `/voice` lets anyone talk quietly or shout (with permission), turn wall muffling off for themselves, set or ignore other players' volume, and show who is talking nearby above the hotbar.
-- **Admin tools:** clickable `/vcd` commands with undo, a log of who changed what, `/vcd debug <player>` to see whom a player hears and why not, and messages in each player's own language.
+- **Player controls:** `/voice` lets anyone talk quietly or shout (with permission), turn wall muffling off for themselves, set or ignore other players' volume, and show who is talking nearby above the hotbar. Clickable, with an inventory menu and undo.
+- **Realism for players without the mod** (off by default, `/vcd effects on`): voices dull under water, far voices are covered in rain and thunder, and a speaker in a cave echoes.
+- **Mute:** `/vcd mute <player> [time] [reason]` silences a voice for a time or until `/vcd unmute`; `/vcd mutes` lists them.
+- **PlaceholderAPI:** `%vcd_mode%`, `%vcd_talking%`, `%vcd_range%`, `%vcd_muted%`, `%vcd_zone%` and more for scoreboards, tab lists and chat formats.
+- **Admin tools:** clickable `/vcd` commands with undo, a log of who changed what, `/vcd debug <player>` to see whom a player hears and why not, `/vcd report` for a bug report to copy, and messages in each player's own language.
 
 ## Install
 
 1. Put `voice-physics-bukkit-*.jar` into `plugins/`. Simple Voice Chat must be installed.
 2. Restart the server. Settings are in `plugins/VoicePhysics/vc-audio-distance-server.properties` and can all be changed in game with `/vcd`.
 
-Minecraft 1.20 – 1.21.11 and 26.1 – 26.3, Java 17+. Each part of `/vcd` has its own permission (`vcd.status`, `vcd.settings`, `vcd.zone`, `vcd.debug`, `vcd.admin`); operators have all of them.
+Minecraft 1.20 – 1.21.11 and 26.1 – 26.3, Java 17+. Each part of `/vcd` has its own permission (`vcd.status`, `vcd.settings`, `vcd.zone`, `vcd.debug`, `vcd.mute`, `vcd.admin`); operators have all of them.
+
+The plugin sends anonymous usage numbers to bStats (no names, addresses or chat); `metrics=false` in the settings file turns it off.
 
 Running Fabric, Forge or NeoForge? Install the [mod](https://www.curseforge.com/projects/1712556) on the server instead, it does all of this too.
 
-**[All settings, commands and permissions →](https://github.com/Shamanalle/voice-physics#for-servers)** · [Changelog](https://github.com/Shamanalle/voice-physics/blob/main/CHANGELOG.md) · [Report a bug](https://github.com/Shamanalle/voice-physics/issues)
+**[All settings, commands and permissions →](https://github.com/Shamanalle/voice-physics#for-servers)** · [Changelog](https://github.com/Shamanalle/voice-physics/blob/main/CHANGELOG.md) · [Questions and problems](https://github.com/Shamanalle/voice-physics#questions-and-problems) · [Report a bug](https://github.com/Shamanalle/voice-physics/issues)

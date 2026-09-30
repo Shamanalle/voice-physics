@@ -6,6 +6,44 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 *Все заметные изменения проекта описываются в этом файле. Каждая версия описана сначала на английском, затем на русском.*
 
+## [2.9.0] - 2026-09-30
+
+### English
+
+#### Added
+- **Server realism for players without the addon** (off by default; `/vcd effects on`). The server dulls voices under water, covers far ones in rain and thunder, and gives a speaker in a cave or hall an echo for a listener outside it, the same physics the addon does at home. `/vcd effects air on` also dulls voices a little as they near the edge of their range. Strengths are the server profile's (`/vcd effects water|weather|echo <0-150>`). Water, rain and air work on Paper, Fabric, Forge and NeoForge; measuring a room for the echo is Paper only, and a zone with its own echo works everywhere. Keys `server_effects` and `server_air`.
+- **Mute:** `/vcd mute <player> [time] [reason]`, `/vcd unmute <player>`, `/vcd mutes`. Nobody hears a muted player for the time given (`30s`, `10m`, `2h`, `1d`, `1w`, `perm`) or until unmuted. Kept across restarts, in the change log, with an *Undo* and an *Unmute* button, in `/vcd debug`; permission `vcd.mute`.
+- **PlaceholderAPI (Paper):** `%vcd_mode%`, `%vcd_mode_name%`, `%vcd_talking%`, `%vcd_muted%`, `%vcd_mute_left%`, `%vcd_mute_reason%`, `%vcd_range%`, `%vcd_whisper_range%`, `%vcd_walls%`, `%vcd_zone%`, `%vcd_addon%`, `%vcd_talking_near%`, `%vcd_muted_count%`.
+- **Bug reports in one click:** `/vcd report` (permission `vcd.debug`) and `/voicephysics report` give one short text to copy, with versions, the settings that change how voices sound, load and the last problems. Player and zone names are left out.
+- **Block materials from data files.** A resource pack, a data pack or a mod's own jar can list blocks and block tags with a material in `voice_physics/materials.json` (`assets/<namespace>/` for the client, `data/<namespace>/` for the server), for blocks of other mods the automatic guess gets wrong. The server's and the player's own rules still come first. Mistakes are logged and shown in the reports.
+- **Sound by place** (on by default, a switch on the *Effects* tab): deep caves and the deep dark ring longer, the Nether's smoke dulls far voices, the End's open void has no echo, snow and dense jungle swallow sound. Mild, on top of what is measured. Part of the server profile (`place_tuning`).
+- **Accessibility:** *High contrast* (the HUD on a solid dark panel with bright text), *Direction marks* (a subtitle-style line such as `◀ Sam 3m` for voices off to the side) and a HUD up to twice the size (`hud_contrast`, `hud_markers`, `hud_scale` up to 2).
+- **Statistics (plugin):** anonymous usage numbers to [bStats](https://bstats.org), on by default; `metrics=false` in the server file, or `plugins/bStats/config.yml`, turns them off. No names, addresses or chat.
+- **Questions and problems:** a new README section (no walls, no HUD, locked settings, modded blocks, water and rain without the addon, how to report a bug), a documented data-file format, PlaceholderAPI table, and the new settings in both READMEs and on the store pages.
+- **Audio regression test:** known signals through the filter and the echo, held to the filter's design and the echo's decay time, so a change that alters how voices sound fails a test instead of being found by ear.
+
+#### Changed
+- `/voice` replies are clickable: *Your choices* show buttons for every value, every change has an *Undo*, `/voice help` has examples, `/voice menu` opens the same choices as an inventory menu, and each part has its own permission (`vcd.player.mode`, `.walls`, `.hud`, `.volume`, `.menu`).
+- Performance: the block lookups of one tick are shared between the wall, echo and round-the-corner measurements without creating garbage, and the addon slows its own measuring down step by step when the game gets busy, then speeds up again.
+
+### Русский
+
+#### Добавлено
+- **Серверный реализм для игроков без аддона** (по умолчанию выключен; `/vcd effects on`). Сервер глушит голоса под водой, заглушает дальние в дождь и грозу и даёт эхо говорящему в пещере или зале для слушателя снаружи: та же физика, что аддон делает у себя. `/vcd effects air on` ещё и слегка глушит голоса у края дальности. Силы берутся из профиля сервера (`/vcd effects water|weather|echo <0-150>`). Вода, дождь и воздух работают на Paper, Fabric, Forge и NeoForge; измерение помещения для эха есть только на Paper, а зона с собственным эхом работает везде. Ключи `server_effects` и `server_air`.
+- **Заглушение:** `/vcd mute <игрок> [время] [причина]`, `/vcd unmute <игрок>`, `/vcd mutes`. Заглушенного игрока никто не слышит заданное время (`30s`, `10m`, `2h`, `1d`, `1w`, `perm`) или пока не снимут заглушение. Хранится между перезапусками, попадает в журнал изменений, есть кнопки «Отменить» и «Снять», виден в `/vcd debug`; право `vcd.mute`.
+- **PlaceholderAPI (Paper):** `%vcd_mode%`, `%vcd_mode_name%`, `%vcd_talking%`, `%vcd_muted%`, `%vcd_mute_left%`, `%vcd_mute_reason%`, `%vcd_range%`, `%vcd_whisper_range%`, `%vcd_walls%`, `%vcd_zone%`, `%vcd_addon%`, `%vcd_talking_near%`, `%vcd_muted_count%`.
+- **Баг-репорт в один клик:** `/vcd report` (право `vcd.debug`) и `/voicephysics report` выдают один короткий текст для копирования: версии, настройки, меняющие звук голосов, нагрузка и последние проблемы. Имена игроков и зон не включаются.
+- **Материалы блоков из файлов данных.** Ресурспак, датапак или собственный jar мода могут перечислить блоки и теги блоков с материалом в `voice_physics/materials.json` (`assets/<пространство имён>/` для клиента, `data/<пространство имён>/` для сервера) — для блоков других модов, которые автоматическое определение угадывает неверно. Собственные правила сервера и игрока по-прежнему главнее. Ошибки пишутся в лог и видны в отчётах.
+- **Звук по месту** (включено по умолчанию, переключатель на вкладке «Эффекты»): в глубоких пещерах и глубинной тьме эхо дольше, дым Незера глушит дальние голоса, в открытой пустоте Энда эха нет, снег и густые джунгли поглощают звук. Мягко, поверх измеренного. Входит в профиль сервера (`place_tuning`).
+- **Доступность:** «Высокий контраст» (HUD на сплошной тёмной панели с яркими буквами), «Метки направления» (строка в духе субтитров вроде `◀ Sam 3m` для голосов сбоку) и HUD до двойного размера (`hud_contrast`, `hud_markers`, `hud_scale` до 2).
+- **Статистика (плагин):** анонимные цифры использования в [bStats](https://bstats.org), включены по умолчанию; `metrics=false` в файле сервера или `plugins/bStats/config.yml` выключают их. Без имён, адресов и чата.
+- **Вопросы и проблемы:** новый раздел README (нет стен, нет HUD, закреплённые настройки, блоки из модов, вода и дождь без аддона, как сообщить об ошибке), описанный формат файлов данных, таблица PlaceholderAPI и новые настройки в обоих README и на страницах площадок.
+- **Тест «звук не изменился»:** известные сигналы через фильтр и эхо, которые сверяются с расчётом фильтра и временем затухания эха, так что изменение, которое меняет звук голосов, роняет тест, а не обнаруживается на слух.
+
+#### Изменено
+- Ответы `/voice` кликабельны: «Ваш выбор» показывает кнопки для каждого значения, у каждого изменения есть «Отменить», у `/voice help` есть примеры, `/voice menu` открывает тот же выбор как меню-инвентарь, а у каждой части своё право (`vcd.player.mode`, `.walls`, `.hud`, `.volume`, `.menu`).
+- Производительность: обращения к блокам за один тик делятся между измерениями стен, эха и пути из-за угла без создания мусора, а аддон шаг за шагом замедляет собственные измерения, когда игра занята, и потом снова ускоряется.
+
 ## [2.8.0] - 2026-09-30
 
 ### English
