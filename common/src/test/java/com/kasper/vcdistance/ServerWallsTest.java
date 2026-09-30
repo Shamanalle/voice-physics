@@ -397,6 +397,175 @@ public class ServerWallsTest {
         assertEquals(0, walls.activeStreams());
     }
 
+    // ---- water, weather, air and echo (server_effects, server_air) ---------------
+
+    private ServerPlayers realismPlayers(double distance, boolean listenerUnderwater) {
+        ServerPlayers players = new ServerPlayers();
+        walls = new ServerWalls(settings, players);
+        walls.markWorldAvailable();
+        players.update(new ServerPlayers.Info(speaker, "Speaker", "world", 0, 64, 0, false, true, false, "", "",
+                List.of(), "", false, EnvironmentEffects.Weather.CLEAR));
+        players.update(new ServerPlayers.Info(listener, "Listener", "world", distance, 64, 0, false, true, false, "", "",
+                List.of(), "", listenerUnderwater, EnvironmentEffects.Weather.CLEAR));
+        return players;
+    }
+
+    private double heardLevel(int from, int to) {
+        double in = 0;
+        double out = 0;
+        for (int i = from; i < to; i++) {
+            assertTrue(fireFrame(i), "frame " + i + " should be replaced");
+            in += rms(tone(i));
+            out += rms(unpack(sent.get(sent.size() - 1).getOpusEncodedData()));
+        }
+        return out / in;
+    }
+
+    @Test
+    @DisplayName("Realism off: nobody is processed for water, weather or air, even under water")
+    void realismOffChangesNothing() {
+        realismPlayers(40, true);
+        for (int i = 0; i < 5; i++) {
+            assertFalse(fireFrame(i));
+        }
+        assertTrue(sent.isEmpty());
+    }
+
+    @Test
+    @DisplayName("A listener under water hears the voice dull and quiet, with no wall in between")
+    void underwaterListener() {
+        settings.setServerEffects(true);
+        realismPlayers(5, true);
+        double level = heardLevel(0, 30);
+        assertTrue(level < 0.1, "3 kHz under water should be far quieter: " + level);
+        assertEquals(1, walls.activeStreams());
+        assertEquals(1, encodersCreated);
+    }
+
+    @Test
+    @DisplayName("Climbing out of the water gives the voice back, and the encoder is freed")
+    void surfacing() {
+        settings.setServerEffects(true);
+        ServerPlayers players = realismPlayers(5, true);
+        heardLevel(0, 20);
+        players.update(new ServerPlayers.Info(listener, "Listener", "world", 5, 64, 0, false, true, false, "", "",
+                List.of(), "", false, EnvironmentEffects.Weather.CLEAR));
+        int i = 20;
+        while (walls.activeStreams() > 0 && i < 300) {
+            fireFrame(i++);
+        }
+        assertEquals(0, walls.activeStreams(), "the filter opens again and the stream passes through");
+        int before = sent.size();
+        assertFalse(fireFrame(i));
+        assertEquals(before, sent.size());
+    }
+
+    @Test
+    @DisplayName("Air: a far voice is duller than a near one, and a near one is left alone")
+    void airDullsFarVoices() {
+        settings.setServerAir(true);
+        realismPlayers(3, false);
+        for (int i = 0; i < 5; i++) {
+            assertFalse(fireFrame(i), "3 blocks away the air changes nothing");
+        }
+        assertTrue(sent.isEmpty());
+
+        realismPlayers(46, false);
+        double far = heardLevel(0, 30);
+        assertTrue(far < 0.5, "3 kHz at the edge of the range loses most of its level: " + far);
+    }
+
+    @Test
+    @DisplayName("Realism does not need the walls: switched off in the profile it still works")
+    void independentOfWalls() {
+        settings.setServerEffects(true);
+        settings.profile().setOcclusionEnabled(false);
+        realismPlayers(5, true);
+        assertTrue(heardLevel(0, 25) < 0.1);
+    }
+
+    @Test
+    @DisplayName("The cave a player stands in adds an echo to the voice; leaving it takes the echo away")
+    void echoInACave() throws InterruptedException {
+        settings.setServerEffects(true);
+        realismPlayers(20, false);
+        AudioDistancePlugin.SERVER_ROOMS.clear();
+        try {
+            long now = System.nanoTime() - 10_000_000_000L;
+            AudioDistancePlugin.SERVER_ROOMS.update(listener, RoomEstimate.forced(0.6), null, now);
+            for (int i = 0; i < 10; i++) {
+                assertTrue(fireFrame(i), "the echo is added to every frame");
+            }
+            // The tail keeps ringing after the tone: the echo of the last frames is in the output
+            EntitySoundPacket last = sent.get(sent.size() - 1);
+            assertEquals(speaker, last.getEntityUuid());
+            assertEquals(FRAME, unpack(last.getOpusEncodedData()).length);
+            double dry = 0;
+            double wet = 0;
+            for (int i = 5; i < 10; i++) {
+                dry += rms(tone(i));
+                wet += rms(unpack(sent.get(i).getOpusEncodedData()));
+            }
+            assertTrue(Math.abs(wet - dry) > dry * 0.01, "the room has changed the sound");
+
+            AudioDistancePlugin.SERVER_ROOMS.update(listener, RoomEstimate.OPEN, null, System.nanoTime());
+            // The echo glides away over a few seconds (RoomGlide), then the tail rings out
+            int i = 10;
+            long give = System.nanoTime() + 12_000_000_000L;
+            while (walls.activeStreams() > 0 && System.nanoTime() < give) {
+                fireFrame(i++);
+                Thread.sleep(20);
+            }
+            assertEquals(0, walls.activeStreams(), "no echo left: back to pass-through");
+        } finally {
+            AudioDistancePlugin.SERVER_ROOMS.clear();
+        }
+    }
+
+    @Test
+    @DisplayName("A voice that pauses does not bring its old echo back as a ghost")
+    void echoDoesNotHauntAfterPause() throws InterruptedException {
+        settings.setServerEffects(true);
+        realismPlayers(20, false);
+        AudioDistancePlugin.SERVER_ROOMS.clear();
+        try {
+            AudioDistancePlugin.SERVER_ROOMS.update(listener, RoomEstimate.forced(0.9), null, System.nanoTime() - 10_000_000_000L);
+            for (int i = 0; i < 20; i++) {
+                fireFrame(i);
+            }
+            Thread.sleep(450);
+            assertTrue(fireFrame(20));
+            double silent = rms(unpack(sent.get(sent.size() - 1).getOpusEncodedData()));
+            assertTrue(silent > 0.0, "the new frame is the voice");
+            // A fresh reverb starts empty: the first samples of the frame are not ringing from before the pause
+            short[] pcm = unpack(sent.get(sent.size() - 1).getOpusEncodedData());
+            double head = 0;
+            for (int k = 0; k < 24; k++) {
+                head += Math.abs(pcm[k]);
+            }
+            assertTrue(head / 24 < 8000, "no loud ghost at the start: " + head / 24);
+        } finally {
+            AudioDistancePlugin.SERVER_ROOMS.clear();
+        }
+    }
+
+    @Test
+    @DisplayName("A zone that sets its own echo skips the measuring but still echoes")
+    void zoneEchoNeedsNoMeasuring() {
+        Zone hall = new Zone(Zone.BOX, "hall", ServerSettings.ProfileMode.OFF, "",
+                new Zone.Rules(null, null, null, null, 0.7, false, null), null, 0);
+        assertFalse(ServerRooms.needsMeasuring(hall));
+        settings.setServerEffects(true);
+        realismPlayers(20, false);
+        AudioDistancePlugin.SERVER_ROOMS.clear();
+        try {
+            AudioDistancePlugin.SERVER_ROOMS.update(listener, RoomEstimate.OPEN, hall, System.nanoTime() - 10_000_000_000L);
+            assertTrue(fireFrame(0));
+        } finally {
+            AudioDistancePlugin.SERVER_ROOMS.clear();
+        }
+    }
+
     @Test
     @DisplayName("Group voices: untouched by default, cancelled by the group rules the admin turned on")
     void groupRules() {

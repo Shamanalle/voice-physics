@@ -20,10 +20,25 @@ public final class ServerPlayers {
      * @param regions   WorldGuard regions at the player's position, highest priority first (Paper only)
      * @param mainHand  item id in the main hand ("minecraft:goat_horn"), or "" when empty
      * @param language  the player's client language ("ru_ru"), or "" when unknown
+     * @param underwater the player's head is under water (Paper); {@code false} where it is not known
+     * @param weather   rain or thunder where the player stands under the open sky (Paper)
      */
     public record Info(UUID id, String name, String world, double x, double y, double z,
                        boolean sneaking, boolean alive, boolean spectator,
-                       String mainHand, String offHand, List<String> regions, String language) {
+                       String mainHand, String offHand, List<String> regions, String language,
+                       boolean underwater, EnvironmentEffects.Weather weather) {
+
+        public Info {
+            weather = weather == null ? EnvironmentEffects.Weather.CLEAR : weather;
+        }
+
+        /** A player whose surroundings (water, weather) are not known. */
+        public Info(UUID id, String name, String world, double x, double y, double z,
+                    boolean sneaking, boolean alive, boolean spectator,
+                    String mainHand, String offHand, List<String> regions, String language) {
+            this(id, name, world, x, y, z, sneaking, alive, spectator, mainHand, offHand, regions, language,
+                    false, EnvironmentEffects.Weather.CLEAR);
+        }
 
         public double distanceTo(Info other) {
             double dx = x - other.x;

@@ -32,7 +32,7 @@ public final class ServerSettings {
      * 3: echo, water and weather; 4: zones and messages_language; 5: more materials;
      * 6: boxes and zone rules, game rules, the addon requirement, messages in every language.
      */
-    private static final int SETTINGS_VERSION = 8;
+    private static final int SETTINGS_VERSION = 9;
     private static final String ZONE_PREFIX = "zone.";
     public static final String CUSTOM_PRESET = "custom";
 
@@ -127,6 +127,8 @@ public final class ServerSettings {
     private volatile boolean openGroupRange = true;
     private volatile boolean serverWalls = true;
     private volatile int maxStreams = DEFAULT_MAX_STREAMS;
+    private volatile boolean serverEffects;
+    private volatile boolean serverAir;
     private volatile long loadedModified = Long.MIN_VALUE;
     private volatile Map<String, Zone> zones = Map.of();
     private volatile String messagesLanguage = "auto";
@@ -195,6 +197,32 @@ public final class ServerSettings {
         return maxStreams;
     }
 
+    /**
+     * Water, weather and the echo of rooms for players without the addon, as the profile has them
+     * (its underwater, weather and reverb settings say which and how strong).
+     */
+    public boolean isServerEffects() {
+        return serverEffects;
+    }
+
+    public void setServerEffects(boolean on) {
+        serverEffects = on;
+    }
+
+    /** Far voices get duller with distance for players without the addon. */
+    public boolean isServerAir() {
+        return serverAir;
+    }
+
+    public void setServerAir(boolean on) {
+        serverAir = on;
+    }
+
+    /** Whether voices for players without the addon may change for another reason than walls. */
+    public boolean hasServerRealism() {
+        return serverEffects || serverAir;
+    }
+
     public synchronized void load() {
         Path file = getPath();
         // The admin's own texts sit next to the settings file (written on first start)
@@ -239,6 +267,8 @@ public final class ServerSettings {
         addonUrl = url.isEmpty() ? DEFAULT_ADDON_URL : url;
         serverWalls = DistanceConfig.parseBoolean(props, "server_walls", true);
         maxStreams = (int) DistanceConfig.clamp(DistanceConfig.parseDouble(props, "server_walls_max_streams", DEFAULT_MAX_STREAMS), 0, MAX_STREAMS_LIMIT);
+        serverEffects = DistanceConfig.parseBoolean(props, "server_effects", false);
+        serverAir = DistanceConfig.parseBoolean(props, "server_air", false);
 
         // Profile: custom values, or a preset on top of them
         profile.readFrom(props, PROFILE_PREFIX);
@@ -303,7 +333,17 @@ public final class ServerSettings {
                         "Voices above the limit are heard without walls. Default 24.",
                         "Сколько голосов сервер глушит одновременно, 0 - 512 (ограничение нагрузки на процессор).",
                         "Голоса сверх лимита слышно без стен. По умолчанию 24.")
-                .value("server_walls_max_streams", maxStreams);
+                .value("server_walls_max_streams", maxStreams)
+                .comment("true: they also get water, rain and thunder and the echo of rooms and caves, as set in section 4",
+                        "(profile.underwater_*, profile.weather_*, profile.reverb_*). Off by default: every voice it changes",
+                        "is re-encoded and counts against the limit above. Default false.",
+                        "true: у них также появляются вода, дождь и гроза и эхо комнат и пещер, как настроено в разделе 4",
+                        "(profile.underwater_*, profile.weather_*, profile.reverb_*). По умолчанию выключено: каждый изменённый",
+                        "голос кодируется заново и учитывается в лимите выше. По умолчанию false.")
+                .value("server_effects", serverEffects)
+                .comment("true: far voices get duller with distance, as in air, also for them. Same cost as above. Default false.",
+                        "true: далёкие голоса и для них глохнут с расстоянием, как в воздухе. Та же нагрузка. По умолчанию false.")
+                .value("server_air", serverAir);
 
         w.section("3. Players with the addon", "3. Игроки с аддоном")
                 .comment("What they get from the server:",

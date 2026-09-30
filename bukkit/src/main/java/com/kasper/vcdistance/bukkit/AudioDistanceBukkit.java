@@ -6,6 +6,7 @@ import com.kasper.vcdistance.CommandReply;
 import com.kasper.vcdistance.LinkProtocol;
 import com.kasper.vcdistance.ModEnvironment;
 import com.kasper.vcdistance.PlayerCommands;
+import com.kasper.vcdistance.RoomEstimate;
 import com.kasper.vcdistance.ServerHooks;
 import com.kasper.vcdistance.ServerPlayers;
 import com.kasper.vcdistance.Zone;
@@ -57,6 +58,8 @@ public final class AudioDistanceBukkit extends JavaPlugin implements Listener {
     static final int LOOK_REACH = 64;
 
     private static final int RELOAD_CHECK_TICKS = 40;
+    /** Each player's surroundings are measured this often for the echo (once a second), spread over the ticks. */
+    private static final int ROOM_TICKS = 20;
     /** The plugin's name before 2.2.0, and so its old settings folder. */
     private static final String OLD_NAME = "VoicechatAudioDistance";
 
@@ -162,6 +165,13 @@ public final class AudioDistanceBukkit extends JavaPlugin implements Listener {
                 sendNearbyAndZone(player);
             }
         }
+        if (!scheduling.isRegionized()) {
+            for (Player player : getServer().getOnlinePlayers()) {
+                if ((ticks + player.getEntityId()) % ROOM_TICKS == 0) {
+                    measureRoom(player);
+                }
+            }
+        }
         ZoneOutlines.tick((id, world, points) -> {
             Player p = getServer().getPlayer(id);
             if (p != null) {
@@ -188,10 +198,32 @@ public final class AudioDistanceBukkit extends JavaPlugin implements Listener {
                 }
             }
             AudioDistancePlugin.SERVER_WALLS.tickListener(id, thickness);
+            if ((n + player.getEntityId()) % ROOM_TICKS == 0) {
+                measureRoom(player);
+            }
             if (n % AudioDistancePlugin.NEARBY_INTERVAL_TICKS == 0) {
                 sendNearbyAndZone(player);
             }
         });
+    }
+
+    /**
+     * The echo of the place {@code player} stands in, for the server's own echo (players without the addon
+     * hear the speaker's room and their own). Only while it is on, and not in a zone that sets its own echo.
+     */
+    private void measureRoom(Player player) {
+        if (!AudioDistancePlugin.SERVER_SETTINGS.isServerEffects() || !AudioDistancePlugin.SERVER_SETTINGS.profile().isReverbEnabled()) {
+            return;
+        }
+        try {
+            Zone zone = zoneOf(player);
+            RoomEstimate room = com.kasper.vcdistance.ServerRooms.needsMeasuring(zone) ? RoomProbe.measure(player) : null;
+            if (room != null || !com.kasper.vcdistance.ServerRooms.needsMeasuring(zone)) {
+                AudioDistancePlugin.SERVER_ROOMS.update(player.getUniqueId(), room, zone, System.nanoTime());
+            }
+        } catch (Throwable ignored) {
+            // half-way through joining or leaving
+        }
     }
 
     /** For a player with the addon: the voice chat state of the players nearby, and a new profile on entering a zone. */
@@ -298,11 +330,14 @@ public final class AudioDistanceBukkit extends JavaPlugin implements Listener {
             language = p.getLocale();
         } catch (Throwable ignored) {
         }
+        // Only looked at when the server's effects are on: it is a block or two per player
+        boolean effects = AudioDistancePlugin.SERVER_SETTINGS.isServerEffects();
         return new ServerPlayers.Info(p.getUniqueId(), p.getName(), p.getWorld().getName(),
                 at.getX(), at.getY(), at.getZ(),
                 p.isSneaking(), !p.isDead(), p.getGameMode() == GameMode.SPECTATOR,
                 item(p.getInventory().getItemInMainHand()), item(p.getInventory().getItemInOffHand()),
-                regions ? WorldGuardRegions.at(at) : List.of(), language == null ? "" : language);
+                regions ? WorldGuardRegions.at(at) : List.of(), language == null ? "" : language,
+                effects && RoomProbe.underwater(p), effects ? RoomProbe.weather(p) : null);
     }
 
     private static String item(ItemStack stack) {
