@@ -51,6 +51,9 @@ public final class ServerReport {
                 + ", mutes " + s.mutes(System.currentTimeMillis()).size());
         out.add("Require addon: " + s.getRequireAddon().getId() + (s.getMinAddonVersion().isEmpty() ? "" : " " + s.getMinAddonVersion())
                 + ", messages " + s.getMessagesLanguage());
+        if (BlockDataRules.data().files() > 0 || !BlockDataRules.data().problems().isEmpty()) {
+            out.add("Block materials from data packs: " + BlockDataRules.data().summary());
+        }
         out.add(String.format(Locale.ROOT, "Load: %.2f ms per tick", AudioDistancePlugin.SERVER_WALLS.perf().averageMs()));
         List<Problems.Problem> problems = Problems.recent();
         if (problems.isEmpty()) {

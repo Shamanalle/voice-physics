@@ -58,6 +58,7 @@ public final class ServerBridge {
      * and carries out the addon requirement.
      */
     public static void tick(MinecraftServer server) {
+        DataMaterials.tick(server);
         ZoneOutlines.tick((id, world, points) -> {
             ServerPlayer p = server.getPlayerList().getPlayer(id);
             if (p != null && Zone.sameWorld(ServerZones.dimensionId(String.valueOf(p.level().dimension())), world)) {

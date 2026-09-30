@@ -33,6 +33,12 @@ public class ClientReportTest {
 
         assertFalse(ClientReport.lines("", own, new ServerLink(), 48.0).get(0).contains("Minecraft"), "unknown game version left out");
 
+        BlockDataRules.setAssets(BlockDataRules.read(java.util.List.of(new BlockDataRules.Source("m:voice_physics/materials.json",
+                "{\"blocks\": {\"m:a\": \"wool\", \"m:b\": \"nothing\"}}"))));
+        assertTrue(String.join("\n", ClientReport.lines("", own, new ServerLink(), 48.0))
+                .contains("Block materials from resource packs: 1 rule from 1 file, 1 problem"));
+        BlockDataRules.setAssets(null);
+
         Problems.record("Tracer failed: IllegalStateException");
         Problems.record("Tracer failed: IllegalStateException");
         text = String.join("\n", ClientReport.lines("", own, new ServerLink(), 48.0));

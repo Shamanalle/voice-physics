@@ -44,6 +44,12 @@ public final class ClientReport {
         if (used != own) {
             out.add("In effect (server): " + describe(used));
         }
+        if (BlockDataRules.assets().files() > 0 || !BlockDataRules.assets().problems().isEmpty()) {
+            out.add("Block materials from resource packs: " + BlockDataRules.assets().summary());
+        }
+        if (BlockDataRules.data().files() > 0) {
+            out.add("Block materials from data packs: " + BlockDataRules.data().summary());
+        }
         out.add(String.format(Locale.ROOT, "Load: %.2f ms per tick", AudioDistancePlugin.CLIENT_PERF.averageMs()));
         List<Problems.Problem> problems = Problems.recent();
         if (problems.isEmpty()) {

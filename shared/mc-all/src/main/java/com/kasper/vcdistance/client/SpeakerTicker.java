@@ -246,5 +246,10 @@ public final class SpeakerTicker {
         AudioDistancePlugin.NEARBY.clear();
         AudioDistancePlugin.ENVIRONMENT.reset();
         access.reset();
+        try {
+            ClientDataMaterials.load();
+        } catch (Throwable t) {
+            DistanceConfig.LOGGER.warn("Could not read block materials from resource packs: {}", t.toString());
+        }
     }
 }
