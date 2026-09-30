@@ -763,5 +763,21 @@
   "message.vc-audio-distance.cmd.log.admin": "更改日志仅供服务器管理员查看。",
   "message.vc-audio-distance.cmd.type.hover": "点击填入",
   "modmenu.descriptionTranslation.vc-audio-distance": "语音像真实的声音一样：随距离减弱、隔墙变闷、能从拐角绕过来，并在洞穴中产生回声。HUD 显示谁在说话、谁能听到你。服务器可使用声音区域、游戏规则，并为未安装附属模组的玩家提供墙壁效果。",
-  "modmenu.summaryTranslation.vc-audio-distance": "为 Simple Voice Chat 加入随距离减弱、墙壁消音和洞穴回声的语音效果。"
+  "modmenu.summaryTranslation.vc-audio-distance": "为 Simple Voice Chat 加入随距离减弱、墙壁消音和洞穴回声的语音效果。",
+  "command.vc-audio-distance.help.speaker": "/vcd speaker [list|add <名称> [半径] [拾音]|remove <名称>|tp <名称>] - 扩音器：在其附近说话的人会从它那里被听到",
+  "command.vc-audio-distance.speaker.title": "扩音器（在其附近说话的人会从它那里被听到）",
+  "command.vc-audio-distance.speaker.state": "扩音器：%s",
+  "command.vc-audio-distance.speaker.none": "没有放置扩音器。站在要放的位置，使用 /vcd speaker add <名称>。",
+  "command.vc-audio-distance.speaker.row": "%s：%s，拾音 %s，半径 %s",
+  "command.vc-audio-distance.speaker.need_player": "只有玩家才能放置扩音器（放在其所站位置）。",
+  "command.vc-audio-distance.speaker.unknown": "没有名为 %s 的扩音器。",
+  "command.vc-audio-distance.speaker.no_tp": "无法从这里传送过去。",
+  "command.vc-audio-distance.speaker.added": "扩音器 %s 已放置在 %s（拾音 %s，半径 %s）。已保存。",
+  "command.vc-audio-distance.speaker.moved": "扩音器 %s 已移至 %s（拾音 %s，半径 %s）。已保存。",
+  "command.vc-audio-distance.speaker.removed": "扩音器 %s 已移除。已保存。",
+  "command.vc-audio-distance.speaker.off_note": "扩音器开关已关闭，所以它不会出声：/vcd extras speakers on。",
+  "command.vc-audio-distance.btn.speaker_tp": "前往",
+  "command.vc-audio-distance.btn.speaker_remove": "移除",
+  "command.vc-audio-distance.btn.speaker_on": "扩音器开",
+  "command.vc-audio-distance.btn.speaker_off": "扩音器关"
 }

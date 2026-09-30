@@ -38,6 +38,7 @@ public final class ServerSettings {
     private static final int SETTINGS_VERSION = 9;
     private static final String ZONE_PREFIX = "zone.";
     private static final String MUTE_PREFIX = "mute.";
+    private static final String SPEAKER_PREFIX = "speaker.";
     public static final String CUSTOM_PRESET = "custom";
 
     public static final int DEFAULT_MAX_STREAMS = 24;
@@ -136,6 +137,8 @@ public final class ServerSettings {
     private volatile boolean metrics = true;
     private volatile boolean serverRadio;
     private volatile String radioItem = "";
+    /** Loudspeakers placed with /vcd speaker, by lower-case name. */
+    private volatile Map<String, Loudspeaker> speakers = Map.of();
     private volatile boolean serverSpeakers;
     private volatile boolean serverEavesdrop;
     private volatile boolean serverSculk;
@@ -346,6 +349,7 @@ public final class ServerSettings {
         metrics = DistanceConfig.parseBoolean(props, "metrics", true);
         serverRadio = DistanceConfig.parseBoolean(props, "server_radio", false);
         radioItem = itemId(props.getProperty("radio_item", ""));
+        speakers = readSpeakers(props, file);
         serverSpeakers = DistanceConfig.parseBoolean(props, "server_speakers", false);
         serverEavesdrop = DistanceConfig.parseBoolean(props, "server_eavesdrop", false);
         serverSculk = DistanceConfig.parseBoolean(props, "server_sculk", false);
@@ -656,7 +660,15 @@ public final class ServerSettings {
                         "Any failure falls back to the muffled straight path. Default false.",
                         "true: игрок без аддона слышит голос за стеной из дверного проёма, через который тот доходит.",
                         "При любой ошибке остаётся приглушённый прямой путь. По умолчанию false.")
-                .value("server_doorway", serverDoorway);
+                .value("server_doorway", serverDoorway)
+                .comment("Loudspeakers, made with /vcd speaker add <name> [radius] [pickup] where the admin stands:",
+                        "  speaker.<name>=<world>|<x>|<y>|<z>|<pickup blocks>|<radius blocks>",
+                        "Whoever talks within the pickup distance is heard from the speaker by everyone within the radius.",
+                        "Громкоговорители, их делает /vcd speaker add <имя> [радиус] [захват] там, где стоит админ:",
+                        "  speaker.<имя>=<мир>|<x>|<y>|<z>|<захват, блоков>|<радиус, блоков>",
+                        "Кого говорящий в пределах захвата, того слышно из громкоговорителя всем в пределах радиуса.");
+        speakers.values().stream().sorted(java.util.Comparator.comparing(Loudspeaker::key))
+                .forEach(sp -> w.value(SPEAKER_PREFIX + sp.name(), sp.encode()));
         w.save(getPath());
         // Our own write is not an edit to pick up again
         loadedModified = lastModified(getPath());
@@ -943,6 +955,51 @@ public final class ServerSettings {
             return zone.rules().wallsStrength();
         }
         return profile.isOcclusionEnabled() ? profile.getOcclusionStrength() : 0.0;
+    }
+
+    private static Map<String, Loudspeaker> readSpeakers(Properties props, Path file) {
+        Map<String, Loudspeaker> out = new java.util.LinkedHashMap<>();
+        for (String key : props.stringPropertyNames().stream().sorted().toList()) {
+            if (!key.startsWith(SPEAKER_PREFIX)) {
+                continue;
+            }
+            Loudspeaker sp = Loudspeaker.decode(key.substring(SPEAKER_PREFIX.length()), props.getProperty(key));
+            if (sp == null) {
+                DistanceConfig.LOGGER.warn("Ignoring a damaged loudspeaker in {}: {}", file.getFileName(), key);
+            } else {
+                out.put(sp.key(), sp);
+            }
+        }
+        return Map.copyOf(out);
+    }
+
+    /** The loudspeakers by lower-case name. */
+    public Map<String, Loudspeaker> speakers() {
+        return speakers;
+    }
+
+    /** The loudspeaker called {@code name} (case ignored), or {@code null}. */
+    public Loudspeaker speaker(String name) {
+        return name == null ? null : speakers.get(name.toLowerCase(Locale.ROOT));
+    }
+
+    /** Places or replaces a loudspeaker; call {@link #save()} to keep it. */
+    public synchronized void putSpeaker(Loudspeaker speaker) {
+        Map<String, Loudspeaker> next = new java.util.LinkedHashMap<>(speakers);
+        next.put(speaker.key(), speaker);
+        speakers = Map.copyOf(next);
+    }
+
+    /** @return {@code true} when there was such a speaker; call {@link #save()} to keep it */
+    public synchronized boolean removeSpeaker(String name) {
+        String key = name == null ? "" : name.toLowerCase(Locale.ROOT);
+        if (!speakers.containsKey(key)) {
+            return false;
+        }
+        Map<String, Loudspeaker> next = new java.util.LinkedHashMap<>(speakers);
+        next.remove(key);
+        speakers = Map.copyOf(next);
+        return true;
     }
 
     private static Map<UUID, VoiceMute> readMutes(Properties props, Path file) {

@@ -327,6 +327,9 @@ public final class ServerWalls {
             if (settings.isServerRadio() && AudioDistancePlugin.PLAYER_PREFS.anyRadio()) {
                 radio(event, packet, talking);
             }
+            if (settings.isServerSpeakers() && !settings.speakers().isEmpty()) {
+                speakers(event, packet, talking);
+            }
         }
         if (packet == null || sender == null || sender.getPlayer() == null || !rangeRulesFor(sender)
                 || !voiceRulesOn()) {
@@ -415,6 +418,50 @@ public final class ServerWalls {
                     voicechat.sendStaticSoundPacketTo(c, out);
                 } finally {
                     resending.set(Boolean.FALSE);
+                }
+            }
+        } catch (Throwable t) {
+            logFailure(t);
+        } finally {
+            perf.add(System.nanoTime() - start);
+        }
+    }
+
+    /**
+     * Loudspeakers: a talker standing at a speaker is heard from its position by the players within its radius,
+     * as a located sound (so it is louder nearer the speaker and muffled by nothing of ours).
+     */
+    private void speakers(MicrophonePacketEvent event, MicrophonePacket packet, UUID id) {
+        long start = System.nanoTime();
+        try {
+            ServerPlayers.Info talker = players.get(id);
+            if (talker == null) {
+                return;
+            }
+            double hearing = ServerRange.rangeOf(settings, talker, packet.isWhispering(), voiceRange(), whisperRange());
+            VoicechatServerApi voicechat = event.getVoicechat();
+            for (ServerSpeakers.Delivery d : ServerSpeakers.deliveries(settings, AudioDistancePlugin.PLAYER_PREFS, players, talker, hearing)) {
+                Loudspeaker sp = d.speaker();
+                LocationalSoundPacket out = null;
+                for (ServerPlayers.Info other : d.listeners()) {
+                    VoicechatConnection c = voicechat.getConnectionOf(other.id());
+                    if (c == null || !c.isConnected() || c.isDisabled()) {
+                        continue;
+                    }
+                    if (out == null) {
+                        out = packet.locationalSoundPacketBuilder()
+                                .channelId(id)
+                                .position(voicechat.createPosition(sp.x(), sp.y(), sp.z()))
+                                .distance((float) sp.radius())
+                                .opusEncodedData(packet.getOpusEncodedData())
+                                .build();
+                    }
+                    resending.set(Boolean.TRUE);
+                    try {
+                        voicechat.sendLocationalSoundPacketTo(c, out);
+                    } finally {
+                        resending.set(Boolean.FALSE);
+                    }
                 }
             }
         } catch (Throwable t) {

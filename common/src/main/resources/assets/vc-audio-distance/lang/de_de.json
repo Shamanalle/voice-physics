@@ -763,5 +763,21 @@
   "message.vc-audio-distance.cmd.log.admin": "Das Änderungsprotokoll ist für Server-Admins.",
   "message.vc-audio-distance.cmd.type.hover": "Klicken zum Eintippen",
   "modmenu.descriptionTranslation.vc-audio-distance": "Stimmen verhalten sich wie Schall: Sie werden mit der Entfernung leiser, hinter Wänden gedämpft, kommen um Ecken und hallen in Höhlen. Ein HUD zeigt, wer spricht und wer dich hört. Server bekommen Klangzonen, Spielregeln und Wände auch für Spieler ohne Addon.",
-  "modmenu.summaryTranslation.vc-audio-distance": "Stimmen werden mit der Entfernung leiser, von Wänden gedämpft und hallen in Höhlen – für Simple Voice Chat."
+  "modmenu.summaryTranslation.vc-audio-distance": "Stimmen werden mit der Entfernung leiser, von Wänden gedämpft und hallen in Höhlen – für Simple Voice Chat.",
+  "command.vc-audio-distance.help.speaker": "/vcd speaker [list|add <Name> [Radius] [Aufnahme]|remove <Name>|tp <Name>] - Lautsprecher: Wer dort spricht, ist von dort zu hören",
+  "command.vc-audio-distance.speaker.title": "Lautsprecher (wer in der Nähe spricht, ist von dort zu hören)",
+  "command.vc-audio-distance.speaker.state": "Lautsprecher: %s",
+  "command.vc-audio-distance.speaker.none": "Keine Lautsprecher gesetzt. Stell dich an die Stelle und nutze /vcd speaker add <Name>.",
+  "command.vc-audio-distance.speaker.row": "%s: %s, Aufnahme %s, Radius %s",
+  "command.vc-audio-distance.speaker.need_player": "Nur ein Spieler kann einen Lautsprecher setzen (er steht dort, wo der Spieler steht).",
+  "command.vc-audio-distance.speaker.unknown": "Es gibt keinen Lautsprecher namens %s.",
+  "command.vc-audio-distance.speaker.no_tp": "Von hier aus nicht teleportierbar.",
+  "command.vc-audio-distance.speaker.added": "Lautsprecher %s gesetzt bei %s (Aufnahme %s, Radius %s). Gespeichert.",
+  "command.vc-audio-distance.speaker.moved": "Lautsprecher %s verschoben nach %s (Aufnahme %s, Radius %s). Gespeichert.",
+  "command.vc-audio-distance.speaker.removed": "Lautsprecher %s entfernt. Gespeichert.",
+  "command.vc-audio-distance.speaker.off_note": "Der Schalter für Lautsprecher ist aus, dieser bleibt also stumm: /vcd extras speakers on.",
+  "command.vc-audio-distance.btn.speaker_tp": "Hin",
+  "command.vc-audio-distance.btn.speaker_remove": "Entfernen",
+  "command.vc-audio-distance.btn.speaker_on": "Lautsprecher an",
+  "command.vc-audio-distance.btn.speaker_off": "Lautsprecher aus"
 }

@@ -763,5 +763,21 @@
   "message.vc-audio-distance.cmd.log.admin": "The change log is for server admins.",
   "message.vc-audio-distance.cmd.type.hover": "Click to type it",
   "modmenu.descriptionTranslation.vc-audio-distance": "Voices behave like sound: they fade with distance, get muffled by walls, come round corners and echo in caves. A HUD shows who is talking and who hears you. Servers get sound zones, game rules and walls even for players without the addon.",
-  "modmenu.summaryTranslation.vc-audio-distance": "Voices that fade with distance, get muffled by walls and echo in caves, for Simple Voice Chat."
+  "modmenu.summaryTranslation.vc-audio-distance": "Voices that fade with distance, get muffled by walls and echo in caves, for Simple Voice Chat.",
+  "command.vc-audio-distance.help.speaker": "/vcd speaker [list|add <name> [radius] [pickup]|remove <name>|tp <name>] - loudspeakers: whoever talks at one is heard from it",
+  "command.vc-audio-distance.speaker.title": "Loudspeakers (whoever talks near one is heard from it)",
+  "command.vc-audio-distance.speaker.state": "Loudspeakers: %s",
+  "command.vc-audio-distance.speaker.none": "No loudspeakers placed. Stand where it should be and use /vcd speaker add <name>.",
+  "command.vc-audio-distance.speaker.row": "%s: %s, pickup %s, radius %s",
+  "command.vc-audio-distance.speaker.need_player": "Only a player can place a speaker (it goes where they stand).",
+  "command.vc-audio-distance.speaker.unknown": "No loudspeaker named %s.",
+  "command.vc-audio-distance.speaker.no_tp": "Could not teleport there from here.",
+  "command.vc-audio-distance.speaker.added": "Loudspeaker %s placed at %s (pickup %s, radius %s). Saved.",
+  "command.vc-audio-distance.speaker.moved": "Loudspeaker %s moved to %s (pickup %s, radius %s). Saved.",
+  "command.vc-audio-distance.speaker.removed": "Loudspeaker %s removed. Saved.",
+  "command.vc-audio-distance.speaker.off_note": "The loudspeakers switch is off, so this one is silent: /vcd extras speakers on.",
+  "command.vc-audio-distance.btn.speaker_tp": "Go",
+  "command.vc-audio-distance.btn.speaker_remove": "Remove",
+  "command.vc-audio-distance.btn.speaker_on": "Speakers on",
+  "command.vc-audio-distance.btn.speaker_off": "Speakers off"
 }

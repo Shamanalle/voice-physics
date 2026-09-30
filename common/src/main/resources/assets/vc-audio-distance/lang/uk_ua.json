@@ -763,5 +763,21 @@
   "message.vc-audio-distance.cmd.log.admin": "Журнал змін доступний адмінам сервера.",
   "message.vc-audio-distance.cmd.type.hover": "Натисніть, щоб вписати",
   "modmenu.descriptionTranslation.vc-audio-distance": "Голоси поводяться як звук: затихають з відстанню, глухнуть за стінами, долинають з-за рогу й відлунюють у печерах. HUD показує, хто говорить і хто чує вас. Серверу — звукові зони, правила гри й стіни навіть для гравців без аддона.",
-  "modmenu.summaryTranslation.vc-audio-distance": "Голоси затихають з відстанню, глушаться стінами й відлунюють — для Simple Voice Chat."
+  "modmenu.summaryTranslation.vc-audio-distance": "Голоси затихають з відстанню, глушаться стінами й відлунюють — для Simple Voice Chat.",
+  "command.vc-audio-distance.help.speaker": "/vcd speaker [list|add <ім'я> [радіус] [захоплення]|remove <ім'я>|tp <ім'я>] - гучномовці: хто говорить поруч, того чути з нього",
+  "command.vc-audio-distance.speaker.title": "Гучномовці (хто говорить поруч, того чути з нього)",
+  "command.vc-audio-distance.speaker.state": "Гучномовці: %s",
+  "command.vc-audio-distance.speaker.none": "Гучномовців немає. Станьте, де він має бути, і введіть /vcd speaker add <ім'я>.",
+  "command.vc-audio-distance.speaker.row": "%s: %s, захоплення %s, радіус %s",
+  "command.vc-audio-distance.speaker.need_player": "Поставити гучномовець може лише гравець (він стане там, де той стоїть).",
+  "command.vc-audio-distance.speaker.unknown": "Гучномовця %s немає.",
+  "command.vc-audio-distance.speaker.no_tp": "Звідси туди не телепортуватися.",
+  "command.vc-audio-distance.speaker.added": "Гучномовець %s поставлено: %s (захоплення %s, радіус %s). Збережено.",
+  "command.vc-audio-distance.speaker.moved": "Гучномовець %s перенесено: %s (захоплення %s, радіус %s). Збережено.",
+  "command.vc-audio-distance.speaker.removed": "Гучномовець %s прибрано. Збережено.",
+  "command.vc-audio-distance.speaker.off_note": "Перемикач гучномовців вимкнено, тому він мовчить: /vcd extras speakers on.",
+  "command.vc-audio-distance.btn.speaker_tp": "До нього",
+  "command.vc-audio-distance.btn.speaker_remove": "Прибрати",
+  "command.vc-audio-distance.btn.speaker_on": "Гучномовці вкл",
+  "command.vc-audio-distance.btn.speaker_off": "Гучномовці викл"
 }

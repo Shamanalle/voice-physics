@@ -61,7 +61,9 @@ public final class AdminCommands {
     public static final String PERM_DEBUG = "vcd.debug";
     /** mute, unmute, mutes. */
     public static final String PERM_MUTE = "vcd.mute";
-    public static final String[] PERMISSIONS = {PERM_STATUS, PERM_SETTINGS, PERM_ZONE, PERM_DEBUG, PERM_MUTE};
+    /** speaker add and remove. */
+    public static final String PERM_SPEAKER = "vcd.speaker";
+    public static final String[] PERMISSIONS = {PERM_STATUS, PERM_SETTINGS, PERM_ZONE, PERM_DEBUG, PERM_MUTE, PERM_SPEAKER};
 
     /** Wall strength suggestions: off, then every 5%. */
     static final String[] WALLS_STEPS = wallsSteps();
@@ -75,10 +77,10 @@ public final class AdminCommands {
         return steps;
     }
 
-    static final String[] SUBCOMMANDS = {"status", "help", "reload", "undo", "log", "profile", "preset", "walls", "serverwalls", "effects", "extras", "radio", "lock",
+    static final String[] SUBCOMMANDS = {"status", "help", "reload", "undo", "log", "profile", "preset", "walls", "serverwalls", "effects", "extras", "radio", "speaker", "lock",
             "monitor", "notices", "zones", "zone", "rule", "group", "require", "block", "mute", "unmute", "mutes", "debug", "report"};
     /** The topics of {@code /vcd help}, in the order they are listed. */
-    static final String[] TOPICS = {"status", "zones", "zone", "profile", "preset", "walls", "serverwalls", "effects", "extras", "radio", "lock", "monitor",
+    static final String[] TOPICS = {"status", "zones", "zone", "profile", "preset", "walls", "serverwalls", "effects", "extras", "radio", "speaker", "lock", "monitor",
             "notices", "rule", "group", "require", "block", "mute", "unmute", "mutes", "debug", "report", "undo", "log", "reload"};
     /** Times offered for {@code /vcd mute <player>}. */
     static final String[] MUTE_TIMES = {"10m", "30m", "1h", "1d", "7d", "perm"};
@@ -233,6 +235,7 @@ public final class AdminCommands {
             case "effects" -> effects(r);
             case "extras" -> extras(r);
             case "radio" -> radio(r);
+            case "speaker" -> speaker(r);
             case "lock" -> {
                 java.util.Set<DistanceConfig.Part> parts = r.args.length > 1
                         ? DistanceConfig.Part.parseSet(String.join(",", Arrays.copyOfRange(r.args, 1, r.args.length))) : null;
@@ -299,6 +302,7 @@ public final class AdminCommands {
             case "status", "help", "?", "zones" -> PERM_STATUS;
             case "debug", "report" -> PERM_DEBUG;
             case "mute", "unmute", "mutes" -> PERM_MUTE;
+            case "speaker" -> action.isEmpty() || action.equalsIgnoreCase("list") ? PERM_STATUS : PERM_SPEAKER;
             case "zone" -> ZoneCommands.readOnly(action) ? PERM_STATUS : PERM_ZONE;
             case "effects", "extras", "radio" -> action.isEmpty() || action.equalsIgnoreCase("info") || action.equalsIgnoreCase("status") ? PERM_STATUS : PERM_SETTINGS;
             case "reload", "log", "profile", "preset", "walls", "serverwalls", "lock", "monitor", "notices", "rule", "group", "require", "block" -> PERM_SETTINGS;
@@ -309,7 +313,7 @@ public final class AdminCommands {
     /** Subcommands that may change the settings (their state before is kept for undo). */
     private static boolean changes(String sub) {
         return switch (sub) {
-            case "profile", "preset", "walls", "serverwalls", "effects", "extras", "radio", "lock", "monitor", "notices", "zone", "rule", "group", "require", "block", "mute", "unmute" -> true;
+            case "profile", "preset", "walls", "serverwalls", "effects", "extras", "radio", "speaker", "lock", "monitor", "notices", "zone", "rule", "group", "require", "block", "mute", "unmute" -> true;
             default -> false;
         };
     }
@@ -534,6 +538,96 @@ public final class AdminCommands {
                 }
             }
             default -> r.badValue("radio", part, "item", "radio");
+        }
+    }
+
+    /**
+     * {@code /vcd speaker add <name> [radius] [pickup]} places a loudspeaker where the sender stands,
+     * {@code remove <name>} takes it away, {@code list} shows them. Whoever talks within the pickup distance of
+     * it is heard from it by everyone within the radius. Needs {@code /vcd extras speakers on}.
+     */
+    private static void speaker(Run r) {
+        Messages m = r.m;
+        ServerSettings settings = r.settings;
+        String action = r.arg(1).toLowerCase(Locale.ROOT);
+        switch (action) {
+            case "", "list", "status", "info" -> {
+                r.line(Style.TITLE, m.get("speaker.title"));
+                r.reply.add(CommandReply.line().addAll(m.spans("speaker.state", Style.PLAIN,
+                        r.change(onOff(m, settings.isServerSpeakers()), "extras speakers"))));
+                if (settings.speakers().isEmpty()) {
+                    r.line(Style.MUTED, m.get("speaker.none"));
+                }
+                settings.speakers().values().stream().sorted(java.util.Comparator.comparing(Loudspeaker::key)).forEach(sp -> {
+                    LineBuilder line = CommandReply.line().text("  ")
+                            .add(new Span(sp.name(), Style.VALUE, Click.SUGGEST, "/vcd speaker add " + sp.name() + " ",
+                                    m.get("hover.change", "/vcd speaker add " + sp.name())))
+                            .text(" " + m.get("speaker.row", sp.world(), fmt(sp.x()), fmt(sp.y()), fmt(sp.z()),
+                                    fmt(sp.pickup()), fmt(sp.radius())), Style.MUTED);
+                    r.button(line, "btn.speaker_tp", Click.RUN, "/vcd speaker tp " + sp.name(), PERM_SPEAKER);
+                    r.button(line, "btn.speaker_remove", Click.RUN, "/vcd speaker remove " + sp.name(), PERM_SPEAKER);
+                    r.reply.add(line);
+                });
+                r.line(Style.MUTED, m.get("extras.untested"));
+                LineBuilder buttons = CommandReply.line();
+                boolean on = settings.isServerSpeakers();
+                r.button(buttons, on ? "btn.speaker_off" : "btn.speaker_on", Click.RUN, "/vcd extras speakers " + (on ? "off" : "on"), PERM_SETTINGS);
+                r.button(buttons, "btn.help", Click.RUN, "/vcd help speaker", PERM_STATUS);
+                if (undoable(settings) > 0) {
+                    r.button(buttons, "btn.undo", Click.RUN, "/vcd undo", null);
+                }
+                if (!buttons.isEmpty()) {
+                    r.reply.add(buttons);
+                }
+            }
+            case "add" -> {
+                String name = r.arg(2);
+                if (!Loudspeaker.validName(name)) {
+                    r.badValue("speaker add " + name, name, "<name: letters, digits, _ and ->", "speaker");
+                    return;
+                }
+                ServerPlayers.Info me = r.ctx.sender() == null ? null : r.ctx.players().get(r.ctx.sender());
+                if (me == null) {
+                    r.error("speaker.need_player");
+                    return;
+                }
+                Double radius = r.args.length > 3 ? parseNumber(r.args[3]) : Loudspeaker.DEFAULT_RADIUS;
+                Double pickup = r.args.length > 4 ? parseNumber(r.args[4]) : Loudspeaker.DEFAULT_PICKUP;
+                if (radius == null || radius < 1 || radius > Loudspeaker.MAX_RADIUS) {
+                    r.badValue("speaker add " + name, r.arg(3), "1-" + fmt(Loudspeaker.MAX_RADIUS), "speaker");
+                    return;
+                }
+                if (pickup == null || pickup < 0.5 || pickup > Loudspeaker.MAX_PICKUP) {
+                    r.badValue("speaker add " + name + " " + fmt(radius), r.arg(4), "0.5-" + fmt(Loudspeaker.MAX_PICKUP), "speaker");
+                    return;
+                }
+                Loudspeaker sp = new Loudspeaker(name, me.world(), me.x(), me.y(), me.z(), pickup, radius);
+                boolean replaced = settings.speaker(name) != null;
+                settings.putSpeaker(sp);
+                r.saved(replaced ? "speaker.moved" : "speaker.added", sp.name(), sp.world() + " " + fmt(sp.x()) + " " + fmt(sp.y()) + " " + fmt(sp.z()),
+                        fmt(sp.pickup()), fmt(sp.radius()));
+                if (!settings.isServerSpeakers()) {
+                    r.line(Style.WARN, m.get("speaker.off_note"));
+                }
+            }
+            case "remove", "delete" -> {
+                Loudspeaker sp = settings.speaker(r.arg(2));
+                if (sp == null) {
+                    r.error("speaker.unknown", r.arg(2));
+                    return;
+                }
+                settings.removeSpeaker(sp.name());
+                r.saved("speaker.removed", sp.name());
+            }
+            case "tp" -> {
+                Loudspeaker sp = settings.speaker(r.arg(2));
+                if (sp == null) {
+                    r.error("speaker.unknown", r.arg(2));
+                } else if (!r.ctx.teleport(sp.world(), sp.x(), sp.y(), sp.z())) {
+                    r.error("speaker.no_tp");
+                }
+            }
+            default -> r.badValue("speaker", action, "add|remove|list|tp", "speaker");
         }
     }
 

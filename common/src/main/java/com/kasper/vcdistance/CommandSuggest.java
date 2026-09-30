@@ -51,6 +51,7 @@ final class CommandSuggest {
                 case "effects" -> addAll(out, AdminCommands.EFFECT_PARTS, typed);
                 case "extras" -> addAll(out, AdminCommands.EXTRAS, typed);
                 case "radio" -> addAll(out, new String[]{"item"}, typed);
+                case "speaker" -> addAll(out, new String[]{"add", "remove", "list", "tp"}, typed);
                 case "lock" -> lockParts(out, typed);
                 case "rule" -> addAll(out, AdminCommands.RULES, typed);
                 case "group" -> addAll(out, AdminCommands.GROUP_RULES, typed);
@@ -99,6 +100,14 @@ final class CommandSuggest {
             }, typed);
         } else if (sub.equals("radio") && args.length == 3 && action.equals("item")) {
             addAll(out, new String[]{"minecraft:clock", "minecraft:compass", "none"}, typed);
+        } else if (sub.equals("speaker") && args.length == 3 && (action.equals("remove") || action.equals("tp") || action.equals("add"))) {
+            if (settings != null) {
+                addAll(out, settings.speakers().values().stream().map(Loudspeaker::name).toArray(String[]::new), typed);
+            }
+        } else if (sub.equals("speaker") && args.length == 4 && action.equals("add")) {
+            addAll(out, new String[]{"16", "32", "48", "64", "128"}, typed);
+        } else if (sub.equals("speaker") && args.length == 5 && action.equals("add")) {
+            addAll(out, new String[]{"2", "3", "4", "8"}, typed);
         } else if (sub.equals("extras") && args.length == 3) {
             addAll(out, AdminCommands.ON_OFF, typed);
         } else if (sub.equals("group") && args.length == 3) {

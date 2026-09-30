@@ -763,5 +763,21 @@
   "message.vc-audio-distance.cmd.log.admin": "El registro de cambios es para administradores del servidor.",
   "message.vc-audio-distance.cmd.type.hover": "Haz clic para escribirlo",
   "modmenu.descriptionTranslation.vc-audio-distance": "Las voces se comportan como el sonido: bajan con la distancia, se amortiguan tras las paredes, doblan esquinas y hacen eco en cuevas. Un HUD muestra quién habla y quién te oye. Los servidores tienen zonas de sonido, reglas de juego y paredes incluso para jugadores sin el addon.",
-  "modmenu.summaryTranslation.vc-audio-distance": "Voces que bajan con la distancia, se amortiguan tras las paredes y hacen eco en cuevas, para Simple Voice Chat."
+  "modmenu.summaryTranslation.vc-audio-distance": "Voces que bajan con la distancia, se amortiguan tras las paredes y hacen eco en cuevas, para Simple Voice Chat.",
+  "command.vc-audio-distance.help.speaker": "/vcd speaker [list|add <nombre> [radio] [captación]|remove <nombre>|tp <nombre>] - altavoces: quien habla junto a uno se oye desde él",
+  "command.vc-audio-distance.speaker.title": "Altavoces (quien habla cerca de uno se oye desde él)",
+  "command.vc-audio-distance.speaker.state": "Altavoces: %s",
+  "command.vc-audio-distance.speaker.none": "No hay altavoces. Colócate donde debe ir y usa /vcd speaker add <nombre>.",
+  "command.vc-audio-distance.speaker.row": "%s: %s, captación %s, radio %s",
+  "command.vc-audio-distance.speaker.need_player": "Solo un jugador puede colocar un altavoz (queda donde está de pie).",
+  "command.vc-audio-distance.speaker.unknown": "No hay ningún altavoz llamado %s.",
+  "command.vc-audio-distance.speaker.no_tp": "No se puede teletransportar allí desde aquí.",
+  "command.vc-audio-distance.speaker.added": "Altavoz %s colocado en %s (captación %s, radio %s). Guardado.",
+  "command.vc-audio-distance.speaker.moved": "Altavoz %s movido a %s (captación %s, radio %s). Guardado.",
+  "command.vc-audio-distance.speaker.removed": "Altavoz %s quitado. Guardado.",
+  "command.vc-audio-distance.speaker.off_note": "El interruptor de altavoces está apagado, así que este no suena: /vcd extras speakers on.",
+  "command.vc-audio-distance.btn.speaker_tp": "Ir",
+  "command.vc-audio-distance.btn.speaker_remove": "Quitar",
+  "command.vc-audio-distance.btn.speaker_on": "Altavoces sí",
+  "command.vc-audio-distance.btn.speaker_off": "Altavoces no"
 }

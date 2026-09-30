@@ -763,5 +763,21 @@
   "message.vc-audio-distance.cmd.log.admin": "O registro de mudanças é para administradores do servidor.",
   "message.vc-audio-distance.cmd.type.hover": "Clique para digitar",
   "modmenu.descriptionTranslation.vc-audio-distance": "As vozes se comportam como som: diminuem com a distância, são abafadas por paredes, contornam cantos e ecoam em cavernas. Um HUD mostra quem está falando e quem te ouve. Servidores ganham zonas de som, regras de jogo e paredes até para jogadores sem o addon.",
-  "modmenu.summaryTranslation.vc-audio-distance": "Vozes que diminuem com a distância, são abafadas por paredes e ecoam em cavernas, para o Simple Voice Chat."
+  "modmenu.summaryTranslation.vc-audio-distance": "Vozes que diminuem com a distância, são abafadas por paredes e ecoam em cavernas, para o Simple Voice Chat.",
+  "command.vc-audio-distance.help.speaker": "/vcd speaker [list|add <nome> [raio] [captação]|remove <nome>|tp <nome>] - alto-falantes: quem fala perto de um é ouvido por ele",
+  "command.vc-audio-distance.speaker.title": "Alto-falantes (quem fala perto de um é ouvido por ele)",
+  "command.vc-audio-distance.speaker.state": "Alto-falantes: %s",
+  "command.vc-audio-distance.speaker.none": "Nenhum alto-falante colocado. Fique onde ele deve ficar e use /vcd speaker add <nome>.",
+  "command.vc-audio-distance.speaker.row": "%s: %s, captação %s, raio %s",
+  "command.vc-audio-distance.speaker.need_player": "Só um jogador pode colocar um alto-falante (ele fica onde o jogador está).",
+  "command.vc-audio-distance.speaker.unknown": "Não há alto-falante chamado %s.",
+  "command.vc-audio-distance.speaker.no_tp": "Não foi possível teleportar para lá daqui.",
+  "command.vc-audio-distance.speaker.added": "Alto-falante %s colocado em %s (captação %s, raio %s). Salvo.",
+  "command.vc-audio-distance.speaker.moved": "Alto-falante %s movido para %s (captação %s, raio %s). Salvo.",
+  "command.vc-audio-distance.speaker.removed": "Alto-falante %s removido. Salvo.",
+  "command.vc-audio-distance.speaker.off_note": "A chave dos alto-falantes está desligada, então este fica mudo: /vcd extras speakers on.",
+  "command.vc-audio-distance.btn.speaker_tp": "Ir",
+  "command.vc-audio-distance.btn.speaker_remove": "Remover",
+  "command.vc-audio-distance.btn.speaker_on": "Alto-falantes on",
+  "command.vc-audio-distance.btn.speaker_off": "Alto-falantes off"
 }

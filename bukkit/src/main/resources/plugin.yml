@@ -58,6 +58,7 @@ permissions:
       vcd.zone: true
       vcd.debug: true
       vcd.mute: true
+      vcd.speaker: true
       vcd.shout: true
   vcd.status:
     description: /vcd status, help, zones and zone info
@@ -73,4 +74,7 @@ permissions:
     default: op
   vcd.mute:
     description: /vcd mute, unmute and mutes - mute a player in voice chat for a while
+    default: op
+  vcd.speaker:
+    description: /vcd speaker add and remove - place and take away loudspeakers
     default: op

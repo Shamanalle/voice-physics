@@ -763,5 +763,21 @@
   "message.vc-audio-distance.cmd.log.admin": "Журнал изменений доступен админам сервера.",
   "message.vc-audio-distance.cmd.type.hover": "Нажмите, чтобы вписать",
   "modmenu.descriptionTranslation.vc-audio-distance": "Голоса ведут себя как звук: затихают с расстоянием, глохнут за стенами, доносятся из-за угла и отдаются эхом в пещерах. HUD показывает, кто говорит и кто слышит вас. Серверу — звуковые зоны, правила игры и стены даже для игроков без аддона.",
-  "modmenu.summaryTranslation.vc-audio-distance": "Голоса затихают с расстоянием, глушатся стенами и отдаются эхом — для Simple Voice Chat."
+  "modmenu.summaryTranslation.vc-audio-distance": "Голоса затихают с расстоянием, глушатся стенами и отдаются эхом — для Simple Voice Chat.",
+  "command.vc-audio-distance.help.speaker": "/vcd speaker [list|add <имя> [радиус] [захват]|remove <имя>|tp <имя>] - громкоговорители: кто говорит рядом, того слышно из него",
+  "command.vc-audio-distance.speaker.title": "Громкоговорители (кто говорит рядом с ним, того слышно из него)",
+  "command.vc-audio-distance.speaker.state": "Громкоговорители: %s",
+  "command.vc-audio-distance.speaker.none": "Громкоговорителей нет. Встаньте, где он должен быть, и введите /vcd speaker add <имя>.",
+  "command.vc-audio-distance.speaker.row": "%s: %s, захват %s, радиус %s",
+  "command.vc-audio-distance.speaker.need_player": "Поставить громкоговоритель может только игрок (он встанет туда, где тот стоит).",
+  "command.vc-audio-distance.speaker.unknown": "Громкоговорителя %s нет.",
+  "command.vc-audio-distance.speaker.no_tp": "Отсюда туда не телепортироваться.",
+  "command.vc-audio-distance.speaker.added": "Громкоговоритель %s поставлен: %s (захват %s, радиус %s). Сохранено.",
+  "command.vc-audio-distance.speaker.moved": "Громкоговоритель %s перенесён: %s (захват %s, радиус %s). Сохранено.",
+  "command.vc-audio-distance.speaker.removed": "Громкоговоритель %s убран. Сохранено.",
+  "command.vc-audio-distance.speaker.off_note": "Переключатель громкоговорителей выключен, поэтому он молчит: /vcd extras speakers on.",
+  "command.vc-audio-distance.btn.speaker_tp": "К нему",
+  "command.vc-audio-distance.btn.speaker_remove": "Убрать",
+  "command.vc-audio-distance.btn.speaker_on": "Громкогов. вкл",
+  "command.vc-audio-distance.btn.speaker_off": "Громкогов. выкл"
 }

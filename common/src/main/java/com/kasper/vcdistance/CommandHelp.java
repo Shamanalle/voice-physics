@@ -28,6 +28,8 @@ final class CommandHelp {
             Map.entry("extras", new String[]{"extras", "extras radio on", "extras speakers on", "extras eavesdrop on",
                     "extras sculk on", "extras doorway on", "extras radio off"}),
             Map.entry("radio", new String[]{"radio", "radio item minecraft:clock", "radio item none", "extras radio on"}),
+            Map.entry("speaker", new String[]{"speaker", "speaker add stage", "speaker add hall 64 4", "speaker tp stage",
+                    "speaker remove stage", "extras speakers on"}),
             Map.entry("lock", new String[]{"lock all", "lock curve,walls", "lock none"}),
             Map.entry("block", new String[]{"block list", "block add create:andesite_casing metal", "block add #c:glass_blocks glass", "block remove create:andesite_casing"}),
             Map.entry("monitor", new String[]{"monitor on", "monitor off"}),
