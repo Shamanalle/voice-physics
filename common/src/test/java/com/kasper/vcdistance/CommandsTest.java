@@ -483,6 +483,132 @@ public class CommandsTest {
     }
 
     @Test
+    @DisplayName("/vcd effects: a clickable view, the two switches and the strengths, each with Undo, saved and in the log")
+    void effects() throws IOException {
+        ServerSettings s = settings("");
+        AdminCommands.Context ctx = ctx();
+        CommandReply view = AdminCommands.execute("effects", s, ctx);
+        assertEquals("Effects for players without the addon", view.plain().get(0));
+        assertFalse(s.hasServerRealism(), "off until the admin asks");
+        button(view, "/vcd effects on");
+        button(view, "/vcd effects air on");
+        button(view, "/vcd help effects");
+        assertEquals(Click.SUGGEST, button(view, "/vcd effects water ").click());
+        assertEquals(Click.SUGGEST, button(view, "/vcd effects echo ").click());
+        assertTrue(String.join("\n", view.plain()).contains("Players with the addon") || String.join("\n", view.plain()).contains("Players who"),
+                "the note about players with the addon: " + view.plain());
+        assertEquals(AdminCommands.execute("effects status", s, ctx).plain(), view.plain());
+
+        CommandReply on = AdminCommands.execute("effects on", s, ctx);
+        assertTrue(s.isServerEffects());
+        assertFalse(s.isServerAir());
+        button(on, "/vcd undo");
+        AdminCommands.run("effects air on", s, ctx);
+        assertTrue(s.isServerAir());
+        CommandReply shown = AdminCommands.execute("effects", s, ctx);
+        assertTrue(shown.plain().contains("Air off") || String.join("\n", shown.plain()).contains("[Air off]"), shown.plain().toString());
+        button(shown, "/vcd effects off");
+        button(shown, "/vcd effects air off");
+
+        AdminCommands.run("effects water 150", s, ctx);
+        assertEquals(1.5, s.profile().getUnderwaterStrength(), 1e-9);
+        assertTrue(s.profile().isUnderwaterEnabled());
+        AdminCommands.run("effects weather 40%", s, ctx);
+        assertEquals(0.4, s.profile().getWeatherStrength(), 1e-9);
+        AdminCommands.run("effects echo 70", s, ctx);
+        assertEquals(0.7, s.profile().getReverbStrength(), 1e-9);
+        AdminCommands.run("effects weather off", s, ctx);
+        assertFalse(s.profile().isWeatherEnabled());
+        assertEquals(0.4, s.profile().getWeatherStrength(), 1e-9, "the strength is kept for when it is turned on again");
+        AdminCommands.run("effects weather 50", s, ctx);
+        assertTrue(s.profile().isWeatherEnabled());
+        assertEquals(0.5, s.profile().getWeatherStrength(), 1e-9);
+
+        ServerSettings again = new ServerSettings(s.getPath());
+        again.load();
+        assertTrue(again.isServerEffects() && again.isServerAir(), "saved");
+        assertEquals(1.5, again.profile().getUnderwaterStrength(), 1e-9);
+
+        // Too much is refused and nothing changes; echo goes to 100% only
+        CommandReply tooMuch = AdminCommands.execute("effects water 200", s, ctx);
+        assertTrue(tooMuch.plain().get(0).contains("200") && tooMuch.plain().get(0).contains("0-150|off"), tooMuch.plain().toString());
+        assertEquals(1.5, s.profile().getUnderwaterStrength(), 1e-9);
+        assertTrue(AdminCommands.run("effects echo 150", s, ctx).get(0).contains("0-100|off"));
+        assertEquals(0.7, s.profile().getReverbStrength(), 1e-9);
+        assertTrue(AdminCommands.run("effects air maybe", s, ctx).get(0).contains("on|off"));
+        assertTrue(AdminCommands.run("effects loud", s, ctx).get(0).contains("loud"));
+        assertTrue(AdminCommands.run("effects water", s, ctx).get(0).contains("0-150|off"));
+        button(AdminCommands.execute("effects water 200", s, ctx), "/vcd effects water ");
+
+        // Every change can be taken back, newest first
+        AdminCommands.run("undo", s, ctx);
+        assertEquals(0.4, s.profile().getWeatherStrength(), 1e-9);
+        assertFalse(s.profile().isWeatherEnabled());
+        AdminCommands.run("undo", s, ctx);
+        assertTrue(s.profile().isWeatherEnabled());
+        AdminCommands.run("undo", s, ctx);
+        AdminCommands.run("undo", s, ctx);
+        AdminCommands.run("undo", s, ctx);
+        assertEquals(1.0, s.profile().getUnderwaterStrength(), 1e-9);
+        AdminCommands.run("undo", s, ctx);
+        assertFalse(s.isServerAir());
+        AdminCommands.run("undo", s, ctx);
+        assertFalse(s.isServerEffects());
+        assertEquals(0, AdminCommands.undoable(s));
+        assertTrue(ChangeLog.read(s).stream().anyMatch(e -> e.command().equals("/vcd effects water 150") && !e.undo()));
+
+        // The status line shows it
+        AdminCommands.run("effects on", s, ctx);
+        String status = String.join("\n", AdminCommands.execute("", s, ctx).plain());
+        assertTrue(status.contains("Effects for players without the addon: water, weather and echo on"), status);
+    }
+
+    @Test
+    @DisplayName("/vcd effects: looking needs vcd.status, changing needs vcd.settings; tab completion has the values")
+    void effectsPermissionsAndSuggestions() throws IOException {
+        ServerSettings s = settings("");
+        players.update(admin);
+        AdminCommands.Context viewer = ctx(admin.id(), null, AdminCommands.PERM_STATUS);
+        assertEquals("Effects for players without the addon", AdminCommands.run("effects", s, viewer).get(0));
+        assertTrue(AdminCommands.run("effects on", s, viewer).get(0).contains(AdminCommands.PERM_SETTINGS));
+        assertTrue(AdminCommands.run("effects water 50", s, viewer).get(0).contains(AdminCommands.PERM_SETTINGS));
+        assertFalse(s.isServerEffects());
+        assertEquals(1.0, s.profile().getUnderwaterStrength(), 1e-9);
+        List<String> subs = AdminCommands.suggestions("eff", s, viewer).stream().map(AdminCommands.Suggestion::text).toList();
+        assertEquals(List.of("effects"), subs);
+        assertTrue(AdminCommands.suggestions("eff", s, viewer).get(0).tooltip().contains("water, weather, echo and air"));
+
+        assertEquals(List.of("on", "off", "air", "water", "weather", "echo", "status"), AdminCommands.suggest("effects "));
+        assertEquals(List.of("on", "off"), AdminCommands.suggest("effects air "));
+        assertEquals(List.of("off", "25", "50", "75", "100", "125", "150"), AdminCommands.suggest("effects water "));
+        assertEquals(List.of("off", "25", "50", "75", "100"), AdminCommands.suggest("effects echo "));
+        assertEquals(List.of("weather"), AdminCommands.suggest("effects we"));
+        assertEquals(List.of("help effects"), List.of("help " + AdminCommands.suggest("help eff").get(0)));
+
+        CommandReply help = AdminCommands.execute("help effects", s, ctx());
+        assertEquals("/vcd effects", help.plain().get(0));
+        assertEquals(Click.SUGGEST, button(help, "/vcd effects air on").click());
+    }
+
+    @Test
+    @DisplayName("Strengths: off, 70%, 70, 0.7; up to the maximum of the setting")
+    void strengthParsing() {
+        assertEquals(0.0, AdminCommands.parseStrength("off", 1.5));
+        assertEquals(0.7, AdminCommands.parseStrength("70%", 1.0), 1e-9);
+        assertEquals(0.7, AdminCommands.parseStrength("70", 1.0), 1e-9);
+        assertEquals(0.7, AdminCommands.parseStrength("0.7", 1.0), 1e-9);
+        assertEquals(1.0, AdminCommands.parseStrength("1", 1.5), 1e-9, "a bare 1 is 100%");
+        assertEquals(1.5, AdminCommands.parseStrength("150", 1.5), 1e-9);
+        assertEquals(1.5, AdminCommands.parseStrength("1.5", 1.5), 1e-9);
+        assertEquals(0.01, AdminCommands.parseStrength("1%", 1.5), 1e-9);
+        assertNull(AdminCommands.parseStrength("151", 1.5));
+        assertNull(AdminCommands.parseStrength("101", 1.0));
+        assertNull(AdminCommands.parseStrength("-5", 1.5));
+        assertNull(AdminCommands.parseStrength("loud", 1.5));
+        assertNull(AdminCommands.parseStrength("", 1.5));
+    }
+
+    @Test
     @DisplayName("Suggestions offer zones, worlds, players and values, with tooltips")
     void suggestions() throws IOException {
         ServerSettings s = settings("""

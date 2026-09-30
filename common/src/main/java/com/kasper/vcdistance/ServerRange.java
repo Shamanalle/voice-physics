@@ -13,7 +13,7 @@ public final class ServerRange {
 
     /** Why a listener does not hear a voice (for {@code /vcd debug}), or {@link #HEARS}. */
     public enum Reason {
-        HEARS, RANGE, ISOLATED, DEAD, SPECTATOR, WORLD
+        HEARS, RANGE, ISOLATED, DEAD, SPECTATOR, WORLD, IGNORED, MUTED
     }
 
     /**
@@ -54,7 +54,15 @@ public final class ServerRange {
         if (speaker.sneaking()) {
             range *= s.getSneakMultiplier();
         }
-        if (isMegaphone(s, speaker)) {
+        // The speaker's own choice with /voice: quiet always; a shout never stretches a range the admin
+        // set for a zone, and does not add to a megaphone
+        boolean megaphone = isMegaphone(s, speaker);
+        double own = AudioDistancePlugin.PLAYER_PREFS.rangeFactor(speaker.id());
+        if (own > 1.0 && ((zone != null && zone.rules().changesRange()) || megaphone)) {
+            own = 1.0;
+        }
+        range *= own;
+        if (megaphone) {
             range *= s.getMegaphoneMultiplier();
         }
         return range;
@@ -69,6 +77,9 @@ public final class ServerRange {
      * the admin chose for groups apply; a group has no range, so the distance is 0.
      */
     public static Decision decideGroup(ServerSettings s, ServerPlayers.Info speaker, ServerPlayers.Info listener) {
+        if (s.muteOf(speaker.id(), System.currentTimeMillis()) != null) {
+            return new Decision(Reason.MUTED, 0.0);
+        }
         if (s.isGroupDeadSilent() && !speaker.alive()) {
             return new Decision(Reason.DEAD, 0.0);
         }
@@ -90,6 +101,9 @@ public final class ServerRange {
     public static Decision decide(ServerSettings s, ServerPlayers.Info speaker, ServerPlayers.Info listener,
                                   boolean whispering, double voice, double whisper) {
         double range = rangeOf(s, speaker, whispering, voice, whisper);
+        if (s.muteOf(speaker.id(), System.currentTimeMillis()) != null) {
+            return new Decision(Reason.MUTED, range);
+        }
         if (s.isDeadSilent() && !speaker.alive()) {
             return new Decision(Reason.DEAD, range);
         }
@@ -104,6 +118,9 @@ public final class ServerRange {
         boolean sameZone = from == null ? to == null : to != null && from.key().equals(to.key());
         if (!sameZone && ((from != null && from.rules().isolated()) || (to != null && to.rules().isolated()))) {
             return new Decision(Reason.ISOLATED, range);
+        }
+        if (AudioDistancePlugin.PLAYER_PREFS.volume(listener.id(), speaker.id()) <= 0) {
+            return new Decision(Reason.IGNORED, range);
         }
         if (speaker.distanceTo(listener) > range) {
             return new Decision(Reason.RANGE, range);

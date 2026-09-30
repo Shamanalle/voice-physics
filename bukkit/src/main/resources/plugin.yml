@@ -4,7 +4,7 @@ main: com.kasper.vcdistance.bukkit.AudioDistanceBukkit
 api-version: '1.20'
 folia-supported: true
 depend: [voicechat]
-softdepend: [WorldGuard]
+softdepend: [WorldGuard, PlaceholderAPI]
 author: Shamanalle
 website: https://github.com/Shamanalle/voice-physics
 description: >-
@@ -14,7 +14,37 @@ commands:
   vcd:
     description: Voice Physics - status, settings and zones
     usage: /vcd help
+  voice:
+    description: Your own voice settings - quiet or shout, walls, other players' volume
+    usage: /voice help
 permissions:
+  vcd.player:
+    description: /voice - set how you talk, whether walls muffle what you hear, and how loud each player is to you
+    default: true
+    children:
+      vcd.player.mode: true
+      vcd.player.walls: true
+      vcd.player.hud: true
+      vcd.player.volume: true
+      vcd.player.menu: true
+  vcd.player.mode:
+    description: /voice mode - quiet or normal (shout needs vcd.shout)
+    default: true
+  vcd.player.walls:
+    description: /voice walls - whether walls muffle what you hear
+    default: true
+  vcd.player.hud:
+    description: /voice hud - the line above the hotbar with who is talking
+    default: true
+  vcd.player.volume:
+    description: /voice volume, ignore and unignore - how loud each player is to you
+    default: true
+  vcd.player.menu:
+    description: /voice menu - the settings as a menu
+    default: true
+  vcd.shout:
+    description: /voice mode shout - a longer voice range
+    default: op
   vcd.admin:
     description: Every part of /vcd
     default: op
@@ -23,6 +53,8 @@ permissions:
       vcd.settings: true
       vcd.zone: true
       vcd.debug: true
+      vcd.mute: true
+      vcd.shout: true
   vcd.status:
     description: /vcd status, help, zones and zone info
     default: op
@@ -34,4 +66,7 @@ permissions:
     default: op
   vcd.debug:
     description: /vcd debug - whom a player hears
+    default: op
+  vcd.mute:
+    description: /vcd mute, unmute and mutes - mute a player in voice chat for a while
     default: op

@@ -44,6 +44,11 @@ public final class BlockRules {
         this.rules = rules;
     }
 
+    /** A list without the {@link #MAX_RULES} limit, for the rules that come from data files (mods can list many blocks). */
+    static BlockRules of(List<Rule> rules) {
+        return rules.isEmpty() ? EMPTY : new BlockRules(List.copyOf(rules));
+    }
+
     public boolean isEmpty() {
         return rules.isEmpty();
     }

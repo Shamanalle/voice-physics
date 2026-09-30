@@ -1,5 +1,7 @@
 plugins {
     id 'java'
+    // Puts bStats into the plugin jar under our own package name
+    id 'com.gradleup.shadow' version '9.0.0'
 }
 
 // This build script reads common's source set, and ':bukkit' is configured before ':common'
@@ -23,13 +25,27 @@ repositories {
         name = "henkelmax.public"
         url = 'https://maven.maxhenkel.de/repository/public'
     }
+    maven {
+        name = "placeholderapi"
+        url = 'https://repo.extendedclip.com/releases/'
+        content { includeGroup 'me.clip' }
+    }
+}
+
+configurations {
+    // What goes into the plugin jar besides the common code
+    bundled
 }
 
 dependencies {
     implementation project(':common')
+    bundled "org.bstats:bstats-bukkit:3.1.0"
+    compileOnly "org.bstats:bstats-bukkit:3.1.0"
 
     compileOnly "io.papermc.paper:paper-api:${project.bukkit_api_version}"
     compileOnly "de.maxhenkel.voicechat:voicechat-api:${project.voicechat_api_version}"
+    // Optional: %vcd_...% placeholders when PlaceholderAPI is installed
+    compileOnly("me.clip:placeholderapi:2.11.6") { transitive = false }
 }
 
 tasks.withType(JavaCompile).configureEach {
@@ -49,17 +65,28 @@ processResources {
     }
 }
 
-jar {
-    // The common code goes into the plugin jar, with the language files: /vcd replies and messages to
-    // players come from them. The icon is for the client only.
+// The plugin jar: the common code with the language files (/vcd replies and messages to players come
+// from them; the icon is for the client only) and bStats, moved to our own package so it cannot clash
+// with another plugin's copy.
+tasks.named('jar') {
+    enabled = false
+    dependsOn 'shadowJar'
+}
+tasks.named('shadowJar') {
+    archiveClassifier = ''
+    configurations = [project.configurations.bundled]
+    from(sourceSets.main.output)
     from(project(':common').sourceSets.main.output) {
         exclude 'assets/vc-audio-distance/icon.png'
     }
+    relocate 'org.bstats', 'com.kasper.vcdistance.libs.bstats'
+    // bStats brings its own licence file; keep the jar free of build metadata
+    exclude 'META-INF/maven/**', 'META-INF/versions/**/module-info.class', 'module-info.class'
 }
 
 // Guards the jar against losing the texts again: without them every server message is a bare key
 tasks.register('checkPluginJar') {
-    def jarFile = tasks.named('jar').flatMap { it.archiveFile }
+    def jarFile = tasks.named('shadowJar').flatMap { it.archiveFile }
     inputs.file jarFile
     doLast {
         def names = new java.util.zip.ZipFile(jarFile.get().asFile).withCloseable { zip -> zip.entries().collect { it.name } }
@@ -72,6 +99,7 @@ tasks.register('checkPluginJar') {
     }
 }
 tasks.named('build') { dependsOn 'checkPluginJar' }
+tasks.named('checkPluginJar') { dependsOn 'shadowJar' }
 
 // The Paper API the plugin is checked against by .github/workflows/compat-bukkit.yml: the plugin jar,
 // built against bukkit_api_version, must link against every later Paper release the same way.

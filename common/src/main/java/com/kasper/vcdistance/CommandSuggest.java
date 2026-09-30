@@ -48,12 +48,21 @@ final class CommandSuggest {
                 case "preset" -> addAll(out, AdminCommands.PRESETS, typed);
                 case "walls" -> addAll(out, AdminCommands.WALLS_STEPS, typed);
                 case "serverwalls", "monitor", "notices" -> addAll(out, AdminCommands.ON_OFF, typed);
+                case "effects" -> addAll(out, AdminCommands.EFFECT_PARTS, typed);
                 case "lock" -> lockParts(out, typed);
                 case "rule" -> addAll(out, AdminCommands.RULES, typed);
                 case "group" -> addAll(out, AdminCommands.GROUP_RULES, typed);
                 case "require" -> addAll(out, AdminCommands.REQUIRE, typed);
                 case "block" -> addAll(out, new String[]{"list", "add", "remove", "clear"}, typed);
-                case "debug" -> players(out, ctx, typed);
+                case "debug", "mute" -> players(out, ctx, typed);
+                case "unmute" -> {
+                    if (settings != null) {
+                        long now = System.currentTimeMillis();
+                        for (VoiceMute mute : settings.mutes(now)) {
+                            add(out, mute.name(), typed, AdminCommands.muteTime(m, mute, now));
+                        }
+                    }
+                }
                 case "zones" -> pages(out, settings, typed);
                 case "zone" -> {
                     for (String a : ZoneCommands.ACTIONS) {
@@ -75,6 +84,15 @@ final class CommandSuggest {
                 case "dead", "spectators" -> AdminCommands.ON_OFF;
                 case "megaphone" -> new String[]{"off", "minecraft:goat_horn", "minecraft:bell"};
                 case "megaphone_range" -> new String[]{"2", "2.5", "3", "4"};
+                default -> new String[0];
+            }, typed);
+        } else if (sub.equals("mute") && args.length == 3) {
+            addAll(out, AdminCommands.MUTE_TIMES, typed);
+        } else if (sub.equals("effects") && args.length == 3) {
+            addAll(out, switch (action) {
+                case "air" -> AdminCommands.ON_OFF;
+                case "water", "weather" -> AdminCommands.EFFECT_STEPS;
+                case "echo" -> AdminCommands.ECHO_STEPS;
                 default -> new String[0];
             }, typed);
         } else if (sub.equals("group") && args.length == 3) {

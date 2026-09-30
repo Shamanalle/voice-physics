@@ -55,6 +55,7 @@ public final class ChangeLog {
             Files.writeString(file, line, StandardCharsets.UTF_8, StandardOpenOption.CREATE, StandardOpenOption.APPEND);
         } catch (IOException e) {
             DistanceConfig.LOGGER.warn("Could not write {}: {}", file, e.getMessage());
+            Problems.record("Writing " + file.getFileName() + ": " + e.getMessage());
         }
     }
 

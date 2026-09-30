@@ -2,6 +2,7 @@ package com.kasper.vcdistance.client;
 
 import com.kasper.vcdistance.EnvironmentEffects;
 import com.kasper.vcdistance.NearbyPlayers;
+import com.kasper.vcdistance.PlaceTuning;
 import com.kasper.vcdistance.RayBundle;
 import com.kasper.vcdistance.RoomEstimate;
 import com.kasper.vcdistance.SpeakerRegistry;
@@ -56,6 +57,11 @@ public interface WorldAccess {
 
     /** Rain or thunder falling on this point (under the open sky, in a biome where it rains). */
     EnvironmentEffects.Weather weatherAt(Vec3 point);
+
+    /** Dimension, biome, height and open sky at this point, for {@link PlaceTuning}. */
+    default PlaceTuning.Place placeAt(Vec3 point) {
+        return PlaceTuning.Place.UNKNOWN;
+    }
 
     /** Acoustic thickness (in stone blocks) along one straight ray. */
     double traceRay(Vec3 from, Vec3 to);

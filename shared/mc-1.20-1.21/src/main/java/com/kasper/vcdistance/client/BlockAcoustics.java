@@ -1,6 +1,7 @@
 package com.kasper.vcdistance.client;
 
 import com.kasper.vcdistance.AcousticMaterial;
+import com.kasper.vcdistance.BlockDataRules;
 import com.kasper.vcdistance.BlockRules;
 import net.minecraft.core.registries.BuiltInRegistries;
 import com.kasper.vcdistance.DistanceConfig;
@@ -36,23 +37,30 @@ public final class BlockAcoustics {
 
     /** The block rules the cached materials were worked out with; a change of rules drops the cache. */
     private static volatile BlockRules appliedRules = BlockRules.EMPTY;
+    /** The same for the rules from data files ({@code voice_physics/materials.json}). */
+    private static volatile BlockRules appliedData = BlockRules.EMPTY;
 
     /** Takes the rules of the settings the trace runs with (the player's, or the server's when the server does the walls). */
     private static void refreshRules(BlockRules rules) {
-        if (rules != appliedRules) {
+        BlockRules data = BlockDataRules.current();
+        if (rules != appliedRules || data != appliedData) {
             appliedRules = rules;
+            appliedData = data;
             MATERIALS.clear();
         }
     }
 
-    /** The material the player's or the server's block rules give this block, or {@code null}. */
+    /** The material the player's or the server's block rules give this block, then the data files', or {@code null}. */
     private static AcousticMaterial custom(BlockState state) {
         BlockRules rules = appliedRules;
-        if (rules.isEmpty()) {
+        BlockRules data = appliedData;
+        if (rules.isEmpty() && data.isEmpty()) {
             return null;
         }
         String id = String.valueOf(BuiltInRegistries.BLOCK.getKey(state.getBlock()));
-        return rules.find(id, tag -> state.getTags().anyMatch(t -> tag.equals(String.valueOf(t.location()))));
+        java.util.function.Predicate<String> hasTag = tag -> state.getTags().anyMatch(t -> tag.equals(String.valueOf(t.location())));
+        AcousticMaterial own = rules.find(id, hasTag);
+        return own != null ? own : data.find(id, hasTag);
     }
 
     private BlockAcoustics() {
@@ -116,6 +124,7 @@ public final class BlockAcoustics {
 
     /** The material of a surface an echo bounces off. */
     public static AcousticMaterial echoMaterial(BlockState state) {
+        refreshRules(appliedRules);
         return MATERIALS.computeIfAbsent(state, BlockAcoustics::classify);
     }
 

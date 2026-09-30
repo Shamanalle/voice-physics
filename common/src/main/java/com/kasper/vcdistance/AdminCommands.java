@@ -59,7 +59,9 @@ public final class AdminCommands {
     public static final String PERM_ZONE = "vcd.zone";
     /** debug. */
     public static final String PERM_DEBUG = "vcd.debug";
-    public static final String[] PERMISSIONS = {PERM_STATUS, PERM_SETTINGS, PERM_ZONE, PERM_DEBUG};
+    /** mute, unmute, mutes. */
+    public static final String PERM_MUTE = "vcd.mute";
+    public static final String[] PERMISSIONS = {PERM_STATUS, PERM_SETTINGS, PERM_ZONE, PERM_DEBUG, PERM_MUTE};
 
     /** Wall strength suggestions: off, then every 5%. */
     static final String[] WALLS_STEPS = wallsSteps();
@@ -73,11 +75,13 @@ public final class AdminCommands {
         return steps;
     }
 
-    static final String[] SUBCOMMANDS = {"status", "help", "reload", "undo", "log", "profile", "preset", "walls", "serverwalls", "lock",
-            "monitor", "notices", "zones", "zone", "rule", "group", "require", "block", "debug"};
+    static final String[] SUBCOMMANDS = {"status", "help", "reload", "undo", "log", "profile", "preset", "walls", "serverwalls", "effects", "lock",
+            "monitor", "notices", "zones", "zone", "rule", "group", "require", "block", "mute", "unmute", "mutes", "debug", "report"};
     /** The topics of {@code /vcd help}, in the order they are listed. */
-    static final String[] TOPICS = {"status", "zones", "zone", "profile", "preset", "walls", "serverwalls", "lock", "monitor",
-            "notices", "rule", "group", "require", "block", "debug", "undo", "log", "reload"};
+    static final String[] TOPICS = {"status", "zones", "zone", "profile", "preset", "walls", "serverwalls", "effects", "lock", "monitor",
+            "notices", "rule", "group", "require", "block", "mute", "unmute", "mutes", "debug", "report", "undo", "log", "reload"};
+    /** Times offered for {@code /vcd mute <player>}. */
+    static final String[] MUTE_TIMES = {"10m", "30m", "1h", "1d", "7d", "perm"};
     static final String[] MODES = {"off", "suggest", "enforce"};
     static final String[] PRESETS = {"vanilla", "realistic", "clear", "stealth", "custom", "export", "import"};
     static final String[] LOCK_PARTS = {"all", "none", "curve", "walls", "materials", "effects"};
@@ -85,6 +89,10 @@ public final class AdminCommands {
     static final String[] GROUP_RULES = {"dead", "spectators", "zones", "open_range"};
     static final String[] REQUIRE = {"off", "suggest", "warn", "kick"};
     static final String[] ON_OFF = {"on", "off"};
+    /** {@code /vcd effects <part> ...}: the server's own air and the strengths the profile has. */
+    static final String[] EFFECT_PARTS = {"on", "off", "air", "water", "weather", "echo", "status"};
+    static final String[] EFFECT_STEPS = {"off", "25", "50", "75", "100", "125", "150"};
+    static final String[] ECHO_STEPS = {"off", "25", "50", "75", "100"};
     /** Changes {@code /vcd undo} can take back, per settings file. */
     static final int UNDO_STEPS = 10;
     /** Players {@code /vcd debug} lists. */
@@ -143,6 +151,11 @@ public final class AdminCommands {
         /** Whether claim zones work here (Open Parties and Claims is installed). */
         default boolean claims() {
             return false;
+        }
+
+        /** The server software and game version, for {@code /vcd report}; "" when unknown. */
+        default String serverVersion() {
+            return "";
         }
     }
 
@@ -215,6 +228,7 @@ public final class AdminCommands {
                 wallsNote(r);
             }
             case "serverwalls" -> onOff(r, "serverwalls", on -> settings.setServerWalls(on), "serverwalls_on", "serverwalls_off");
+            case "effects" -> effects(r);
             case "lock" -> {
                 java.util.Set<DistanceConfig.Part> parts = r.args.length > 1
                         ? DistanceConfig.Part.parseSet(String.join(",", Arrays.copyOfRange(r.args, 1, r.args.length))) : null;
@@ -233,7 +247,11 @@ public final class AdminCommands {
             case "group" -> group(r);
             case "require" -> require(r);
             case "block" -> block(r);
+            case "mute" -> mute(r);
+            case "unmute" -> unmute(r);
+            case "mutes" -> mutes(r);
             case "debug" -> debug(r);
+            case "report" -> report(r);
             default -> CommandHelp.unknown(r, sub);
         }
         return r.reply;
@@ -275,8 +293,10 @@ public final class AdminCommands {
     public static String permissionFor(String sub, String action) {
         return switch (sub.toLowerCase(Locale.ROOT)) {
             case "status", "help", "?", "zones" -> PERM_STATUS;
-            case "debug" -> PERM_DEBUG;
+            case "debug", "report" -> PERM_DEBUG;
+            case "mute", "unmute", "mutes" -> PERM_MUTE;
             case "zone" -> ZoneCommands.readOnly(action) ? PERM_STATUS : PERM_ZONE;
+            case "effects" -> action.isEmpty() || action.equalsIgnoreCase("info") || action.equalsIgnoreCase("status") ? PERM_STATUS : PERM_SETTINGS;
             case "reload", "log", "profile", "preset", "walls", "serverwalls", "lock", "monitor", "notices", "rule", "group", "require", "block" -> PERM_SETTINGS;
             default -> null;
         };
@@ -285,7 +305,7 @@ public final class AdminCommands {
     /** Subcommands that may change the settings (their state before is kept for undo). */
     private static boolean changes(String sub) {
         return switch (sub) {
-            case "profile", "preset", "walls", "serverwalls", "lock", "monitor", "notices", "zone", "rule", "group", "require", "block" -> true;
+            case "profile", "preset", "walls", "serverwalls", "effects", "lock", "monitor", "notices", "zone", "rule", "group", "require", "block", "mute", "unmute" -> true;
             default -> false;
         };
     }
@@ -321,6 +341,12 @@ public final class AdminCommands {
                 r.change(p.isOcclusionEnabled() ? pct(p.getOcclusionStrength()) : m.get("off"), "walls"),
                 r.change(onOff(m, settings.isServerWalls()), "serverwalls"),
                 AudioDistancePlugin.SERVER_WALLS.activeStreams(), settings.getMaxStreams())));
+        r.reply.add(CommandReply.line().addAll(m.spans("status.effects", Style.PLAIN,
+                r.change(onOff(m, settings.isServerEffects()), "effects"),
+                r.change(onOff(m, settings.isServerAir()), "effects air"),
+                r.change(effectText(m, p.isUnderwaterEnabled(), p.getUnderwaterStrength()), "effects water"),
+                r.change(effectText(m, p.isWeatherEnabled(), p.getWeatherStrength()), "effects weather"),
+                r.change(effectText(m, p.isReverbEnabled(), p.getReverbStrength()), "effects echo"))));
         r.reply.add(CommandReply.line().addAll(m.spans("status.players", Style.PLAIN, ctx.addonPlayers(), ctx.onlinePlayers())));
         r.reply.add(CommandReply.line().addAll(m.spans("status.profile", Style.PLAIN,
                 r.change(settings.getProfileMode().getId(), "profile"),
@@ -346,6 +372,11 @@ public final class AdminCommands {
         r.reply.add(CommandReply.line().addAll(m.spans("status.zones", Style.PLAIN,
                 new Span(String.valueOf(settings.zones().size()), Style.VALUE, Click.RUN, "/vcd zones", m.get("hover.run", "/vcd zones")),
                 r.change(onOff(m, settings.isZoneNotices()), "notices"))));
+        int muted = settings.mutes(System.currentTimeMillis()).size();
+        if (muted > 0 && ctx.allows(PERM_MUTE)) {
+            r.reply.add(CommandReply.line().addAll(m.spans("status.mutes", Style.PLAIN,
+                    new Span(String.valueOf(muted), Style.VALUE, Click.RUN, "/vcd mutes", m.get("hover.run", "/vcd mutes")))));
+        }
         r.reply.add(CommandReply.line().addAll(m.spans("status.perf", Style.MUTED,
                 String.format(Locale.ROOT, "%.2f", AudioDistancePlugin.SERVER_WALLS.perf().averageMs()))));
         LineBuilder buttons = CommandReply.line();
@@ -359,6 +390,247 @@ public final class AdminCommands {
         if (!buttons.isEmpty()) {
             r.reply.add(buttons);
         }
+    }
+
+    /**
+     * {@code /vcd effects}: water, weather and echo for players without the addon ({@code on|off}), the
+     * distance air ({@code air on|off}) and the strengths the profile has ({@code water|weather|echo}).
+     */
+    private static void effects(Run r) {
+        ServerSettings settings = r.settings;
+        DistanceConfig p = settings.profile();
+        String part = r.arg(1).toLowerCase(Locale.ROOT);
+        switch (part) {
+            case "", "status", "info" -> effectsView(r);
+            case "on", "off" -> {
+                boolean on = part.equals("on");
+                settings.setServerEffects(on);
+                if (!on) {
+                    AudioDistancePlugin.SERVER_ROOMS.clear();
+                }
+                r.saved(on ? "effects.on" : "effects.off");
+                if (on) {
+                    r.line(Style.MUTED, r.m.get("effects.cost"));
+                }
+            }
+            case "air" -> {
+                Boolean on = r.args.length > 2 ? parseOnOff(r.args[2]) : null;
+                if (on == null) {
+                    r.badValue("effects air", r.arg(2), "on|off", "effects");
+                    return;
+                }
+                settings.setServerAir(on);
+                r.saved(on ? "effects.air_on" : "effects.air_off");
+            }
+            case "water", "weather", "echo" -> {
+                boolean echo = part.equals("echo");
+                double max = echo ? DistanceConfig.REVERB_MAX : DistanceConfig.EFFECT_STRENGTH_MAX;
+                Double value = r.args.length > 2 ? parseStrength(r.args[2], max) : null;
+                if (value == null) {
+                    r.badValue("effects " + part, r.arg(2), (echo ? "0-100" : "0-150") + "|off", "effects");
+                    return;
+                }
+                boolean on = value > 0.0;
+                switch (part) {
+                    case "water" -> {
+                        p.setUnderwaterEnabled(on);
+                        p.setUnderwaterStrength(on ? value : p.getUnderwaterStrength());
+                    }
+                    case "weather" -> {
+                        p.setWeatherEnabled(on);
+                        p.setWeatherStrength(on ? value : p.getWeatherStrength());
+                    }
+                    default -> {
+                        p.setReverbEnabled(on);
+                        p.setReverbStrength(on ? value : p.getReverbStrength());
+                    }
+                }
+                if (on) {
+                    r.saved("effects." + part + "_set", pct(value));
+                } else {
+                    r.saved("effects." + part + "_off");
+                }
+                effectsNote(r);
+            }
+            default -> r.badValue("effects", part, String.join("|", EFFECT_PARTS), "effects");
+        }
+    }
+
+    /** The state of the effects, each part a click away. */
+    private static void effectsView(Run r) {
+        Messages m = r.m;
+        ServerSettings settings = r.settings;
+        DistanceConfig p = settings.profile();
+        r.line(Style.TITLE, m.get("effects.title"));
+        r.reply.add(CommandReply.line().addAll(m.spans("effects.state", Style.PLAIN,
+                r.change(onOff(m, settings.isServerEffects()), "effects"))));
+        r.reply.add(CommandReply.line().addAll(m.spans("effects.strengths", Style.PLAIN,
+                r.change(effectText(m, p.isUnderwaterEnabled(), p.getUnderwaterStrength()), "effects water"),
+                r.change(effectText(m, p.isWeatherEnabled(), p.getWeatherStrength()), "effects weather"),
+                r.change(effectText(m, p.isReverbEnabled(), p.getReverbStrength()), "effects echo"))));
+        r.reply.add(CommandReply.line().addAll(m.spans("effects.air", Style.PLAIN,
+                r.change(onOff(m, settings.isServerAir()), "effects air"))));
+        if (settings.hasServerRealism()) {
+            r.reply.add(CommandReply.line().addAll(m.spans("effects.perf", Style.MUTED,
+                    String.format(Locale.ROOT, "%.2f", AudioDistancePlugin.SERVER_WALLS.perf().averageMs()))));
+        }
+        effectsNote(r);
+        LineBuilder buttons = CommandReply.line();
+        boolean effects = settings.isServerEffects();
+        r.button(buttons, effects ? "btn.effects_off" : "btn.effects_on", Click.RUN, "/vcd effects " + (effects ? "off" : "on"), PERM_SETTINGS);
+        boolean air = settings.isServerAir();
+        r.button(buttons, air ? "btn.air_off" : "btn.air_on", Click.RUN, "/vcd effects air " + (air ? "off" : "on"), PERM_SETTINGS);
+        r.button(buttons, "btn.help", Click.RUN, "/vcd help effects", PERM_STATUS);
+        if (undoable(settings) > 0) {
+            r.button(buttons, "btn.undo", Click.RUN, "/vcd undo", null);
+        }
+        if (!buttons.isEmpty()) {
+            r.reply.add(buttons);
+        }
+    }
+
+    /**
+     * The strengths are the profile's, so players with the addon use them only when the profile is enforced
+     * with the effects locked; the server's own effects reach players without it in any case.
+     */
+    private static void effectsNote(Run r) {
+        ServerSettings s = r.settings;
+        if (s.getProfileMode() != ServerSettings.ProfileMode.ENFORCE || !s.getLockedParts().contains(DistanceConfig.Part.EFFECTS)) {
+            r.line(Style.MUTED, r.m.get("effects.note"));
+        }
+    }
+
+    /** "off", or the strength as a percentage. */
+    private static String effectText(Messages m, boolean enabled, double strength) {
+        return enabled ? pct(strength) : m.get("off");
+    }
+
+    /**
+     * {@code /vcd mute <player> [time] [reason]}: nobody hears the player until the time runs out (no time:
+     * until {@code /vcd unmute}). Muting again changes the time and the reason.
+     */
+    private static void mute(Run r) {
+        Messages m = r.m;
+        String who = r.arg(1);
+        if (who.isEmpty()) {
+            r.badValue("mute", "", "<player> [10m|1h|1d|perm] [reason]", "mute");
+            return;
+        }
+        ServerPlayers.Info online = r.ctx.players().byName(who);
+        UUID id = online != null ? online.id() : parseUuid(who);
+        VoiceMute known = online != null ? null : r.settings.findMute(who, System.currentTimeMillis());
+        if (id == null && known != null) {
+            id = known.player();
+        }
+        if (id == null) {
+            r.error("mute.unknown", who);
+            return;
+        }
+        String name = online != null ? online.name() : known != null ? known.name() : who;
+        int reasonFrom = 2;
+        long duration = 0L;
+        String time = r.arg(2);
+        if (!time.isEmpty()) {
+            Long parsed = VoiceMute.parseDuration(time);
+            if (parsed != null) {
+                duration = parsed;
+                reasonFrom = 3;
+            } else if (Character.isDigit(time.charAt(0))) {
+                r.badValue("mute " + who, time, "30s|10m|2h|1d|1w|perm", "mute");
+                return;
+            }
+        }
+        long now = System.currentTimeMillis();
+        VoiceMute mute = new VoiceMute(id, name, duration > 0 ? now + duration : 0L, r.who(), r.rest(reasonFrom));
+        r.settings.mute(mute);
+        LineBuilder line = CommandReply.line().addAll(m.spans("mute.done", Style.OK, name, muteTime(m, mute, now)));
+        r.savedLine(line);
+        if (!mute.reason().isEmpty()) {
+            r.reply.add(CommandReply.line().addAll(m.spans("mute.reason", Style.MUTED, mute.reason())));
+        }
+        LineBuilder buttons = CommandReply.line();
+        r.button(buttons, "btn.unmute", Click.RUN, "/vcd unmute " + name, PERM_MUTE);
+        r.button(buttons, "btn.mutes", Click.RUN, "/vcd mutes", PERM_MUTE);
+        r.reply.add(buttons);
+    }
+
+    /** {@code /vcd unmute <player>}: by name (online or as muted) or UUID. */
+    private static void unmute(Run r) {
+        String who = r.arg(1);
+        if (who.isEmpty()) {
+            r.badValue("unmute", "", "<player>", "unmute");
+            return;
+        }
+        long now = System.currentTimeMillis();
+        VoiceMute mute = r.settings.findMute(who, now);
+        if (mute == null) {
+            ServerPlayers.Info online = r.ctx.players().byName(who);
+            mute = online == null ? null : r.settings.muteOf(online.id(), now);
+        }
+        if (mute == null) {
+            LineBuilder line = CommandReply.line().addAll(r.m.spans("unmute.none", Style.WARN, who));
+            line.button(r.m.get("btn.mutes"), Click.RUN, "/vcd mutes", r.m.get("hover.run", "/vcd mutes"));
+            r.reply.add(line);
+            return;
+        }
+        r.settings.unmute(mute.player());
+        r.saved("unmute.done", mute.name());
+    }
+
+    /** {@code /vcd mutes}: who is muted, for how long more, by whom and why, each with an Unmute button. */
+    private static void mutes(Run r) {
+        Messages m = r.m;
+        long now = System.currentTimeMillis();
+        List<VoiceMute> all = r.settings.mutes(now);
+        if (all.isEmpty()) {
+            LineBuilder line = CommandReply.line().text(m.get("mutes.none"), Style.MUTED);
+            line.button(m.get("btn.mute"), Click.SUGGEST, "/vcd mute ", m.get("hover.suggest", "/vcd mute"));
+            r.reply.add(line);
+            return;
+        }
+        r.line(Style.TITLE, m.get("mutes.title", all.size()));
+        for (VoiceMute mute : all) {
+            String by = ChangeLog.CONSOLE.equals(mute.by()) ? m.get("log.console") : mute.by().isEmpty() ? "-" : mute.by();
+            LineBuilder line = CommandReply.line().text("• ", Style.MUTED)
+                    .addAll(m.spans("mutes.line", Style.PLAIN,
+                            new Span(mute.name(), Style.VALUE, Click.SUGGEST, "/vcd mute " + mute.name() + " ", m.get("hover.change", "/vcd mute " + mute.name())),
+                            mute.isPermanent() ? m.get("mutes.no_end") : m.get("mutes.left", VoiceMute.formatDuration(mute.leftAt(now))),
+                            by));
+            if (!mute.reason().isEmpty()) {
+                line.text(" - " + mute.reason(), Style.MUTED);
+            }
+            line.button(m.get("btn.unmute"), Click.RUN, "/vcd unmute " + mute.name(), m.get("hover.run", "/vcd unmute " + mute.name()));
+            r.reply.add(line);
+        }
+    }
+
+    /** "for 10m" or "until unmuted". */
+    static String muteTime(Messages m, VoiceMute mute, long now) {
+        return mute.isPermanent() ? m.get("mute.forever") : m.get("mute.for", VoiceMute.formatDuration(mute.leftAt(now)));
+    }
+
+    private static UUID parseUuid(String s) {
+        try {
+            return s.length() == 36 ? UUID.fromString(s) : null;
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+    }
+
+    /**
+     * {@code /vcd report}: versions, settings, load and the last problems as one text to copy into a bug
+     * report. The text itself is in English, so whoever reads the report can read it.
+     */
+    private static void report(Run r) {
+        List<String> lines = ServerReport.lines(r.settings, r.ctx);
+        String text = String.join("\n", lines);
+        LineBuilder title = CommandReply.line().text(r.m.get("report.title"), Style.TITLE);
+        title.button(r.m.get("btn.copy"), Click.COPY, text, r.m.get("hover.copy"));
+        r.reply.add(title);
+        for (String line : lines) {
+            r.line(Style.MUTED, line);
+        }
+        r.line(Style.PLAIN, r.m.get("report.hint"));
     }
 
     private static void undo(Run r) {
@@ -672,6 +944,18 @@ public final class AdminCommands {
             r.reply.add(CommandReply.line().addAll(m.spans("debug.group", Style.PLAIN, group[0],
                     group[1].isEmpty() ? "-" : m.get("group.type." + group[1]))));
         }
+        VoiceMute mute = settings.muteOf(target.id(), System.currentTimeMillis());
+        if (mute != null) {
+            LineBuilder line = CommandReply.line().addAll(m.spans("debug.muted", Style.WARN,
+                    muteTime(m, mute, System.currentTimeMillis()), mute.by().isEmpty() ? "-" : mute.by()));
+            if (!mute.reason().isEmpty()) {
+                line.text(" - " + mute.reason(), Style.MUTED);
+            }
+            if (r.ctx.allows(PERM_MUTE)) {
+                line.button(m.get("btn.unmute"), Click.RUN, "/vcd unmute " + mute.name(), m.get("hover.run", "/vcd unmute " + mute.name()));
+            }
+            r.reply.add(line);
+        }
         r.reply.add(CommandReply.line().addAll(m.spans("debug.range", Style.PLAIN,
                 fmt(ServerRange.rangeOf(settings, target, false, voice, whisper)),
                 fmt(ServerRange.rangeOf(settings, target, true, voice, whisper)))));
@@ -866,6 +1150,31 @@ public final class AdminCommands {
             }
             // With a % sign it is a percentage; without, 0.6 and 60 both mean 60%
             return Math.min(1.0, percent || d > 1.0 ? d / 100.0 : d);
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    /**
+     * A strength from 0 to {@code max} (1 = 100%) as a fraction: "off", "70%", "70", "0.7" and "150%" for a
+     * maximum of 1.5. Without a % sign a number up to 2 is the fraction itself and a larger one a percentage.
+     */
+    static Double parseStrength(String s, double max) {
+        String v = s.trim().toLowerCase(Locale.ROOT);
+        if (v.equals("off")) {
+            return 0.0;
+        }
+        boolean percent = v.endsWith("%");
+        if (percent) {
+            v = v.substring(0, v.length() - 1);
+        }
+        try {
+            double d = Double.parseDouble(v.replace(',', '.'));
+            if (!Double.isFinite(d) || d < 0.0) {
+                return null;
+            }
+            double fraction = percent || d > 2.0 ? d / 100.0 : d;
+            return fraction > max + 1e-9 ? null : Math.min(max, fraction);
         } catch (NumberFormatException e) {
             return null;
         }
