@@ -36,6 +36,7 @@ import java.util.function.Consumer;
  * /voicephysics reset curve|walls|materials|effects|hud|all     back to the defaults
  * /voicephysics status                                          what the server does to your sound
  * /voicephysics log                                             the server's change log (admins)
+ * /voicephysics report                                          one text to copy into a bug report
  * /voicephysics help
  * </pre>
  * Built with Brigadier alone, since each loader names its own command helpers differently.
@@ -80,6 +81,7 @@ final class ClientCommands {
                         .executes(c -> reset(StringArgumentType.getString(c, "part")))));
         root.then(LiteralArgumentBuilder.<S>literal("log").executes(c -> openLog()));
         root.then(LiteralArgumentBuilder.<S>literal("status").executes(c -> status()));
+        root.then(LiteralArgumentBuilder.<S>literal("report").executes(c -> report()));
         root.then(LiteralArgumentBuilder.<S>literal("help").executes(c -> help()));
         return root;
     }
@@ -257,6 +259,40 @@ final class ClientCommands {
         return 1;
     }
 
+    /** Versions, what the server sent, the settings in effect and recent problems, with a Copy button. */
+    private static int report() {
+        List<String> lines = com.kasper.vcdistance.ClientReport.lines(gameVersion(), AudioDistancePlugin.CONFIG,
+                AudioDistancePlugin.LINK, AudioDistancePlugin.getServerMaxDistance());
+        String text = String.join("\n", lines);
+        say(Component.translatable(KEY + "report.title").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD)
+                .append(" ").append(button(Component.translatable(KEY + "copy"), text, true)));
+        for (String line : lines) {
+            say(Component.literal(line).withStyle(ChatFormatting.GRAY));
+        }
+        say(Component.translatable(KEY + "report.hint").withStyle(ChatFormatting.DARK_GRAY));
+        return 1;
+    }
+
+    /** "1.21.4": the game's own version object, whose accessor is named differently across versions. */
+    private static String gameVersion() {
+        try {
+            Object version = Class.forName("net.minecraft.SharedConstants").getMethod("getCurrentVersion").invoke(null);
+            for (String name : new String[]{"name", "getName", "id", "getId"}) {
+                try {
+                    Object v = version.getClass().getMethod(name).invoke(version);
+                    if (v instanceof String text && !text.isEmpty()) {
+                        return text;
+                    }
+                } catch (ReflectiveOperationException ignored) {
+                    // the next name
+                }
+            }
+        } catch (Throwable ignored) {
+            // unknown
+        }
+        return "";
+    }
+
     private static int help() {
         say(Component.translatable(KEY + "help.title").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD));
         String base = "/" + ClientHints.COMMAND;
@@ -267,7 +303,8 @@ final class ClientCommands {
                 {"code", base + " code"},
                 {"reset", base + " reset "},
                 {"status", base + " status"},
-                {"log", base + " log"}};
+                {"log", base + " log"},
+                {"report", base + " report"}};
         for (String[] l : lines) {
             String[] parts = Component.translatable(KEY + "help." + l[0]).getString().split(" - ", 2);
             MutableComponent line = Component.literal(parts[0]).withStyle(Style.EMPTY.withColor(ChatFormatting.WHITE)
