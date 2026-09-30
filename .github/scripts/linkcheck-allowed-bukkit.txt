@@ -38,3 +38,10 @@ method org/bukkit/Bukkit.getGlobalRegionScheduler()Lio/papermc/paper/threadedreg
 method org/bukkit/Bukkit.isOwnedByCurrentRegion(Lorg/bukkit/Location;)Z
 method org/bukkit/Bukkit.isOwnedByCurrentRegion(Lorg/bukkit/entity/Entity;)Z
 method org/bukkit/entity/Player.getScheduler()Lio/papermc/paper/threadedregions/scheduler/EntityScheduler;
+
+# RoomProbe calls World.rayTraceBlocks(Location, Vector, double, FluidCollisionMode, boolean). The reference
+# declares it abstract and newer Paper makes it a default method; the signature and the call are the same.
+method org/bukkit/World.rayTraceBlocks(Lorg/bukkit/Location;Lorg/bukkit/util/Vector;DLorg/bukkit/FluidCollisionMode;Z)Lorg/bukkit/util/RayTraceResult;
+# VoiceMenu calls Player.openInventory and drops the result. InventoryView is a class in the reference and an
+# interface in newer Paper; the returned value is only popped, never used.
+type org/bukkit/inventory/InventoryView

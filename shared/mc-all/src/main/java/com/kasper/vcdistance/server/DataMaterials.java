@@ -45,8 +45,10 @@ public final class DataMaterials {
         List<String> unreadable = new ArrayList<>();
         try {
             Map<String, List<Resource>> found = new TreeMap<>();
-            resources.listResourceStacks("voice_physics", location -> String.valueOf(location).endsWith(":" + BlockDataRules.PATH))
-                    .forEach((location, stack) -> found.put(String.valueOf(location), stack));
+            // listResources + getResourceStack exist in every supported version (listResourceStacks does not in 26.1-26.2)
+            for (var location : resources.listResources("voice_physics", l -> String.valueOf(l).endsWith(":" + BlockDataRules.PATH)).keySet()) {
+                found.put(String.valueOf(location), resources.getResourceStack(location));
+            }
             for (Map.Entry<String, List<Resource>> e : found.entrySet()) {
                 int pack = 0;
                 for (Resource resource : e.getValue()) {
