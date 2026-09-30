@@ -114,6 +114,11 @@ public final class AudioDistanceBukkit extends JavaPlugin implements Listener {
                 (channel, player, message) -> onAdmin(player, message));
         getServer().getPluginManager().registerEvents(this, this);
         getServer().getPluginManager().registerEvents(new VoiceMenu.Events(), this);
+        try {
+            VcdPlaceholders.registerIfPresent(this);
+        } catch (NoClassDefFoundError e) {
+            // PlaceholderAPI is not installed
+        }
         scheduling.everyTick(this::tick);
         for (Player player : getServer().getOnlinePlayers()) {
             startPlayerTick(player);

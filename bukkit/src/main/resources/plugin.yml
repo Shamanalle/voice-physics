@@ -4,7 +4,7 @@ main: com.kasper.vcdistance.bukkit.AudioDistanceBukkit
 api-version: '1.20'
 folia-supported: true
 depend: [voicechat]
-softdepend: [WorldGuard]
+softdepend: [WorldGuard, PlaceholderAPI]
 author: Shamanalle
 website: https://github.com/Shamanalle/voice-physics
 description: >-

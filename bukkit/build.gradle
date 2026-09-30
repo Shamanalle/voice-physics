@@ -23,6 +23,11 @@ repositories {
         name = "henkelmax.public"
         url = 'https://maven.maxhenkel.de/repository/public'
     }
+    maven {
+        name = "placeholderapi"
+        url = 'https://repo.extendedclip.com/releases/'
+        content { includeGroup 'me.clip' }
+    }
 }
 
 dependencies {
@@ -30,6 +35,8 @@ dependencies {
 
     compileOnly "io.papermc.paper:paper-api:${project.bukkit_api_version}"
     compileOnly "de.maxhenkel.voicechat:voicechat-api:${project.voicechat_api_version}"
+    // Optional: %vcd_...% placeholders when PlaceholderAPI is installed
+    compileOnly("me.clip:placeholderapi:2.11.6") { transitive = false }
 }
 
 tasks.withType(JavaCompile).configureEach {
