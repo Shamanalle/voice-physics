@@ -316,6 +316,30 @@ public class ServerWallsTest {
     }
 
     @Test
+    @DisplayName("With more pairs than one tick can measure, every pair is measured in turn")
+    void manyPairsAllMeasured() throws InterruptedException {
+        settings.setMaxStreams(300);
+        List<UUID> listeners = new ArrayList<>();
+        for (int i = 0; i < 130; i++) {
+            UUID to = UUID.randomUUID();
+            listeners.add(to);
+            fire(packet(channel, 0, pack(tone(0)), false, 48F), to, SoundPacketEvent.SOURCE_PROXIMITY);
+        }
+        // 48 traces per tick: three rounds cover 130 pairs only if each round takes the ones waiting longest
+        for (int round = 0; round < 3; round++) {
+            Thread.sleep(120);
+            walls.tick((player, level, entity, x, y, z) -> 3.0);
+        }
+        int muffled = 0;
+        for (UUID to : listeners) {
+            if (fire(packet(channel, 1, pack(tone(1)), false, 48F), to, SoundPacketEvent.SOURCE_PROXIMITY)) {
+                muffled++;
+            }
+        }
+        assertEquals(130, muffled);
+    }
+
+    @Test
     @DisplayName("Encoder failures fall back to the original packet")
     void failureFallsBack() {
         fireFrame(0);

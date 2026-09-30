@@ -32,6 +32,10 @@ public final class RoomGlide {
     /** A new measurement to glide towards. */
     public synchronized void set(RoomEstimate room, long nowNanos) {
         advance(nowNanos);
+        if (current == target) {
+            // Settled: the glide starts now, not at the last step, which may be long ago
+            lastNanos = nowNanos;
+        }
         target = room == null && !optional ? RoomEstimate.OPEN : room;
         if (current == null && target != null) {
             current = RoomEstimate.OPEN;

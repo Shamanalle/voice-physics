@@ -6,6 +6,36 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 *Все заметные изменения проекта описываются в этом файле. Каждая версия описана сначала на английском, затем на русском.*
 
+## [2.7.1] - 2026-09-30
+
+### English
+
+#### Fixed
+- A voice behind a wall is now heard from the doorway it comes through, and a voice from a cave echoes for you outside it. Neither had ever started: the check that starts them could never pass.
+- The echo fades in over about a second and a half when you walk into a cave; after a long time in one place it used to jump there at once.
+- With a player's volume above 100%, a voice no longer keeps the old, quieter volume when you move closer.
+- Voices from more than 256 blocks away are not traced through walls, so a far source cannot slow the game down.
+- Server walls: with many players talking, every listener's walls are measured in turn. Before, pairs beyond the first hundred or so were never measured and heard no walls.
+- Paper/Folia: the block material cache is safe on several threads.
+- `/vcd zone tp` takes you to the middle of the zone, not to its bottom.
+- `/vcd walls 1%` is 1%, not 100% (likewise `0.5%`).
+- A backslash in a zone message (`C:\underworld`) no longer breaks the settings file.
+- `/vcd walls` now says whom it reaches by itself: players without the addon, and players with it only when the profile is enforced with walls locked.
+
+### Русский
+
+#### Исправлено
+- Голос за стеной теперь слышен из дверного проёма, через который он проходит, а голос из пещеры даёт эхо и снаружи. Раньше ни то ни другое не запускалось: проверка, которая их включает, никогда не срабатывала.
+- Эхо нарастает около полутора секунд, когда вы заходите в пещеру; после долгого времени на одном месте оно раньше появлялось сразу.
+- При громкости игрока выше 100% голос больше не остаётся на прежней, более тихой громкости, когда вы подходите ближе.
+- Голоса дальше 256 блоков не просвечиваются на стены, поэтому далёкий источник не может затормозить игру.
+- Стены на сервере: когда говорит много игроков, стены каждого слушателя измеряются по очереди. Раньше пары после первой сотни примерно не измерялись и стен не слышали.
+- Paper/Folia: кэш материалов блоков безопасен при работе в нескольких потоках.
+- `/vcd zone tp` переносит в середину зоны, а не на её дно.
+- `/vcd walls 1%` — это 1%, а не 100% (так же `0.5%`).
+- Обратная косая черта в сообщении зоны (`C:\underworld`) больше не ломает файл настроек.
+- `/vcd walls` теперь сам говорит, до кого доходит: до игроков без аддона, а до игроков с ним — только когда профиль принудительный и стены закреплены.
+
 ## [2.7.0] - 2026-09-29
 
 ### English

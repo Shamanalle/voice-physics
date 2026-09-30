@@ -59,14 +59,15 @@ public final class SpeakerRegistry {
         private volatile double openingZ;
         private volatile double pathThickness = Double.NaN;
         private volatile double pathLength = Double.NaN;
-        private volatile long lastPathNanos = Long.MIN_VALUE;
+        /** "Long ago", but far enough from MIN_VALUE that {@code now - last} does not overflow. */
+        private volatile long lastPathNanos = Long.MIN_VALUE / 2;
         // The mix of the straight way and the way round (audio thread), and the direction the voice is heard from
         private volatile SoundBlend blend;
         private double[] heard;
         private long heardNanos;
         // The space around the speaker (client tick); null: the listener's own
         private final RoomGlide room = new RoomGlide(true);
-        private volatile long lastRoomNanos = Long.MIN_VALUE;
+        private volatile long lastRoomNanos = Long.MIN_VALUE / 2;
         private volatile String displayName;
         private volatile long lastTraceNanos;
         private volatile int cachedEntityNetworkId = Integer.MIN_VALUE;

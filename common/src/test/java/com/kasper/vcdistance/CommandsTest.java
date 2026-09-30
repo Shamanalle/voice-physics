@@ -450,7 +450,7 @@ public class CommandsTest {
         assertTrue(AdminCommands.run("zone rename world_nether other", s, ctx).get(0).startsWith("Only box zones"));
 
         assertTrue(AdminCommands.run("zone tp arena", s, ctx).get(0).contains("arena"));
-        assertEquals("world 25.5 60.0 31.5", ctx.toString());
+        assertEquals("world 25.5 65.5 31.5", ctx.toString(), "the middle of the box (y 60 - 70), not its floor");
 
         CommandReply ask = AdminCommands.execute("zone delete arena", s, ctx);
         assertNotNull(s.findZone("arena"), "deleting asks first");

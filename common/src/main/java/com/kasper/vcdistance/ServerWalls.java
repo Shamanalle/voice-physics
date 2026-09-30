@@ -538,7 +538,15 @@ public final class ServerWalls {
         }
         long now = System.nanoTime();
         int budget = MAX_TRACES_PER_TICK;
-        for (Pair pair : pairs.values()) {
+        java.util.Collection<Pair> order = pairs.values();
+        if (order.size() > MAX_TRACES_PER_TICK) {
+            // More pairs than one tick can measure: the one measured longest ago goes first, so in
+            // hash order the same first few dozen would be refreshed every time and the rest never
+            java.util.List<Pair> oldestFirst = new java.util.ArrayList<>(order);
+            oldestFirst.sort(java.util.Comparator.comparingLong(p -> p.lastTraceNanos));
+            order = oldestFirst;
+        }
+        for (Pair pair : order) {
             if (budget <= 0) {
                 break;
             }

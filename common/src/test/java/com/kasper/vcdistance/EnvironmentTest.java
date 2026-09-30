@@ -276,6 +276,26 @@ public class EnvironmentTest {
     }
 
     @Test
+    @DisplayName("After a long time in one place the echo still fades in, it does not jump")
+    void echoGlideStartsWhenTheRoomChanges() {
+        RoomEstimate cave = RoomEstimate.of(box(15, 12, 10, AcousticMaterial.STONE, AcousticMaterial.STONE));
+        RoomGlide glide = new RoomGlide(false);
+        glide.jump(RoomEstimate.OPEN, 0);
+        glide.set(cave, 0);
+        long t = 10_000_000_000L;
+        assertSame(cave, glide.get(t), "settled in the cave");
+        // A minute of the same room measured every half second, while nobody talks (no reads)
+        for (int i = 0; i < 120; i++) {
+            t += 500_000_000L;
+            glide.set(cave, t);
+        }
+        // Out to the field: the first frame 20 ms later is still almost the cave
+        glide.set(RoomEstimate.OPEN, t);
+        t += 20_000_000L;
+        assertTrue(glide.get(t).wet() > cave.wet() * 0.9, "no jump: " + glide.get(t).wet());
+    }
+
+    @Test
     @DisplayName("Echo glides with time into a cave and out again, taps fading instead of jumping")
     void echoGlidesWithTime() {
         RoomEstimate cave = RoomEstimate.of(box(15, 12, 10, AcousticMaterial.STONE, AcousticMaterial.STONE));
