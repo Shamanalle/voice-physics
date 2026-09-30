@@ -57,6 +57,15 @@ public final class ServerWalls {
          * @return thickness in stone blocks, or {@code NaN} when it cannot be determined
          */
         double thickness(Object listener, Object level, UUID speakerEntity, double x, double y, double z);
+
+        /**
+         * The way round a wall through an opening ({@code server_doorway}), or {@code null} when there is none or
+         * this platform cannot find it.
+         */
+        default SoundPath.Result doorway(Object listener, Object level, UUID speakerEntity, double x, double y, double z,
+                                         double range) {
+            return null;
+        }
     }
 
     private static final long ACTIVE_NANOS = TimeUnit.MILLISECONDS.toNanos(800);
@@ -66,6 +75,7 @@ public final class ServerWalls {
     /** A pause this long in a voice drops its echo tail. */
     private static final long REVERB_STALE_NANOS = TimeUnit.MILLISECONDS.toNanos(400);
     private static final int MAX_TRACES_PER_TICK = 48;
+    private static final int MAX_DOORWAY_SEARCHES = 6;
     /** Per listener and tick, when each player's walls are measured on their own thread (Folia). */
     private static final int MAX_TRACES_PER_LISTENER = 8;
 
@@ -86,6 +96,8 @@ public final class ServerWalls {
         volatile long lastSeenNanos;
         volatile long lastTraceNanos;
         volatile double thickness = Double.NaN;
+        /** The way round the wall through an opening, when {@code server_doorway} found one. */
+        volatile SoundPath.Result doorway;
         OpusEncoder encoder;
         /** The echo of this pair's space; made when a voice first needs one, dropped with the encoder. */
         Reverb reverb;
@@ -195,13 +207,30 @@ public final class ServerWalls {
                 retarget = true;
             }
         }
+        double[] opening = new double[3];
         byte[] processed = process(event, p.getChannelId(), p.getSequenceNumber(), p.getOpusEncodedData(),
-                p.getEntityUuid(), null);
+                p.getEntityUuid(), null, opening);
         perf.add(System.nanoTime() - start);
         if (processed == null && !retarget) {
             return;
         }
         byte[] audio = processed != null ? processed : p.getOpusEncodedData();
+        if (processed != null && !Double.isNaN(opening[0])) {
+            // Doorway sound: from the opening the voice comes through, not from the speaker behind the wall
+            try {
+                float range = distance;
+                LocationalSoundPacket fromDoorway = p.locationalSoundPacketBuilder()
+                        .position(event.getVoicechat().createPosition(opening[0], opening[1], opening[2]))
+                        .distance(range)
+                        .opusEncodedData(audio)
+                        .build();
+                resend(event, () -> event.getVoicechat().sendLocationalSoundPacketTo(event.getReceiverConnection(), fromDoorway));
+                return;
+            } catch (Throwable t) {
+                // This Simple Voice Chat cannot do it: the voice goes on through the wall, as muffled as before
+                logFailure(t);
+            }
+        }
         EntitySoundPacket rebuilt = rebuild(p, audio, retarget ? distance : Float.NaN);
         if (rebuilt == null) {
             return; // this Simple Voice Chat cannot change the range: the original packet goes out
@@ -496,7 +525,7 @@ public final class ServerWalls {
         }
         long start = System.nanoTime();
         byte[] processed = process(event, p.getChannelId(), p.getSequenceNumber(), p.getOpusEncodedData(),
-                null, p.getPosition());
+                null, p.getPosition(), null);
         perf.add(System.nanoTime() - start);
         if (processed == null) {
             return;
@@ -511,7 +540,10 @@ public final class ServerWalls {
      * @return the re-encoded frame, or {@code null} to let the original packet through
      */
     private byte[] process(SoundPacketEvent<?> event, UUID channel, long sequence, byte[] opus,
-                           UUID speakerEntity, Position position) {
+                           UUID speakerEntity, Position position, double[] opening) {
+        if (opening != null) {
+            opening[0] = Double.NaN;
+        }
         if (resending.get() || !SoundPacketEvent.SOURCE_PROXIMITY.equals(event.getSource())) {
             return null;
         }
@@ -570,6 +602,14 @@ public final class ServerWalls {
 
         synchronized (pair) {
             double thickness = pair.thickness;
+            SoundPath.Result doorway = opening != null && settings.isServerDoorway() ? pair.doorway : null;
+            if (doorway != null && walls && !Double.isNaN(thickness)) {
+                // Through the doorway: only the bends muffle, and the voice seems to come from the opening
+                thickness = doorway.thickness();
+                opening[0] = doorway.openingX();
+                opening[1] = doorway.openingY();
+                opening[2] = doorway.openingZ();
+            }
             // A zone can make walls stronger or weaker for the listeners in it
             // and thinner still for a listener who holds the eavesdrop item
             double strength = settings.wallsStrengthIn(listenerZone) * ServerEavesdrop.factor(settings, players.get(listener));
@@ -736,6 +776,18 @@ public final class ServerWalls {
         }
     }
 
+    private final AtomicInteger doorwaySearches = new AtomicInteger();
+    private volatile long doorwayWindowNanos;
+
+    /** At most {@link #MAX_DOORWAY_SEARCHES} searches for a way round per tick, so a crowd cannot stall the server. */
+    private boolean doorwayAllowed(long now) {
+        if (now - doorwayWindowNanos > TimeUnit.MILLISECONDS.toNanos(50)) {
+            doorwayWindowNanos = now;
+            doorwaySearches.set(0);
+        }
+        return doorwaySearches.incrementAndGet() <= MAX_DOORWAY_SEARCHES;
+    }
+
     /** Measures the pair's walls when it is active and due. @return whether it was measured */
     private boolean trace(Pair pair, ThicknessProvider provider, long now) {
         if (now - pair.lastSeenNanos > ACTIVE_NANOS || now - pair.lastTraceNanos < TRACE_INTERVAL_NANOS) {
@@ -751,6 +803,18 @@ public final class ServerWalls {
         } catch (Throwable t) {
             pair.thickness = Double.NaN;
             logFailure(t);
+        }
+        if (!settings.isServerDoorway() || !ServerDoorway.worthLooking(pair.thickness)) {
+            pair.doorway = null;
+        } else if (doorwayAllowed(now)) {
+            try {
+                pair.doorway = ServerDoorway.choose(pair.thickness,
+                        provider.doorway(listener, level, pair.speakerEntity, pair.x, pair.y, pair.z, voiceRange()));
+            } catch (Throwable t) {
+                // The muffled straight path stays
+                pair.doorway = null;
+                logFailure(t);
+            }
         }
         pair.lastTraceNanos = now;
         return true;
