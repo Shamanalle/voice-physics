@@ -149,6 +149,41 @@ public final class HudOverlay {
                     : new Line(hud("in_range", e.inRange()), 0, Palette.TEXT_DIM));
         }
         draw(c, lines, screenW, screenH, prefs);
+        if (prefs.isHudMarkers()) {
+            paintMarkers(c, talkers, screenW, screenH, prefs);
+        }
+    }
+
+    /**
+     * Who is talking and on which side, in a line above the hotbar the way subtitles show a sound's side:
+     * {@code ◀ Anna} to the left, {@code Bob ▶} to the right, plain when it is ahead, each line placed
+     * to its side of the middle.
+     */
+    private static void paintMarkers(Canvas c, List<SpeakerRegistry.Speaker> talkers, int screenW, int screenH, DistanceConfig prefs) {
+        boolean contrast = prefs.isHudContrast();
+        int y = screenH - 62;
+        int shown = 0;
+        for (SpeakerRegistry.Speaker s : talkers) {
+            if (shown == MAX_TALKERS) {
+                break;
+            }
+            double bearing = s.getBearing();
+            if (Double.isNaN(bearing)) {
+                continue;
+            }
+            String name = s.getDisplayName() != null && !s.getDisplayName().isEmpty() ? s.getDisplayName() : "?";
+            Component label = Component.literal(Bearing.marker(name, bearing, s.getDistance()));
+            int w = c.width(label) + 8;
+            // Left of the middle for a voice on the left, right of it for the right, in the middle when ahead or behind
+            double side = Math.sin(Math.toRadians(bearing));
+            int cx = screenW / 2 + (int) Math.round(side * Math.min(screenW / 4.0, 120.0 + w / 2.0));
+            int alpha = contrast ? 255 : 0xB0;
+            c.frame(cx - w / 2, y - 3, cx + w / 2, y + 10, Palette.withAlpha(contrast ? 0x000000 : 0x101418, alpha),
+                    Palette.withAlpha(0xFFFFFF, contrast ? 255 : 0x60));
+            c.centered(label, cx, y, contrast ? 0xFFFFFFFF : s.isWhispering() ? Palette.WHISPER : Palette.TEXT);
+            y -= 16;
+            shown++;
+        }
     }
 
     private static void draw(Canvas c, List<Line> lines, int screenW, int screenH, DistanceConfig prefs) {
@@ -190,9 +225,11 @@ public final class HudOverlay {
         // Keep clear of the hotbar and chat at the bottom, and of the effect icons at the top right
         int y = corner.isBottom() ? areaY + areaH - MARGIN - h - (inGame ? Math.round(42 / scale) : 0)
                 : areaY + MARGIN + (inGame && corner.isRight() ? Math.round(effectIconsHeight() / scale) : 0);
-        int alpha = (int) Math.round(prefs.getHudBackground() * 255.0);
+        boolean contrast = prefs.isHudContrast();
+        int alpha = contrast ? 255 : (int) Math.round(prefs.getHudBackground() * 255.0);
         if (alpha > 0) {
-            c.frame(x, y, x + w, y + h, Palette.withAlpha(0x101418, alpha), Palette.withAlpha(0xFFFFFF, alpha * 2 / 3));
+            c.frame(x, y, x + w, y + h, Palette.withAlpha(contrast ? 0x000000 : 0x101418, alpha),
+                    Palette.withAlpha(0xFFFFFF, contrast ? 255 : alpha * 2 / 3));
         }
         int ty = y + PAD;
         for (Line l : lines) {
@@ -205,7 +242,7 @@ public final class HudOverlay {
                 }
                 tx += 7;
             }
-            c.text(l.text(), tx, ty, l.textColor());
+            c.text(l.text(), tx, ty, contrast ? 0xFFFFFFFF : l.textColor());
             ty += LINE;
         }
     }

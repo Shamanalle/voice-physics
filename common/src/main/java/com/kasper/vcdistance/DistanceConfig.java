@@ -62,6 +62,7 @@ public final class DistanceConfig {
     public static final double EFFECT_STRENGTH_MIN = 0.0;
     public static final double EFFECT_STRENGTH_MAX = 1.5;
     public static final boolean DEFAULT_DIFFRACTION_ENABLED = true;
+    public static final boolean DEFAULT_PLACE_TUNING = true;
 
     private volatile AttenuationModel model = DEFAULT_MODEL;
     private volatile double attenuationFactor = DEFAULT_ATTENUATION_FACTOR;
@@ -77,6 +78,7 @@ public final class DistanceConfig {
     private volatile double underwaterStrength = DEFAULT_UNDERWATER_STRENGTH;
     private volatile double weatherStrength = DEFAULT_WEATHER_STRENGTH;
     private volatile boolean diffractionEnabled = DEFAULT_DIFFRACTION_ENABLED;
+    private volatile boolean placeTuning = DEFAULT_PLACE_TUNING;
     private final double[] materialWeights = new double[AcousticMaterial.values().length];
     /** Blocks and block tags with a material of their own; replaced as a whole, never changed in place. */
     private volatile BlockRules blockRules = BlockRules.EMPTY;
@@ -91,6 +93,8 @@ public final class DistanceConfig {
     private volatile double hudScale = DEFAULT_HUD_SCALE;
     private volatile double hudBackground = DEFAULT_HUD_BACKGROUND;
     private volatile boolean hudCompact;
+    private volatile boolean hudContrast;
+    private volatile boolean hudMarkers;
     private volatile boolean colorblind;
     /** The preset last picked ("" = own values) and the voice range it was fitted to. */
     private volatile String presetId = "";
@@ -252,6 +256,16 @@ public final class DistanceConfig {
         changed();
     }
 
+    /** Echo and far voices follow the place: deep caves ring more, the Nether is smoky, jungles and snow swallow sound. */
+    public boolean isPlaceTuning() {
+        return placeTuning;
+    }
+
+    public void setPlaceTuning(boolean value) {
+        placeTuning = value;
+        changed();
+    }
+
     public double getMaterialWeight(AcousticMaterial material) {
         synchronized (materialWeights) {
             return materialWeights[material.ordinal()];
@@ -317,7 +331,7 @@ public final class DistanceConfig {
 
     public static final double DEFAULT_HUD_SCALE = 1.0;
     public static final double HUD_SCALE_MIN = 0.5;
-    public static final double HUD_SCALE_MAX = 1.5;
+    public static final double HUD_SCALE_MAX = 2.0;
     public static final double DEFAULT_HUD_BACKGROUND = 0.55;
 
     /** Size of the voice HUD, 0.5 - 1.5. */
@@ -347,6 +361,26 @@ public final class DistanceConfig {
 
     public void setHudCompact(boolean compact) {
         hudCompact = compact;
+        changed();
+    }
+
+    /** High contrast: a solid black panel with white text, for low vision. */
+    public boolean isHudContrast() {
+        return hudContrast;
+    }
+
+    public void setHudContrast(boolean on) {
+        hudContrast = on;
+        changed();
+    }
+
+    /** Who is talking, with an arrow to their side, in a line above the hotbar (like subtitles). */
+    public boolean isHudMarkers() {
+        return hudMarkers;
+    }
+
+    public void setHudMarkers(boolean on) {
+        hudMarkers = on;
         changed();
     }
 
@@ -387,6 +421,8 @@ public final class DistanceConfig {
         hudScale = other.hudScale;
         hudBackground = other.hudBackground;
         hudCompact = other.hudCompact;
+        hudContrast = other.hudContrast;
+        hudMarkers = other.hudMarkers;
         colorblind = other.colorblind;
         changed();
     }
@@ -416,6 +452,7 @@ public final class DistanceConfig {
         underwaterStrength = DEFAULT_UNDERWATER_STRENGTH;
         weatherStrength = DEFAULT_WEATHER_STRENGTH;
         diffractionEnabled = DEFAULT_DIFFRACTION_ENABLED;
+        placeTuning = DEFAULT_PLACE_TUNING;
         resetMaterials();
     }
 
@@ -444,6 +481,7 @@ public final class DistanceConfig {
                 underwaterStrength = DEFAULT_UNDERWATER_STRENGTH;
                 weatherStrength = DEFAULT_WEATHER_STRENGTH;
                 diffractionEnabled = DEFAULT_DIFFRACTION_ENABLED;
+                placeTuning = DEFAULT_PLACE_TUNING;
             }
         }
         changed();
@@ -456,6 +494,8 @@ public final class DistanceConfig {
         hudScale = DEFAULT_HUD_SCALE;
         hudBackground = DEFAULT_HUD_BACKGROUND;
         hudCompact = false;
+        hudContrast = false;
+        hudMarkers = false;
         colorblind = false;
         changed();
     }
@@ -483,6 +523,7 @@ public final class DistanceConfig {
         underwaterStrength = other.underwaterStrength;
         weatherStrength = other.weatherStrength;
         diffractionEnabled = other.diffractionEnabled;
+        placeTuning = other.placeTuning;
         for (AcousticMaterial m : AcousticMaterial.values()) {
             double w = other.getMaterialWeight(m);
             synchronized (materialWeights) {
@@ -606,6 +647,7 @@ public final class DistanceConfig {
                 underwaterStrength = other.underwaterStrength;
                 weatherStrength = other.weatherStrength;
                 diffractionEnabled = other.diffractionEnabled;
+                placeTuning = other.placeTuning;
             }
         }
         changed();
@@ -652,6 +694,8 @@ public final class DistanceConfig {
         hudScale = clamp(parseDouble(props, "hud_scale", DEFAULT_HUD_SCALE), HUD_SCALE_MIN, HUD_SCALE_MAX);
         hudBackground = clamp(parseDouble(props, "hud_background", DEFAULT_HUD_BACKGROUND), 0.0, 1.0);
         hudCompact = parseBoolean(props, "hud_compact", false);
+        hudContrast = parseBoolean(props, "hud_contrast", false);
+        hudMarkers = parseBoolean(props, "hud_markers", false);
         colorblind = parseBoolean(props, "colorblind", false);
         presetId = props.getProperty("preset", "").trim().toLowerCase(java.util.Locale.ROOT);
         presetRange = clamp(parseDouble(props, "preset_range", 0.0), 0.0, 10000.0);
@@ -726,7 +770,7 @@ public final class DistanceConfig {
                 .comment("Corner of the voice HUD: top_left, top_right, bottom_left, bottom_right. Default top_right.",
                         "Угол экрана для HUD: top_left, top_right, bottom_left, bottom_right. По умолчанию top_right.")
                 .value("hud_corner", hudCorner.getId())
-                .comment("Size of the voice HUD, 0.5 - 1.5. Default 1.0.", "Размер HUD, 0.5 - 1.5. По умолчанию 1.0.")
+                .comment("Size of the voice HUD, 0.5 - 2. Default 1.0.", "Размер HUD, 0.5 - 2. По умолчанию 1.0.")
                 .value("hud_scale", hudScale)
                 .comment("Opacity of the HUD's background, 0 (none) - 1. Default 0.55.",
                         "Непрозрачность фона HUD, 0 (без фона) - 1. По умолчанию 0.55.")
@@ -734,6 +778,12 @@ public final class DistanceConfig {
                 .comment("Compact HUD: one line for everyone talking. Default false.",
                         "Компактный HUD: одна строка на всех говорящих. По умолчанию false.")
                 .value("hud_compact", hudCompact)
+                .comment("High contrast HUD: a solid black panel with white text, for low vision. Default false.",
+                        "HUD с высокой контрастностью: сплошная чёрная панель и белый текст, для слабого зрения. По умолчанию false.")
+                .value("hud_contrast", hudContrast)
+                .comment("Direction markers: who is talking, with an arrow to their side, in a line above the hotbar (like subtitles). Default false.",
+                        "Маркеры направления: кто говорит, со стрелкой в его сторону, в строке над хотбаром (как субтитры). По умолчанию false.")
+                .value("hud_markers", hudMarkers)
                 .comment("Colors for color blindness (blue / orange instead of green / red) and marks that differ in shape. Default false.",
                         "Цвета для дальтоников (синий / оранжевый вместо зелёного / красного) и метки разной формы. По умолчанию false.")
                 .value("colorblind", colorblind)
@@ -803,7 +853,10 @@ public final class DistanceConfig {
                 .value(prefix + "weather_strength", weatherStrength)
                 .comment("Voices behind a wall come round through a nearby doorway or window: less muffled, from its direction. Default true.",
                         "Голоса за стеной обходят её через ближайший проём или окно: глушатся меньше и слышны с его стороны. По умолчанию true.")
-                .value(prefix + "diffraction_enabled", diffractionEnabled);
+                .value(prefix + "diffraction_enabled", diffractionEnabled)
+                .comment("Echo and far voices follow the place: deep caves ring more, the Nether is smoky, jungles and snow swallow sound. Default true.",
+                        "Эхо и дальние голоса зависят от места: глубокие пещеры звучат гулче, в Незере дымно, джунгли и снег глушат звук. По умолчанию true.")
+                .value(prefix + "place_tuning", placeTuning);
     }
 
     /** Per-material weights with their explanations (shared by the client and server files). */
@@ -845,6 +898,7 @@ public final class DistanceConfig {
         props.setProperty(prefix + "underwater_strength", format(underwaterStrength));
         props.setProperty(prefix + "weather_strength", format(weatherStrength));
         props.setProperty(prefix + "diffraction_enabled", String.valueOf(diffractionEnabled));
+        props.setProperty(prefix + "place_tuning", String.valueOf(placeTuning));
         for (AcousticMaterial m : AcousticMaterial.values()) {
             props.setProperty(prefix + "material." + m.getId(), format(getMaterialWeight(m)));
         }
@@ -869,6 +923,7 @@ public final class DistanceConfig {
         weatherStrength = clamp(parseDouble(props, prefix + "weather_strength", DEFAULT_WEATHER_STRENGTH),
                 EFFECT_STRENGTH_MIN, EFFECT_STRENGTH_MAX);
         diffractionEnabled = parseBoolean(props, prefix + "diffraction_enabled", DEFAULT_DIFFRACTION_ENABLED);
+        placeTuning = parseBoolean(props, prefix + "place_tuning", DEFAULT_PLACE_TUNING);
         synchronized (materialWeights) {
             for (AcousticMaterial m : AcousticMaterial.values()) {
                 materialWeights[m.ordinal()] = clamp(parseDouble(props, prefix + "material." + m.getId(), m.getDefaultWeight()), 0.0, AcousticMaterial.MAX_WEIGHT);

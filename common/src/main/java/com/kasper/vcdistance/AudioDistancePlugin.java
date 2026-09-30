@@ -72,6 +72,14 @@ public class AudioDistancePlugin implements VoicechatPlugin {
     /** Which sound zone each player with the addon was last sent (server). */
     public static final ZoneTracker ZONES = new ZoneTracker();
     public static final ZoneNotices ZONE_NOTICES = new ZoneNotices();
+    /** What players chose with /voice: range mode, walls, volumes, the talking line (server). */
+    public static final PlayerPrefs PLAYER_PREFS = new PlayerPrefs();
+    /** Who spoke a moment ago, for the talking line of players without the addon (server). */
+    public static final TalkTracker TALK = new TalkTracker();
+    /** Muted players who tried to talk (for the notice above their hotbar). */
+    public static final TalkTracker MUTED_TALK = new TalkTracker();
+    /** The echo of the place each player stands in, for the server's own echo (server). */
+    public static final ServerRooms SERVER_ROOMS = new ServerRooms();
 
     private static volatile VoicechatApi api;
     private static volatile VoicechatServerApi serverApi;
@@ -155,6 +163,7 @@ public class AudioDistancePlugin implements VoicechatPlugin {
         if (!serverSettingsLoaded) {
             serverSettingsLoaded = true;
             SERVER_SETTINGS.load();
+            PLAYER_PREFS.load(ModEnvironment.configDir().resolve(PlayerPrefs.FILE));
         }
     }
 
@@ -718,6 +727,13 @@ public class AudioDistancePlugin implements VoicechatPlugin {
                         ListenerEnvironment.worse(env.weather(), speaker.getWeather()), speaker.getDistance() / range,
                         c.getWeatherStrength()));
             }
+            // The place: smoky Nether air, dense jungle, snow
+            PlaceTuning.Tuning place = c.isPlaceTuning() ? env.place() : PlaceTuning.Tuning.NONE;
+            if (place.air() > 0.0 && speaker.getDistance() >= 0.0) {
+                double range = speaker.getMaxDistance() > 0.0F ? speaker.getMaxDistance() : getServerMaxDistance();
+                effect = effect.plus(new EnvironmentEffects.Effect(
+                        ServerEffects.air(speaker.getDistance() / range).muffle() * place.air(), 0.0));
+            }
 
             // Both stages work on the frame in place
             boolean changed = false;
@@ -732,7 +748,7 @@ public class AudioDistancePlugin implements VoicechatPlugin {
             double wet = 0.0;
             double echo = 0.0;
             if (ownPhysics && c.isReverbEnabled() && room.isAudible()) {
-                double[] level = echoLevels(room, speaker, c.getReverbStrength());
+                double[] level = echoLevels(room, speaker, c.getReverbStrength() * place.echo());
                 wet = level[0];
                 echo = level[1];
             }

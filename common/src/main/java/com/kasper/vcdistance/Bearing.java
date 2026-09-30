@@ -45,4 +45,26 @@ public final class Bearing {
         int sector = (int) Math.floor((wrap(relative) + 360.0 + 22.5) / 45.0) % 8;
         return ARROWS[sector];
     }
+
+    /**
+     * A subtitle-style line for a voice: {@code ◀ Anna 6m} to the left, {@code Bob 6m ▶} to the right,
+     * the plain {@code Sam 3m} ahead (within 25 degrees), {@code Sam 3m ▼} behind (beyond 155).
+     *
+     * @param distance in blocks, negative when unknown
+     */
+    public static String marker(String name, double relative, double distance) {
+        String text = distance >= 0.0 ? name + " " + Math.round(distance) + "m" : name;
+        if (Double.isNaN(relative)) {
+            return text;
+        }
+        double wrapped = wrap(relative);
+        double abs = Math.abs(wrapped);
+        if (abs <= 25.0) {
+            return text;
+        }
+        if (abs >= 155.0) {
+            return text + " ▼";
+        }
+        return wrapped < 0.0 ? "◀ " + text : text + " ▶";
+    }
 }

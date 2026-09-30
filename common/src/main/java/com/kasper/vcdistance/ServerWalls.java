@@ -62,6 +62,8 @@ public final class ServerWalls {
     private static final long FORGET_NANOS = TimeUnit.SECONDS.toNanos(4);
     private static final long PRUNE_INTERVAL_NANOS = TimeUnit.SECONDS.toNanos(2);
     private static final long TRACE_INTERVAL_NANOS = TimeUnit.MILLISECONDS.toNanos(100);
+    /** A pause this long in a voice drops its echo tail. */
+    private static final long REVERB_STALE_NANOS = TimeUnit.MILLISECONDS.toNanos(400);
     private static final int MAX_TRACES_PER_TICK = 48;
     /** Per listener and tick, when each player's walls are measured on their own thread (Folia). */
     private static final int MAX_TRACES_PER_LISTENER = 8;
@@ -84,6 +86,9 @@ public final class ServerWalls {
         volatile long lastTraceNanos;
         volatile double thickness = Double.NaN;
         OpusEncoder encoder;
+        /** The echo of this pair's space; made when a voice first needs one, dropped with the encoder. */
+        Reverb reverb;
+        long lastFrameNanos;
 
         Pair(UUID listener) {
             this.listener = listener;
@@ -291,7 +296,7 @@ public final class ServerWalls {
      * {@code null} when there are no rules or either player is unknown.
      */
     private ServerRange.Decision voiceRule(UUID speaker, VoicechatConnection receiver, boolean whispering) {
-        if (!settings.hasVoiceRules() || speaker == null || receiver == null || receiver.getPlayer() == null) {
+        if (!voiceRulesOn() || speaker == null || receiver == null || receiver.getPlayer() == null) {
             return null;
         }
         ServerPlayers.Info from = players.get(speaker);
@@ -309,8 +314,18 @@ public final class ServerWalls {
     public void onMicrophone(MicrophonePacketEvent event) {
         MicrophonePacket packet = event.getPacket();
         VoicechatConnection sender = event.getSenderConnection();
+        if (packet != null && sender != null && sender.getPlayer() != null) {
+            UUID talking = sender.getPlayer().getUuid();
+            if (settings.muteOf(talking, System.currentTimeMillis()) != null) {
+                // Muted with /vcd mute: the voice goes nowhere, nearby or in a group
+                AudioDistancePlugin.MUTED_TALK.spoke(talking, System.nanoTime());
+                event.cancel();
+                return;
+            }
+            AudioDistancePlugin.TALK.spoke(talking, System.nanoTime());
+        }
         if (packet == null || sender == null || sender.getPlayer() == null || !rangeRulesFor(sender)
-                || !settings.hasVoiceRules()) {
+                || !voiceRulesOn()) {
             return;
         }
         long start = System.nanoTime();
@@ -362,6 +377,11 @@ public final class ServerWalls {
         }
     }
 
+    /** The admin's voice rules, or a player's own choice (a range mode, a volume, an ignored player). */
+    private boolean voiceRulesOn() {
+        return settings.hasVoiceRules() || AudioDistancePlugin.PLAYER_PREFS.anyRules();
+    }
+
     private static double voiceRange() {
         double v = AudioDistancePlugin.serverVoiceDistance();
         return v > 0.0 ? v : AudioDistancePlugin.FALLBACK_DISTANCE;
@@ -398,11 +418,7 @@ public final class ServerWalls {
         if (resending.get() || !SoundPacketEvent.SOURCE_PROXIMITY.equals(event.getSource())) {
             return null;
         }
-        if (!worldAvailable || !settings.isServerWalls() || channel == null || opus == null || opus.length == 0) {
-            return null;
-        }
-        DistanceConfig profile = settings.profile();
-        if (!profile.isOcclusionEnabled()) {
+        if (channel == null || opus == null || opus.length == 0) {
             return null;
         }
         VoicechatConnection receiver = event.getReceiverConnection();
@@ -413,9 +429,34 @@ public final class ServerWalls {
         if (listener == null || addonListeners.contains(listener)) {
             return null;
         }
+        // Walls (the admin's switch, and this player's own), how loud this speaker is to this listener, and
+        // what water, weather, distance and rooms do to it
+        PlayerPrefs prefs = AudioDistancePlugin.PLAYER_PREFS;
+        DistanceConfig profile = settings.profile();
+        Zone listenerZone = settings.zoneOf(players.get(listener));
+        boolean walls = worldAvailable && settings.isServerWalls() && settings.wallsApply(listenerZone, prefs.wallsFor(listener));
+        UUID speakerId = speakerEntity != null ? speakerEntity : channel;
+        double volumeLoss = prefs.lossDb(listener, speakerId);
+        boolean realism = settings.hasServerRealism();
+        if (!walls && volumeLoss <= 0.0 && !realism) {
+            return null;
+        }
 
         long now = System.nanoTime();
         maybePrune(now);
+        EnvironmentEffects.Effect air = EnvironmentEffects.Effect.NONE;
+        RoomEstimate room = null;
+        double roomDistance = -1.0;
+        if (realism) {
+            ServerPlayers.Info from = players.get(speakerId);
+            ServerPlayers.Info to = players.get(listener);
+            if (from != null && to != null && Zone.sameWorld(from.world(), to.world())) {
+                double range = voiceRange();
+                air = ServerEffects.atmosphere(settings, from, to, range);
+                room = ServerEffects.room(settings, AudioDistancePlugin.SERVER_ROOMS, from, to, now);
+                roomDistance = from.distanceTo(to);
+            }
+        }
 
         Pair pair = pairs.computeIfAbsent(new PairKey(channel, listener), k -> new Pair(listener));
         pair.lastSeenNanos = now;
@@ -433,10 +474,16 @@ public final class ServerWalls {
         synchronized (pair) {
             double thickness = pair.thickness;
             // A zone can make walls stronger or weaker for the listeners in it
-            double strength = settings.wallsStrengthIn(settings.zoneOf(players.get(listener)));
-            double muffle = Double.isNaN(thickness) ? 0.0 : OcclusionModel.muffle(thickness, strength);
-            double loss = Double.isNaN(thickness) ? 0.0 : OcclusionModel.lossDb(thickness, strength);
-            boolean wanted = muffle > 0.002 || loss > 0.05;
+            double strength = settings.wallsStrengthIn(listenerZone);
+            boolean measured = walls && !Double.isNaN(thickness);
+            double muffle = measured ? OcclusionModel.muffle(thickness, strength) : 0.0;
+            double loss = (measured ? OcclusionModel.lossDb(thickness, strength) : 0.0) + volumeLoss;
+            // Water, rain and distance on top of the walls: filters in a row
+            muffle = 1.0 - (1.0 - muffle) * (1.0 - air.muffle());
+            loss += air.lossDb();
+            double[] levels = ServerEffects.echoLevels(room, roomDistance, voiceRange(), profile.getReverbStrength());
+            boolean echoing = levels[0] > 0.002 || levels[1] > 0.002;
+            boolean wanted = muffle > 0.002 || loss > 0.05 || echoing;
 
             if (pair.encoder == null) {
                 if (!wanted || encoding.get() >= settings.getMaxStreams()) {
@@ -453,9 +500,21 @@ public final class ServerWalls {
                     return null;
                 }
                 short[] frame = pair.filter.process(pcm.clone(), muffle, loss);
+                if (pair.reverb != null && now - pair.lastFrameNanos > REVERB_STALE_NANOS) {
+                    // The voice paused: the old tail would come back as a ghost
+                    pair.reverb = null;
+                }
+                pair.lastFrameNanos = now;
+                if (pair.reverb == null && echoing) {
+                    pair.reverb = new Reverb();
+                }
+                if (pair.reverb != null) {
+                    pair.reverb.process(frame, room != null ? room : RoomEstimate.OPEN, levels[0], levels[1]);
+                }
                 byte[] encoded = pair.encoder.encode(frame);
-                if (!pair.filter.isEngaged()) {
-                    // The filter has glided back open: this frame is the crossfade to dry, then pass through again
+                if (!pair.filter.isEngaged() && (pair.reverb == null || !pair.reverb.isActive())) {
+                    // The filter has glided back open and no echo is left: this frame is the crossfade to dry,
+                    // then the voice passes through again
                     stop(pair);
                 }
                 return encoded;
@@ -501,6 +560,7 @@ public final class ServerWalls {
     }
 
     private void stop(Pair pair) {
+        pair.reverb = null;
         if (pair.encoder != null) {
             try {
                 pair.encoder.close();
@@ -657,6 +717,7 @@ public final class ServerWalls {
     }
 
     private void logFailure(Throwable t) {
+        Problems.record("Server voice processing", t);
         if (!loggedFailure) {
             loggedFailure = true;
             DistanceConfig.LOGGER.warn("Server-side wall muffling failed, passing voices through unchanged: {}", t.toString());

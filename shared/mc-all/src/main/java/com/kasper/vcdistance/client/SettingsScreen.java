@@ -805,6 +805,10 @@ public abstract class SettingsScreen extends Screen {
             config.setDiffractionEnabled(!config.isDiffractionEnabled());
             b.setMessage(onOff("effects.corners", config.isDiffractionEnabled()));
         }).bounds(left, y + ROW * 3, colW, 20).tooltip(tip("effects.corners.tooltip")).build(), DistanceConfig.Part.EFFECTS);
+        edit(Button.builder(onOff("effects.place", shown().isPlaceTuning()), b -> {
+            config.setPlaceTuning(!config.isPlaceTuning());
+            b.setMessage(onOff("effects.place", config.isPlaceTuning()));
+        }).bounds(right - colW, y + ROW * 3, colW, 20).tooltip(tip("effects.place.tooltip")).build(), DistanceConfig.Part.EFFECTS);
 
         statusY = y + ROW * 4 + 2;
         panelTop = statusY + (hasStatusBanner() ? 30 : 0);
@@ -849,7 +853,16 @@ public abstract class SettingsScreen extends Screen {
             b.setMessage(colorsLabel());
         }).bounds(col2, y + ROW * 2, colW, 20).tooltip(tip("colors.tooltip")).build());
 
-        panelTop = y + ROW * 3 + 2;
+        content(Button.builder(onOff("hud.contrast", prefs.isHudContrast()), b -> {
+            prefs.setHudContrast(!prefs.isHudContrast());
+            b.setMessage(onOff("hud.contrast", prefs.isHudContrast()));
+        }).bounds(left, y + ROW * 3, colW, 20).tooltip(tip("hud.contrast.tooltip")).build());
+        content(Button.builder(onOff("hud.markers", prefs.isHudMarkers()), b -> {
+            prefs.setHudMarkers(!prefs.isHudMarkers());
+            b.setMessage(onOff("hud.markers", prefs.isHudMarkers()));
+        }).bounds(col2, y + ROW * 3, colW, 20).tooltip(tip("hud.markers.tooltip")).build());
+
+        panelTop = y + ROW * 4 + 2;
         panelBottom = stretch(panelTop, 110);
         contentEnd = panelBottom;
     }

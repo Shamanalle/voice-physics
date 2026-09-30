@@ -20,14 +20,16 @@ Install it on your client, on the server, or on both. Each works on its own. On 
 - The echo fits the place: short in a stone room, long in a cave, soft in a wooden house, none in a forest or field.
 - Near cliffs the voice comes back a moment later.
 - The echo changes smoothly as you walk between places.
+- Caves, the Nether and the End sound different: echo and air follow the place.
 - Dull voices under water; rain and thunder cover far voices. You choose how strong each is.
 
 **👀 HUD and monitor**
 - See who is talking, how far, from where, and whether they are behind a wall.
 - While you talk, see how many players hear you.
 - A monitor and radar with everyone in voice range. Colors for color blindness.
+- A bigger HUD, a high-contrast mode and subtitle-style arrows for voices off to the side.
 
-**🔗 Also:** share your settings with a friend as one code. Seven languages.
+**🔗 Also:** share your settings with a friend as one code, send a bug report with one click (`/voicephysics report`). Seven languages.
 
 ## For servers
 
@@ -40,6 +42,9 @@ Players **without the addon** also hear voices muffled through walls.
 - **One sound for everyone:** offer or enforce the server's settings for fair PvP and events.
 - **No seeing through walls:** turn off the monitor and radar.
 - **Require the addon:** send a download link, remind on every join, or kick.
+- **Realism without the addon** (off by default): water, rain and echo for players who only have voice chat.
+- **Mute** a player's voice for a time or for good, with `/vcd mute`.
+- **Paper:** `/voice` for every player (talk quietly or shout, walls off for yourself, per-player volume) and PlaceholderAPI placeholders for scoreboards and tab lists.
 - **In-game Server tab** for admins, clickable `/vcd` commands with undo, and a log of who changed what.
 
 ## Which file do I need?
@@ -53,4 +58,4 @@ Players **without the addon** also hear voices muffled through walls.
 
 Minecraft 1.20 – 1.20.6, 1.21 – 1.21.11 and 26.1 – 26.3.
 
-**[All settings, commands and what works where →](https://github.com/Shamanalle/voice-physics#readme)** · [Changelog](https://github.com/Shamanalle/voice-physics/blob/main/CHANGELOG.md) · [Report a bug](https://github.com/Shamanalle/voice-physics/issues)
+**[All settings, commands and what works where →](https://github.com/Shamanalle/voice-physics#readme)** · [Changelog](https://github.com/Shamanalle/voice-physics/blob/main/CHANGELOG.md) · [Questions and problems](https://github.com/Shamanalle/voice-physics#questions-and-problems) · [Report a bug](https://github.com/Shamanalle/voice-physics/issues)

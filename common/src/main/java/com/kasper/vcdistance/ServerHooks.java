@@ -26,6 +26,11 @@ public final class ServerHooks {
 
         /** A short line above the player's hotbar. */
         void actionBar(UUID player, String text);
+
+        /** Whether {@code viewer} may see {@code other} (vanish plugins, spectators); a platform without them says yes. */
+        default boolean canSee(UUID viewer, UUID other) {
+            return true;
+        }
     }
 
     private static long ticks;
@@ -52,10 +57,17 @@ public final class ServerHooks {
             }
         }
         ServerSettings settings = AudioDistancePlugin.SERVER_SETTINGS;
+        long nowMillis = System.currentTimeMillis();
         for (ServerPlayers.Info info : online) {
+            boolean mutedBar = muteNotices(settings, info, nowMillis, platform);
             String notice = AudioDistancePlugin.ZONE_NOTICES.update(info, settings.zoneOf(info), settings);
-            if (notice != null) {
+            if (mutedBar) {
+                hudLine.remove(info.id());
+            } else if (notice != null) {
                 platform.actionBar(info.id(), notice);
+                hudLine.remove(info.id());
+            } else {
+                talkingLine(settings, info, online, platform);
             }
             AddonCheck.Action action = AudioDistancePlugin.ADDON_CHECK.due(settings, info.id(), ticks,
                     AudioDistancePlugin.hasVoiceChat(info.id()));
@@ -69,6 +81,108 @@ public final class ServerHooks {
                 platform.message(info.id(), text);
             }
         }
+    }
+
+    /** The end of each online player's mute as last told to them (0 = no end), to tell them when it changes. */
+    private static final java.util.Map<UUID, Long> muteTold = new java.util.concurrent.ConcurrentHashMap<>();
+    /** When the "you are muted" line was last shown above a player's hotbar (in {@link #ticks}). */
+    private static final java.util.Map<UUID, Long> muteBarAt = new java.util.concurrent.ConcurrentHashMap<>();
+
+    /**
+     * Tells a player in chat when they are muted (also on joining while muted) and when they may talk again,
+     * and above the hotbar when they try to talk while muted.
+     *
+     * @return {@code true} when the line above the hotbar was used for it
+     */
+    private static boolean muteNotices(ServerSettings settings, ServerPlayers.Info info, long nowMillis, Platform platform) {
+        UUID id = info.id();
+        VoiceMute mute = settings.muteOf(id, nowMillis);
+        Long told = muteTold.get(id);
+        String language = settings.languageFor(info.language());
+        if (mute == null) {
+            if (told != null) {
+                muteTold.remove(id);
+                muteBarAt.remove(id);
+                platform.message(id, ServerText.get(language, "mute.ended"));
+            }
+            return false;
+        }
+        AdminCommands.Messages m = new AdminCommands.Messages(language);
+        if (told == null || told != mute.until()) {
+            muteTold.put(id, mute.until());
+            String text = m.get("mute.you", AdminCommands.muteTime(m, mute, nowMillis));
+            platform.message(id, mute.reason().isEmpty() ? text : text + " " + m.get("mute.reason", mute.reason()));
+        }
+        if (!AudioDistancePlugin.MUTED_TALK.isTalking(id, System.nanoTime())) {
+            return false;
+        }
+        long at = muteBarAt.getOrDefault(id, Long.MIN_VALUE / 2);
+        if (ticks - at >= HUD_REPEAT_TICKS) {
+            muteBarAt.put(id, ticks);
+            platform.actionBar(id, m.get("mute.bar", AdminCommands.muteTime(m, mute, nowMillis)));
+        }
+        return true;
+    }
+
+    /** What the talking line last showed each player, and when (in {@link #ticks}). */
+    private static final java.util.Map<UUID, String> hudLine = new java.util.concurrent.ConcurrentHashMap<>();
+    private static final java.util.Map<UUID, Long> hudAt = new java.util.concurrent.ConcurrentHashMap<>();
+    /** The line above the hotbar fades after about 3 s: send it again before that. */
+    private static final int HUD_REPEAT_TICKS = 40;
+    private static final int HUD_MAX_NAMES = 3;
+
+    /**
+     * The "who is talking" line above the hotbar of a player without the addon who turned it on with
+     * {@code /voice hud on}: the nearest players talking whom they hear, with the distance.
+     */
+    private static void talkingLine(ServerSettings settings, ServerPlayers.Info listener,
+                                    Collection<ServerPlayers.Info> online, Platform platform) {
+        UUID id = listener.id();
+        // The monitor's switch (allow_monitor) also covers this line: it tells who is near and how far
+        if (!AudioDistancePlugin.PLAYER_PREFS.hudFor(id) || AudioDistancePlugin.SERVER_WALLS.hasAddon(id)
+                || !settings.isMonitorAllowed()) {
+            hudLine.remove(id);
+            return;
+        }
+        String text = talkingText(settings, listener, online, System.nanoTime(), other -> platform.canSee(id, other));
+        String before = hudLine.getOrDefault(id, "");
+        long at = hudAt.getOrDefault(id, Long.MIN_VALUE / 2);
+        if (text.equals(before) && (text.isEmpty() || ticks - at < HUD_REPEAT_TICKS)) {
+            return;
+        }
+        hudLine.put(id, text);
+        hudAt.put(id, ticks);
+        platform.actionBar(id, text.isEmpty() ? " " : text);
+    }
+
+    /** The talking line for {@code listener}, or "" when nobody they hear is talking. */
+    static String talkingText(ServerSettings settings, ServerPlayers.Info listener,
+                              Collection<ServerPlayers.Info> online, long nowNanos,
+                              java.util.function.Predicate<UUID> visible) {
+        double voice = AudioDistancePlugin.serverVoiceDistance() > 0.0
+                ? AudioDistancePlugin.serverVoiceDistance() : AudioDistancePlugin.FALLBACK_DISTANCE;
+        double whisper = AudioDistancePlugin.serverWhisperDistance() > 0.0
+                ? AudioDistancePlugin.serverWhisperDistance() : voice / 2.0;
+        java.util.List<ServerPlayers.Info> talking = new java.util.ArrayList<>();
+        for (ServerPlayers.Info other : online) {
+            if (!other.id().equals(listener.id()) && visible.test(other.id()) && AudioDistancePlugin.TALK.isTalking(other.id(), nowNanos)
+                    && ServerRange.decide(settings, other, listener, false, voice, whisper).hears()) {
+                talking.add(other);
+            }
+        }
+        if (talking.isEmpty()) {
+            return "";
+        }
+        talking.sort(java.util.Comparator.comparingDouble(o -> o.distanceTo(listener)));
+        StringBuilder out = new StringBuilder("\u00bb ");
+        for (int i = 0; i < Math.min(HUD_MAX_NAMES, talking.size()); i++) {
+            ServerPlayers.Info o = talking.get(i);
+            out.append(i == 0 ? "" : ", ").append(o.name()).append(' ').append(Math.round(o.distanceTo(listener))).append('m');
+        }
+        if (talking.size() > HUD_MAX_NAMES) {
+            out.append(" +").append(talking.size() - HUD_MAX_NAMES);
+        }
+        return out.toString();
     }
 
     /** "Install the addon" or "update the addon", in the player's language. */
@@ -91,6 +205,14 @@ public final class ServerHooks {
         AudioDistancePlugin.SERVER_WALLS.forgetPlayer(player);
         AudioDistancePlugin.ZONES.forget(player);
         AudioDistancePlugin.ZONE_NOTICES.forget(player);
+        AudioDistancePlugin.TALK.forget(player);
+        AudioDistancePlugin.PLAYER_PREFS.forget(player);
+        AudioDistancePlugin.SERVER_ROOMS.forget(player);
+        AudioDistancePlugin.MUTED_TALK.forget(player);
+        muteTold.remove(player);
+        muteBarAt.remove(player);
+        hudLine.remove(player);
+        hudAt.remove(player);
     }
 
     /** The addon's hello: remembers the player has it (and which version). */

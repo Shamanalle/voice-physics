@@ -3,11 +3,14 @@ package com.kasper.vcdistance;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
+import java.util.UUID;
 
 /**
  * Server-side settings, stored in {@code config/vc-audio-distance-server.properties} (Fabric) or
@@ -32,8 +35,9 @@ public final class ServerSettings {
      * 3: echo, water and weather; 4: zones and messages_language; 5: more materials;
      * 6: boxes and zone rules, game rules, the addon requirement, messages in every language.
      */
-    private static final int SETTINGS_VERSION = 8;
+    private static final int SETTINGS_VERSION = 9;
     private static final String ZONE_PREFIX = "zone.";
+    private static final String MUTE_PREFIX = "mute.";
     public static final String CUSTOM_PRESET = "custom";
 
     public static final int DEFAULT_MAX_STREAMS = 24;
@@ -127,8 +131,13 @@ public final class ServerSettings {
     private volatile boolean openGroupRange = true;
     private volatile boolean serverWalls = true;
     private volatile int maxStreams = DEFAULT_MAX_STREAMS;
+    private volatile boolean serverEffects;
+    private volatile boolean serverAir;
+    private volatile boolean metrics = true;
     private volatile long loadedModified = Long.MIN_VALUE;
     private volatile Map<String, Zone> zones = Map.of();
+    /** Players muted with /vcd mute, by UUID (ended ones stay until the next save). */
+    private volatile Map<UUID, VoiceMute> mutes = Map.of();
     private volatile String messagesLanguage = "auto";
 
     public ServerSettings() {
@@ -166,6 +175,11 @@ public final class ServerSettings {
         return lockedParts;
     }
 
+    /** Whether the profile is enforced with walls locked: players cannot change their walls (not even with /voice). */
+    public boolean wallsLocked() {
+        return profileMode == ProfileMode.ENFORCE && lockedParts.contains(DistanceConfig.Part.WALLS);
+    }
+
     /** Players with the addon may see the monitor, the radar and nearby players in the HUD. */
     public boolean isMonitorAllowed() {
         return allowMonitor;
@@ -190,6 +204,37 @@ public final class ServerSettings {
         return maxStreams;
     }
 
+    /**
+     * Water, weather and the echo of rooms for players without the addon, as the profile has them
+     * (its underwater, weather and reverb settings say which and how strong).
+     */
+    public boolean isServerEffects() {
+        return serverEffects;
+    }
+
+    public void setServerEffects(boolean on) {
+        serverEffects = on;
+    }
+
+    /** Far voices get duller with distance for players without the addon. */
+    /** Whether the plugin reports anonymous usage numbers to bStats (Paper); read once at start-up. */
+    public boolean isMetrics() {
+        return metrics;
+    }
+
+    public boolean isServerAir() {
+        return serverAir;
+    }
+
+    public void setServerAir(boolean on) {
+        serverAir = on;
+    }
+
+    /** Whether voices for players without the addon may change for another reason than walls. */
+    public boolean hasServerRealism() {
+        return serverEffects || serverAir;
+    }
+
     public synchronized void load() {
         Path file = getPath();
         // The admin's own texts sit next to the settings file (written on first start)
@@ -205,6 +250,7 @@ public final class ServerSettings {
             props = ConfigWriter.load(file);
         } catch (IOException e) {
             DistanceConfig.LOGGER.error("Failed to read {}, keeping previous server settings: {}", file, e.getMessage());
+            Problems.record("Reading " + file.getFileName() + ": " + e.getMessage());
             return;
         }
         profileMode = ProfileMode.fromId(props.getProperty("profile_mode"), ProfileMode.OFF);
@@ -234,6 +280,10 @@ public final class ServerSettings {
         addonUrl = url.isEmpty() ? DEFAULT_ADDON_URL : url;
         serverWalls = DistanceConfig.parseBoolean(props, "server_walls", true);
         maxStreams = (int) DistanceConfig.clamp(DistanceConfig.parseDouble(props, "server_walls_max_streams", DEFAULT_MAX_STREAMS), 0, MAX_STREAMS_LIMIT);
+        serverEffects = DistanceConfig.parseBoolean(props, "server_effects", false);
+        serverAir = DistanceConfig.parseBoolean(props, "server_air", false);
+        mutes = readMutes(props, file);
+        metrics = DistanceConfig.parseBoolean(props, "metrics", true);
 
         // Profile: custom values, or a preset on top of them
         profile.readFrom(props, PROFILE_PREFIX);
@@ -298,7 +348,17 @@ public final class ServerSettings {
                         "Voices above the limit are heard without walls. Default 24.",
                         "Сколько голосов сервер глушит одновременно, 0 - 512 (ограничение нагрузки на процессор).",
                         "Голоса сверх лимита слышно без стен. По умолчанию 24.")
-                .value("server_walls_max_streams", maxStreams);
+                .value("server_walls_max_streams", maxStreams)
+                .comment("true: they also get water, rain and thunder and the echo of rooms and caves, as set in section 4",
+                        "(profile.underwater_*, profile.weather_*, profile.reverb_*). Off by default: every voice it changes",
+                        "is re-encoded and counts against the limit above. Default false.",
+                        "true: у них также появляются вода, дождь и гроза и эхо комнат и пещер, как настроено в разделе 4",
+                        "(profile.underwater_*, profile.weather_*, profile.reverb_*). По умолчанию выключено: каждый изменённый",
+                        "голос кодируется заново и учитывается в лимите выше. По умолчанию false.")
+                .value("server_effects", serverEffects)
+                .comment("true: far voices get duller with distance, as in air, also for them. Same cost as above. Default false.",
+                        "true: далёкие голоса и для них глохнут с расстоянием, как в воздухе. Та же нагрузка. По умолчанию false.")
+                .value("server_air", serverAir);
 
         w.section("3. Players with the addon", "3. Игроки с аддоном")
                 .comment("What they get from the server:",
@@ -485,6 +545,28 @@ public final class ServerSettings {
                         "true: в открытых группах (их слышат и игроки рядом) дальность зон, корточки и мегафон",
                         "действуют на этот голос рядом. По умолчанию true.")
                 .value("open_group_range", openGroupRange);
+
+        w.section("10. Muted players", "10. Заглушённые игроки")
+                .comment("Players muted with /vcd mute: nobody hears them, nearby or in a group, until the time runs out.",
+                        "  mute.<uuid>=<end, epoch ms; 0 = until /vcd unmute>|<name>|<muted by>|<reason>",
+                        "Easiest with /vcd mute <player> [time] [reason], /vcd unmute <player> and /vcd mutes. Ended mutes are removed.",
+                        "Игроки, заглушённые командой /vcd mute: их никто не слышит, ни рядом, ни в группе, пока не выйдет время.",
+                        "  mute.<uuid>=<конец, эпоха в мс; 0 = до /vcd unmute>|<имя>|<кто заглушил>|<причина>",
+                        "Проще всего командами /vcd mute <игрок> [время] [причина], /vcd unmute <игрок> и /vcd mutes. Истёкшие удаляются.");
+        long now = System.currentTimeMillis();
+        mutes.values().stream().filter(m -> m.activeAt(now))
+                .sorted(java.util.Comparator.comparing(m -> m.player().toString()))
+                .forEach(m -> w.value(MUTE_PREFIX + m.player(), m.encode()));
+        w.section("11. Statistics", "11. Статистика")
+                .comment("Paper plugin: send anonymous usage numbers to bStats (https://bstats.org): the plugin's version, the",
+                        "server software and version, the Java version, the number of players and whether the addon's options are on.",
+                        "No names, addresses or chat. The numbers show which versions to keep supporting. Takes effect after a restart.",
+                        "Also off for every plugin with plugins/bStats/config.yml (enabled: false). Default true.",
+                        "Плагин для Paper: отправлять в bStats (https://bstats.org) анонимные числа об использовании: версию плагина,",
+                        "ПО и версию сервера, версию Java, число игроков и включены ли настройки аддона.",
+                        "Ни имён, ни адресов, ни чата. Числа показывают, какие версии стоит поддерживать. Действует после перезапуска.",
+                        "Выключается и для всех плагинов сразу через plugins/bStats/config.yml (enabled: false). По умолчанию true.")
+                .value("metrics", metrics);
         w.save(getPath());
         // Our own write is not an edit to pick up again
         loadedModified = lastModified(getPath());
@@ -747,12 +829,101 @@ public final class ServerSettings {
         return v == null ? "-" : ConfigWriter.number(v);
     }
 
+    /** The zone {@code player} stands in if it sets its own wall strength (the player's own choice does not count there), else null. */
+    public Zone wallsZoneOf(ServerPlayers.Info player) {
+        Zone zone = zoneOf(player);
+        return zone != null && zone.rules().wallsStrength() != null ? zone : null;
+    }
+
+    /**
+     * Whether walls muffle what a listener in {@code zone} hears, for the server's own muffling: a zone that
+     * sets a wall strength decides (0 = none) whatever the player chose; elsewhere the player's choice counts,
+     * unless the profile locks walls, and the walls must be on at all.
+     */
+    public boolean wallsApply(Zone zone, boolean playerWants) {
+        if (zone != null && zone.rules().wallsStrength() != null) {
+            return zone.rules().wallsStrength() > 0.0;
+        }
+        return profile.isOcclusionEnabled() && (playerWants || wallsLocked());
+    }
+
     /** Wall strength for a listener in {@code zone} (0 = walls off), for the server's own muffling. */
     public double wallsStrengthIn(Zone zone) {
         if (zone != null && zone.rules().wallsStrength() != null) {
             return zone.rules().wallsStrength();
         }
         return profile.isOcclusionEnabled() ? profile.getOcclusionStrength() : 0.0;
+    }
+
+    private static Map<UUID, VoiceMute> readMutes(Properties props, Path file) {
+        Map<UUID, VoiceMute> out = new java.util.LinkedHashMap<>();
+        for (String key : props.stringPropertyNames()) {
+            if (!key.startsWith(MUTE_PREFIX)) {
+                continue;
+            }
+            VoiceMute m = null;
+            try {
+                m = VoiceMute.decode(UUID.fromString(key.substring(MUTE_PREFIX.length()).trim()), props.getProperty(key));
+            } catch (IllegalArgumentException ignored) {
+                // reported below
+            }
+            if (m == null) {
+                DistanceConfig.LOGGER.warn("Ignoring a damaged mute in {}: {}", file.getFileName(), key);
+            } else {
+                out.put(m.player(), m);
+            }
+        }
+        return Map.copyOf(out);
+    }
+
+    /** The mute on {@code player} at {@code nowMillis}, or {@code null} when they may talk. */
+    public VoiceMute muteOf(UUID player, long nowMillis) {
+        VoiceMute m = player == null || mutes.isEmpty() ? null : mutes.get(player);
+        return m != null && m.activeAt(nowMillis) ? m : null;
+    }
+
+    /** The mutes that still hold, the ones ending soonest first and those without end last. */
+    public List<VoiceMute> mutes(long nowMillis) {
+        List<VoiceMute> out = new ArrayList<>();
+        for (VoiceMute m : mutes.values()) {
+            if (m.activeAt(nowMillis)) {
+                out.add(m);
+            }
+        }
+        out.sort(java.util.Comparator.comparingLong((VoiceMute m) -> m.isPermanent() ? Long.MAX_VALUE : m.until())
+                .thenComparing(VoiceMute::name, String.CASE_INSENSITIVE_ORDER));
+        return out;
+    }
+
+    /** Mutes a player, or changes their mute; call {@link #save()} to keep it. */
+    public synchronized void mute(VoiceMute mute) {
+        Map<UUID, VoiceMute> next = new java.util.LinkedHashMap<>(mutes);
+        next.put(mute.player(), mute);
+        mutes = Map.copyOf(next);
+    }
+
+    /** @return {@code true} when the player was muted; call {@link #save()} to keep it */
+    public synchronized boolean unmute(UUID player) {
+        if (!mutes.containsKey(player)) {
+            return false;
+        }
+        Map<UUID, VoiceMute> next = new java.util.LinkedHashMap<>(mutes);
+        next.remove(player);
+        mutes = Map.copyOf(next);
+        return true;
+    }
+
+    /** A mute that still holds by the muted player's name (ignoring case) or UUID, or {@code null}. */
+    public VoiceMute findMute(String nameOrId, long nowMillis) {
+        if (nameOrId == null || nameOrId.isBlank()) {
+            return null;
+        }
+        for (VoiceMute m : mutes(nowMillis)) {
+            if (m.name().equalsIgnoreCase(nameOrId) || m.player().toString().equalsIgnoreCase(nameOrId)) {
+                return m;
+            }
+        }
+        return null;
     }
 
     private static Map<String, Zone> readZones(Properties props, Path file) {
