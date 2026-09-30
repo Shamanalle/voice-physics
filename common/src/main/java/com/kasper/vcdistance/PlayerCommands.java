@@ -54,6 +54,9 @@ public final class PlayerCommands {
             case "mode":
                 return mode(player, lang, args, ctx, prefs);
             case "walls":
+                if (AudioDistancePlugin.SERVER_SETTINGS.wallsLocked()) {
+                    return List.of(ServerText.get(lang, "voice.walls.locked"));
+                }
                 return toggle(args, lang, "voice.walls", on -> prefs.setWalls(player, on));
             case "hud":
                 return toggle(args, lang, "voice.hud", on -> prefs.setHud(player, on));

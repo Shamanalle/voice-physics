@@ -188,6 +188,7 @@
   "command.vc-audio-distance.voice.mode.denied": "You may not shout on this server (permission %s).",
   "command.vc-audio-distance.voice.walls.on": "Walls muffle the voices you hear.",
   "command.vc-audio-distance.voice.walls.off": "Walls no longer muffle the voices you hear.",
+  "command.vc-audio-distance.voice.walls.locked": "The server has locked walls for everyone, so you cannot turn them off.",
   "command.vc-audio-distance.voice.hud.on": "The talking line is on: it shows who talks near you above your hotbar.",
   "command.vc-audio-distance.voice.hud.off": "The talking line is off.",
   "command.vc-audio-distance.voice.volume.set": "%s is at %s%% for you.",

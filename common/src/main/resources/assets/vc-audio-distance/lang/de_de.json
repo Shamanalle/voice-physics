@@ -188,6 +188,7 @@
   "command.vc-audio-distance.voice.mode.denied": "Auf diesem Server darfst du nicht rufen (Recht %s).",
   "command.vc-audio-distance.voice.walls.on": "Wände dämpfen die Stimmen, die du hörst.",
   "command.vc-audio-distance.voice.walls.off": "Wände dämpfen die Stimmen, die du hörst, nicht mehr.",
+  "command.vc-audio-distance.voice.walls.locked": "Der Server hat die Wände für alle festgelegt, du kannst sie nicht ausschalten.",
   "command.vc-audio-distance.voice.hud.on": "Die Sprecherzeile ist an: Über der Hotbar steht, wer in deiner Nähe spricht.",
   "command.vc-audio-distance.voice.hud.off": "Die Sprecherzeile ist aus.",
   "command.vc-audio-distance.voice.volume.set": "%s hat für dich %s%%.",

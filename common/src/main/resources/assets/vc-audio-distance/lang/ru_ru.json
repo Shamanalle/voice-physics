@@ -188,6 +188,7 @@
   "command.vc-audio-distance.voice.mode.denied": "На этом сервере вам нельзя кричать (право %s).",
   "command.vc-audio-distance.voice.walls.on": "Стены глушат голоса, которые вы слышите.",
   "command.vc-audio-distance.voice.walls.off": "Стены больше не глушат голоса, которые вы слышите.",
+  "command.vc-audio-distance.voice.walls.locked": "Сервер закрепил стены для всех, поэтому отключить их нельзя.",
   "command.vc-audio-distance.voice.hud.on": "Строка «кто говорит» включена: над хотбаром видно, кто говорит рядом.",
   "command.vc-audio-distance.voice.hud.off": "Строка «кто говорит» выключена.",
   "command.vc-audio-distance.voice.volume.set": "%s для вас на %s%%.",

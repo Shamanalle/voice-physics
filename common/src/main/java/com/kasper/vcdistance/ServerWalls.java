@@ -420,7 +420,8 @@ public final class ServerWalls {
         // Walls (the admin's switch, and this player's own), and how loud this speaker is to this listener
         PlayerPrefs prefs = AudioDistancePlugin.PLAYER_PREFS;
         DistanceConfig profile = settings.profile();
-        boolean walls = worldAvailable && settings.isServerWalls() && profile.isOcclusionEnabled() && prefs.wallsFor(listener);
+        boolean walls = worldAvailable && settings.isServerWalls() && profile.isOcclusionEnabled()
+                && (prefs.wallsFor(listener) || settings.wallsLocked());
         double volumeLoss = prefs.lossDb(listener, speakerEntity != null ? speakerEntity : channel);
         if (!walls && volumeLoss <= 0.0) {
             return null;

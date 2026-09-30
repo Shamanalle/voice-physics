@@ -188,6 +188,7 @@
   "command.vc-audio-distance.voice.mode.denied": "你不能在此服务器上喊叫（权限 %s）。",
   "command.vc-audio-distance.voice.walls.on": "墙壁会削弱你听到的声音。",
   "command.vc-audio-distance.voice.walls.off": "墙壁不再削弱你听到的声音。",
+  "command.vc-audio-distance.voice.walls.locked": "服务器已为所有人锁定墙壁效果，你无法将其关闭。",
   "command.vc-audio-distance.voice.hud.on": "发言提示行已开启：快捷栏上方会显示附近谁在说话。",
   "command.vc-audio-distance.voice.hud.off": "发言提示行已关闭。",
   "command.vc-audio-distance.voice.volume.set": "%s 对你是 %s%%。",

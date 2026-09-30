@@ -166,6 +166,20 @@ public class PlayerControlsTest {
     }
 
     @Test
+    @DisplayName("Walls count as locked only for an enforced profile with walls locked; /voice walls works otherwise")
+    void wallsLocked() throws IOException {
+        Path file = dir.resolve("locked.properties");
+        Files.writeString(file, "profile_mode=enforce\nprofile_locked=walls\n");
+        ServerSettings locked = new ServerSettings(file);
+        locked.load();
+        assertTrue(locked.wallsLocked());
+        assertFalse(settings().wallsLocked());
+        // The command reads the server's own settings: with them not locked it works
+        PlayerCommands.run(ANNA, "", "walls off", p -> true);
+        assertFalse(AudioDistancePlugin.PLAYER_PREFS.wallsFor(ANNA));
+    }
+
+    @Test
     @DisplayName("Tab completion: subcommands, modes without shout when not allowed, online players")
     void suggestions() {
         AudioDistancePlugin.PLAYERS.update(player("Bob", 5));

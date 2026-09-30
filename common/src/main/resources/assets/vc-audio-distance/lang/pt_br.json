@@ -188,6 +188,7 @@
   "command.vc-audio-distance.voice.mode.denied": "Você não pode gritar neste servidor (permissão %s).",
   "command.vc-audio-distance.voice.walls.on": "As paredes abafam as vozes que você ouve.",
   "command.vc-audio-distance.voice.walls.off": "As paredes não abafam mais as vozes que você ouve.",
+  "command.vc-audio-distance.voice.walls.locked": "O servidor fixou as paredes para todos, então você não pode desativá-las.",
   "command.vc-audio-distance.voice.hud.on": "A linha de quem fala está ligada: acima da hotbar aparece quem fala por perto.",
   "command.vc-audio-distance.voice.hud.off": "A linha de quem fala está desligada.",
   "command.vc-audio-distance.voice.volume.set": "%s está em %s%% para você.",

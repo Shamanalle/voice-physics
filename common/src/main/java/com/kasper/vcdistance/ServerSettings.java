@@ -166,6 +166,11 @@ public final class ServerSettings {
         return lockedParts;
     }
 
+    /** Whether the profile is enforced with walls locked: players cannot change their walls (not even with /voice). */
+    public boolean wallsLocked() {
+        return profileMode == ProfileMode.ENFORCE && lockedParts.contains(DistanceConfig.Part.WALLS);
+    }
+
     /** Players with the addon may see the monitor, the radar and nearby players in the HUD. */
     public boolean isMonitorAllowed() {
         return allowMonitor;
