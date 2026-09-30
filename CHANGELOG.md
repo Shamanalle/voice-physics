@@ -6,6 +6,40 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 *Все заметные изменения проекта описываются в этом файле. Каждая версия описана сначала на английском, затем на русском.*
 
+## [2.10.0] - 2026-09-30
+
+### English
+
+> **Everything new in this release is for the Paper/Folia plugin, off by default and not yet tried in a live game.** Turn each one on with `/vcd extras <name> on` on a test server first; `/vcd undo` takes a switch back. The mods are unchanged apart from the version number.
+
+#### Added
+- **`/vcd extras`** lists the new features with a switch each, in the server file's section 12 (`server_radio`, `server_speakers`, `server_eavesdrop`, `server_sculk`, `server_doorway`, `server_integrations`; all `false`). Changes can be undone and appear in the change log.
+- **Radio.** `/voice radio <1-9999|off>` tunes a player's radio (permission `vcd.player.radio`, on for everyone): players on the same frequency hear each other at any distance and in any world, like a voice in the ear, unless they already hear the speaker by distance or ignore them. `radio_item` (for example `minecraft:clock`) makes holding that item necessary. `/vcd radio` shows who is on the air and sets the item (`/vcd radio item <id>|none`). Keys `server_radio`, `radio_item`.
+- **Loudspeakers.** `/vcd speaker add <name> [radius] [pickup]` places a loudspeaker where you stand; whoever talks within its pickup distance is heard from it by every player within its radius (up to 256 blocks), as a located sound. `list`, `tp <name>` and `remove <name>` manage them (permission `vcd.speaker`; `list` needs only `vcd.status`). Saved as `speaker.<name>=world|x|y|z|pickup|radius`.
+- **Eavesdrop item.** A player holding `eavesdrop_item` (default `minecraft:spyglass`) hears walls as thinner: the muffling is multiplied by `eavesdrop_factor` (default 0.3, 0.05 - 1). `/vcd eavesdrop [item <id>|none|factor <0.05-1>]`. Works for players without the addon.
+- **Sculk and wardens.** A shout (`/voice mode shout`) or a megaphone voice raises a game event at the speaker that sculk sensors and wardens react to, at most once every 3 seconds; whispers, sneaking, ordinary talking and the dead raise nothing. Switch `/vcd extras sculk on`.
+- **Doorway sound** for players without the addon: behind a wall, a voice with a clearly better way round through an open door or gap is heard from that opening, muffled only by the bends, instead of through the wall (at most 6 searches per tick, 48 blocks). Any failure leaves the muffled straight path. Switch `/vcd extras doorway on`.
+- **Integrations** (`/vcd extras integrations on`, each needs its plugin, all by reflection): Towny towns and Lands lands as zones (`zone.town.<name>`, `zone.land.<name>`, `/vcd zone set town:<name> ...`); a WorldGuard region flag `vcd-zone` that puts a region in one of the settings file's zones by name; LuckPerms contexts `vcd:mode`, `vcd:walls` and `vcd:zone`.
+
+#### Fixed
+- The Modrinth page workflow no longer fails when a gallery picture is already there.
+
+### Русский
+
+> **Всё новое в этом выпуске — для плагина Paper/Folia, выключено по умолчанию и ещё не опробовано в живой игре.** Включайте каждое командой `/vcd extras <название> on` сначала на тестовом сервере; `/vcd undo` возвращает переключатель. Моды не изменились, кроме номера версии.
+
+#### Добавлено
+- **`/vcd extras`** показывает новые возможности с переключателем у каждой, в разделе 12 файла сервера (`server_radio`, `server_speakers`, `server_eavesdrop`, `server_sculk`, `server_doorway`, `server_integrations`; все `false`). Изменения можно отменить, они попадают в журнал.
+- **Рация.** `/voice radio <1-9999|off>` настраивает рацию игрока (право `vcd.player.radio`, у всех включено): игроки на одной частоте слышат друг друга на любом расстоянии и в любом мире, как голос в ухе, если только не слышат говорящего и так по расстоянию или не игнорируют его. `radio_item` (например `minecraft:clock`) делает обязательным предмет в руке. `/vcd radio` показывает, кто в эфире, и задаёт предмет (`/vcd radio item <id>|none`). Ключи `server_radio`, `radio_item`.
+- **Громкоговорители.** `/vcd speaker add <имя> [радиус] [захват]` ставит громкоговоритель там, где вы стоите; того, кто говорит в пределах захвата, слышат из него все игроки в его радиусе (до 256 блоков) как позиционный звук. `list`, `tp <имя>` и `remove <имя>` управляют ими (право `vcd.speaker`; для `list` хватает `vcd.status`). Хранится как `speaker.<имя>=мир|x|y|z|захват|радиус`.
+- **Предмет для подслушивания.** Игрок с `eavesdrop_item` в руке (по умолчанию `minecraft:spyglass`) слышит стены тоньше: приглушение умножается на `eavesdrop_factor` (по умолчанию 0.3, от 0.05 до 1). `/vcd eavesdrop [item <id>|none|factor <0.05-1>]`. Работает и для игроков без аддона.
+- **Скалк и вардены.** Крик (`/voice mode shout`) или голос с мегафоном создаёт у говорящего игровое событие, на которое реагируют скалковые датчики и вардены, не чаще раза в 3 секунды; шёпот, корточки, обычная речь и мёртвые ничего не создают. Переключатель `/vcd extras sculk on`.
+- **Звук через дверной проём** для игроков без аддона: за стеной голос, у которого есть заметно лучший путь через открытую дверь или проём, слышен из этого проёма, приглушённый только изгибами, а не через стену (не больше 6 поисков за тик, 48 блоков). При любом сбое остаётся приглушённый прямой путь. Переключатель `/vcd extras doorway on`.
+- **Интеграции** (`/vcd extras integrations on`, каждой нужен свой плагин, всё через reflection): города Towny и земли Lands как зоны (`zone.town.<имя>`, `zone.land.<имя>`, `/vcd zone set town:<имя> ...`); флаг региона WorldGuard `vcd-zone`, относящий регион к зоне из файла настроек по имени; контексты LuckPerms `vcd:mode`, `vcd:walls` и `vcd:zone`.
+
+#### Исправлено
+- Workflow страницы Modrinth больше не падает, если картинка галереи уже есть.
+
 ## [2.9.0] - 2026-09-30
 
 ### English

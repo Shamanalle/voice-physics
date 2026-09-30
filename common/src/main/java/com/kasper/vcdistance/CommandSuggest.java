@@ -49,6 +49,10 @@ final class CommandSuggest {
                 case "walls" -> addAll(out, AdminCommands.WALLS_STEPS, typed);
                 case "serverwalls", "monitor", "notices" -> addAll(out, AdminCommands.ON_OFF, typed);
                 case "effects" -> addAll(out, AdminCommands.EFFECT_PARTS, typed);
+                case "extras" -> addAll(out, AdminCommands.EXTRAS, typed);
+                case "radio" -> addAll(out, new String[]{"item"}, typed);
+                case "eavesdrop" -> addAll(out, new String[]{"item", "factor"}, typed);
+                case "speaker" -> addAll(out, new String[]{"add", "remove", "list", "tp"}, typed);
                 case "lock" -> lockParts(out, typed);
                 case "rule" -> addAll(out, AdminCommands.RULES, typed);
                 case "group" -> addAll(out, AdminCommands.GROUP_RULES, typed);
@@ -95,6 +99,22 @@ final class CommandSuggest {
                 case "echo" -> AdminCommands.ECHO_STEPS;
                 default -> new String[0];
             }, typed);
+        } else if (sub.equals("radio") && args.length == 3 && action.equals("item")) {
+            addAll(out, new String[]{"minecraft:clock", "minecraft:compass", "none"}, typed);
+        } else if (sub.equals("eavesdrop") && args.length == 3 && action.equals("item")) {
+            addAll(out, new String[]{"minecraft:spyglass", "minecraft:amethyst_shard", "none"}, typed);
+        } else if (sub.equals("eavesdrop") && args.length == 3 && action.equals("factor")) {
+            addAll(out, new String[]{"0.1", "0.3", "0.5", "0.8"}, typed);
+        } else if (sub.equals("speaker") && args.length == 3 && (action.equals("remove") || action.equals("tp") || action.equals("add"))) {
+            if (settings != null) {
+                addAll(out, settings.speakers().values().stream().map(Loudspeaker::name).toArray(String[]::new), typed);
+            }
+        } else if (sub.equals("speaker") && args.length == 4 && action.equals("add")) {
+            addAll(out, new String[]{"16", "32", "48", "64", "128"}, typed);
+        } else if (sub.equals("speaker") && args.length == 5 && action.equals("add")) {
+            addAll(out, new String[]{"2", "3", "4", "8"}, typed);
+        } else if (sub.equals("extras") && args.length == 3) {
+            addAll(out, AdminCommands.ON_OFF, typed);
         } else if (sub.equals("group") && args.length == 3) {
             addAll(out, AdminCommands.ON_OFF, typed);
         } else if (sub.equals("block") && args.length >= 3) {
@@ -167,6 +187,12 @@ final class CommandSuggest {
                     }
                     if (ctx != null && ctx.claims()) {
                         claims(out, ctx, settings, typed);
+                    }
+                    if (ctx != null && ctx.towns()) {
+                        add(out, Zone.TOWN + ":", typed, null);
+                    }
+                    if (ctx != null && ctx.lands()) {
+                        add(out, Zone.LAND + ":", typed, null);
                     }
                 } else if (args.length == 4) {
                     addAll(out, ZoneCommands.SETTINGS, typed);

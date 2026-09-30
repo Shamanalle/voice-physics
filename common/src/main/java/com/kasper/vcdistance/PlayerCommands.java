@@ -22,6 +22,7 @@ import java.util.UUID;
  * /voice mode quiet|normal|shout           how far your voice carries
  * /voice walls on|off | hud on|off         walls muffling what you hear | the talking line
  * /voice volume &lt;player&gt; 0-100 | ignore | unignore
+ * /voice radio [1-9999|off]                tune the radio (when the server has it on)
  * /voice undo | reset | menu | help [command]
  * </pre>
  * Replies are {@link CommandReply} lines in the player's language ({@link ServerText}) with buttons
@@ -40,8 +41,11 @@ public final class PlayerCommands {
     public static final String PERM_HUD = "vcd.player.hud";
     public static final String PERM_VOLUME = "vcd.player.volume";
     public static final String PERM_MENU = "vcd.player.menu";
+    public static final String PERM_RADIO = "vcd.player.radio";
 
-    static final String[] SUBCOMMANDS = {"status", "mode", "walls", "hud", "volume", "ignore", "unignore", "undo", "reset", "menu", "help"};
+    static final String[] SUBCOMMANDS = {"status", "mode", "walls", "hud", "volume", "ignore", "unignore", "radio", "undo", "reset", "menu", "help"};
+    /** Frequencies offered by Tab for {@code /voice radio}. */
+    private static final String[] RADIO_STEPS = {"off", "100", "1000", "1200"};
     private static final String[] ON_OFF = {"on", "off"};
     /** Players listed in the status. */
     static final int LIST_VOLUMES = 8;
@@ -55,11 +59,12 @@ public final class PlayerCommands {
             Map.entry("volume", new String[]{"volume Steve 50", "volume Steve 100"}),
             Map.entry("ignore", new String[]{"ignore Steve"}),
             Map.entry("unignore", new String[]{"unignore Steve"}),
+            Map.entry("radio", new String[]{"radio", "radio 1200", "radio off"}),
             Map.entry("undo", new String[]{"undo"}),
             Map.entry("reset", new String[]{"reset"}),
             Map.entry("menu", new String[]{"menu"}));
     /** The topics in the order {@code /voice help} lists them. */
-    static final String[] TOPICS = {"status", "mode", "walls", "hud", "volume", "ignore", "unignore", "undo", "reset", "menu"};
+    static final String[] TOPICS = {"status", "mode", "walls", "hud", "volume", "ignore", "unignore", "radio", "undo", "reset", "menu"};
 
     /** What the platform tells the command about the player running it. */
     public interface Context {
@@ -120,6 +125,7 @@ public final class PlayerCommands {
                     volume(r, r.args[1], "100");
                 }
             }
+            case "radio" -> radio(r);
             case "undo" -> undo(r);
             case "reset" -> {
                 AudioDistancePlugin.PLAYER_PREFS.reset(player);
@@ -154,6 +160,7 @@ public final class PlayerCommands {
             case "hud" -> PERM_HUD;
             case "volume", "ignore", "unignore" -> PERM_VOLUME;
             case "menu" -> PERM_MENU;
+            case "radio" -> PERM_RADIO;
             default -> null;
         };
     }
@@ -228,6 +235,14 @@ public final class PlayerCommands {
             LineBuilder hud = CommandReply.line().addAll(m.spans("voice.status.hud", Style.PLAIN, AdminCommands.onOff(m, p.hud())));
             toggleButton(r, hud, "hud", p.hud());
             r.reply.add(hud);
+        }
+
+        // The radio, when the server has it on
+        if (settings.isServerRadio()) {
+            int frequency = prefs.radioOf(r.player);
+            r.reply.add(CommandReply.line().addAll(m.spans("voice.status.radio", Style.PLAIN,
+                    new Span(frequency > 0 ? String.valueOf(frequency) : m.get("off"), Style.VALUE, Click.SUGGEST, "/voice radio ",
+                            m.get("hover.change", "/voice radio")))));
         }
 
         // Volumes, one line each with a button to bring the player back to full volume
@@ -312,6 +327,52 @@ public final class PlayerCommands {
             return;
         }
         toggle(r, "walls", on -> AudioDistancePlugin.PLAYER_PREFS.setWalls(r.player, on));
+    }
+
+    /** {@code /voice radio [1-9999|off]}: tune the radio; players on one frequency hear each other at any distance. */
+    private static void radio(Run r) {
+        ServerSettings settings = AudioDistancePlugin.SERVER_SETTINGS;
+        if (!settings.isServerRadio()) {
+            r.line(Style.WARN, r.m.get("voice.radio.unavailable"));
+            return;
+        }
+        String word = r.arg(1).toLowerCase(Locale.ROOT);
+        if (word.isEmpty()) {
+            int frequency = AudioDistancePlugin.PLAYER_PREFS.radioOf(r.player);
+            r.reply.add(CommandReply.line().addAll(r.m.spans("voice.status.radio", Style.PLAIN,
+                    new Span(frequency > 0 ? String.valueOf(frequency) : r.m.get("off"), Style.VALUE))));
+            r.line(Style.MUTED, r.m.get("voice.radio.how", PlayerPrefs.RADIO_MIN, PlayerPrefs.RADIO_MAX));
+            radioItemNote(r, settings);
+            return;
+        }
+        int frequency = word.equals("off") ? 0 : parseFrequency(word);
+        if (frequency < 0) {
+            r.badValue("radio", r.arg(1), PlayerPrefs.RADIO_MIN + "-" + PlayerPrefs.RADIO_MAX + "|off", "radio");
+            return;
+        }
+        AudioDistancePlugin.PLAYER_PREFS.setRadio(r.player, frequency);
+        if (frequency == 0) {
+            r.saved("voice.radio.off");
+        } else {
+            r.saved("voice.radio.set", frequency);
+            radioItemNote(r, settings);
+        }
+    }
+
+    private static void radioItemNote(Run r, ServerSettings settings) {
+        if (!settings.getRadioItem().isEmpty()) {
+            r.line(Style.MUTED, r.m.get("voice.radio.item", settings.getRadioItem()));
+        }
+    }
+
+    /** A frequency in range, or -1. */
+    static int parseFrequency(String text) {
+        try {
+            int v = Integer.parseInt(text.trim());
+            return v < PlayerPrefs.RADIO_MIN || v > PlayerPrefs.RADIO_MAX ? -1 : v;
+        } catch (NumberFormatException e) {
+            return -1;
+        }
     }
 
     private static void hud(Run r) {
@@ -493,6 +554,11 @@ public final class PlayerCommands {
                             }
                         } else if (words.length == 3 && sub.equals("volume")) {
                             options.addAll(List.of("0", "25", "50", "75", "100"));
+                        }
+                    }
+                    case "radio" -> {
+                        if (words.length == 2) {
+                            options.addAll(List.of(RADIO_STEPS));
                         }
                     }
                     case "help", "?" -> {

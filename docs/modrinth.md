@@ -42,6 +42,7 @@ Players **without the addon** also hear voices muffled through walls.
 - **Require the addon:** send a download link, remind on every join, or kick.
 - **Realism without the addon** (off by default): water, rain and echo for players who only have voice chat.
 - **Mute** a player's voice for a time or for good, with `/vcd mute`.
+- **Paper extras** (off by default, not yet tried in a live game): a radio, loudspeakers, an eavesdrop item, a sculk reaction to shouts, doorway sound, and Towny, Lands, WorldGuard and LuckPerms integrations. `/vcd extras` lists the switches.
 - **Paper:** `/voice` for every player (talk quietly or shout, walls off for yourself, per-player volume) and PlaceholderAPI placeholders for scoreboards and tab lists.
 - **In-game Server tab** for admins, clickable `/vcd` commands with undo, and a log of who changed what.
 
@@ -105,6 +106,7 @@ Minecraft 1.20 – 1.20.6, 1.21 – 1.21.11 and 26.1 – 26.3.
 - **Обязательный аддон:** ссылка на скачивание, напоминание при каждом входе или кик.
 - **Реализм без аддона** (по умолчанию выключен): вода, дождь и эхо для игроков, у которых есть только голосовой чат.
 - **Заглушение** голоса игрока на время или насовсем командой `/vcd mute`.
+- **Дополнения Paper** (по умолчанию выключены, ещё не опробованы в живой игре): рация, громкоговорители, предмет для подслушивания, реакция скалка на крик, звук через дверной проём и интеграции с Towny, Lands, WorldGuard и LuckPerms. Переключатели — в `/vcd extras`.
 - **Paper:** `/voice` для каждого игрока (говорить тише или кричать, свои стены выключить, громкость каждого) и плейсхолдеры PlaceholderAPI для скорбордов и таба.
 - **Вкладка «Сервер» в игре** для админов, кликабельные команды `/vcd` с отменой и журнал того, кто что менял.
 

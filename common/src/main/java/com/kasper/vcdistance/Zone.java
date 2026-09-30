@@ -7,11 +7,11 @@ import java.util.Map;
 /**
  * A place with its own sound: a world (dimension), a box drawn with {@code /vcd zone}, on Paper
  * with WorldGuard a region, or on Fabric, Forge and NeoForge with Open Parties and Claims the claims
- * of a player or party. A zone can change how the profile is offered, which preset it uses, how
+ * of a player or party, or on Paper with Towny a town, or with Lands a land. A zone can change how the profile is offered, which preset it uses, how
  * far voices carry, how strong walls are and whether there is always an echo; whatever it leaves out
  * comes from the server's main settings.
  *
- * @param kind     {@link #WORLD}, {@link #BOX}, {@link #REGION} or {@link #CLAIM}
+ * @param kind     {@link #WORLD}, {@link #BOX}, {@link #REGION}, {@link #CLAIM}, {@link #TOWN} or {@link #LAND}
  * @param name     world name ("world_nether", or on Fabric "the_nether" / "minecraft:the_nether"),
  *                 box name or region id
  * @param mode     how the profile is offered here, or {@code null} to keep the server's
@@ -28,6 +28,16 @@ public record Zone(String kind, String name, ServerSettings.ProfileMode mode, St
     public static final String REGION = "region";
     /** Chunks claimed with Open Parties and Claims, by the player (or party leader) the zone is named after. */
     public static final String CLAIM = "claim";
+
+    /** A Towny town (Paper with Towny), by the town's name. */
+    public static final String TOWN = "town";
+    /** A Lands land (Paper with Lands), by the land's name. */
+    public static final String LAND = "land";
+    /** What a WorldGuard region's {@code vcd-zone} flag names: a zone of the settings file, by name. */
+    public static final String FLAG = "flag";
+
+    /** The kinds a region entry names with a prefix: "claim:steve", "town:springfield", "land:atlantis". */
+    private static final List<String> PREFIXED = List.of(CLAIM, TOWN, LAND);
 
     public Zone(String kind, String name, ServerSettings.ProfileMode mode, String preset) {
         this(kind, name, mode, preset, Rules.NONE, null, 0);
@@ -98,7 +108,20 @@ public record Zone(String kind, String name, ServerSettings.ProfileMode mode, St
 
     /** Whether {@code kind} is one of the zone kinds. */
     public static boolean isKind(String kind) {
-        return WORLD.equals(kind) || BOX.equals(kind) || REGION.equals(kind) || CLAIM.equals(kind);
+        return WORLD.equals(kind) || BOX.equals(kind) || REGION.equals(kind) || PREFIXED.contains(kind);
+    }
+
+    /** The kind a reference like "town:springfield" is prefixed with ("claim", "town" or "land"), or {@code null}. */
+    public static String prefixedKind(String ref) {
+        if (ref == null) {
+            return null;
+        }
+        String n = normalize(ref);
+        int colon = n.indexOf(':');
+        if (colon > 0 && PREFIXED.contains(n.substring(0, colon))) {
+            return n.substring(0, colon);
+        }
+        return null;
     }
 
     /** Stable key for tracking which zone a player is in. */
@@ -129,8 +152,9 @@ public record Zone(String kind, String name, ServerSettings.ProfileMode mode, St
         Zone best = null;
         if (regions != null) {
             for (String region : regions) {
-                // WorldGuard region ids, and "claim:<owner>" for claims (region ids have no colon)
-                Zone r = zones.get(region.startsWith(CLAIM + ":") ? normalize(region) : REGION + ":" + normalize(region));
+                // WorldGuard region ids, "claim:<owner>", "town:<name>" and "land:<name>" (region ids have no colon),
+                // and "flag:<zone>" for the zone a region's vcd-zone flag names
+                Zone r = byEntry(zones, region);
                 if (r != null && (best == null || r.priority() > best.priority())) {
                     best = r;
                 }
@@ -160,6 +184,23 @@ public record Zone(String kind, String name, ServerSettings.ProfileMode mode, St
             return inWorld;
         }
         return null;
+    }
+
+    private static Zone byEntry(Map<String, Zone> zones, String entry) {
+        if (prefixedKind(entry) != null) {
+            return zones.get(normalize(entry));
+        }
+        if (normalize(entry).startsWith(FLAG + ":")) {
+            String name = normalize(entry).substring(FLAG.length() + 1);
+            for (String kind : new String[]{BOX, REGION, WORLD}) {
+                Zone z = zones.get(kind + ":" + name);
+                if (z != null) {
+                    return z;
+                }
+            }
+            return null;
+        }
+        return zones.get(REGION + ":" + normalize(entry));
     }
 
     /** "minecraft:the_nether" and "the_nether" are the same world. */
