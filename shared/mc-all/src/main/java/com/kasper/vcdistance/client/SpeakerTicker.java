@@ -3,6 +3,7 @@ package com.kasper.vcdistance.client;
 import com.kasper.vcdistance.AudioDistancePlugin;
 import com.kasper.vcdistance.Bearing;
 import com.kasper.vcdistance.DistanceConfig;
+import com.kasper.vcdistance.GridCache;
 import com.kasper.vcdistance.ListenerEnvironment;
 import com.kasper.vcdistance.RoomEstimate;
 import com.kasper.vcdistance.SoundPath;
@@ -36,6 +37,8 @@ public final class SpeakerTicker {
     private static final int PATH_NODES = 1200;
 
     private final WorldAccess access;
+    /** Block lookups for this tick's wall rays' ways round, shared so each block is read once. */
+    private final GridCache grid = new GridCache();
     private int lastMaterialRevision = Integer.MIN_VALUE;
     private Object lastWorld;
     private boolean loggedFailure;
@@ -104,8 +107,8 @@ public final class SpeakerTicker {
     }
 
     private void work(List<SpeakerRegistry.Speaker> active, long now, DistanceConfig config, boolean configChanged) {
-        // On a slow machine (or a busy spot) the same work is spread over twice the time
-        int slow = AudioDistancePlugin.CLIENT_PERF.isBusy() ? 2 : 1;
+        // On a slow machine (or a busy spot) the same work is spread over up to four times the time
+        int slow = AudioDistancePlugin.CLIENT_PERF.slowdown();
 
         boolean tracing = AudioDistancePlugin.occlusionStatus() == AudioDistancePlugin.OcclusionStatus.ACTIVE;
         Vec3 listener = access.listenerPosition();
@@ -115,7 +118,7 @@ public final class SpeakerTicker {
         int budget = MAX_TRACES_PER_TICK / slow;
         int pathBudget = ticks % slow == 0 ? PATHS_PER_TICK : 0;
         boolean corners = config.isDiffractionEnabled();
-        SoundPath.Grid grid = cachedGrid();
+        grid.newTick(access::isOpenForSound);
         SpeakerRegistry.Speaker roomSpeaker = null;
         Vec3 roomSource = null;
 
@@ -233,13 +236,6 @@ public final class SpeakerTicker {
                 DistanceConfig.LOGGER.warn("Could not measure the surroundings, echo and water are paused: {}", t.toString());
             }
         }
-    }
-
-    /** Block lookups for this tick's path searches, shared so each block is read once. */
-    private SoundPath.Grid cachedGrid() {
-        java.util.Map<Long, Boolean> cache = new java.util.HashMap<>();
-        return (x, y, z) -> cache.computeIfAbsent(((long) (x & 0x3FFFFFF) << 38) | ((long) (y & 0xFFF) << 26) | (z & 0x3FFFFFFL),
-                k -> access.isOpenForSound(x, y, z));
     }
 
     private void reset() {

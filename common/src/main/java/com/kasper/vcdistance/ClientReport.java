@@ -54,7 +54,9 @@ public final class ClientReport {
         if (!place.isNone()) {
             out.add(String.format(Locale.ROOT, "Place: %s (echo x%.2f, air %.2f)", place.where(), place.echo(), place.air()));
         }
-        out.add(String.format(Locale.ROOT, "Load: %.2f ms per tick", AudioDistancePlugin.CLIENT_PERF.averageMs()));
+        int slowdown = AudioDistancePlugin.CLIENT_PERF.slowdown();
+        out.add(String.format(Locale.ROOT, "Load: %.2f ms per tick", AudioDistancePlugin.CLIENT_PERF.averageMs())
+                + (slowdown > 1 ? ", work spread over " + slowdown + "x the time" : ""));
         List<Problems.Problem> problems = Problems.recent();
         if (problems.isEmpty()) {
             out.add("Problems: none since the start");
