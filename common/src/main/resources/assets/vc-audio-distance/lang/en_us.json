@@ -779,5 +779,16 @@
   "command.vc-audio-distance.btn.speaker_tp": "Go",
   "command.vc-audio-distance.btn.speaker_remove": "Remove",
   "command.vc-audio-distance.btn.speaker_on": "Speakers on",
-  "command.vc-audio-distance.btn.speaker_off": "Speakers off"
+  "command.vc-audio-distance.btn.speaker_off": "Speakers off",
+  "command.vc-audio-distance.help.eavesdrop": "/vcd eavesdrop [item <id>|none|factor <0.05-1>] - eavesdropping: the item that makes walls sound thinner, and by how much",
+  "command.vc-audio-distance.eavesdrop.title": "Eavesdropping (holding the item makes walls sound thinner)",
+  "command.vc-audio-distance.eavesdrop.state": "Eavesdropping: %s",
+  "command.vc-audio-distance.eavesdrop.item": "Item to hold: %s",
+  "command.vc-audio-distance.eavesdrop.nobody": "nobody can",
+  "command.vc-audio-distance.eavesdrop.factor": "Walls left: %s of their muffling",
+  "command.vc-audio-distance.eavesdrop.item_set": "Players must hold %s to eavesdrop. Saved.",
+  "command.vc-audio-distance.eavesdrop.item_off": "Nobody can eavesdrop now (no item set). Saved.",
+  "command.vc-audio-distance.eavesdrop.factor_set": "Eavesdroppers hear %s of the walls' muffling. Saved.",
+  "command.vc-audio-distance.btn.eavesdrop_on": "Eavesdrop on",
+  "command.vc-audio-distance.btn.eavesdrop_off": "Eavesdrop off"
 }

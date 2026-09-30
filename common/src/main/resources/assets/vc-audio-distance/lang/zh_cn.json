@@ -779,5 +779,16 @@
   "command.vc-audio-distance.btn.speaker_tp": "前往",
   "command.vc-audio-distance.btn.speaker_remove": "移除",
   "command.vc-audio-distance.btn.speaker_on": "扩音器开",
-  "command.vc-audio-distance.btn.speaker_off": "扩音器关"
+  "command.vc-audio-distance.btn.speaker_off": "扩音器关",
+  "command.vc-audio-distance.help.eavesdrop": "/vcd eavesdrop [item <id>|none|factor <0.05-1>] - 窃听：让墙壁听起来更薄的物品，以及薄多少",
+  "command.vc-audio-distance.eavesdrop.title": "窃听（手持该物品时墙壁听起来更薄）",
+  "command.vc-audio-distance.eavesdrop.state": "窃听：%s",
+  "command.vc-audio-distance.eavesdrop.item": "需手持的物品：%s",
+  "command.vc-audio-distance.eavesdrop.nobody": "没人能窃听",
+  "command.vc-audio-distance.eavesdrop.factor": "保留的墙壁隔音：%s",
+  "command.vc-audio-distance.eavesdrop.item_set": "需要手持 %s 才能窃听。已保存。",
+  "command.vc-audio-distance.eavesdrop.item_off": "现在没人能窃听（未设置物品）。已保存。",
+  "command.vc-audio-distance.eavesdrop.factor_set": "窃听者听到墙壁隔音的 %s。已保存。",
+  "command.vc-audio-distance.btn.eavesdrop_on": "窃听开",
+  "command.vc-audio-distance.btn.eavesdrop_off": "窃听关"
 }

@@ -330,6 +330,9 @@ public final class ServerWalls {
             if (settings.isServerSpeakers() && !settings.speakers().isEmpty()) {
                 speakers(event, packet, talking);
             }
+            if (settings.isServerSculk() && ServerSculk.loud(settings, AudioDistancePlugin.PLAYER_PREFS, players.get(talking), packet.isWhispering())) {
+                ServerSculk.report(talking, System.nanoTime());
+            }
         }
         if (packet == null || sender == null || sender.getPlayer() == null || !rangeRulesFor(sender)
                 || !voiceRulesOn()) {
@@ -568,7 +571,8 @@ public final class ServerWalls {
         synchronized (pair) {
             double thickness = pair.thickness;
             // A zone can make walls stronger or weaker for the listeners in it
-            double strength = settings.wallsStrengthIn(listenerZone);
+            // and thinner still for a listener who holds the eavesdrop item
+            double strength = settings.wallsStrengthIn(listenerZone) * ServerEavesdrop.factor(settings, players.get(listener));
             boolean measured = walls && !Double.isNaN(thickness);
             double muffle = measured ? OcclusionModel.muffle(thickness, strength) : 0.0;
             double loss = (measured ? OcclusionModel.lossDb(thickness, strength) : 0.0) + volumeLoss;

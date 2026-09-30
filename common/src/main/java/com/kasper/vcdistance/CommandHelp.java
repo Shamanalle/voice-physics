@@ -27,6 +27,7 @@ final class CommandHelp {
                     "effects weather 50", "effects echo 70"}),
             Map.entry("extras", new String[]{"extras", "extras radio on", "extras speakers on", "extras eavesdrop on",
                     "extras sculk on", "extras doorway on", "extras radio off"}),
+            Map.entry("eavesdrop", new String[]{"eavesdrop", "eavesdrop item minecraft:spyglass", "eavesdrop factor 0.3", "extras eavesdrop on"}),
             Map.entry("radio", new String[]{"radio", "radio item minecraft:clock", "radio item none", "extras radio on"}),
             Map.entry("speaker", new String[]{"speaker", "speaker add stage", "speaker add hall 64 4", "speaker tp stage",
                     "speaker remove stage", "extras speakers on"}),

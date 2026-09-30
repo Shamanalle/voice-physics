@@ -779,5 +779,16 @@
   "command.vc-audio-distance.btn.speaker_tp": "Ir",
   "command.vc-audio-distance.btn.speaker_remove": "Quitar",
   "command.vc-audio-distance.btn.speaker_on": "Altavoces sí",
-  "command.vc-audio-distance.btn.speaker_off": "Altavoces no"
+  "command.vc-audio-distance.btn.speaker_off": "Altavoces no",
+  "command.vc-audio-distance.help.eavesdrop": "/vcd eavesdrop [item <id>|none|factor <0.05-1>] - escuchar a escondidas: el objeto con el que las paredes suenan más finas, y cuánto",
+  "command.vc-audio-distance.eavesdrop.title": "Escuchar a escondidas (con el objeto en la mano las paredes suenan más finas)",
+  "command.vc-audio-distance.eavesdrop.state": "Escuchar a escondidas: %s",
+  "command.vc-audio-distance.eavesdrop.item": "Objeto en la mano: %s",
+  "command.vc-audio-distance.eavesdrop.nobody": "nadie puede",
+  "command.vc-audio-distance.eavesdrop.factor": "Queda de la atenuación de las paredes: %s",
+  "command.vc-audio-distance.eavesdrop.item_set": "Hay que sostener %s para escuchar a escondidas. Guardado.",
+  "command.vc-audio-distance.eavesdrop.item_off": "Ahora nadie puede escuchar a escondidas (sin objeto). Guardado.",
+  "command.vc-audio-distance.eavesdrop.factor_set": "Quien escucha oye %s de la atenuación de las paredes. Guardado.",
+  "command.vc-audio-distance.btn.eavesdrop_on": "Escuchar sí",
+  "command.vc-audio-distance.btn.eavesdrop_off": "Escuchar no"
 }

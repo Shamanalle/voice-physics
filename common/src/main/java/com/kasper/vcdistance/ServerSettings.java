@@ -39,6 +39,9 @@ public final class ServerSettings {
     private static final String ZONE_PREFIX = "zone.";
     private static final String MUTE_PREFIX = "mute.";
     private static final String SPEAKER_PREFIX = "speaker.";
+    public static final String DEFAULT_EAVESDROP_ITEM = "minecraft:spyglass";
+    public static final double DEFAULT_EAVESDROP_FACTOR = 0.3;
+    public static final double MIN_EAVESDROP_FACTOR = 0.05;
     public static final String CUSTOM_PRESET = "custom";
 
     public static final int DEFAULT_MAX_STREAMS = 24;
@@ -137,6 +140,8 @@ public final class ServerSettings {
     private volatile boolean metrics = true;
     private volatile boolean serverRadio;
     private volatile String radioItem = "";
+    private volatile String eavesdropItem = DEFAULT_EAVESDROP_ITEM;
+    private volatile double eavesdropFactor = DEFAULT_EAVESDROP_FACTOR;
     /** Loudspeakers placed with /vcd speaker, by lower-case name. */
     private volatile Map<String, Loudspeaker> speakers = Map.of();
     private volatile boolean serverSpeakers;
@@ -257,6 +262,24 @@ public final class ServerSettings {
         radioItem = itemId(id);
     }
 
+    /** The item a player must hold to eavesdrop (id like {@code minecraft:spyglass}), or "" for nobody. */
+    public String getEavesdropItem() {
+        return eavesdropItem;
+    }
+
+    public void setEavesdropItem(String id) {
+        eavesdropItem = itemId(id);
+    }
+
+    /** How much of the wall muffling an eavesdropper hears, 0.05-1. */
+    public double getEavesdropFactor() {
+        return eavesdropFactor;
+    }
+
+    public void setEavesdropFactor(double f) {
+        eavesdropFactor = DistanceConfig.clamp(f, MIN_EAVESDROP_FACTOR, 1.0);
+    }
+
     /** Loudspeakers placed by admins repeat voices around them (Paper). Off until play-tested. */
     public boolean isServerSpeakers() {
         return serverSpeakers;
@@ -349,6 +372,8 @@ public final class ServerSettings {
         metrics = DistanceConfig.parseBoolean(props, "metrics", true);
         serverRadio = DistanceConfig.parseBoolean(props, "server_radio", false);
         radioItem = itemId(props.getProperty("radio_item", ""));
+        eavesdropItem = itemId(props.getProperty("eavesdrop_item", DEFAULT_EAVESDROP_ITEM));
+        eavesdropFactor = DistanceConfig.clamp(DistanceConfig.parseDouble(props, "eavesdrop_factor", DEFAULT_EAVESDROP_FACTOR), MIN_EAVESDROP_FACTOR, 1.0);
         speakers = readSpeakers(props, file);
         serverSpeakers = DistanceConfig.parseBoolean(props, "server_speakers", false);
         serverEavesdrop = DistanceConfig.parseBoolean(props, "server_eavesdrop", false);
@@ -653,6 +678,12 @@ public final class ServerSettings {
                 .comment("true: the eavesdrop item makes walls thinner for the player who holds it. Default false.",
                         "true: предмет для подслушивания делает стены тоньше для держащего его игрока. По умолчанию false.")
                 .value("server_eavesdrop", serverEavesdrop)
+                .comment("Item a player must hold (in either hand) to eavesdrop, e.g. minecraft:spyglass. Empty: nobody can. Default minecraft:spyglass.",
+                        "Предмет, который игрок должен держать (в любой руке), чтобы подслушивать, например minecraft:spyglass. Пусто: никто не может. По умолчанию minecraft:spyglass.")
+                .value("eavesdrop_item", eavesdropItem)
+                .comment("How much of the walls' muffling is left for an eavesdropper: 0.05 - 1. 0.3 = a wall sounds about a third as thick. Default 0.3.",
+                        "Сколько от приглушения стенами остаётся подслушивающему: 0.05 - 1. 0.3 = стена звучит примерно втрое тоньше. По умолчанию 0.3.")
+                .value("eavesdrop_factor", eavesdropFactor)
                 .comment("true: a shout is a game event that sculk sensors and wardens react to; whispers and sneaking are not. Default false.",
                         "true: крик - игровое событие, на него реагируют скалковые датчики и вардены; шёпот и корточки - нет. По умолчанию false.")
                 .value("server_sculk", serverSculk)

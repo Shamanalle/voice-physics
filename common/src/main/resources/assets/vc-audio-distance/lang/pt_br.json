@@ -779,5 +779,16 @@
   "command.vc-audio-distance.btn.speaker_tp": "Ir",
   "command.vc-audio-distance.btn.speaker_remove": "Remover",
   "command.vc-audio-distance.btn.speaker_on": "Alto-falantes on",
-  "command.vc-audio-distance.btn.speaker_off": "Alto-falantes off"
+  "command.vc-audio-distance.btn.speaker_off": "Alto-falantes off",
+  "command.vc-audio-distance.help.eavesdrop": "/vcd eavesdrop [item <id>|none|factor <0.05-1>] - espionar: o item com o qual as paredes soam mais finas, e quanto",
+  "command.vc-audio-distance.eavesdrop.title": "Espionar (com o item na mão as paredes soam mais finas)",
+  "command.vc-audio-distance.eavesdrop.state": "Espionar: %s",
+  "command.vc-audio-distance.eavesdrop.item": "Item na mão: %s",
+  "command.vc-audio-distance.eavesdrop.nobody": "ninguém pode",
+  "command.vc-audio-distance.eavesdrop.factor": "Resta da atenuação das paredes: %s",
+  "command.vc-audio-distance.eavesdrop.item_set": "É preciso segurar %s para espionar. Salvo.",
+  "command.vc-audio-distance.eavesdrop.item_off": "Agora ninguém pode espionar (sem item). Salvo.",
+  "command.vc-audio-distance.eavesdrop.factor_set": "Quem espiona ouve %s da atenuação das paredes. Salvo.",
+  "command.vc-audio-distance.btn.eavesdrop_on": "Espionar on",
+  "command.vc-audio-distance.btn.eavesdrop_off": "Espionar off"
 }

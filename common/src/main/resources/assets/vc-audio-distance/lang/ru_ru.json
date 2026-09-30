@@ -779,5 +779,16 @@
   "command.vc-audio-distance.btn.speaker_tp": "К нему",
   "command.vc-audio-distance.btn.speaker_remove": "Убрать",
   "command.vc-audio-distance.btn.speaker_on": "Громкогов. вкл",
-  "command.vc-audio-distance.btn.speaker_off": "Громкогов. выкл"
+  "command.vc-audio-distance.btn.speaker_off": "Громкогов. выкл",
+  "command.vc-audio-distance.help.eavesdrop": "/vcd eavesdrop [item <id>|none|factor <0.05-1>] - подслушивание: предмет, с которым стены звучат тоньше, и насколько",
+  "command.vc-audio-distance.eavesdrop.title": "Подслушивание (с предметом в руке стены звучат тоньше)",
+  "command.vc-audio-distance.eavesdrop.state": "Подслушивание: %s",
+  "command.vc-audio-distance.eavesdrop.item": "Предмет в руке: %s",
+  "command.vc-audio-distance.eavesdrop.nobody": "никто не может",
+  "command.vc-audio-distance.eavesdrop.factor": "Остаётся от приглушения стенами: %s",
+  "command.vc-audio-distance.eavesdrop.item_set": "Чтобы подслушивать, нужно держать %s. Сохранено.",
+  "command.vc-audio-distance.eavesdrop.item_off": "Подслушивать теперь никто не может (предмет не задан). Сохранено.",
+  "command.vc-audio-distance.eavesdrop.factor_set": "Подслушивающий слышит %s от приглушения стенами. Сохранено.",
+  "command.vc-audio-distance.btn.eavesdrop_on": "Подслушивание вкл",
+  "command.vc-audio-distance.btn.eavesdrop_off": "Подслушивание выкл"
 }

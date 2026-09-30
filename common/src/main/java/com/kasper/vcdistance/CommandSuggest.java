@@ -51,6 +51,7 @@ final class CommandSuggest {
                 case "effects" -> addAll(out, AdminCommands.EFFECT_PARTS, typed);
                 case "extras" -> addAll(out, AdminCommands.EXTRAS, typed);
                 case "radio" -> addAll(out, new String[]{"item"}, typed);
+                case "eavesdrop" -> addAll(out, new String[]{"item", "factor"}, typed);
                 case "speaker" -> addAll(out, new String[]{"add", "remove", "list", "tp"}, typed);
                 case "lock" -> lockParts(out, typed);
                 case "rule" -> addAll(out, AdminCommands.RULES, typed);
@@ -100,6 +101,10 @@ final class CommandSuggest {
             }, typed);
         } else if (sub.equals("radio") && args.length == 3 && action.equals("item")) {
             addAll(out, new String[]{"minecraft:clock", "minecraft:compass", "none"}, typed);
+        } else if (sub.equals("eavesdrop") && args.length == 3 && action.equals("item")) {
+            addAll(out, new String[]{"minecraft:spyglass", "minecraft:amethyst_shard", "none"}, typed);
+        } else if (sub.equals("eavesdrop") && args.length == 3 && action.equals("factor")) {
+            addAll(out, new String[]{"0.1", "0.3", "0.5", "0.8"}, typed);
         } else if (sub.equals("speaker") && args.length == 3 && (action.equals("remove") || action.equals("tp") || action.equals("add"))) {
             if (settings != null) {
                 addAll(out, settings.speakers().values().stream().map(Loudspeaker::name).toArray(String[]::new), typed);

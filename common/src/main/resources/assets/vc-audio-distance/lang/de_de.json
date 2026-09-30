@@ -779,5 +779,16 @@
   "command.vc-audio-distance.btn.speaker_tp": "Hin",
   "command.vc-audio-distance.btn.speaker_remove": "Entfernen",
   "command.vc-audio-distance.btn.speaker_on": "Lautsprecher an",
-  "command.vc-audio-distance.btn.speaker_off": "Lautsprecher aus"
+  "command.vc-audio-distance.btn.speaker_off": "Lautsprecher aus",
+  "command.vc-audio-distance.help.eavesdrop": "/vcd eavesdrop [item <id>|none|factor <0.05-1>] - Lauschen: der Gegenstand, mit dem Wände dünner klingen, und um wie viel",
+  "command.vc-audio-distance.eavesdrop.title": "Lauschen (mit dem Gegenstand klingen Wände dünner)",
+  "command.vc-audio-distance.eavesdrop.state": "Lauschen: %s",
+  "command.vc-audio-distance.eavesdrop.item": "Gegenstand in der Hand: %s",
+  "command.vc-audio-distance.eavesdrop.nobody": "niemand kann lauschen",
+  "command.vc-audio-distance.eavesdrop.factor": "Von der Dämpfung der Wände bleibt: %s",
+  "command.vc-audio-distance.eavesdrop.item_set": "Zum Lauschen muss man %s halten. Gespeichert.",
+  "command.vc-audio-distance.eavesdrop.item_off": "Jetzt kann niemand lauschen (kein Gegenstand gesetzt). Gespeichert.",
+  "command.vc-audio-distance.eavesdrop.factor_set": "Lauschende hören %s der Wanddämpfung. Gespeichert.",
+  "command.vc-audio-distance.btn.eavesdrop_on": "Lauschen an",
+  "command.vc-audio-distance.btn.eavesdrop_off": "Lauschen aus"
 }

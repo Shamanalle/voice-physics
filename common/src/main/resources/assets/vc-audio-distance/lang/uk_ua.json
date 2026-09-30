@@ -779,5 +779,16 @@
   "command.vc-audio-distance.btn.speaker_tp": "До нього",
   "command.vc-audio-distance.btn.speaker_remove": "Прибрати",
   "command.vc-audio-distance.btn.speaker_on": "Гучномовці вкл",
-  "command.vc-audio-distance.btn.speaker_off": "Гучномовці викл"
+  "command.vc-audio-distance.btn.speaker_off": "Гучномовці викл",
+  "command.vc-audio-distance.help.eavesdrop": "/vcd eavesdrop [item <id>|none|factor <0.05-1>] - підслуховування: предмет, із яким стіни звучать тонше, і наскільки",
+  "command.vc-audio-distance.eavesdrop.title": "Підслуховування (з предметом у руці стіни звучать тонше)",
+  "command.vc-audio-distance.eavesdrop.state": "Підслуховування: %s",
+  "command.vc-audio-distance.eavesdrop.item": "Предмет у руці: %s",
+  "command.vc-audio-distance.eavesdrop.nobody": "ніхто не може",
+  "command.vc-audio-distance.eavesdrop.factor": "Залишається від приглушення стінами: %s",
+  "command.vc-audio-distance.eavesdrop.item_set": "Щоб підслуховувати, потрібно тримати %s. Збережено.",
+  "command.vc-audio-distance.eavesdrop.item_off": "Підслуховувати тепер ніхто не може (предмет не задано). Збережено.",
+  "command.vc-audio-distance.eavesdrop.factor_set": "Той, хто підслуховує, чує %s від приглушення стінами. Збережено.",
+  "command.vc-audio-distance.btn.eavesdrop_on": "Підслуховування вкл",
+  "command.vc-audio-distance.btn.eavesdrop_off": "Підслуховування викл"
 }

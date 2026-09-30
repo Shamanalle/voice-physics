@@ -77,10 +77,10 @@ public final class AdminCommands {
         return steps;
     }
 
-    static final String[] SUBCOMMANDS = {"status", "help", "reload", "undo", "log", "profile", "preset", "walls", "serverwalls", "effects", "extras", "radio", "speaker", "lock",
+    static final String[] SUBCOMMANDS = {"status", "help", "reload", "undo", "log", "profile", "preset", "walls", "serverwalls", "effects", "extras", "radio", "speaker", "eavesdrop", "lock",
             "monitor", "notices", "zones", "zone", "rule", "group", "require", "block", "mute", "unmute", "mutes", "debug", "report"};
     /** The topics of {@code /vcd help}, in the order they are listed. */
-    static final String[] TOPICS = {"status", "zones", "zone", "profile", "preset", "walls", "serverwalls", "effects", "extras", "radio", "speaker", "lock", "monitor",
+    static final String[] TOPICS = {"status", "zones", "zone", "profile", "preset", "walls", "serverwalls", "effects", "extras", "radio", "speaker", "eavesdrop", "lock", "monitor",
             "notices", "rule", "group", "require", "block", "mute", "unmute", "mutes", "debug", "report", "undo", "log", "reload"};
     /** Times offered for {@code /vcd mute <player>}. */
     static final String[] MUTE_TIMES = {"10m", "30m", "1h", "1d", "7d", "perm"};
@@ -235,6 +235,7 @@ public final class AdminCommands {
             case "effects" -> effects(r);
             case "extras" -> extras(r);
             case "radio" -> radio(r);
+            case "eavesdrop" -> eavesdrop(r);
             case "speaker" -> speaker(r);
             case "lock" -> {
                 java.util.Set<DistanceConfig.Part> parts = r.args.length > 1
@@ -304,7 +305,7 @@ public final class AdminCommands {
             case "mute", "unmute", "mutes" -> PERM_MUTE;
             case "speaker" -> action.isEmpty() || action.equalsIgnoreCase("list") ? PERM_STATUS : PERM_SPEAKER;
             case "zone" -> ZoneCommands.readOnly(action) ? PERM_STATUS : PERM_ZONE;
-            case "effects", "extras", "radio" -> action.isEmpty() || action.equalsIgnoreCase("info") || action.equalsIgnoreCase("status") ? PERM_STATUS : PERM_SETTINGS;
+            case "effects", "extras", "radio", "eavesdrop" -> action.isEmpty() || action.equalsIgnoreCase("info") || action.equalsIgnoreCase("status") ? PERM_STATUS : PERM_SETTINGS;
             case "reload", "log", "profile", "preset", "walls", "serverwalls", "lock", "monitor", "notices", "rule", "group", "require", "block" -> PERM_SETTINGS;
             default -> null;
         };
@@ -313,7 +314,7 @@ public final class AdminCommands {
     /** Subcommands that may change the settings (their state before is kept for undo). */
     private static boolean changes(String sub) {
         return switch (sub) {
-            case "profile", "preset", "walls", "serverwalls", "effects", "extras", "radio", "speaker", "lock", "monitor", "notices", "zone", "rule", "group", "require", "block", "mute", "unmute" -> true;
+            case "profile", "preset", "walls", "serverwalls", "effects", "extras", "radio", "speaker", "eavesdrop", "lock", "monitor", "notices", "zone", "rule", "group", "require", "block", "mute", "unmute" -> true;
             default -> false;
         };
     }
@@ -538,6 +539,60 @@ public final class AdminCommands {
                 }
             }
             default -> r.badValue("radio", part, "item", "radio");
+        }
+    }
+
+    /**
+     * {@code /vcd eavesdrop [item <id>|none] [factor <0.05-1>]}: the state, the item a player holds to hear
+     * through walls, and how much of the walls' muffling is left for them. On/off is {@code /vcd extras eavesdrop}.
+     */
+    private static void eavesdrop(Run r) {
+        Messages m = r.m;
+        ServerSettings settings = r.settings;
+        String part = r.arg(1).toLowerCase(Locale.ROOT);
+        switch (part) {
+            case "", "status", "info" -> {
+                r.line(Style.TITLE, m.get("eavesdrop.title"));
+                r.reply.add(CommandReply.line().addAll(m.spans("eavesdrop.state", Style.PLAIN,
+                        r.change(onOff(m, settings.isServerEavesdrop()), "extras eavesdrop"))));
+                r.reply.add(CommandReply.line().addAll(m.spans("eavesdrop.item", Style.PLAIN,
+                        r.change(settings.getEavesdropItem().isEmpty() ? m.get("eavesdrop.nobody") : settings.getEavesdropItem(), "eavesdrop item"))));
+                r.reply.add(CommandReply.line().addAll(m.spans("eavesdrop.factor", Style.PLAIN,
+                        r.change(fmt(settings.getEavesdropFactor()), "eavesdrop factor"))));
+                r.line(Style.MUTED, m.get("extras.untested"));
+                LineBuilder buttons = CommandReply.line();
+                boolean on = settings.isServerEavesdrop();
+                r.button(buttons, on ? "btn.eavesdrop_off" : "btn.eavesdrop_on", Click.RUN, "/vcd extras eavesdrop " + (on ? "off" : "on"), PERM_SETTINGS);
+                r.button(buttons, "btn.help", Click.RUN, "/vcd help eavesdrop", PERM_STATUS);
+                if (undoable(settings) > 0) {
+                    r.button(buttons, "btn.undo", Click.RUN, "/vcd undo", null);
+                }
+                if (!buttons.isEmpty()) {
+                    r.reply.add(buttons);
+                }
+            }
+            case "item" -> {
+                if (r.args.length < 3) {
+                    r.badValue("eavesdrop item", "", "<item id>|none", "eavesdrop");
+                    return;
+                }
+                settings.setEavesdropItem(r.args[2].equalsIgnoreCase("none") || r.args[2].equalsIgnoreCase("off") ? "" : r.args[2]);
+                if (settings.getEavesdropItem().isEmpty()) {
+                    r.saved("eavesdrop.item_off");
+                } else {
+                    r.saved("eavesdrop.item_set", settings.getEavesdropItem());
+                }
+            }
+            case "factor" -> {
+                Double value = r.args.length < 3 ? null : parseNumber(r.args[2]);
+                if (value == null || value < ServerSettings.MIN_EAVESDROP_FACTOR || value > 1.0) {
+                    r.badValue("eavesdrop factor", r.arg(2), fmt(ServerSettings.MIN_EAVESDROP_FACTOR) + "-1", "eavesdrop");
+                    return;
+                }
+                settings.setEavesdropFactor(value);
+                r.saved("eavesdrop.factor_set", fmt(settings.getEavesdropFactor()));
+            }
+            default -> r.badValue("eavesdrop", part, "item|factor", "eavesdrop");
         }
     }
 

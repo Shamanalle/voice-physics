@@ -9,6 +9,7 @@ import com.kasper.vcdistance.PlayerCommands;
 import com.kasper.vcdistance.RoomEstimate;
 import com.kasper.vcdistance.ServerHooks;
 import com.kasper.vcdistance.ServerPlayers;
+import com.kasper.vcdistance.ServerSculk;
 import com.kasper.vcdistance.Zone;
 import com.kasper.vcdistance.ZoneOutlines;
 import com.kasper.vcdistance.ZoneTracker;
@@ -69,6 +70,7 @@ public final class AudioDistanceBukkit extends JavaPlugin implements Listener {
     private Scheduling scheduling;
     private BukkitThickness thickness;
     private int ticks;
+    private volatile boolean sculkFailed;
 
     @Override
     public void onLoad() {
@@ -256,11 +258,39 @@ public final class AudioDistanceBukkit extends JavaPlugin implements Listener {
         }
     }
 
+    /**
+     * Shouts (see {@code ServerSculk}) become a game event at the shouter, which sculk sensors and wardens react to.
+     * Any failure (an API that changed) only logs once: the voice is never affected.
+     */
+    private void raiseSculkEvents() {
+        if (!AudioDistancePlugin.SERVER_SETTINGS.isServerSculk()) {
+            ServerSculk.drain();
+            return;
+        }
+        for (UUID id : ServerSculk.drain()) {
+            Player p = getServer().getPlayer(id);
+            if (p == null) {
+                continue;
+            }
+            scheduling.onPlayer(p, () -> {
+                try {
+                    p.getWorld().sendGameEvent(p, org.bukkit.GameEvent.ENTITY_ROAR, p.getLocation().toVector());
+                } catch (Throwable t) {
+                    if (!sculkFailed) {
+                        sculkFailed = true;
+                        getLogger().warning("The sculk reaction to shouts does not work on this server version: " + t);
+                    }
+                }
+            });
+        }
+    }
+
     /** Every few ticks: the players for the voice rules, and the addon requirement. */
     private void refreshPlayers() {
         if (!ServerHooks.refreshDue()) {
             return;
         }
+        raiseSculkEvents();
         List<ServerPlayers.Info> online = new ArrayList<>();
         if (scheduling.isRegionized()) {
             // Each player's own thread keeps their entry fresh; drop those who left
@@ -438,6 +468,7 @@ public final class AudioDistanceBukkit extends JavaPlugin implements Listener {
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
         ServerHooks.left(event.getPlayer().getUniqueId());
+        ServerSculk.forget(event.getPlayer().getUniqueId());
         zones.forget(event.getPlayer().getUniqueId());
         infos.remove(event.getPlayer().getUniqueId());
         ZoneOutlines.hide(event.getPlayer().getUniqueId());
