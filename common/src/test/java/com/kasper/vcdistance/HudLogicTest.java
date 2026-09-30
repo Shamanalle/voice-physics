@@ -126,4 +126,42 @@ public class HudLogicTest {
         assertEquals(HudCorner.TOP_LEFT, HudCorner.BOTTOM_LEFT.next());
         assertTrue(HudCorner.BOTTOM_RIGHT.isRight() && HudCorner.BOTTOM_RIGHT.isBottom());
     }
+
+    @Test
+    @DisplayName("Direction marks: the side of the arrow follows the bearing, ahead and behind are plain")
+    void directionMarks() {
+        assertEquals("◀ Anna 6m", Bearing.marker("Anna", -90.0, 6.2));
+        assertEquals("Bob 14m ▶", Bearing.marker("Bob", 60.0, 14.0));
+        assertEquals("Sam 3m", Bearing.marker("Sam", 10.0, 3.0));
+        assertEquals("Sam 3m ▼", Bearing.marker("Sam", 170.0, 3.0));
+        assertEquals("Sam 3m ▼", Bearing.marker("Sam", -179.0, 3.0));
+        assertEquals("◀ Sam 3m", Bearing.marker("Sam", 330.0, 3.0), "330 is 30 to the left");
+        assertEquals("Sam", Bearing.marker("Sam", Double.NaN, -1.0), "unknown direction and distance");
+        assertEquals("◀ Sam", Bearing.marker("Sam", -45.0, -1.0));
+    }
+
+    @Test
+    @DisplayName("Accessibility settings are saved and reset with the HUD; the HUD can be twice as big")
+    void accessibilitySettings() throws java.io.IOException {
+        DistanceConfig c = new DistanceConfig();
+        assertFalse(c.isHudContrast());
+        assertFalse(c.isHudMarkers());
+        c.setHudContrast(true);
+        c.setHudMarkers(true);
+        c.setHudScale(3.0);
+        assertEquals(2.0, c.getHudScale(), 1e-9);
+        java.nio.file.Path file = java.nio.file.Files.createTempDirectory("vcd-hud").resolve("vc.properties");
+        DistanceConfig saved = new DistanceConfig(file);
+        saved.copyInterfaceFrom(c);
+        saved.save();
+        DistanceConfig back = new DistanceConfig(file);
+        back.load();
+        assertTrue(back.isHudContrast() && back.isHudMarkers());
+        assertEquals(2.0, back.getHudScale(), 1e-9);
+        DistanceConfig copy = new DistanceConfig();
+        copy.copyInterfaceFrom(c);
+        assertTrue(copy.isHudContrast() && copy.isHudMarkers());
+        copy.resetHud();
+        assertFalse(copy.isHudContrast() || copy.isHudMarkers());
+    }
 }

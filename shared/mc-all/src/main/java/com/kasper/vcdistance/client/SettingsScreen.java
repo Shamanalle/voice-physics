@@ -853,7 +853,16 @@ public abstract class SettingsScreen extends Screen {
             b.setMessage(colorsLabel());
         }).bounds(col2, y + ROW * 2, colW, 20).tooltip(tip("colors.tooltip")).build());
 
-        panelTop = y + ROW * 3 + 2;
+        content(Button.builder(onOff("hud.contrast", prefs.isHudContrast()), b -> {
+            prefs.setHudContrast(!prefs.isHudContrast());
+            b.setMessage(onOff("hud.contrast", prefs.isHudContrast()));
+        }).bounds(left, y + ROW * 3, colW, 20).tooltip(tip("hud.contrast.tooltip")).build());
+        content(Button.builder(onOff("hud.markers", prefs.isHudMarkers()), b -> {
+            prefs.setHudMarkers(!prefs.isHudMarkers());
+            b.setMessage(onOff("hud.markers", prefs.isHudMarkers()));
+        }).bounds(col2, y + ROW * 3, colW, 20).tooltip(tip("hud.markers.tooltip")).build());
+
+        panelTop = y + ROW * 4 + 2;
         panelBottom = stretch(panelTop, 110);
         contentEnd = panelBottom;
     }

@@ -39,7 +39,9 @@ public final class ClientReport {
                 AdminCommands.fmt(range * link.whisperShare())));
         Preset preset = own.getChosenPreset();
         out.add("Own: preset " + (preset == null ? "custom" : preset.getId()) + ", " + describe(own)
-                + ", HUD " + own.getHudMode().getId() + (own.isHudCompact() ? " compact" : ""));
+                + ", HUD " + own.getHudMode().getId() + (own.isHudCompact() ? " compact" : "")
+                + (own.isHudContrast() ? " contrast" : "") + (own.isHudMarkers() ? " marks" : "")
+                + String.format(Locale.ROOT, " x%.2f", own.getHudScale()));
         DistanceConfig used = link.effective(own);
         if (used != own) {
             out.add("In effect (server): " + describe(used));

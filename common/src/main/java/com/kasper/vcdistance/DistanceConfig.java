@@ -93,6 +93,8 @@ public final class DistanceConfig {
     private volatile double hudScale = DEFAULT_HUD_SCALE;
     private volatile double hudBackground = DEFAULT_HUD_BACKGROUND;
     private volatile boolean hudCompact;
+    private volatile boolean hudContrast;
+    private volatile boolean hudMarkers;
     private volatile boolean colorblind;
     /** The preset last picked ("" = own values) and the voice range it was fitted to. */
     private volatile String presetId = "";
@@ -329,7 +331,7 @@ public final class DistanceConfig {
 
     public static final double DEFAULT_HUD_SCALE = 1.0;
     public static final double HUD_SCALE_MIN = 0.5;
-    public static final double HUD_SCALE_MAX = 1.5;
+    public static final double HUD_SCALE_MAX = 2.0;
     public static final double DEFAULT_HUD_BACKGROUND = 0.55;
 
     /** Size of the voice HUD, 0.5 - 1.5. */
@@ -359,6 +361,26 @@ public final class DistanceConfig {
 
     public void setHudCompact(boolean compact) {
         hudCompact = compact;
+        changed();
+    }
+
+    /** High contrast: a solid black panel with white text, for low vision. */
+    public boolean isHudContrast() {
+        return hudContrast;
+    }
+
+    public void setHudContrast(boolean on) {
+        hudContrast = on;
+        changed();
+    }
+
+    /** Who is talking, with an arrow to their side, in a line above the hotbar (like subtitles). */
+    public boolean isHudMarkers() {
+        return hudMarkers;
+    }
+
+    public void setHudMarkers(boolean on) {
+        hudMarkers = on;
         changed();
     }
 
@@ -399,6 +421,8 @@ public final class DistanceConfig {
         hudScale = other.hudScale;
         hudBackground = other.hudBackground;
         hudCompact = other.hudCompact;
+        hudContrast = other.hudContrast;
+        hudMarkers = other.hudMarkers;
         colorblind = other.colorblind;
         changed();
     }
@@ -470,6 +494,8 @@ public final class DistanceConfig {
         hudScale = DEFAULT_HUD_SCALE;
         hudBackground = DEFAULT_HUD_BACKGROUND;
         hudCompact = false;
+        hudContrast = false;
+        hudMarkers = false;
         colorblind = false;
         changed();
     }
@@ -668,6 +694,8 @@ public final class DistanceConfig {
         hudScale = clamp(parseDouble(props, "hud_scale", DEFAULT_HUD_SCALE), HUD_SCALE_MIN, HUD_SCALE_MAX);
         hudBackground = clamp(parseDouble(props, "hud_background", DEFAULT_HUD_BACKGROUND), 0.0, 1.0);
         hudCompact = parseBoolean(props, "hud_compact", false);
+        hudContrast = parseBoolean(props, "hud_contrast", false);
+        hudMarkers = parseBoolean(props, "hud_markers", false);
         colorblind = parseBoolean(props, "colorblind", false);
         presetId = props.getProperty("preset", "").trim().toLowerCase(java.util.Locale.ROOT);
         presetRange = clamp(parseDouble(props, "preset_range", 0.0), 0.0, 10000.0);
@@ -742,7 +770,7 @@ public final class DistanceConfig {
                 .comment("Corner of the voice HUD: top_left, top_right, bottom_left, bottom_right. Default top_right.",
                         "Угол экрана для HUD: top_left, top_right, bottom_left, bottom_right. По умолчанию top_right.")
                 .value("hud_corner", hudCorner.getId())
-                .comment("Size of the voice HUD, 0.5 - 1.5. Default 1.0.", "Размер HUD, 0.5 - 1.5. По умолчанию 1.0.")
+                .comment("Size of the voice HUD, 0.5 - 2. Default 1.0.", "Размер HUD, 0.5 - 2. По умолчанию 1.0.")
                 .value("hud_scale", hudScale)
                 .comment("Opacity of the HUD's background, 0 (none) - 1. Default 0.55.",
                         "Непрозрачность фона HUD, 0 (без фона) - 1. По умолчанию 0.55.")
@@ -750,6 +778,12 @@ public final class DistanceConfig {
                 .comment("Compact HUD: one line for everyone talking. Default false.",
                         "Компактный HUD: одна строка на всех говорящих. По умолчанию false.")
                 .value("hud_compact", hudCompact)
+                .comment("High contrast HUD: a solid black panel with white text, for low vision. Default false.",
+                        "HUD с высокой контрастностью: сплошная чёрная панель и белый текст, для слабого зрения. По умолчанию false.")
+                .value("hud_contrast", hudContrast)
+                .comment("Direction markers: who is talking, with an arrow to their side, in a line above the hotbar (like subtitles). Default false.",
+                        "Маркеры направления: кто говорит, со стрелкой в его сторону, в строке над хотбаром (как субтитры). По умолчанию false.")
+                .value("hud_markers", hudMarkers)
                 .comment("Colors for color blindness (blue / orange instead of green / red) and marks that differ in shape. Default false.",
                         "Цвета для дальтоников (синий / оранжевый вместо зелёного / красного) и метки разной формы. По умолчанию false.")
                 .value("colorblind", colorblind)
