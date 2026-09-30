@@ -316,6 +316,8 @@
   "gui.vc-audio-distance.effects.corners.none": "Сейчас ни один голос не идёт из-за угла",
   "gui.vc-audio-distance.effects.corners.now": "Голосов из-за угла: %s",
   "gui.vc-audio-distance.effects.corners.tooltip": "Голос из-за стены доходит и в обход, через дверной проём или окно.\nЧем круче поворот, тем глуше звук.",
+  "gui.vc-audio-distance.effects.place": "По месту: %s",
+  "gui.vc-audio-distance.effects.place.tooltip": "Звук зависит от места: глубокие пещеры и глубокая тьма звучат гулче, дым Незера глушит дальние голоса, в открытой пустоте Энда нет эха, снег и густые джунгли поглощают звук. Мягко, поверх измеренного.",
   "gui.vc-audio-distance.effects.hint": "Эхо зависит от пространства вокруг вас и вокруг говорящего, вода и дождь — от того, где вы оба.",
   "gui.vc-audio-distance.effects.no_world": "Зайдите в мир, чтобы увидеть, что вокруг.",
   "gui.vc-audio-distance.effects.now": "Вокруг вас сейчас:",

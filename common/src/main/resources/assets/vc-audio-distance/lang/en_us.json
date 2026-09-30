@@ -316,6 +316,8 @@
   "gui.vc-audio-distance.effects.corners.none": "No voice comes round a corner right now",
   "gui.vc-audio-distance.effects.corners.now": "Voices coming round a corner: %s",
   "gui.vc-audio-distance.effects.corners.tooltip": "A voice behind a wall also comes round it through a doorway or window.\nThe sharper the turn, the duller it sounds.",
+  "gui.vc-audio-distance.effects.place": "By place: %s",
+  "gui.vc-audio-distance.effects.place.tooltip": "Sound follows where you are: deep caves and the deep dark ring more, the Nether's smoke dulls far voices, the End's open void gives no echo, snow and dense jungles swallow sound. Mild, on top of what is measured.",
   "gui.vc-audio-distance.effects.hint": "The echo comes from the space around you and around the speaker; water and rain from where you both are.",
   "gui.vc-audio-distance.effects.no_world": "Join a world to see your surroundings.",
   "gui.vc-audio-distance.effects.now": "Around you right now:",

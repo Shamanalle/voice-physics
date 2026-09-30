@@ -11,6 +11,7 @@ public final class ListenerEnvironment {
     private volatile EnvironmentEffects.Weather weather = EnvironmentEffects.Weather.CLEAR;
     /** The listener's head in world coordinates, for directions to doorways; NaN when unknown. */
     private volatile double[] position = {Double.NaN, Double.NaN, Double.NaN};
+    private volatile PlaceTuning.Tuning place = PlaceTuning.Tuning.NONE;
 
     /** The echo around the listener right now, gliding towards the latest measurement. */
     public RoomEstimate room() {
@@ -35,6 +36,15 @@ public final class ListenerEnvironment {
         this.weather = weather == null ? EnvironmentEffects.Weather.CLEAR : weather;
     }
 
+    /** What the place does to the sound (before the {@code place_tuning} switch). */
+    public PlaceTuning.Tuning place() {
+        return place;
+    }
+
+    public void updatePlace(PlaceTuning.Place where) {
+        place = PlaceTuning.of(where);
+    }
+
     public double[] position() {
         return position;
     }
@@ -48,6 +58,7 @@ public final class ListenerEnvironment {
         room.jump(RoomEstimate.OPEN, System.nanoTime());
         underWater = false;
         weather = EnvironmentEffects.Weather.CLEAR;
+        place = PlaceTuning.Tuning.NONE;
     }
 
     /** The stronger of two weathers: a thunderstorm at either end covers the voice. */

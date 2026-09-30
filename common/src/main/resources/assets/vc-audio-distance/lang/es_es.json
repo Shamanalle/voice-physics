@@ -316,6 +316,8 @@
   "gui.vc-audio-distance.effects.corners.none": "Ahora ninguna voz llega por una esquina",
   "gui.vc-audio-distance.effects.corners.now": "Voces que llegan por una esquina: %s",
   "gui.vc-audio-distance.effects.corners.tooltip": "Una voz tras una pared también llega rodeándola por una puerta o ventana.\nCuanto más cerrada la curva, más apagada suena.",
+  "gui.vc-audio-distance.effects.place": "Según el lugar: %s",
+  "gui.vc-audio-distance.effects.place.tooltip": "El sonido depende del lugar: las cuevas profundas y la oscuridad profunda resuenan más, el humo del Nether apaga las voces lejanas, el vacío abierto del End no da eco, la nieve y la selva densa absorben el sonido. Suave, sobre lo medido.",
   "gui.vc-audio-distance.effects.hint": "El eco depende del espacio a tu alrededor y alrededor de quien habla; el agua y la lluvia, de dónde estáis ambos.",
   "gui.vc-audio-distance.effects.no_world": "Entra en un mundo para ver tu entorno.",
   "gui.vc-audio-distance.effects.now": "A tu alrededor ahora:",

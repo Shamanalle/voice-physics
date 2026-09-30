@@ -316,6 +316,8 @@
   "gui.vc-audio-distance.effects.corners.none": "现在没有语音绕过拐角",
   "gui.vc-audio-distance.effects.corners.now": "绕过拐角的语音：%s",
   "gui.vc-audio-distance.effects.corners.tooltip": "墙后的语音也会从门洞或窗户绕过来。\n拐角越急，声音越闷。",
+  "gui.vc-audio-distance.effects.place": "按地点：%s",
+  "gui.vc-audio-distance.effects.place.tooltip": "声音随所处地点变化：深层洞穴和深暗之域回声更强，下界的烟雾让远处的声音更闷，末地的开阔虚空没有回声，雪地和茂密丛林会吸收声音。效果温和，叠加在实测结果之上。",
   "gui.vc-audio-distance.effects.hint": "回声取决于你和说话者周围的空间；水和雨取决于你们两人所在的位置。",
   "gui.vc-audio-distance.effects.no_world": "进入世界后查看周围环境。",
   "gui.vc-audio-distance.effects.now": "你周围现在：",

@@ -134,6 +134,17 @@ public final class ModernWorldAccess implements WorldAccess {
     }
 
     @Override
+    public com.kasper.vcdistance.PlaceTuning.Place placeAt(Vec3 point) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.level == null) {
+            return com.kasper.vcdistance.PlaceTuning.Place.UNKNOWN;
+        }
+        BlockPos pos = BlockPos.containing(point);
+        return new com.kasper.vcdistance.PlaceTuning.Place(String.valueOf(mc.level.dimension()),
+                String.valueOf(mc.level.getBiome(pos).unwrapKey().orElse(null)), point.y, mc.level.canSeeSky(pos));
+    }
+
+    @Override
     public double traceRay(Vec3 from, Vec3 to) {
         return BlockAcoustics.traceRay(Minecraft.getInstance().level, from, to, AudioDistancePlugin.config());
     }

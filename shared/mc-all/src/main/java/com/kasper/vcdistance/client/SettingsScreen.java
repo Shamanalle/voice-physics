@@ -805,6 +805,10 @@ public abstract class SettingsScreen extends Screen {
             config.setDiffractionEnabled(!config.isDiffractionEnabled());
             b.setMessage(onOff("effects.corners", config.isDiffractionEnabled()));
         }).bounds(left, y + ROW * 3, colW, 20).tooltip(tip("effects.corners.tooltip")).build(), DistanceConfig.Part.EFFECTS);
+        edit(Button.builder(onOff("effects.place", shown().isPlaceTuning()), b -> {
+            config.setPlaceTuning(!config.isPlaceTuning());
+            b.setMessage(onOff("effects.place", config.isPlaceTuning()));
+        }).bounds(right - colW, y + ROW * 3, colW, 20).tooltip(tip("effects.place.tooltip")).build(), DistanceConfig.Part.EFFECTS);
 
         statusY = y + ROW * 4 + 2;
         panelTop = statusY + (hasStatusBanner() ? 30 : 0);

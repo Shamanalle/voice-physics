@@ -316,6 +316,8 @@
   "gui.vc-audio-distance.effects.corners.none": "Agora nenhuma voz vem por um canto",
   "gui.vc-audio-distance.effects.corners.now": "Vozes vindo por um canto: %s",
   "gui.vc-audio-distance.effects.corners.tooltip": "Uma voz atrás de uma parede também chega contornando por uma porta ou janela.\nQuanto mais fechada a curva, mais abafada soa.",
+  "gui.vc-audio-distance.effects.place": "Pelo lugar: %s",
+  "gui.vc-audio-distance.effects.place.tooltip": "O som depende do lugar: cavernas profundas e a escuridão profunda ecoam mais, a fumaça do Nether abafa vozes distantes, o vazio aberto do End não tem eco, neve e selva densa absorvem o som. Suave, somado ao que é medido.",
   "gui.vc-audio-distance.effects.hint": "O eco depende do espaço ao seu redor e ao redor de quem fala; água e chuva, de onde vocês dois estão.",
   "gui.vc-audio-distance.effects.no_world": "Entre em um mundo para ver o que está ao seu redor.",
   "gui.vc-audio-distance.effects.now": "Ao seu redor agora:",

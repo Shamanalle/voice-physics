@@ -62,6 +62,7 @@ public final class DistanceConfig {
     public static final double EFFECT_STRENGTH_MIN = 0.0;
     public static final double EFFECT_STRENGTH_MAX = 1.5;
     public static final boolean DEFAULT_DIFFRACTION_ENABLED = true;
+    public static final boolean DEFAULT_PLACE_TUNING = true;
 
     private volatile AttenuationModel model = DEFAULT_MODEL;
     private volatile double attenuationFactor = DEFAULT_ATTENUATION_FACTOR;
@@ -77,6 +78,7 @@ public final class DistanceConfig {
     private volatile double underwaterStrength = DEFAULT_UNDERWATER_STRENGTH;
     private volatile double weatherStrength = DEFAULT_WEATHER_STRENGTH;
     private volatile boolean diffractionEnabled = DEFAULT_DIFFRACTION_ENABLED;
+    private volatile boolean placeTuning = DEFAULT_PLACE_TUNING;
     private final double[] materialWeights = new double[AcousticMaterial.values().length];
     /** Blocks and block tags with a material of their own; replaced as a whole, never changed in place. */
     private volatile BlockRules blockRules = BlockRules.EMPTY;
@@ -252,6 +254,16 @@ public final class DistanceConfig {
         changed();
     }
 
+    /** Echo and far voices follow the place: deep caves ring more, the Nether is smoky, jungles and snow swallow sound. */
+    public boolean isPlaceTuning() {
+        return placeTuning;
+    }
+
+    public void setPlaceTuning(boolean value) {
+        placeTuning = value;
+        changed();
+    }
+
     public double getMaterialWeight(AcousticMaterial material) {
         synchronized (materialWeights) {
             return materialWeights[material.ordinal()];
@@ -416,6 +428,7 @@ public final class DistanceConfig {
         underwaterStrength = DEFAULT_UNDERWATER_STRENGTH;
         weatherStrength = DEFAULT_WEATHER_STRENGTH;
         diffractionEnabled = DEFAULT_DIFFRACTION_ENABLED;
+        placeTuning = DEFAULT_PLACE_TUNING;
         resetMaterials();
     }
 
@@ -444,6 +457,7 @@ public final class DistanceConfig {
                 underwaterStrength = DEFAULT_UNDERWATER_STRENGTH;
                 weatherStrength = DEFAULT_WEATHER_STRENGTH;
                 diffractionEnabled = DEFAULT_DIFFRACTION_ENABLED;
+                placeTuning = DEFAULT_PLACE_TUNING;
             }
         }
         changed();
@@ -483,6 +497,7 @@ public final class DistanceConfig {
         underwaterStrength = other.underwaterStrength;
         weatherStrength = other.weatherStrength;
         diffractionEnabled = other.diffractionEnabled;
+        placeTuning = other.placeTuning;
         for (AcousticMaterial m : AcousticMaterial.values()) {
             double w = other.getMaterialWeight(m);
             synchronized (materialWeights) {
@@ -606,6 +621,7 @@ public final class DistanceConfig {
                 underwaterStrength = other.underwaterStrength;
                 weatherStrength = other.weatherStrength;
                 diffractionEnabled = other.diffractionEnabled;
+                placeTuning = other.placeTuning;
             }
         }
         changed();
@@ -803,7 +819,10 @@ public final class DistanceConfig {
                 .value(prefix + "weather_strength", weatherStrength)
                 .comment("Voices behind a wall come round through a nearby doorway or window: less muffled, from its direction. Default true.",
                         "Голоса за стеной обходят её через ближайший проём или окно: глушатся меньше и слышны с его стороны. По умолчанию true.")
-                .value(prefix + "diffraction_enabled", diffractionEnabled);
+                .value(prefix + "diffraction_enabled", diffractionEnabled)
+                .comment("Echo and far voices follow the place: deep caves ring more, the Nether is smoky, jungles and snow swallow sound. Default true.",
+                        "Эхо и дальние голоса зависят от места: глубокие пещеры звучат гулче, в Незере дымно, джунгли и снег глушат звук. По умолчанию true.")
+                .value(prefix + "place_tuning", placeTuning);
     }
 
     /** Per-material weights with their explanations (shared by the client and server files). */
@@ -845,6 +864,7 @@ public final class DistanceConfig {
         props.setProperty(prefix + "underwater_strength", format(underwaterStrength));
         props.setProperty(prefix + "weather_strength", format(weatherStrength));
         props.setProperty(prefix + "diffraction_enabled", String.valueOf(diffractionEnabled));
+        props.setProperty(prefix + "place_tuning", String.valueOf(placeTuning));
         for (AcousticMaterial m : AcousticMaterial.values()) {
             props.setProperty(prefix + "material." + m.getId(), format(getMaterialWeight(m)));
         }
@@ -869,6 +889,7 @@ public final class DistanceConfig {
         weatherStrength = clamp(parseDouble(props, prefix + "weather_strength", DEFAULT_WEATHER_STRENGTH),
                 EFFECT_STRENGTH_MIN, EFFECT_STRENGTH_MAX);
         diffractionEnabled = parseBoolean(props, prefix + "diffraction_enabled", DEFAULT_DIFFRACTION_ENABLED);
+        placeTuning = parseBoolean(props, prefix + "place_tuning", DEFAULT_PLACE_TUNING);
         synchronized (materialWeights) {
             for (AcousticMaterial m : AcousticMaterial.values()) {
                 materialWeights[m.ordinal()] = clamp(parseDouble(props, prefix + "material." + m.getId(), m.getDefaultWeight()), 0.0, AcousticMaterial.MAX_WEIGHT);

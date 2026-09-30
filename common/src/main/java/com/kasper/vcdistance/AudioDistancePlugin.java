@@ -727,6 +727,13 @@ public class AudioDistancePlugin implements VoicechatPlugin {
                         ListenerEnvironment.worse(env.weather(), speaker.getWeather()), speaker.getDistance() / range,
                         c.getWeatherStrength()));
             }
+            // The place: smoky Nether air, dense jungle, snow
+            PlaceTuning.Tuning place = c.isPlaceTuning() ? env.place() : PlaceTuning.Tuning.NONE;
+            if (place.air() > 0.0 && speaker.getDistance() >= 0.0) {
+                double range = speaker.getMaxDistance() > 0.0F ? speaker.getMaxDistance() : getServerMaxDistance();
+                effect = effect.plus(new EnvironmentEffects.Effect(
+                        ServerEffects.air(speaker.getDistance() / range).muffle() * place.air(), 0.0));
+            }
 
             // Both stages work on the frame in place
             boolean changed = false;
@@ -741,7 +748,7 @@ public class AudioDistancePlugin implements VoicechatPlugin {
             double wet = 0.0;
             double echo = 0.0;
             if (ownPhysics && c.isReverbEnabled() && room.isAudible()) {
-                double[] level = echoLevels(room, speaker, c.getReverbStrength());
+                double[] level = echoLevels(room, speaker, c.getReverbStrength() * place.echo());
                 wet = level[0];
                 echo = level[1];
             }

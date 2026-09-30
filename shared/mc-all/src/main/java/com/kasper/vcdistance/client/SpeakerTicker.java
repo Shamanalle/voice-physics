@@ -217,6 +217,7 @@ public final class SpeakerTicker {
             }
             env.update(access.isUnderWater(listener), access.weatherAt(listener));
             env.setPosition(listener.x, listener.y, listener.z);
+            env.updatePlace(access.placeAt(listener));
             Double zoneEcho = AudioDistancePlugin.LINK.zoneEcho();
             if (zoneEcho != null) {
                 // The server's zone sets the echo (a cathedral, a padded room): no need to measure

@@ -50,6 +50,10 @@ public final class ClientReport {
         if (BlockDataRules.data().files() > 0) {
             out.add("Block materials from data packs: " + BlockDataRules.data().summary());
         }
+        PlaceTuning.Tuning place = AudioDistancePlugin.ENVIRONMENT.place();
+        if (!place.isNone()) {
+            out.add(String.format(Locale.ROOT, "Place: %s (echo x%.2f, air %.2f)", place.where(), place.echo(), place.air()));
+        }
         out.add(String.format(Locale.ROOT, "Load: %.2f ms per tick", AudioDistancePlugin.CLIENT_PERF.averageMs()));
         List<Problems.Problem> problems = Problems.recent();
         if (problems.isEmpty()) {
@@ -72,6 +76,7 @@ public final class ClientReport {
                 + ", echo " + (c.isReverbEnabled() ? AdminCommands.pct(c.getReverbStrength()) : "off")
                 + ", water " + (c.isUnderwaterEnabled() ? AdminCommands.pct(c.getUnderwaterStrength()) : "off")
                 + ", weather " + (c.isWeatherEnabled() ? AdminCommands.pct(c.getWeatherStrength()) : "off")
+                + ", place " + onOff(c.isPlaceTuning())
                 + ", block rules " + c.getBlockRules().rules().size();
     }
 
