@@ -177,6 +177,7 @@
   "command.vc-audio-distance.log.title": "Changes to the settings (%s), newest first:",
   "command.vc-audio-distance.log.none": "No changes yet. Every change made with /vcd or on the Server tab is written to %s next to the settings file.",
   "command.vc-audio-distance.log.none_by": "No changes by %s.",
+  "command.vc-audio-distance.walls.note": "On its own this reaches only players without the addon. Players who have it keep their own walls unless the profile is enforced with walls locked (/vcd profile enforce).",
   "command.vc-audio-distance.log.undo": "undid %s",
   "command.vc-audio-distance.log.console": "console",
   "command.vc-audio-distance.log.file": "The whole log: %s, next to the settings file.",

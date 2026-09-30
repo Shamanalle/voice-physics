@@ -19,25 +19,26 @@ import org.bukkit.block.data.Openable;
 import org.bukkit.block.data.Waterlogged;
 import org.bukkit.util.BoundingBox;
 
-import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Acoustic ray casting through blocks with the Bukkit API. Mirrors the Fabric version: a block only
  * counts when the ray crosses its collision shape, and materials are classified the same way.
- * Main thread only; unloaded chunks are never loaded, they count as open air.
+ * Safe to call from several threads (Folia traces each player's walls on the region's own thread);
+ * unloaded chunks are never loaded, they count as open air.
  */
 final class BlockAcoustics {
 
     /** Longest ray walked, in blocks (the tracer never asks for more than 160). */
     private static final int MAX_BLOCKS = 512;
 
-    private static final Map<Material, AcousticMaterial> MATERIALS = new HashMap<>();
+    private static final Map<Material, AcousticMaterial> MATERIALS = new ConcurrentHashMap<>();
 
     /** The block rules the cached materials were worked out with; a change of rules drops the cache. */
-    private static BlockRules appliedRules = BlockRules.EMPTY;
+    private static volatile BlockRules appliedRules = BlockRules.EMPTY;
 
     private static void refreshRules() {
         BlockRules rules = AudioDistancePlugin.SERVER_SETTINGS.getBlockRules();
@@ -49,10 +50,11 @@ final class BlockAcoustics {
 
     /** The material the server's block rules give this block, or {@code null}. */
     private static AcousticMaterial custom(Material m) {
-        if (appliedRules.isEmpty()) {
+        BlockRules rules = appliedRules;
+        if (rules.isEmpty()) {
             return null;
         }
-        return appliedRules.find(m.getKey().toString(), tag -> {
+        return rules.find(m.getKey().toString(), tag -> {
             NamespacedKey key = NamespacedKey.fromString(tag);
             Tag<Material> blockTag = key == null ? null : Bukkit.getTag(Tag.REGISTRY_BLOCKS, key, Material.class);
             return blockTag != null && blockTag.isTagged(m);

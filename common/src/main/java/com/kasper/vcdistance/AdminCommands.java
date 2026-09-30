@@ -212,6 +212,7 @@ public final class AdminCommands {
                 } else {
                     r.saved("walls_off");
                 }
+                wallsNote(r);
             }
             case "serverwalls" -> onOff(r, "serverwalls", on -> settings.setServerWalls(on), "serverwalls_on", "serverwalls_off");
             case "lock" -> {
@@ -838,12 +839,24 @@ public final class AdminCommands {
     // Parsing
     // -------------------------------------------------------------------------
 
+    /**
+     * The server's walls reach players without the addon by themselves; players with it use their own
+     * unless the profile is enforced with the walls locked. Says so when that is the case.
+     */
+    private static void wallsNote(Run r) {
+        ServerSettings s = r.settings;
+        if (s.getProfileMode() != ServerSettings.ProfileMode.ENFORCE || !s.getLockedParts().contains(DistanceConfig.Part.WALLS)) {
+            r.line(Style.MUTED, r.m.get("walls.note"));
+        }
+    }
+
     static Double parsePercent(String s) {
         String v = s.trim().toLowerCase(Locale.ROOT);
         if (v.equals("off")) {
             return 0.0;
         }
-        if (v.endsWith("%")) {
+        boolean percent = v.endsWith("%");
+        if (percent) {
             v = v.substring(0, v.length() - 1);
         }
         try {
@@ -851,8 +864,8 @@ public final class AdminCommands {
             if (!Double.isFinite(d) || d < 0.0 || d > 100.0) {
                 return null;
             }
-            // 0.6 and 60 both mean 60%
-            return Math.min(1.0, d > 1.0 ? d / 100.0 : d);
+            // With a % sign it is a percentage; without, 0.6 and 60 both mean 60%
+            return Math.min(1.0, percent || d > 1.0 ? d / 100.0 : d);
         } catch (NumberFormatException e) {
             return null;
         }

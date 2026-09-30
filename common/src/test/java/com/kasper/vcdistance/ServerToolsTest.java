@@ -213,6 +213,10 @@ public class ServerToolsTest {
         assertEquals(0.6, AdminCommands.parsePercent("60%"), 1e-9);
         assertEquals(0.6, AdminCommands.parsePercent("0.6"), 1e-9);
         assertNull(AdminCommands.parsePercent("-5"));
+        assertEquals(0.01, AdminCommands.parsePercent("1%"), 1e-9, "a % sign is always a percentage");
+        assertEquals(0.005, AdminCommands.parsePercent("0.5%"), 1e-9);
+        assertEquals(1.0, AdminCommands.parsePercent("1"), 1e-9, "without it 1 is the whole");
+        assertEquals(1.0, AdminCommands.parsePercent("100%"), 1e-9);
     }
 
     @Test

@@ -177,6 +177,7 @@
   "command.vc-audio-distance.log.title": "Зміни налаштувань (%s), спершу нові:",
   "command.vc-audio-distance.log.none": "Змін поки немає. Кожна зміна через /vcd або вкладку «Сервер» записується в %s поруч із файлом налаштувань.",
   "command.vc-audio-distance.log.none_by": "Змін від %s немає.",
+  "command.vc-audio-distance.walls.note": "Саме по собі це діє лише на гравців без аддона. Ті, у кого він є, залишають свої стіни, доки профіль не примусовий і стіни не закріплені (/vcd profile enforce).",
   "command.vc-audio-distance.log.undo": "скасував(ла) %s",
   "command.vc-audio-distance.log.console": "консоль",
   "command.vc-audio-distance.log.file": "Увесь журнал: %s поруч із файлом налаштувань.",

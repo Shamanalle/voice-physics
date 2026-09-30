@@ -177,6 +177,7 @@
   "command.vc-audio-distance.log.title": "Изменения настроек (%s), сначала новые:",
   "command.vc-audio-distance.log.none": "Изменений пока нет. Каждое изменение через /vcd или вкладку «Сервер» записывается в %s рядом с файлом настроек.",
   "command.vc-audio-distance.log.none_by": "Изменений от %s нет.",
+  "command.vc-audio-distance.walls.note": "Само по себе это действует только на игроков без аддона. У тех, у кого он есть, стены остаются своими, пока профиль не принудительный и стены не закреплены (/vcd profile enforce).",
   "command.vc-audio-distance.log.undo": "отменил(а) %s",
   "command.vc-audio-distance.log.console": "консоль",
   "command.vc-audio-distance.log.file": "Весь журнал: %s рядом с файлом настроек.",

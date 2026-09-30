@@ -41,7 +41,8 @@ public final class Claims {
 
     private static final Map<UUID, Looked> CACHE = new ConcurrentHashMap<>();
     private static final Map<UUID, String> NAMES = new ConcurrentHashMap<>();
-    private static volatile long namesNanos = Long.MIN_VALUE;
+    /** "Long ago", far enough from MIN_VALUE that {@code now - namesNanos} does not overflow. */
+    private static volatile long namesNanos = Long.MIN_VALUE / 2;
     private static volatile boolean failed;
     private static volatile Boolean installed;
 
