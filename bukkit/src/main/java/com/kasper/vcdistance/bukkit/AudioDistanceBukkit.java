@@ -270,6 +270,23 @@ public final class AudioDistanceBukkit extends JavaPlugin implements Listener {
         }
     }
 
+    private static Object roarEvent;
+    private static java.lang.reflect.Method sendGameEvent;
+
+    /**
+     * {@code world.sendGameEvent(player, GameEvent.ENTITY_ROAR, position)}, through reflection: {@code GameEvent}
+     * is a different kind of type on different Paper versions, so nothing links to it at compile time.
+     */
+    private static synchronized void sculkRoar(Player p) throws ReflectiveOperationException {
+        if (sendGameEvent == null) {
+            Class<?> type = Class.forName("org.bukkit.GameEvent");
+            roarEvent = type.getField("ENTITY_ROAR").get(null);
+            sendGameEvent = org.bukkit.World.class.getMethod("sendGameEvent", org.bukkit.entity.Entity.class, type,
+                    org.bukkit.util.Vector.class);
+        }
+        sendGameEvent.invoke(p.getWorld(), p, roarEvent, p.getLocation().toVector());
+    }
+
     /**
      * Shouts (see {@code ServerSculk}) become a game event at the shouter, which sculk sensors and wardens react to.
      * Any failure (an API that changed) only logs once: the voice is never affected.
@@ -286,7 +303,7 @@ public final class AudioDistanceBukkit extends JavaPlugin implements Listener {
             }
             scheduling.onPlayer(p, () -> {
                 try {
-                    p.getWorld().sendGameEvent(p, org.bukkit.GameEvent.ENTITY_ROAR, p.getLocation().toVector());
+                    sculkRoar(p);
                 } catch (Throwable t) {
                     if (!sculkFailed) {
                         sculkFailed = true;
