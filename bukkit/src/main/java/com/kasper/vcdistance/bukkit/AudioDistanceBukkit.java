@@ -110,6 +110,7 @@ public final class AudioDistanceBukkit extends JavaPlugin implements Listener {
         getServer().getMessenger().registerIncomingPluginChannel(this, ADMIN_CHANNEL,
                 (channel, player, message) -> onAdmin(player, message));
         getServer().getPluginManager().registerEvents(this, this);
+        getServer().getPluginManager().registerEvents(new VoiceMenu.Events(), this);
         scheduling.everyTick(this::tick);
         for (Player player : getServer().getOnlinePlayers()) {
             startPlayerTick(player);
@@ -528,8 +529,25 @@ public final class AudioDistanceBukkit extends JavaPlugin implements Listener {
                 sender.sendMessage("/voice is for players");
                 return true;
             }
-            for (String line : PlayerCommands.run(p.getUniqueId(), info(p).language(), String.join(" ", args), p::hasPermission)) {
-                p.sendMessage(line);
+            PlayerCommands.Context context = new PlayerCommands.Context() {
+                @Override
+                public boolean allows(String permission) {
+                    return p.hasPermission(permission);
+                }
+
+                @Override
+                public boolean openMenu() {
+                    try {
+                        VoiceMenu.open(p);
+                        return true;
+                    } catch (Throwable t) {
+                        return false;
+                    }
+                }
+            };
+            AudioDistancePlugin.PLAYERS.update(info(p));
+            for (CommandReply.Line line : PlayerCommands.execute(p.getUniqueId(), info(p).language(), String.join(" ", args), context).lines()) {
+                ReplyAdventure.send(p, line);
             }
             return true;
         }

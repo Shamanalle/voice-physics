@@ -21,6 +21,27 @@ permissions:
   vcd.player:
     description: /voice - set how you talk, whether walls muffle what you hear, and how loud each player is to you
     default: true
+    children:
+      vcd.player.mode: true
+      vcd.player.walls: true
+      vcd.player.hud: true
+      vcd.player.volume: true
+      vcd.player.menu: true
+  vcd.player.mode:
+    description: /voice mode - quiet or normal (shout needs vcd.shout)
+    default: true
+  vcd.player.walls:
+    description: /voice walls - whether walls muffle what you hear
+    default: true
+  vcd.player.hud:
+    description: /voice hud - the line above the hotbar with who is talking
+    default: true
+  vcd.player.volume:
+    description: /voice volume, ignore and unignore - how loud each player is to you
+    default: true
+  vcd.player.menu:
+    description: /voice menu - the settings as a menu
+    default: true
   vcd.shout:
     description: /voice mode shout - a longer voice range
     default: op

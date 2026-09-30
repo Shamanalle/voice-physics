@@ -161,6 +161,7 @@ public final class ServerHooks {
         AudioDistancePlugin.ZONES.forget(player);
         AudioDistancePlugin.ZONE_NOTICES.forget(player);
         AudioDistancePlugin.TALK.forget(player);
+        AudioDistancePlugin.PLAYER_PREFS.forget(player);
         hudLine.remove(player);
         hudAt.remove(player);
     }

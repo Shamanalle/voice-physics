@@ -43,9 +43,9 @@ public final class PlayerPrefs {
     /** One player's choices; volumes are in percent, 0-99 (100 is the default and not stored). */
     public record Prefs(Mode mode, boolean walls, boolean hud, Map<UUID, Integer> volumes) {
 
-        static final Prefs DEFAULT = new Prefs(Mode.NORMAL, true, false, Map.of());
+        public static final Prefs DEFAULT = new Prefs(Mode.NORMAL, true, false, Map.of());
 
-        boolean isDefault() {
+        public boolean isDefault() {
             return mode == Mode.NORMAL && walls && !hud && volumes.isEmpty();
         }
 
@@ -73,6 +73,8 @@ public final class PlayerPrefs {
     }
 
     private final Map<UUID, Prefs> players = new ConcurrentHashMap<>();
+    /** Each player's choices before their last change, for {@link #undo} (kept while the server runs). */
+    private final Map<UUID, Prefs> before = new ConcurrentHashMap<>();
     /** Whether any player has a choice that changes what the voice rules do (range mode or a volume). */
     private volatile boolean active;
     private volatile Path file;
@@ -140,12 +142,40 @@ public final class PlayerPrefs {
         update(player, p -> Prefs.DEFAULT);
     }
 
-    /** A player left for good: nothing to forget, choices are kept. Others' volumes for them stay too. */
+    /** Whether the player has a change to take back (or, right after taking one back, to put back). */
+    public boolean canUndo(UUID player) {
+        return player != null && before.containsKey(player);
+    }
+
+    /**
+     * Takes back the player's last change; asking again puts it back.
+     *
+     * @return {@code false} when there is nothing to take back
+     */
+    public boolean undo(UUID player) {
+        Prefs previous = player == null ? null : before.get(player);
+        if (previous == null) {
+            return false;
+        }
+        update(player, p -> previous);
+        return true;
+    }
+
+    /** The player left the game: their undo is forgotten. Their choices and others' volumes for them are kept. */
+    public void forget(UUID player) {
+        before.remove(player);
+    }
+
     private void update(UUID player, java.util.function.UnaryOperator<Prefs> change) {
-        players.compute(player, (id, old) -> {
-            Prefs next = change.apply(old == null ? Prefs.DEFAULT : old);
+        Prefs[] old = new Prefs[1];
+        players.compute(player, (id, current) -> {
+            old[0] = current == null ? Prefs.DEFAULT : current;
+            Prefs next = change.apply(old[0]);
             return next.isDefault() ? null : next;
         });
+        if (!old[0].equals(get(player))) {
+            before.put(player, old[0]);
+        }
         recount();
         save();
     }

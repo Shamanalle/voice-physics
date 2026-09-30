@@ -26,6 +26,8 @@ public class PlayerControlsTest {
     void clear() {
         AudioDistancePlugin.PLAYER_PREFS.reset(ANNA);
         AudioDistancePlugin.PLAYER_PREFS.reset(BOB);
+        AudioDistancePlugin.PLAYER_PREFS.forget(ANNA);
+        AudioDistancePlugin.PLAYER_PREFS.forget(BOB);
         AudioDistancePlugin.PLAYERS.clear();
         AudioDistancePlugin.TALK.clear();
     }
@@ -204,6 +206,118 @@ public class PlayerControlsTest {
         assertEquals(List.of("quiet", "normal", "shout"), PlayerCommands.suggest("mode ", p -> true));
         assertEquals(List.of("Bob"), PlayerCommands.suggest("ignore b", noShout));
         assertEquals(List.of(), PlayerCommands.suggest("mode ", p -> false));
+        // A part the server took away is not suggested
+        assertFalse(PlayerCommands.suggest("", p -> !p.equals(PlayerCommands.PERM_VOLUME)).contains("volume"));
+        assertTrue(PlayerCommands.suggest("help ", p -> true).contains("mode"));
+    }
+
+    private static List<CommandReply.Span> buttons(CommandReply reply) {
+        List<CommandReply.Span> out = new java.util.ArrayList<>();
+        for (CommandReply.Line line : reply.lines()) {
+            for (CommandReply.Span s : line.spans()) {
+                if (s.click() != null) {
+                    out.add(s);
+                }
+            }
+        }
+        return out;
+    }
+
+    @Test
+    @DisplayName("Status: clickable modes, toggles, one line per volume, and Undo only after a change")
+    void clickableStatus() {
+        AudioDistancePlugin.PLAYERS.update(player("Anna", 0));
+        AudioDistancePlugin.PLAYERS.update(player("Bob", 5));
+        CommandReply fresh = PlayerCommands.execute(ANNA, "", "", p -> true);
+        List<String> actions = buttons(fresh).stream().map(CommandReply.Span::action).toList();
+        assertTrue(actions.contains("/voice mode quiet"));
+        assertTrue(actions.contains("/voice mode shout"));
+        assertFalse(actions.contains("/voice mode normal"), "the current mode is not a button");
+        assertTrue(actions.contains("/voice walls off"));
+        assertTrue(actions.contains("/voice hud on"));
+        assertFalse(actions.contains("/voice undo"), "nothing to undo yet");
+        assertFalse(actions.contains("/voice reset"), "nothing to reset yet");
+
+        AudioDistancePlugin.PLAYER_PREFS.setVolume(ANNA, BOB, 40);
+        CommandReply changed = PlayerCommands.execute(ANNA, "", "status", p -> true);
+        List<String> after = buttons(changed).stream().map(CommandReply.Span::action).toList();
+        assertTrue(after.contains("/voice undo"));
+        assertTrue(after.contains("/voice reset"));
+        assertTrue(after.contains("/voice unignore Bob"), "a button brings a player back to full volume");
+        assertTrue(changed.plain().stream().anyMatch(l -> l.contains("Bob 40%")));
+
+        // Without the shout permission it is not offered
+        List<String> noShout = buttons(PlayerCommands.execute(ANNA, "", "", p -> !p.equals(PlayerCommands.PERM_SHOUT))).stream()
+                .map(CommandReply.Span::action).toList();
+        assertFalse(noShout.contains("/voice mode shout"));
+    }
+
+    @Test
+    @DisplayName("Every change has an Undo; undo takes it back and asking again puts it back")
+    void undo() {
+        PlayerPrefs prefs = AudioDistancePlugin.PLAYER_PREFS;
+        assertTrue(PlayerCommands.run(ANNA, "", "undo", p -> true).get(0).toLowerCase().contains("nothing"));
+        CommandReply reply = PlayerCommands.execute(ANNA, "", "mode quiet", p -> true);
+        assertTrue(buttons(reply).stream().anyMatch(s -> "/voice undo".equals(s.action())));
+        assertEquals(PlayerPrefs.Mode.QUIET, prefs.get(ANNA).mode());
+
+        PlayerCommands.run(ANNA, "", "undo", p -> true);
+        assertEquals(PlayerPrefs.Mode.NORMAL, prefs.get(ANNA).mode());
+        PlayerCommands.run(ANNA, "", "undo", p -> true);
+        assertEquals(PlayerPrefs.Mode.QUIET, prefs.get(ANNA).mode(), "the second undo puts the change back");
+
+        // A reset can be taken back too, volumes included
+        prefs.setVolume(ANNA, BOB, 20);
+        PlayerCommands.run(ANNA, "", "reset", p -> true);
+        assertEquals(100, prefs.volume(ANNA, BOB));
+        PlayerCommands.run(ANNA, "", "undo", p -> true);
+        assertEquals(20, prefs.volume(ANNA, BOB));
+        assertEquals(PlayerPrefs.Mode.QUIET, prefs.get(ANNA).mode());
+
+        prefs.forget(ANNA);
+        assertFalse(prefs.canUndo(ANNA));
+    }
+
+    @Test
+    @DisplayName("Help: the list links to each command, a command shows examples, a typo suggests the command")
+    void help() {
+        CommandReply list = PlayerCommands.execute(ANNA, "", "help", p -> true);
+        assertTrue(buttons(list).stream().anyMatch(s -> "/voice help mode".equals(s.action())));
+        CommandReply topic = PlayerCommands.execute(ANNA, "", "help volume", p -> true);
+        assertTrue(buttons(topic).stream().anyMatch(s -> "/voice volume Steve 50".equals(s.action())));
+        assertTrue(buttons(topic).stream().anyMatch(s -> "/voice help".equals(s.action())), "a way back to the list");
+        // A part the server took away is left out of the list
+        CommandReply limited = PlayerCommands.execute(ANNA, "", "help", p -> !p.equals(PlayerCommands.PERM_MENU));
+        assertFalse(buttons(limited).stream().anyMatch(s -> "/voice help menu".equals(s.action())));
+
+        CommandReply typo = PlayerCommands.execute(ANNA, "", "mdoe quiet", p -> true);
+        assertTrue(buttons(typo).stream().anyMatch(s -> s.action().startsWith("/voice mode")), "did you mean /voice mode");
+        assertEquals(PlayerPrefs.Mode.NORMAL, AudioDistancePlugin.PLAYER_PREFS.get(ANNA).mode());
+    }
+
+    @Test
+    @DisplayName("Each part of /voice has its own permission on top of vcd.player")
+    void partPermissions() {
+        PlayerCommands.Context noVolume = p -> !p.equals(PlayerCommands.PERM_VOLUME);
+        AudioDistancePlugin.PLAYERS.update(player("Bob", 5));
+        List<String> reply = PlayerCommands.run(ANNA, "", "volume Bob 50", noVolume);
+        assertTrue(reply.get(0).contains(PlayerCommands.PERM_VOLUME));
+        assertEquals(100, AudioDistancePlugin.PLAYER_PREFS.volume(ANNA, BOB));
+        PlayerCommands.run(ANNA, "", "mode quiet", noVolume);
+        assertEquals(PlayerPrefs.Mode.QUIET, AudioDistancePlugin.PLAYER_PREFS.get(ANNA).mode(), "the other parts still work");
+        assertNull(PlayerCommands.permissionFor("status"));
+        assertEquals(PlayerCommands.PERM_VOLUME, PlayerCommands.permissionFor("ignore"));
+    }
+
+    @Test
+    @DisplayName("A bad value comes back with what is allowed and buttons to retype or get help")
+    void badValueButtons() {
+        CommandReply reply = PlayerCommands.execute(ANNA, "", "mode loud", p -> true);
+        assertTrue(reply.plain().get(0).contains("loud"));
+        List<String> actions = buttons(reply).stream().map(CommandReply.Span::action).toList();
+        assertTrue(actions.contains("/voice mode "));
+        assertTrue(actions.contains("/voice help mode"));
+        assertEquals(PlayerPrefs.Mode.NORMAL, AudioDistancePlugin.PLAYER_PREFS.get(ANNA).mode());
     }
 
     @Test
