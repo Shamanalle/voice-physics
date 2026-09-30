@@ -6,6 +6,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 *Все заметные изменения проекта описываются в этом файле. Каждая версия описана сначала на английском, затем на русском.*
 
+## [2.8.0] - 2026-09-30
+
+### English
+
+#### Added
+- Paper/Folia: `/voice` for every player, with or without the mod. Choose how loud you talk (`mode quiet|normal|shout`: half, normal or double range; shouting needs the `vcd.shout` permission), turn wall muffling off for yourself (`walls off`), set how loud a player is to you (`volume <player> <0-100>`) or ignore one (`ignore`), and show who is talking near you above the hotbar (`hud on`). Choices are saved per player in `vc-audio-distance-players.properties`.
+- `/vcd debug` says "ignored" when a listener turned a player off with `/voice ignore`.
+
+#### Changed
+- Volume below 100% and wall muffling are now applied together; a player who turned walls off with `/voice walls off` still gets the volume they set.
+
+### Русский
+
+#### Добавлено
+- Paper/Folia: `/voice` для каждого игрока, с модом или без. Выберите, как громко говорите (`mode quiet|normal|shout`: вдвое ближе, обычно или вдвое дальше; для крика нужно право `vcd.shout`), отключите для себя приглушение стенами (`walls off`), задайте громкость игрока (`volume <игрок> <0-100>`) или игнорируйте его (`ignore`) и включите над хотбаром показ того, кто говорит рядом (`hud on`). Выбор сохраняется для каждого игрока в `vc-audio-distance-players.properties`.
+- `/vcd debug` пишет «игнор», если слушающий отключил игрока командой `/voice ignore`.
+
+#### Изменено
+- Громкость ниже 100% и приглушение стенами теперь применяются вместе; игрок, отключивший стены командой `/voice walls off`, всё равно получает заданную им громкость.
+
 ## [2.7.1] - 2026-09-30
 
 ### English

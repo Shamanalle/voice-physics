@@ -5,6 +5,7 @@ import com.kasper.vcdistance.AudioDistancePlugin;
 import com.kasper.vcdistance.CommandReply;
 import com.kasper.vcdistance.LinkProtocol;
 import com.kasper.vcdistance.ModEnvironment;
+import com.kasper.vcdistance.PlayerCommands;
 import com.kasper.vcdistance.ServerHooks;
 import com.kasper.vcdistance.ServerPlayers;
 import com.kasper.vcdistance.Zone;
@@ -121,6 +122,12 @@ public final class AudioDistanceBukkit extends JavaPlugin implements Listener {
             AdminCommand handler = new AdminCommand();
             command.setExecutor(handler);
             command.setTabCompleter(handler);
+        }
+        PluginCommand voice = getCommand(PlayerCommands.NAME);
+        if (voice != null) {
+            VoiceCommand handler = new VoiceCommand();
+            voice.setExecutor(handler);
+            voice.setTabCompleter(handler);
         }
     }
 
@@ -502,6 +509,27 @@ public final class AudioDistanceBukkit extends JavaPlugin implements Listener {
                 out.add(s.text());
             }
             return out;
+        }
+    }
+
+    /** {@code /voice}: what any player sets for themselves (range mode, walls, volumes, the talking line). */
+    private final class VoiceCommand implements TabExecutor {
+
+        @Override
+        public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+            if (!(sender instanceof Player p)) {
+                sender.sendMessage("/voice is for players");
+                return true;
+            }
+            for (String line : PlayerCommands.run(p.getUniqueId(), info(p).language(), String.join(" ", args), p::hasPermission)) {
+                p.sendMessage(line);
+            }
+            return true;
+        }
+
+        @Override
+        public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
+            return PlayerCommands.suggest(String.join(" ", args), sender::hasPermission);
         }
     }
 

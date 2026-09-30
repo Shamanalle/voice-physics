@@ -10,6 +10,7 @@ Players don't need to install anything. Those who also install the [Voice Physic
 - **One sound for everyone:** offer or enforce the server's settings for players with the mod, for fair PvP and events.
 - **No seeing through walls:** turn off the monitor and radar of players with the mod.
 - **Require the mod:** send a download link, remind on every join, or kick.
+- **Player controls:** `/voice` lets anyone talk quietly or shout (with permission), turn wall muffling off for themselves, set or ignore other players' volume, and show who is talking nearby above the hotbar.
 - **Admin tools:** clickable `/vcd` commands with undo, a log of who changed what, `/vcd debug <player>` to see whom a player hears and why not, and messages in each player's own language.
 
 ## Install

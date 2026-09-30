@@ -14,7 +14,16 @@ commands:
   vcd:
     description: Voice Physics - status, settings and zones
     usage: /vcd help
+  voice:
+    description: Your own voice settings - quiet or shout, walls, other players' volume
+    usage: /voice help
 permissions:
+  vcd.player:
+    description: /voice - set how you talk, whether walls muffle what you hear, and how loud each player is to you
+    default: true
+  vcd.shout:
+    description: /voice mode shout - a longer voice range
+    default: op
   vcd.admin:
     description: Every part of /vcd
     default: op

@@ -72,6 +72,10 @@ public class AudioDistancePlugin implements VoicechatPlugin {
     /** Which sound zone each player with the addon was last sent (server). */
     public static final ZoneTracker ZONES = new ZoneTracker();
     public static final ZoneNotices ZONE_NOTICES = new ZoneNotices();
+    /** What players chose with /voice: range mode, walls, volumes, the talking line (server). */
+    public static final PlayerPrefs PLAYER_PREFS = new PlayerPrefs();
+    /** Who spoke a moment ago, for the talking line of players without the addon (server). */
+    public static final TalkTracker TALK = new TalkTracker();
 
     private static volatile VoicechatApi api;
     private static volatile VoicechatServerApi serverApi;
@@ -155,6 +159,7 @@ public class AudioDistancePlugin implements VoicechatPlugin {
         if (!serverSettingsLoaded) {
             serverSettingsLoaded = true;
             SERVER_SETTINGS.load();
+            PLAYER_PREFS.load(ModEnvironment.configDir().resolve(PlayerPrefs.FILE));
         }
     }
 

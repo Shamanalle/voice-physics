@@ -56,6 +56,9 @@ public final class ServerHooks {
             String notice = AudioDistancePlugin.ZONE_NOTICES.update(info, settings.zoneOf(info), settings);
             if (notice != null) {
                 platform.actionBar(info.id(), notice);
+                hudLine.remove(info.id());
+            } else {
+                talkingLine(settings, info, online, platform);
             }
             AddonCheck.Action action = AudioDistancePlugin.ADDON_CHECK.due(settings, info.id(), ticks,
                     AudioDistancePlugin.hasVoiceChat(info.id()));
@@ -69,6 +72,64 @@ public final class ServerHooks {
                 platform.message(info.id(), text);
             }
         }
+    }
+
+    /** What the talking line last showed each player, and when (in {@link #ticks}). */
+    private static final java.util.Map<UUID, String> hudLine = new java.util.concurrent.ConcurrentHashMap<>();
+    private static final java.util.Map<UUID, Long> hudAt = new java.util.concurrent.ConcurrentHashMap<>();
+    /** The line above the hotbar fades after about 3 s: send it again before that. */
+    private static final int HUD_REPEAT_TICKS = 40;
+    private static final int HUD_MAX_NAMES = 3;
+
+    /**
+     * The "who is talking" line above the hotbar of a player without the addon who turned it on with
+     * {@code /voice hud on}: the nearest players talking whom they hear, with the distance.
+     */
+    private static void talkingLine(ServerSettings settings, ServerPlayers.Info listener,
+                                    Collection<ServerPlayers.Info> online, Platform platform) {
+        UUID id = listener.id();
+        if (!AudioDistancePlugin.PLAYER_PREFS.hudFor(id) || AudioDistancePlugin.SERVER_WALLS.hasAddon(id)) {
+            hudLine.remove(id);
+            return;
+        }
+        String text = talkingText(settings, listener, online, System.nanoTime());
+        String before = hudLine.getOrDefault(id, "");
+        long at = hudAt.getOrDefault(id, Long.MIN_VALUE / 2);
+        if (text.equals(before) && (text.isEmpty() || ticks - at < HUD_REPEAT_TICKS)) {
+            return;
+        }
+        hudLine.put(id, text);
+        hudAt.put(id, ticks);
+        platform.actionBar(id, text.isEmpty() ? " " : text);
+    }
+
+    /** The talking line for {@code listener}, or "" when nobody they hear is talking. */
+    static String talkingText(ServerSettings settings, ServerPlayers.Info listener,
+                              Collection<ServerPlayers.Info> online, long nowNanos) {
+        double voice = AudioDistancePlugin.serverVoiceDistance() > 0.0
+                ? AudioDistancePlugin.serverVoiceDistance() : AudioDistancePlugin.FALLBACK_DISTANCE;
+        double whisper = AudioDistancePlugin.serverWhisperDistance() > 0.0
+                ? AudioDistancePlugin.serverWhisperDistance() : voice / 2.0;
+        java.util.List<ServerPlayers.Info> talking = new java.util.ArrayList<>();
+        for (ServerPlayers.Info other : online) {
+            if (!other.id().equals(listener.id()) && AudioDistancePlugin.TALK.isTalking(other.id(), nowNanos)
+                    && ServerRange.decide(settings, other, listener, false, voice, whisper).hears()) {
+                talking.add(other);
+            }
+        }
+        if (talking.isEmpty()) {
+            return "";
+        }
+        talking.sort(java.util.Comparator.comparingDouble(o -> o.distanceTo(listener)));
+        StringBuilder out = new StringBuilder("\u00bb ");
+        for (int i = 0; i < Math.min(HUD_MAX_NAMES, talking.size()); i++) {
+            ServerPlayers.Info o = talking.get(i);
+            out.append(i == 0 ? "" : ", ").append(o.name()).append(' ').append(Math.round(o.distanceTo(listener))).append('m');
+        }
+        if (talking.size() > HUD_MAX_NAMES) {
+            out.append(" +").append(talking.size() - HUD_MAX_NAMES);
+        }
+        return out.toString();
     }
 
     /** "Install the addon" or "update the addon", in the player's language. */
@@ -91,6 +152,9 @@ public final class ServerHooks {
         AudioDistancePlugin.SERVER_WALLS.forgetPlayer(player);
         AudioDistancePlugin.ZONES.forget(player);
         AudioDistancePlugin.ZONE_NOTICES.forget(player);
+        AudioDistancePlugin.TALK.forget(player);
+        hudLine.remove(player);
+        hudAt.remove(player);
     }
 
     /** The addon's hello: remembers the player has it (and which version). */

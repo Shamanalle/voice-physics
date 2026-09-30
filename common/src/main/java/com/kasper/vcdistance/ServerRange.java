@@ -13,7 +13,7 @@ public final class ServerRange {
 
     /** Why a listener does not hear a voice (for {@code /vcd debug}), or {@link #HEARS}. */
     public enum Reason {
-        HEARS, RANGE, ISOLATED, DEAD, SPECTATOR, WORLD
+        HEARS, RANGE, ISOLATED, DEAD, SPECTATOR, WORLD, IGNORED
     }
 
     /**
@@ -54,6 +54,8 @@ public final class ServerRange {
         if (speaker.sneaking()) {
             range *= s.getSneakMultiplier();
         }
+        // The speaker's own choice with /voice (quiet, shout)
+        range *= AudioDistancePlugin.PLAYER_PREFS.rangeFactor(speaker.id());
         if (isMegaphone(s, speaker)) {
             range *= s.getMegaphoneMultiplier();
         }
@@ -104,6 +106,9 @@ public final class ServerRange {
         boolean sameZone = from == null ? to == null : to != null && from.key().equals(to.key());
         if (!sameZone && ((from != null && from.rules().isolated()) || (to != null && to.rules().isolated()))) {
             return new Decision(Reason.ISOLATED, range);
+        }
+        if (AudioDistancePlugin.PLAYER_PREFS.volume(listener.id(), speaker.id()) <= 0) {
+            return new Decision(Reason.IGNORED, range);
         }
         if (speaker.distanceTo(listener) > range) {
             return new Decision(Reason.RANGE, range);

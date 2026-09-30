@@ -291,7 +291,7 @@ public final class ServerWalls {
      * {@code null} when there are no rules or either player is unknown.
      */
     private ServerRange.Decision voiceRule(UUID speaker, VoicechatConnection receiver, boolean whispering) {
-        if (!settings.hasVoiceRules() || speaker == null || receiver == null || receiver.getPlayer() == null) {
+        if (!voiceRulesOn() || speaker == null || receiver == null || receiver.getPlayer() == null) {
             return null;
         }
         ServerPlayers.Info from = players.get(speaker);
@@ -309,8 +309,11 @@ public final class ServerWalls {
     public void onMicrophone(MicrophonePacketEvent event) {
         MicrophonePacket packet = event.getPacket();
         VoicechatConnection sender = event.getSenderConnection();
+        if (packet != null && sender != null && sender.getPlayer() != null) {
+            AudioDistancePlugin.TALK.spoke(sender.getPlayer().getUuid(), System.nanoTime());
+        }
         if (packet == null || sender == null || sender.getPlayer() == null || !rangeRulesFor(sender)
-                || !settings.hasVoiceRules()) {
+                || !voiceRulesOn()) {
             return;
         }
         long start = System.nanoTime();
@@ -362,6 +365,11 @@ public final class ServerWalls {
         }
     }
 
+    /** The admin's voice rules, or a player's own choice (a range mode, a volume, an ignored player). */
+    private boolean voiceRulesOn() {
+        return settings.hasVoiceRules() || AudioDistancePlugin.PLAYER_PREFS.anyRules();
+    }
+
     private static double voiceRange() {
         double v = AudioDistancePlugin.serverVoiceDistance();
         return v > 0.0 ? v : AudioDistancePlugin.FALLBACK_DISTANCE;
@@ -398,11 +406,7 @@ public final class ServerWalls {
         if (resending.get() || !SoundPacketEvent.SOURCE_PROXIMITY.equals(event.getSource())) {
             return null;
         }
-        if (!worldAvailable || !settings.isServerWalls() || channel == null || opus == null || opus.length == 0) {
-            return null;
-        }
-        DistanceConfig profile = settings.profile();
-        if (!profile.isOcclusionEnabled()) {
+        if (channel == null || opus == null || opus.length == 0) {
             return null;
         }
         VoicechatConnection receiver = event.getReceiverConnection();
@@ -411,6 +415,14 @@ public final class ServerWalls {
         }
         UUID listener = receiver.getPlayer().getUuid();
         if (listener == null || addonListeners.contains(listener)) {
+            return null;
+        }
+        // Walls (the admin's switch, and this player's own), and how loud this speaker is to this listener
+        PlayerPrefs prefs = AudioDistancePlugin.PLAYER_PREFS;
+        DistanceConfig profile = settings.profile();
+        boolean walls = worldAvailable && settings.isServerWalls() && profile.isOcclusionEnabled() && prefs.wallsFor(listener);
+        double volumeLoss = prefs.lossDb(listener, speakerEntity != null ? speakerEntity : channel);
+        if (!walls && volumeLoss <= 0.0) {
             return null;
         }
 
@@ -434,8 +446,9 @@ public final class ServerWalls {
             double thickness = pair.thickness;
             // A zone can make walls stronger or weaker for the listeners in it
             double strength = settings.wallsStrengthIn(settings.zoneOf(players.get(listener)));
-            double muffle = Double.isNaN(thickness) ? 0.0 : OcclusionModel.muffle(thickness, strength);
-            double loss = Double.isNaN(thickness) ? 0.0 : OcclusionModel.lossDb(thickness, strength);
+            boolean measured = walls && !Double.isNaN(thickness);
+            double muffle = measured ? OcclusionModel.muffle(thickness, strength) : 0.0;
+            double loss = (measured ? OcclusionModel.lossDb(thickness, strength) : 0.0) + volumeLoss;
             boolean wanted = muffle > 0.002 || loss > 0.05;
 
             if (pair.encoder == null) {
