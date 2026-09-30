@@ -238,6 +238,8 @@
   "command.vc-audio-distance.voice.walls.on": "Walls muffle the voices you hear.",
   "command.vc-audio-distance.voice.walls.off": "Walls no longer muffle the voices you hear.",
   "command.vc-audio-distance.voice.walls.locked": "The server has locked walls for everyone, so you cannot turn them off.",
+  "command.vc-audio-distance.voice.walls.zone": "The zone %s sets its own walls, so your choice does not apply there.",
+  "command.vc-audio-distance.voice.status.walls_zone": "Walls muffle what you hear: %s (set by the zone %s)",
   "command.vc-audio-distance.voice.hud.on": "The talking line is on: it shows who talks near you above your hotbar.",
   "command.vc-audio-distance.voice.hud.off": "The talking line is off.",
   "command.vc-audio-distance.voice.volume.set": "%s is at %s%% for you.",

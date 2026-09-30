@@ -238,6 +238,8 @@
   "command.vc-audio-distance.voice.walls.on": "As paredes abafam as vozes que você ouve.",
   "command.vc-audio-distance.voice.walls.off": "As paredes não abafam mais as vozes que você ouve.",
   "command.vc-audio-distance.voice.walls.locked": "O servidor fixou as paredes para todos, então você não pode desativá-las.",
+  "command.vc-audio-distance.voice.walls.zone": "A zona %s define as próprias paredes, então a sua escolha não vale lá.",
+  "command.vc-audio-distance.voice.status.walls_zone": "As paredes abafam o que você ouve: %s (definido pela zona %s)",
   "command.vc-audio-distance.voice.hud.on": "A linha de quem fala está ligada: acima da hotbar aparece quem fala por perto.",
   "command.vc-audio-distance.voice.hud.off": "A linha de quem fala está desligada.",
   "command.vc-audio-distance.voice.volume.set": "%s está em %s%% para você.",

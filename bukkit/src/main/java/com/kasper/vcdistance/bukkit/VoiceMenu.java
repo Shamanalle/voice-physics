@@ -5,6 +5,7 @@ import com.kasper.vcdistance.CommandReply;
 import com.kasper.vcdistance.PlayerCommands;
 import com.kasper.vcdistance.PlayerPrefs;
 import com.kasper.vcdistance.ServerText;
+import com.kasper.vcdistance.Zone;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -84,9 +85,15 @@ final class VoiceMenu implements InventoryHolder {
         inventory.setItem(NORMAL, modeItem(Material.PAPER, PlayerPrefs.Mode.NORMAL, prefs, true, 1.0));
         inventory.setItem(SHOUT, modeItem(Material.GOAT_HORN, PlayerPrefs.Mode.SHOUT, prefs, canShout, PlayerPrefs.SHOUT_FACTOR));
 
-        boolean walls = prefs.walls() || wallsLocked;
-        inventory.setItem(WALLS, toggle(Material.STONE_BRICKS,
-                t("voice.status." + (wallsLocked ? "walls_locked" : "walls"), onOff(walls)), walls, !wallsLocked));
+        Zone wallsZone = AudioDistancePlugin.SERVER_SETTINGS.wallsZoneOf(AudioDistancePlugin.PLAYERS.get(player));
+        if (wallsLocked) {
+            inventory.setItem(WALLS, toggle(Material.STONE_BRICKS, t("voice.status.walls_locked", onOff(true)), true, false));
+        } else if (wallsZone != null) {
+            boolean zoneWalls = AudioDistancePlugin.SERVER_SETTINGS.wallsApply(wallsZone, prefs.walls());
+            inventory.setItem(WALLS, toggle(Material.STONE_BRICKS, t("voice.status.walls_zone", onOff(zoneWalls), wallsZone.name()), zoneWalls, false));
+        } else {
+            inventory.setItem(WALLS, toggle(Material.STONE_BRICKS, t("voice.status.walls", onOff(prefs.walls())), prefs.walls(), true));
+        }
         if (hasAddon || !AudioDistancePlugin.SERVER_SETTINGS.isMonitorAllowed()) {
             inventory.setItem(HUD, item(Material.BARRIER, ChatColor.GRAY + t(hasAddon ? "voice.status.hud_addon" : "voice.status.hud_server_off")));
         } else {

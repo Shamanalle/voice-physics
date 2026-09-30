@@ -829,6 +829,24 @@ public final class ServerSettings {
         return v == null ? "-" : ConfigWriter.number(v);
     }
 
+    /** The zone {@code player} stands in if it sets its own wall strength (the player's own choice does not count there), else null. */
+    public Zone wallsZoneOf(ServerPlayers.Info player) {
+        Zone zone = zoneOf(player);
+        return zone != null && zone.rules().wallsStrength() != null ? zone : null;
+    }
+
+    /**
+     * Whether walls muffle what a listener in {@code zone} hears, for the server's own muffling: a zone that
+     * sets a wall strength decides (0 = none) whatever the player chose; elsewhere the player's choice counts,
+     * unless the profile locks walls, and the walls must be on at all.
+     */
+    public boolean wallsApply(Zone zone, boolean playerWants) {
+        if (zone != null && zone.rules().wallsStrength() != null) {
+            return zone.rules().wallsStrength() > 0.0;
+        }
+        return profile.isOcclusionEnabled() && (playerWants || wallsLocked());
+    }
+
     /** Wall strength for a listener in {@code zone} (0 = walls off), for the server's own muffling. */
     public double wallsStrengthIn(Zone zone) {
         if (zone != null && zone.rules().wallsStrength() != null) {

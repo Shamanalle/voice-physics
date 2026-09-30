@@ -238,6 +238,8 @@
   "command.vc-audio-distance.voice.walls.on": "Wände dämpfen die Stimmen, die du hörst.",
   "command.vc-audio-distance.voice.walls.off": "Wände dämpfen die Stimmen, die du hörst, nicht mehr.",
   "command.vc-audio-distance.voice.walls.locked": "Der Server hat die Wände für alle festgelegt, du kannst sie nicht ausschalten.",
+  "command.vc-audio-distance.voice.walls.zone": "Die Zone %s legt ihre eigenen Wände fest, deine Einstellung gilt dort nicht.",
+  "command.vc-audio-distance.voice.status.walls_zone": "Wände dämpfen, was du hörst: %s (von der Zone %s festgelegt)",
   "command.vc-audio-distance.voice.hud.on": "Die Sprecherzeile ist an: Über der Hotbar steht, wer in deiner Nähe spricht.",
   "command.vc-audio-distance.voice.hud.off": "Die Sprecherzeile ist aus.",
   "command.vc-audio-distance.voice.volume.set": "%s hat für dich %s%%.",

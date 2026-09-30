@@ -212,7 +212,7 @@ Parts the server locks cannot be changed from here either.
 |---|---|
 | `/voice` or `/voice status` | Your choices as clickable buttons: each value changes on a click, with an *Undo* |
 | `/voice mode quiet\|normal\|shout` | How far your voice carries: half, normal, double (`shout` needs `vcd.shout`) |
-| `/voice walls on\|off` | Whether walls muffle the voices you hear |
+| `/voice walls on\|off` | Whether walls muffle the voices you hear (not where the server locks walls or a zone sets its own: there the server decides) |
 | `/voice volume <player> <0-100>` | How loud that player is to you (not for players with the addon: their volume is in the voice chat menu) |
 | `/voice ignore <player>`, `/voice unignore <player>` | Stop hearing a player, and undo it (works for everyone) |
 | `/voice hud on\|off` | The names and distances of players talking near you, above the hotbar (players without the addon) |
@@ -377,7 +377,7 @@ Everything here can also be set in game. Every key in the files has a comment in
 | `zone.<kind>.<name>.voice_range`, `.whisper_range` | 1 – 1000 blocks | Voice and whisper range here |
 | `zone.<kind>.<name>.range_multiplier` | 0.05 – 10 | Range times this: 2 = stage, 0.4 = library |
 | `zone.<kind>.<name>.isolated` | true / false | No voice gets in or out |
-| `zone.<kind>.<name>.walls_strength` | 0 – 1 | Wall strength here |
+| `zone.<kind>.<name>.walls_strength` | 0 – 1 | Wall strength here; it decides for everyone in the zone (0 = no walls), whatever they chose with `/voice walls` |
 | `zone.<kind>.<name>.echo` | `auto` / `off` / 0.1 – 1 | Measured as usual / none / this much everywhere here |
 | `zone.<kind>.<name>.profile_mode`, `.profile_preset` | as above | The profile here |
 | `zone.<kind>.<name>.enter_message` | text | Shown on entering |

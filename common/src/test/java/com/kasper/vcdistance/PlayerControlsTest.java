@@ -182,6 +182,36 @@ public class PlayerControlsTest {
     }
 
     @Test
+    @DisplayName("A zone that sets walls decides for the players in it: their /voice walls choice does not apply there")
+    void zoneWallsOverridePlayer() throws IOException {
+        ServerSettings s = settings();
+        Zone strong = new Zone(Zone.WORLD, "world", ServerSettings.ProfileMode.OFF, "",
+                new Zone.Rules(null, null, null, 0.9, null, false, null), null, 0);
+        Zone none = new Zone(Zone.WORLD, "world", ServerSettings.ProfileMode.OFF, "",
+                new Zone.Rules(null, null, null, 0.0, null, false, null), null, 0);
+        assertTrue(s.wallsApply(strong, false), "the zone's walls, although the player turned theirs off");
+        assertFalse(s.wallsApply(none, true), "a zone with 0 has no walls, although the player wants them");
+        assertFalse(s.wallsApply(null, false), "outside a zone the player's choice counts");
+        assertTrue(s.wallsApply(null, true));
+        assertNull(s.wallsZoneOf(player("Anna", 0)), "no zones: nothing decides for the player");
+
+        // The command refuses to change it inside such a zone and says which zone decides
+        ServerSettings live = AudioDistancePlugin.SERVER_SETTINGS;
+        live.putZone(strong);
+        try {
+            AudioDistancePlugin.PLAYERS.update(new ServerPlayers.Info(ANNA, "Anna", "world", 0, 64, 0,
+                    false, true, false, "", "", List.of(), ""));
+            assertNotNull(live.wallsZoneOf(AudioDistancePlugin.PLAYERS.get(ANNA)));
+            List<String> reply = PlayerCommands.run(ANNA, "", "walls off", p -> true);
+            assertTrue(AudioDistancePlugin.PLAYER_PREFS.wallsFor(ANNA), "the choice was not stored: " + reply);
+            assertTrue(String.join(" ", reply).contains("world"), String.join(" ", reply));
+            assertTrue(String.join(" ", PlayerCommands.run(ANNA, "", "status", p -> true)).contains("set by the zone world"));
+        } finally {
+            live.removeZone(strong.key());
+        }
+    }
+
+    @Test
     @DisplayName("A shout does not stretch a zone's range or add to a megaphone; quiet always applies")
     void shoutLimits() throws IOException {
         Path file = dir.resolve("zone.properties");

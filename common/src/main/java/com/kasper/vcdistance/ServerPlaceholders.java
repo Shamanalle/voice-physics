@@ -55,8 +55,7 @@ public final class ServerPlaceholders {
             case "mute_left" -> mute == null ? "" : mute.isPermanent() ? "perm" : VoiceMute.formatDuration(mute.leftAt(nowMillis));
             case "mute_reason" -> mute == null ? "" : mute.reason();
             case "range", "whisper_range" -> me == null ? "" : AdminCommands.fmt(range(settings, me, key.equals("whisper_range")));
-            case "walls" -> String.valueOf(settings.isServerWalls() && settings.profile().isOcclusionEnabled()
-                    && (prefs.walls() || settings.wallsLocked()));
+            case "walls" -> String.valueOf(settings.isServerWalls() && settings.wallsApply(settings.zoneOf(me), prefs.walls()));
             case "zone" -> {
                 Zone zone = settings.zoneOf(me);
                 yield zone == null ? "" : zone.name();

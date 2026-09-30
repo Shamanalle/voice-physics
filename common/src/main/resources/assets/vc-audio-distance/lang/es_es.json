@@ -238,6 +238,8 @@
   "command.vc-audio-distance.voice.walls.on": "Las paredes amortiguan las voces que oyes.",
   "command.vc-audio-distance.voice.walls.off": "Las paredes ya no amortiguan las voces que oyes.",
   "command.vc-audio-distance.voice.walls.locked": "El servidor ha fijado las paredes para todos, así que no puedes desactivarlas.",
+  "command.vc-audio-distance.voice.walls.zone": "La zona %s fija sus propias paredes, así que tu elección no se aplica allí.",
+  "command.vc-audio-distance.voice.status.walls_zone": "Las paredes amortiguan lo que oyes: %s (fijado por la zona %s)",
   "command.vc-audio-distance.voice.hud.on": "La línea de quién habla está activada: sobre la barra de objetos ves quién habla cerca.",
   "command.vc-audio-distance.voice.hud.off": "La línea de quién habla está desactivada.",
   "command.vc-audio-distance.voice.volume.set": "%s está al %s%% para ti.",

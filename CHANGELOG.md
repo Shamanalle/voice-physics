@@ -24,6 +24,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 #### Changed
 - `/voice` replies are clickable: *Your choices* show buttons for every value, every change has an *Undo*, `/voice help` has examples, `/voice menu` opens the same choices as an inventory menu, and each part has its own permission (`vcd.player.mode`, `.walls`, `.hud`, `.volume`, `.menu`).
+- A zone that sets `walls_strength` now decides the walls for everyone in it, also for players without the addon: their own `/voice walls off` does not apply there (the command, the menu and the status say which zone decides), and a zone's strength works even where walls are off elsewhere on the server.
 - Performance: the block lookups of one tick are shared between the wall, echo and round-the-corner measurements without creating garbage, and the addon slows its own measuring down step by step when the game gets busy, then speeds up again.
 
 ### Русский
@@ -42,6 +43,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 #### Изменено
 - Ответы `/voice` кликабельны: «Ваш выбор» показывает кнопки для каждого значения, у каждого изменения есть «Отменить», у `/voice help` есть примеры, `/voice menu` открывает тот же выбор как меню-инвентарь, а у каждой части своё право (`vcd.player.mode`, `.walls`, `.hud`, `.volume`, `.menu`).
+- Зона с `walls_strength` теперь решает стены за всех в ней, в том числе за игроков без аддона: их `/voice walls off` там не действует (команда, меню и статус говорят, какая зона решает), а сила зоны работает и там, где на остальном сервере стены выключены.
 - Производительность: обращения к блокам за один тик делятся между измерениями стен, эха и пути из-за угла без создания мусора, а аддон шаг за шагом замедляет собственные измерения, когда игра занята, и потом снова ускоряется.
 
 ## [2.8.0] - 2026-09-30

@@ -433,8 +433,8 @@ public final class ServerWalls {
         // what water, weather, distance and rooms do to it
         PlayerPrefs prefs = AudioDistancePlugin.PLAYER_PREFS;
         DistanceConfig profile = settings.profile();
-        boolean walls = worldAvailable && settings.isServerWalls() && profile.isOcclusionEnabled()
-                && (prefs.wallsFor(listener) || settings.wallsLocked());
+        Zone listenerZone = settings.zoneOf(players.get(listener));
+        boolean walls = worldAvailable && settings.isServerWalls() && settings.wallsApply(listenerZone, prefs.wallsFor(listener));
         UUID speakerId = speakerEntity != null ? speakerEntity : channel;
         double volumeLoss = prefs.lossDb(listener, speakerId);
         boolean realism = settings.hasServerRealism();
@@ -474,7 +474,7 @@ public final class ServerWalls {
         synchronized (pair) {
             double thickness = pair.thickness;
             // A zone can make walls stronger or weaker for the listeners in it
-            double strength = settings.wallsStrengthIn(settings.zoneOf(players.get(listener)));
+            double strength = settings.wallsStrengthIn(listenerZone);
             boolean measured = walls && !Double.isNaN(thickness);
             double muffle = measured ? OcclusionModel.muffle(thickness, strength) : 0.0;
             double loss = (measured ? OcclusionModel.lossDb(thickness, strength) : 0.0) + volumeLoss;

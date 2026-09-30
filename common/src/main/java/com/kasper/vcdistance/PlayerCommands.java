@@ -206,9 +206,15 @@ public final class PlayerCommands {
 
         // Walls
         boolean locked = settings.wallsLocked();
-        LineBuilder walls = CommandReply.line().addAll(m.spans(locked ? "voice.status.walls_locked" : "voice.status.walls",
-                Style.PLAIN, AdminCommands.onOff(m, p.walls() || locked)));
-        if (!locked) {
+        Zone wallsZone = settings.wallsZoneOf(me);
+        LineBuilder walls;
+        if (locked) {
+            walls = CommandReply.line().addAll(m.spans("voice.status.walls_locked", Style.PLAIN, AdminCommands.onOff(m, true)));
+        } else if (wallsZone != null) {
+            walls = CommandReply.line().addAll(m.spans("voice.status.walls_zone", Style.PLAIN,
+                    AdminCommands.onOff(m, settings.wallsApply(wallsZone, p.walls())), wallsZone.name()));
+        } else {
+            walls = CommandReply.line().addAll(m.spans("voice.status.walls", Style.PLAIN, AdminCommands.onOff(m, p.walls())));
             toggleButton(r, walls, "walls", p.walls());
         }
         r.reply.add(walls);
@@ -298,6 +304,11 @@ public final class PlayerCommands {
     private static void walls(Run r) {
         if (AudioDistancePlugin.SERVER_SETTINGS.wallsLocked()) {
             r.line(Style.WARN, r.m.get("voice.walls.locked"));
+            return;
+        }
+        Zone zone = AudioDistancePlugin.SERVER_SETTINGS.wallsZoneOf(AudioDistancePlugin.PLAYERS.get(r.player));
+        if (zone != null) {
+            r.line(Style.WARN, r.m.get("voice.walls.zone", zone.name()));
             return;
         }
         toggle(r, "walls", on -> AudioDistancePlugin.PLAYER_PREFS.setWalls(r.player, on));

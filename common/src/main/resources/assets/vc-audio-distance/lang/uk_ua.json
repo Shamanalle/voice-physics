@@ -238,6 +238,8 @@
   "command.vc-audio-distance.voice.walls.on": "Стіни глушать голоси, які ви чуєте.",
   "command.vc-audio-distance.voice.walls.off": "Стіни більше не глушать голоси, які ви чуєте.",
   "command.vc-audio-distance.voice.walls.locked": "Сервер закріпив стіни для всіх, тому вимкнути їх не можна.",
+  "command.vc-audio-distance.voice.walls.zone": "Зона %s задає свої стіни, тому ваш вибір там не діє.",
+  "command.vc-audio-distance.voice.status.walls_zone": "Стіни глушать те, що ви чуєте: %s (задано зоною %s)",
   "command.vc-audio-distance.voice.hud.on": "Рядок «хто говорить» увімкнено: над хотбаром видно, хто говорить поруч.",
   "command.vc-audio-distance.voice.hud.off": "Рядок «хто говорить» вимкнено.",
   "command.vc-audio-distance.voice.volume.set": "%s для вас на %s%%.",
