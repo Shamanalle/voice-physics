@@ -39,16 +39,51 @@ public final class DataMaterials {
         BlockDataRules.setData(read(resources, "data pack"));
     }
 
+    /**
+     * Every {@code voice_physics/materials.json} with its packs, lowest first. The listing method and its filter type
+     * differ between versions (Predicate up to 26.2, Selector in 26.3), so it is called by name.
+     */
+    @SuppressWarnings("unchecked")
+    private static Map<String, List<Resource>> list(ResourceManager resources) throws Exception {
+        java.lang.reflect.Method method = null;
+        for (String name : new String[]{"listResourceStacks", "listResources"}) {
+            for (java.lang.reflect.Method m : ResourceManager.class.getMethods()) {
+                if (m.getName().equals(name) && m.getParameterCount() == 2 && m.getParameterTypes()[0] == String.class
+                        && m.getParameterTypes()[1].isInterface() && Map.class.isAssignableFrom(m.getReturnType())) {
+                    method = m;
+                    break;
+                }
+            }
+            if (method != null) {
+                break;
+            }
+        }
+        if (method == null) {
+            throw new NoSuchMethodException("ResourceManager listing");
+        }
+        Class<?> filterType = method.getParameterTypes()[1];
+        Object filter = java.lang.reflect.Proxy.newProxyInstance(filterType.getClassLoader(), new Class<?>[]{filterType}, (proxy, m, args) -> {
+            if (m.getDeclaringClass() == Object.class) {
+                return m.getName().equals("hashCode") ? 0 : m.getName().equals("equals") ? proxy == args[0] : "filter";
+            }
+            boolean match = args != null && args.length > 0 && String.valueOf(args[0]).endsWith(":" + BlockDataRules.PATH);
+            return m.getReturnType() == boolean.class ? (Object) match : m.getReturnType() == Boolean.class ? (Object) match : null;
+        });
+        Map<String, List<Resource>> found = new TreeMap<>();
+        for (Map.Entry<?, ?> e : ((Map<?, ?>) method.invoke(resources, "voice_physics", filter)).entrySet()) {
+            Object value = e.getValue();
+            found.put(String.valueOf(e.getKey()), value instanceof List<?> ? (List<Resource>) value : List.of((Resource) value));
+        }
+        return found;
+    }
+
     /** Every {@code <namespace>:voice_physics/materials.json}, namespaces in alphabetical order, each from the lowest pack up. */
     public static BlockDataRules.Loaded read(ResourceManager resources, String kind) {
         List<BlockDataRules.Source> sources = new ArrayList<>();
         List<String> unreadable = new ArrayList<>();
         try {
             Map<String, List<Resource>> found = new TreeMap<>();
-            // listResources + getResourceStack exist in every supported version (listResourceStacks does not in 26.1-26.2)
-            for (var location : resources.listResources("voice_physics", l -> String.valueOf(l).endsWith(":" + BlockDataRules.PATH)).keySet()) {
-                found.put(String.valueOf(location), resources.getResourceStack(location));
-            }
+            found.putAll(list(resources));
             for (Map.Entry<String, List<Resource>> e : found.entrySet()) {
                 int pack = 0;
                 for (Resource resource : e.getValue()) {
