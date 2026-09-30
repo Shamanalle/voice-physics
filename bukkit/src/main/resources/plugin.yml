@@ -27,6 +27,7 @@ permissions:
       vcd.player.hud: true
       vcd.player.volume: true
       vcd.player.menu: true
+      vcd.player.radio: true
   vcd.player.mode:
     description: /voice mode - quiet or normal (shout needs vcd.shout)
     default: true
@@ -41,6 +42,9 @@ permissions:
     default: true
   vcd.player.menu:
     description: /voice menu - the settings as a menu
+    default: true
+  vcd.player.radio:
+    description: /voice radio - tune the radio (when the server has it on)
     default: true
   vcd.shout:
     description: /voice mode shout - a longer voice range

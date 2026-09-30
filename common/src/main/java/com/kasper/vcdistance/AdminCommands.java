@@ -75,10 +75,10 @@ public final class AdminCommands {
         return steps;
     }
 
-    static final String[] SUBCOMMANDS = {"status", "help", "reload", "undo", "log", "profile", "preset", "walls", "serverwalls", "effects", "extras", "lock",
+    static final String[] SUBCOMMANDS = {"status", "help", "reload", "undo", "log", "profile", "preset", "walls", "serverwalls", "effects", "extras", "radio", "lock",
             "monitor", "notices", "zones", "zone", "rule", "group", "require", "block", "mute", "unmute", "mutes", "debug", "report"};
     /** The topics of {@code /vcd help}, in the order they are listed. */
-    static final String[] TOPICS = {"status", "zones", "zone", "profile", "preset", "walls", "serverwalls", "effects", "extras", "lock", "monitor",
+    static final String[] TOPICS = {"status", "zones", "zone", "profile", "preset", "walls", "serverwalls", "effects", "extras", "radio", "lock", "monitor",
             "notices", "rule", "group", "require", "block", "mute", "unmute", "mutes", "debug", "report", "undo", "log", "reload"};
     /** Times offered for {@code /vcd mute <player>}. */
     static final String[] MUTE_TIMES = {"10m", "30m", "1h", "1d", "7d", "perm"};
@@ -232,6 +232,7 @@ public final class AdminCommands {
             case "serverwalls" -> onOff(r, "serverwalls", on -> settings.setServerWalls(on), "serverwalls_on", "serverwalls_off");
             case "effects" -> effects(r);
             case "extras" -> extras(r);
+            case "radio" -> radio(r);
             case "lock" -> {
                 java.util.Set<DistanceConfig.Part> parts = r.args.length > 1
                         ? DistanceConfig.Part.parseSet(String.join(",", Arrays.copyOfRange(r.args, 1, r.args.length))) : null;
@@ -299,7 +300,7 @@ public final class AdminCommands {
             case "debug", "report" -> PERM_DEBUG;
             case "mute", "unmute", "mutes" -> PERM_MUTE;
             case "zone" -> ZoneCommands.readOnly(action) ? PERM_STATUS : PERM_ZONE;
-            case "effects", "extras" -> action.isEmpty() || action.equalsIgnoreCase("info") || action.equalsIgnoreCase("status") ? PERM_STATUS : PERM_SETTINGS;
+            case "effects", "extras", "radio" -> action.isEmpty() || action.equalsIgnoreCase("info") || action.equalsIgnoreCase("status") ? PERM_STATUS : PERM_SETTINGS;
             case "reload", "log", "profile", "preset", "walls", "serverwalls", "lock", "monitor", "notices", "rule", "group", "require", "block" -> PERM_SETTINGS;
             default -> null;
         };
@@ -308,7 +309,7 @@ public final class AdminCommands {
     /** Subcommands that may change the settings (their state before is kept for undo). */
     private static boolean changes(String sub) {
         return switch (sub) {
-            case "profile", "preset", "walls", "serverwalls", "effects", "extras", "lock", "monitor", "notices", "zone", "rule", "group", "require", "block", "mute", "unmute" -> true;
+            case "profile", "preset", "walls", "serverwalls", "effects", "extras", "radio", "lock", "monitor", "notices", "zone", "rule", "group", "require", "block", "mute", "unmute" -> true;
             default -> false;
         };
     }
@@ -482,6 +483,57 @@ public final class AdminCommands {
         r.saved(on ? "extras.on" : "extras.off", r.m.get("extras.name." + name));
         if (on) {
             r.line(Style.MUTED, r.m.get("extras.untested"));
+        }
+    }
+
+    /**
+     * {@code /vcd radio}: the radio's state, who is on the air, and {@code item <id>|none} for the item players
+     * must hold. Switching it on or off is {@code /vcd extras radio on|off}.
+     */
+    private static void radio(Run r) {
+        Messages m = r.m;
+        ServerSettings settings = r.settings;
+        String part = r.arg(1).toLowerCase(Locale.ROOT);
+        switch (part) {
+            case "", "status", "info" -> {
+                r.line(Style.TITLE, m.get("radio.title"));
+                r.reply.add(CommandReply.line().addAll(m.spans("radio.state", Style.PLAIN,
+                        r.change(onOff(m, settings.isServerRadio()), "extras radio"))));
+                r.reply.add(CommandReply.line().addAll(m.spans("radio.item", Style.PLAIN,
+                        r.change(settings.getRadioItem().isEmpty() ? m.get("radio.no_item") : settings.getRadioItem(), "radio item"))));
+                java.util.SortedMap<Integer, Integer> channels = AudioDistancePlugin.PLAYER_PREFS.radioChannels();
+                if (channels.isEmpty()) {
+                    r.line(Style.MUTED, m.get("radio.nobody"));
+                } else {
+                    StringBuilder on = new StringBuilder();
+                    channels.forEach((frequency, count) -> on.append(on.length() == 0 ? "" : ", ").append(frequency).append(" ×").append(count));
+                    r.reply.add(CommandReply.line().addAll(m.spans("radio.channels", Style.PLAIN, on.toString())));
+                }
+                r.line(Style.MUTED, m.get("extras.untested"));
+                LineBuilder buttons = CommandReply.line();
+                boolean on = settings.isServerRadio();
+                r.button(buttons, on ? "btn.radio_off" : "btn.radio_on", Click.RUN, "/vcd extras radio " + (on ? "off" : "on"), PERM_SETTINGS);
+                r.button(buttons, "btn.help", Click.RUN, "/vcd help radio", PERM_STATUS);
+                if (undoable(settings) > 0) {
+                    r.button(buttons, "btn.undo", Click.RUN, "/vcd undo", null);
+                }
+                if (!buttons.isEmpty()) {
+                    r.reply.add(buttons);
+                }
+            }
+            case "item" -> {
+                if (r.args.length < 3) {
+                    r.badValue("radio item", "", "<item id>|none", "radio");
+                    return;
+                }
+                settings.setRadioItem(r.args[2].equalsIgnoreCase("none") || r.args[2].equalsIgnoreCase("off") ? "" : r.args[2]);
+                if (settings.getRadioItem().isEmpty()) {
+                    r.saved("radio.item_off");
+                } else {
+                    r.saved("radio.item_set", settings.getRadioItem());
+                }
+            }
+            default -> r.badValue("radio", part, "item", "radio");
         }
     }
 

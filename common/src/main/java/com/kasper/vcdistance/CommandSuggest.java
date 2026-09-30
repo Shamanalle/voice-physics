@@ -50,6 +50,7 @@ final class CommandSuggest {
                 case "serverwalls", "monitor", "notices" -> addAll(out, AdminCommands.ON_OFF, typed);
                 case "effects" -> addAll(out, AdminCommands.EFFECT_PARTS, typed);
                 case "extras" -> addAll(out, AdminCommands.EXTRAS, typed);
+                case "radio" -> addAll(out, new String[]{"item"}, typed);
                 case "lock" -> lockParts(out, typed);
                 case "rule" -> addAll(out, AdminCommands.RULES, typed);
                 case "group" -> addAll(out, AdminCommands.GROUP_RULES, typed);
@@ -96,6 +97,8 @@ final class CommandSuggest {
                 case "echo" -> AdminCommands.ECHO_STEPS;
                 default -> new String[0];
             }, typed);
+        } else if (sub.equals("radio") && args.length == 3 && action.equals("item")) {
+            addAll(out, new String[]{"minecraft:clock", "minecraft:compass", "none"}, typed);
         } else if (sub.equals("extras") && args.length == 3) {
             addAll(out, AdminCommands.ON_OFF, typed);
         } else if (sub.equals("group") && args.length == 3) {

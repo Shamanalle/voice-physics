@@ -14,8 +14,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * voice packet, so a player's entry is an immutable record swapped in whole.
  * <p>
  * Kept in {@code vc-audio-distance-players.properties} next to the server settings: one line per
- * player, {@code <uuid>=mode:shout;walls:off;hud:on;vol:<uuid>@50,<uuid>@0}. A volume of 0 means the
- * player is ignored.
+ * player, {@code <uuid>=mode:shout;walls:off;hud:on;radio:1200;vol:<uuid>@50,<uuid>@0}. A volume of 0
+ * means the player is ignored; a radio frequency of 0 (not stored) means the radio is off.
  */
 public final class PlayerPrefs {
 
@@ -40,25 +40,36 @@ public final class PlayerPrefs {
     /** Range with {@link Mode#SHOUT}, times the normal range. */
     public static final double SHOUT_FACTOR = 2.0;
 
-    /** One player's choices; volumes are in percent, 0-99 (100 is the default and not stored). */
-    public record Prefs(Mode mode, boolean walls, boolean hud, Map<UUID, Integer> volumes) {
+    /** Lowest and highest radio frequency; 0 is "off". */
+    public static final int RADIO_MIN = 1;
+    public static final int RADIO_MAX = 9999;
 
-        public static final Prefs DEFAULT = new Prefs(Mode.NORMAL, true, false, Map.of());
+    /**
+     * One player's choices; volumes are in percent, 0-99 (100 is the default and not stored); the radio
+     * is a frequency {@link #RADIO_MIN}-{@link #RADIO_MAX}, or 0 when it is off.
+     */
+    public record Prefs(Mode mode, boolean walls, boolean hud, Map<UUID, Integer> volumes, int radio) {
+
+        public static final Prefs DEFAULT = new Prefs(Mode.NORMAL, true, false, Map.of(), 0);
 
         public boolean isDefault() {
-            return mode == Mode.NORMAL && walls && !hud && volumes.isEmpty();
+            return mode == Mode.NORMAL && walls && !hud && volumes.isEmpty() && radio == 0;
         }
 
         Prefs withMode(Mode m) {
-            return new Prefs(m, walls, hud, volumes);
+            return new Prefs(m, walls, hud, volumes, radio);
         }
 
         Prefs withWalls(boolean on) {
-            return new Prefs(mode, on, hud, volumes);
+            return new Prefs(mode, on, hud, volumes, radio);
         }
 
         Prefs withHud(boolean on) {
-            return new Prefs(mode, walls, on, volumes);
+            return new Prefs(mode, walls, on, volumes, radio);
+        }
+
+        Prefs withRadio(int frequency) {
+            return new Prefs(mode, walls, hud, volumes, frequency < RADIO_MIN || frequency > RADIO_MAX ? 0 : frequency);
         }
 
         Prefs withVolume(UUID other, int percent) {
@@ -68,7 +79,7 @@ public final class PlayerPrefs {
             } else {
                 next.put(other, Math.max(0, percent));
             }
-            return new Prefs(mode, walls, hud, Map.copyOf(next));
+            return new Prefs(mode, walls, hud, Map.copyOf(next), radio);
         }
     }
 
@@ -77,6 +88,8 @@ public final class PlayerPrefs {
     private final Map<UUID, Prefs> before = new ConcurrentHashMap<>();
     /** Whether any player has a choice that changes what the voice rules do (range mode or a volume). */
     private volatile boolean active;
+    /** How many players have a radio frequency (the radio looks at voice packets only while someone has). */
+    private volatile int radioUsers;
     private volatile Path file;
 
     public Prefs get(UUID player) {
@@ -101,6 +114,27 @@ public final class PlayerPrefs {
     /** Whether {@code listener} muffles voices behind walls (true unless they turned it off). */
     public boolean wallsFor(UUID listener) {
         return get(listener).walls();
+    }
+
+    /** Whether any player tuned a radio, so voice packets are worth a look. */
+    public boolean anyRadio() {
+        return radioUsers > 0;
+    }
+
+    /** The player's radio frequency, or 0 when it is off. */
+    public int radioOf(UUID player) {
+        return get(player).radio();
+    }
+
+    /** Players per radio frequency, lowest first. */
+    public java.util.SortedMap<Integer, Integer> radioChannels() {
+        java.util.SortedMap<Integer, Integer> out = new java.util.TreeMap<>();
+        for (Prefs p : players.values()) {
+            if (p.radio() > 0) {
+                out.merge(p.radio(), 1, Integer::sum);
+            }
+        }
+        return out;
     }
 
     public boolean hudFor(UUID player) {
@@ -132,6 +166,11 @@ public final class PlayerPrefs {
 
     public void setHud(UUID player, boolean on) {
         update(player, p -> p.withHud(on));
+    }
+
+    /** Tunes the radio to {@code frequency} ({@link #RADIO_MIN}-{@link #RADIO_MAX}); anything else turns it off. */
+    public void setRadio(UUID player, int frequency) {
+        update(player, p -> p.withRadio(frequency));
     }
 
     public void setVolume(UUID listener, UUID speaker, int percent) {
@@ -182,13 +221,17 @@ public final class PlayerPrefs {
 
     private void recount() {
         boolean any = false;
+        int radios = 0;
         for (Prefs p : players.values()) {
             if (p.mode() != Mode.NORMAL || !p.volumes().isEmpty()) {
                 any = true;
-                break;
+            }
+            if (p.radio() > 0) {
+                radios++;
             }
         }
         active = any;
+        radioUsers = radios;
     }
 
     // -------------------------------------------------------------------------
@@ -233,6 +276,9 @@ public final class PlayerPrefs {
         StringBuilder out = new StringBuilder("mode:").append(p.mode().name().toLowerCase(java.util.Locale.ROOT))
                 .append(";walls:").append(p.walls() ? "on" : "off")
                 .append(";hud:").append(p.hud() ? "on" : "off");
+        if (p.radio() > 0) {
+            out.append(";radio:").append(p.radio());
+        }
         if (!p.volumes().isEmpty()) {
             out.append(";vol:");
             boolean first = true;
@@ -257,6 +303,13 @@ public final class PlayerPrefs {
                 case "mode" -> p = p.withMode(Mode.of(value));
                 case "walls" -> p = p.withWalls(!value.equals("off"));
                 case "hud" -> p = p.withHud(value.equals("on"));
+                case "radio" -> {
+                    try {
+                        p = p.withRadio(Integer.parseInt(value));
+                    } catch (NumberFormatException ignored) {
+                        // a damaged entry: the radio stays off
+                    }
+                }
                 case "vol" -> {
                     for (String item : value.split(",")) {
                         int at = item.indexOf('@');

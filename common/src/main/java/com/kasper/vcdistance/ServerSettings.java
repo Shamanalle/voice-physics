@@ -135,6 +135,7 @@ public final class ServerSettings {
     private volatile boolean serverAir;
     private volatile boolean metrics = true;
     private volatile boolean serverRadio;
+    private volatile String radioItem = "";
     private volatile boolean serverSpeakers;
     private volatile boolean serverEavesdrop;
     private volatile boolean serverSculk;
@@ -244,6 +245,15 @@ public final class ServerSettings {
         serverRadio = on;
     }
 
+    /** The item a player must hold to use the radio (id like {@code minecraft:clock}), or "" for none needed. */
+    public String getRadioItem() {
+        return radioItem;
+    }
+
+    public void setRadioItem(String id) {
+        radioItem = itemId(id);
+    }
+
     /** Loudspeakers placed by admins repeat voices around them (Paper). Off until play-tested. */
     public boolean isServerSpeakers() {
         return serverSpeakers;
@@ -335,6 +345,7 @@ public final class ServerSettings {
         mutes = readMutes(props, file);
         metrics = DistanceConfig.parseBoolean(props, "metrics", true);
         serverRadio = DistanceConfig.parseBoolean(props, "server_radio", false);
+        radioItem = itemId(props.getProperty("radio_item", ""));
         serverSpeakers = DistanceConfig.parseBoolean(props, "server_speakers", false);
         serverEavesdrop = DistanceConfig.parseBoolean(props, "server_eavesdrop", false);
         serverSculk = DistanceConfig.parseBoolean(props, "server_sculk", false);
@@ -627,6 +638,11 @@ public final class ServerSettings {
                         "frequency hear each other at any distance. Default false.",
                         "true: рации. Предмет с частотой (/vcd radio, /voice radio): у кого частота одна, те слышат друг друга на любом расстоянии. По умолчанию false.")
                 .value("server_radio", serverRadio)
+                .comment("Item a player must hold (in either hand) to talk and listen on the radio, e.g. minecraft:clock.",
+                        "Empty: no item needed, the frequency alone decides. Default empty.",
+                        "Предмет, который игрок должен держать (в любой руке), чтобы говорить и слушать по рации, например minecraft:clock.",
+                        "Пусто: предмет не нужен, решает одна частота. По умолчанию пусто.")
+                .value("radio_item", radioItem)
                 .comment("true: loudspeakers placed with /vcd speaker add repeat voices to the players around them. Default false.",
                         "true: громкоговорители, поставленные через /vcd speaker add, повторяют голоса игрокам вокруг. По умолчанию false.")
                 .value("server_speakers", serverSpeakers)

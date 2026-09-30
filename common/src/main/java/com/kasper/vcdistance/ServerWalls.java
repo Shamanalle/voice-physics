@@ -13,6 +13,7 @@ import de.maxhenkel.voicechat.api.opus.OpusDecoder;
 import de.maxhenkel.voicechat.api.opus.OpusEncoder;
 import de.maxhenkel.voicechat.api.packets.EntitySoundPacket;
 import de.maxhenkel.voicechat.api.packets.LocationalSoundPacket;
+import de.maxhenkel.voicechat.api.packets.StaticSoundPacket;
 import de.maxhenkel.voicechat.api.packets.MicrophonePacket;
 import de.maxhenkel.voicechat.api.packets.SoundPacket;
 import de.maxhenkel.voicechat.api.packets.StaticSoundPacket;
@@ -323,6 +324,9 @@ public final class ServerWalls {
                 return;
             }
             AudioDistancePlugin.TALK.spoke(talking, System.nanoTime());
+            if (settings.isServerRadio() && AudioDistancePlugin.PLAYER_PREFS.anyRadio()) {
+                radio(event, packet, talking);
+            }
         }
         if (packet == null || sender == null || sender.getPlayer() == null || !rangeRulesFor(sender)
                 || !voiceRulesOn()) {
@@ -366,6 +370,49 @@ public final class ServerWalls {
                 resending.set(Boolean.TRUE);
                 try {
                     voicechat.sendEntitySoundPacketTo(c, send);
+                } finally {
+                    resending.set(Boolean.FALSE);
+                }
+            }
+        } catch (Throwable t) {
+            logFailure(t);
+        } finally {
+            perf.add(System.nanoTime() - start);
+        }
+    }
+
+    /**
+     * The radio: everyone on the speaker's frequency who does not already hear the voice by distance gets it
+     * as a static sound (in their ear, from any distance or world).
+     */
+    private void radio(MicrophonePacketEvent event, MicrophonePacket packet, UUID id) {
+        long start = System.nanoTime();
+        try {
+            ServerPlayers.Info speaker = players.get(id);
+            if (speaker == null) {
+                return;
+            }
+            double hearing = ServerRange.rangeOf(settings, speaker, packet.isWhispering(), voiceRange(), whisperRange());
+            java.util.List<ServerPlayers.Info> to = ServerRadio.receivers(settings, AudioDistancePlugin.PLAYER_PREFS, players, speaker, hearing);
+            if (to.isEmpty()) {
+                return;
+            }
+            VoicechatServerApi voicechat = event.getVoicechat();
+            StaticSoundPacket out = null;
+            for (ServerPlayers.Info other : to) {
+                VoicechatConnection c = voicechat.getConnectionOf(other.id());
+                if (c == null || !c.isConnected() || c.isDisabled()) {
+                    continue;
+                }
+                if (out == null) {
+                    out = packet.staticSoundPacketBuilder()
+                            .channelId(id)
+                            .opusEncodedData(packet.getOpusEncodedData())
+                            .build();
+                }
+                resending.set(Boolean.TRUE);
+                try {
+                    voicechat.sendStaticSoundPacketTo(c, out);
                 } finally {
                     resending.set(Boolean.FALSE);
                 }
