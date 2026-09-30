@@ -119,6 +119,7 @@ public final class AudioDistanceBukkit extends JavaPlugin implements Listener {
         } catch (NoClassDefFoundError e) {
             // PlaceholderAPI is not installed
         }
+        VcdMetrics.start(this);
         scheduling.everyTick(this::tick);
         for (Player player : getServer().getOnlinePlayers()) {
             startPlayerTick(player);

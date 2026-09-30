@@ -133,6 +133,7 @@ public final class ServerSettings {
     private volatile int maxStreams = DEFAULT_MAX_STREAMS;
     private volatile boolean serverEffects;
     private volatile boolean serverAir;
+    private volatile boolean metrics = true;
     private volatile long loadedModified = Long.MIN_VALUE;
     private volatile Map<String, Zone> zones = Map.of();
     /** Players muted with /vcd mute, by UUID (ended ones stay until the next save). */
@@ -216,6 +217,11 @@ public final class ServerSettings {
     }
 
     /** Far voices get duller with distance for players without the addon. */
+    /** Whether the plugin reports anonymous usage numbers to bStats (Paper); read once at start-up. */
+    public boolean isMetrics() {
+        return metrics;
+    }
+
     public boolean isServerAir() {
         return serverAir;
     }
@@ -277,6 +283,7 @@ public final class ServerSettings {
         serverEffects = DistanceConfig.parseBoolean(props, "server_effects", false);
         serverAir = DistanceConfig.parseBoolean(props, "server_air", false);
         mutes = readMutes(props, file);
+        metrics = DistanceConfig.parseBoolean(props, "metrics", true);
 
         // Profile: custom values, or a preset on top of them
         profile.readFrom(props, PROFILE_PREFIX);
@@ -550,6 +557,16 @@ public final class ServerSettings {
         mutes.values().stream().filter(m -> m.activeAt(now))
                 .sorted(java.util.Comparator.comparing(m -> m.player().toString()))
                 .forEach(m -> w.value(MUTE_PREFIX + m.player(), m.encode()));
+        w.section("11. Statistics", "11. Статистика")
+                .comment("Paper plugin: send anonymous usage numbers to bStats (https://bstats.org): the plugin's version, the",
+                        "server software and version, the Java version, the number of players and whether the addon's options are on.",
+                        "No names, addresses or chat. The numbers show which versions to keep supporting. Takes effect after a restart.",
+                        "Also off for every plugin with plugins/bStats/config.yml (enabled: false). Default true.",
+                        "Плагин для Paper: отправлять в bStats (https://bstats.org) анонимные числа об использовании: версию плагина,",
+                        "ПО и версию сервера, версию Java, число игроков и включены ли настройки аддона.",
+                        "Ни имён, ни адресов, ни чата. Числа показывают, какие версии стоит поддерживать. Действует после перезапуска.",
+                        "Выключается и для всех плагинов сразу через plugins/bStats/config.yml (enabled: false). По умолчанию true.")
+                .value("metrics", metrics);
         w.save(getPath());
         // Our own write is not an edit to pick up again
         loadedModified = lastModified(getPath());
