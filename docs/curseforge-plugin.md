@@ -13,6 +13,7 @@ Players don't need to install anything. Those who also install the [Voice Physic
 - **Player controls:** `/voice` lets anyone talk quietly or shout (with permission), turn wall muffling off for themselves, set or ignore other players' volume, and show who is talking nearby above the hotbar. Clickable, with an inventory menu and undo.
 - **Realism for players without the mod** (off by default, `/vcd effects on`): voices dull under water, far voices are covered in rain and thunder, and a speaker in a cave echoes.
 - **Mute:** `/vcd mute <player> [time] [reason]` silences a voice for a time or until `/vcd unmute`; `/vcd mutes` lists them.
+- **Extras** (off by default, not yet tried in a live game; `/vcd extras` lists the switches): a radio (`/voice radio`), loudspeakers (`/vcd speaker`), an eavesdrop item, a sculk reaction to shouts, doorway sound, and Towny, Lands, WorldGuard and LuckPerms integrations.
 - **PlaceholderAPI:** `%vcd_mode%`, `%vcd_talking%`, `%vcd_range%`, `%vcd_muted%`, `%vcd_zone%` and more for scoreboards, tab lists and chat formats.
 - **Admin tools:** clickable `/vcd` commands with undo, a log of who changed what, `/vcd debug <player>` to see whom a player hears and why not, `/vcd report` for a bug report to copy, and messages in each player's own language.
 
@@ -21,7 +22,7 @@ Players don't need to install anything. Those who also install the [Voice Physic
 1. Put `voice-physics-bukkit-*.jar` into `plugins/`. Simple Voice Chat must be installed.
 2. Restart the server. Settings are in `plugins/VoicePhysics/vc-audio-distance-server.properties` and can all be changed in game with `/vcd`.
 
-Minecraft 1.20 – 1.21.11 and 26.1 – 26.3, Java 17+. Each part of `/vcd` has its own permission (`vcd.status`, `vcd.settings`, `vcd.zone`, `vcd.debug`, `vcd.mute`, `vcd.admin`); operators have all of them.
+Minecraft 1.20 – 1.21.11 and 26.1 – 26.3, Java 17+. Each part of `/vcd` has its own permission (`vcd.status`, `vcd.settings`, `vcd.zone`, `vcd.debug`, `vcd.mute`, `vcd.speaker`, `vcd.admin`); operators have all of them.
 
 The plugin sends anonymous usage numbers to bStats (no names, addresses or chat); `metrics=false` in the settings file turns it off.
 
