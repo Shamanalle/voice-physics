@@ -121,6 +121,7 @@ Available in the full Fabric, Forge and NeoForge mods and as a plugin for Paper,
 - **Controls for players without the mod (Paper, Folia).** `/voice` lets anyone choose how loud they talk (quiet, normal, shout), turn wall muffling off for themselves, set how loud each player is to them or ignore one, and show who is talking nearby above the hotbar. The choices are kept per player; shouting needs the `vcd.shout` permission (operators by default).
 - **Realism for players without the addon (off by default).** `/vcd effects on` makes the server dull voices under water, cover far ones in rain and thunder, and echo the room a speaker or listener is in, the same physics the addon does at home. `/vcd effects air on` also dulls voices a little as they near the edge of their range. Water, rain and air work on every platform; measuring a room for the echo needs block access and is Paper only, while a zone with its own echo works everywhere. The strengths are the profile's (`/vcd effects water|weather|echo <0-150>`). It costs some load, so it is off until you turn it on.
 - **Mute.** `/vcd mute <player> [time] [reason]` silences a player's voice for everyone, for a time (`10m`, `2h`, `1d`, `perm`) or until `/vcd unmute`. `/vcd mutes` lists who is muted and why, with an *Unmute* button. Mutes survive restarts and appear in the change log.
+- **Extras (Paper, off by default, not yet tried in a live game).** `/vcd extras` lists them with a switch each; turn one on on a test server first, `/vcd undo` takes it back. A **radio** (`/voice radio <1-9999>`: players on one frequency hear each other at any distance, optionally only while holding an item), **loudspeakers** (`/vcd speaker add`: whoever talks at one is heard from it around it), an **eavesdrop item** (a spyglass makes walls sound thinner), the **sculk reaction** (a shout is a game event wardens and sculk sensors react to), **doorway sound** (behind a wall, the voice comes through the open door instead of the wall) and **integrations** (Towny towns and Lands lands as zones, a WorldGuard `vcd-zone` flag, LuckPerms contexts `vcd:mode`, `vcd:walls`, `vcd:zone`).
 - **PlaceholderAPI (Paper).** With [PlaceholderAPI](https://modrinth.com/plugin/placeholderapi) installed, scoreboards, tab lists, holograms and chat formats can show [`%vcd_...%` placeholders](#placeholders): who talks, the mode, the range, whether someone is muted.
 - **Statistics (plugin).** The plugin sends anonymous usage numbers to [bStats](https://bstats.org) (server size and versions, which options are in use; no names, addresses or chat), so work goes where people use it. Turn it off with `metrics=false` in the server file, or for all plugins in `plugins/bStats/config.yml`.
 - **Admin tools.** A *Server* tab in the settings screen, [`/vcd`](#commands) with clickable replies, examples in its help, undo and separate permissions, a log of who changed what, on a screen of its own (*Server* tab → *Full log*, or `/voicephysics log`) and as `/vcd log`, `/vcd debug <player>` to see whom a player hears and why not, `/vcd report` for a bug report to copy, and messages in each player's own language (all texts can be edited).
@@ -139,7 +140,7 @@ Available in the full Fabric, Forge and NeoForge mods and as a plugin for Paper,
 | Zones: echo | — | — | ✅ |
 | Game rules, addon requirement, `/vcd` | — | ✅ | ✅ |
 | Mute, `/vcd report` | — | ✅ | ✅ |
-| `/voice`, PlaceholderAPI | — | Paper | Paper |
+| `/voice`, PlaceholderAPI, extras (radio, loudspeakers, eavesdrop, sculk, doorway, integrations) | — | Paper | Paper |
 | Server tab, locked settings, monitor off | — | — | ✅ |
 | Exact whisper range on the graph | approximate | — | ✅ |
 
@@ -149,31 +150,31 @@ With the addon on both sides the client muffles walls itself and the server skip
 
 | Loader | Minecraft | File | Java | Simple Voice Chat |
 |---|---|---|---|---|
-| **Fabric / Quilt** | 1.20 – 1.20.1 | `voice-physics-fabric-2.9.0+mc1.20.1.jar` | 17+ | 2.4.0+ |
-| **Fabric / Quilt** | 1.20.2 – 1.20.4 | `voice-physics-fabric-2.9.0+mc1.20.2-1.20.4.jar` | 17+ | 2.4.0+ |
-| **Fabric / Quilt** | 1.20.5 – 1.20.6 | `voice-physics-fabric-2.9.0+mc1.20.5-1.20.6.jar` | 21+ | 2.5.0+ |
-| **Fabric / Quilt** | 1.21 – 1.21.11 | `voice-physics-fabric-2.9.0+mc1.21.x.jar` | 21+ | 2.5.0+ |
-| **Fabric / Quilt** | 26.1 – 26.3 | `voice-physics-fabric-2.9.0+mc26.x.jar` | 25+ | 2.6.0+ |
-| **Forge** | 1.20 – 1.20.1 | `voice-physics-forge-2.9.0+mc1.20.1.jar` | 17+ | 2.4.0+ |
-| **Forge** | 1.20.2 – 1.20.4 | `voice-physics-forge-2.9.0+mc1.20.2-1.20.4.jar` | 17+ | 2.4.0+ |
-| **Forge** | 1.20.6 | `voice-physics-forge-2.9.0+mc1.20.6.jar` | 21+ | 2.5.0+ |
-| **Forge** | 1.21 – 1.21.1 | `voice-physics-forge-2.9.0+mc1.21-1.21.1.jar` | 21+ | 2.5.0+ |
-| **Forge** | 1.21.3 – 1.21.5 | `voice-physics-forge-2.9.0+mc1.21.3-1.21.5.jar` | 21+ | 2.5.0+ |
-| **Forge** | 1.21.6 – 1.21.8 | `voice-physics-forge-2.9.0+mc1.21.6-1.21.8.jar` | 21+ | 2.5.0+ |
-| **Forge** | 1.21.9 – 1.21.10 | `voice-physics-forge-2.9.0+mc1.21.9-1.21.10.jar` | 21+ | 2.5.0+ |
-| **Forge** | 1.21.11 | `voice-physics-forge-2.9.0+mc1.21.11.jar` | 21+ | 2.5.0+ |
-| **Forge** | 26.1 – 26.3 | `voice-physics-forge-2.9.0+mc26.x.jar` | 25+ | 2.6.0+ |
-| **NeoForge** | 1.20.1 | `voice-physics-forge-2.9.0+mc1.20.1.jar` | 17+ | 2.4.0+ |
-| **NeoForge** | 1.20.2 – 1.20.3 | `voice-physics-neoforge-2.9.0+mc1.20.2-1.20.3.jar` | 17+ | 2.4.0+ |
-| **NeoForge** | 1.20.4 | `voice-physics-neoforge-2.9.0+mc1.20.4.jar` | 17+ | 2.4.0+ |
-| **NeoForge** | 1.20.5 – 1.20.6 | `voice-physics-neoforge-2.9.0+mc1.20.5-1.20.6.jar` | 21+ | 2.5.0+ |
-| **NeoForge** | 1.21 – 1.21.1 | `voice-physics-neoforge-2.9.0+mc1.21-1.21.1.jar` | 21+ | 2.5.0+ |
-| **NeoForge** | 1.21.2 – 1.21.5 | `voice-physics-neoforge-2.9.0+mc1.21.2-1.21.5.jar` | 21+ | 2.5.0+ |
-| **NeoForge** | 1.21.6 – 1.21.8 | `voice-physics-neoforge-2.9.0+mc1.21.6-1.21.8.jar` | 21+ | 2.5.0+ |
-| **NeoForge** | 1.21.9 – 1.21.10 | `voice-physics-neoforge-2.9.0+mc1.21.9-1.21.10.jar` | 21+ | 2.5.0+ |
-| **NeoForge** | 1.21.11 | `voice-physics-neoforge-2.9.0+mc1.21.11.jar` | 21+ | 2.5.0+ |
-| **NeoForge** | 26.1 – 26.3 | `voice-physics-neoforge-2.9.0+mc26.x.jar` | 25+ | 2.6.0+ |
-| **Paper / Purpur / Folia / Spigot / Bukkit** | 1.20 – 26.3 | `voice-physics-bukkit-2.9.0.jar` | 17+ | Bukkit version |
+| **Fabric / Quilt** | 1.20 – 1.20.1 | `voice-physics-fabric-2.10.0+mc1.20.1.jar` | 17+ | 2.4.0+ |
+| **Fabric / Quilt** | 1.20.2 – 1.20.4 | `voice-physics-fabric-2.10.0+mc1.20.2-1.20.4.jar` | 17+ | 2.4.0+ |
+| **Fabric / Quilt** | 1.20.5 – 1.20.6 | `voice-physics-fabric-2.10.0+mc1.20.5-1.20.6.jar` | 21+ | 2.5.0+ |
+| **Fabric / Quilt** | 1.21 – 1.21.11 | `voice-physics-fabric-2.10.0+mc1.21.x.jar` | 21+ | 2.5.0+ |
+| **Fabric / Quilt** | 26.1 – 26.3 | `voice-physics-fabric-2.10.0+mc26.x.jar` | 25+ | 2.6.0+ |
+| **Forge** | 1.20 – 1.20.1 | `voice-physics-forge-2.10.0+mc1.20.1.jar` | 17+ | 2.4.0+ |
+| **Forge** | 1.20.2 – 1.20.4 | `voice-physics-forge-2.10.0+mc1.20.2-1.20.4.jar` | 17+ | 2.4.0+ |
+| **Forge** | 1.20.6 | `voice-physics-forge-2.10.0+mc1.20.6.jar` | 21+ | 2.5.0+ |
+| **Forge** | 1.21 – 1.21.1 | `voice-physics-forge-2.10.0+mc1.21-1.21.1.jar` | 21+ | 2.5.0+ |
+| **Forge** | 1.21.3 – 1.21.5 | `voice-physics-forge-2.10.0+mc1.21.3-1.21.5.jar` | 21+ | 2.5.0+ |
+| **Forge** | 1.21.6 – 1.21.8 | `voice-physics-forge-2.10.0+mc1.21.6-1.21.8.jar` | 21+ | 2.5.0+ |
+| **Forge** | 1.21.9 – 1.21.10 | `voice-physics-forge-2.10.0+mc1.21.9-1.21.10.jar` | 21+ | 2.5.0+ |
+| **Forge** | 1.21.11 | `voice-physics-forge-2.10.0+mc1.21.11.jar` | 21+ | 2.5.0+ |
+| **Forge** | 26.1 – 26.3 | `voice-physics-forge-2.10.0+mc26.x.jar` | 25+ | 2.6.0+ |
+| **NeoForge** | 1.20.1 | `voice-physics-forge-2.10.0+mc1.20.1.jar` | 17+ | 2.4.0+ |
+| **NeoForge** | 1.20.2 – 1.20.3 | `voice-physics-neoforge-2.10.0+mc1.20.2-1.20.3.jar` | 17+ | 2.4.0+ |
+| **NeoForge** | 1.20.4 | `voice-physics-neoforge-2.10.0+mc1.20.4.jar` | 17+ | 2.4.0+ |
+| **NeoForge** | 1.20.5 – 1.20.6 | `voice-physics-neoforge-2.10.0+mc1.20.5-1.20.6.jar` | 21+ | 2.5.0+ |
+| **NeoForge** | 1.21 – 1.21.1 | `voice-physics-neoforge-2.10.0+mc1.21-1.21.1.jar` | 21+ | 2.5.0+ |
+| **NeoForge** | 1.21.2 – 1.21.5 | `voice-physics-neoforge-2.10.0+mc1.21.2-1.21.5.jar` | 21+ | 2.5.0+ |
+| **NeoForge** | 1.21.6 – 1.21.8 | `voice-physics-neoforge-2.10.0+mc1.21.6-1.21.8.jar` | 21+ | 2.5.0+ |
+| **NeoForge** | 1.21.9 – 1.21.10 | `voice-physics-neoforge-2.10.0+mc1.21.9-1.21.10.jar` | 21+ | 2.5.0+ |
+| **NeoForge** | 1.21.11 | `voice-physics-neoforge-2.10.0+mc1.21.11.jar` | 21+ | 2.5.0+ |
+| **NeoForge** | 26.1 – 26.3 | `voice-physics-neoforge-2.10.0+mc26.x.jar` | 25+ | 2.6.0+ |
+| **Paper / Purpur / Folia / Spigot / Bukkit** | 1.20 – 26.3 | `voice-physics-bukkit-2.10.0.jar` | 17+ | Bukkit version |
 
 - **Fabric**, **Forge** and **NeoForge** are the full addon, for the client and the server. Fabric needs [Fabric API](https://modrinth.com/mod/fabric-api); [Mod Menu](https://modrinth.com/mod/modmenu) is optional. On Forge for 1.21.6 – 1.21.7 the voice HUD is off: that Forge cannot add it. NeoForge 1.20.1 is a fork of Forge 1.20.1 and takes the Forge file. The NeoForge 1.20.4 file needs NeoForge 20.4.80 or newer.
 - **The plugin** is the server side only. Players can join with the addon, without it, or without mods at all.
@@ -217,10 +218,11 @@ Parts the server locks cannot be changed from here either.
 | `/voice ignore <player>`, `/voice unignore <player>` | Stop hearing a player, and undo it (works for everyone) |
 | `/voice hud on\|off` | The names and distances of players talking near you, above the hotbar (players without the addon) |
 | `/voice menu` | The same choices as an inventory menu |
+| `/voice radio [1-9999\|off]` | Tune your radio: players on the same frequency hear each other at any distance (when the server has turned the radio on; with `radio_item` set, hold that item) |
 | `/voice undo` | Take back your last change |
 | `/voice reset` | Back to the defaults |
 
-Everyone may use `/voice` (permission `vcd.player`); each part has its own permission under it (`vcd.player.mode`, `.walls`, `.hud`, `.volume`, `.menu`), so a server can take one away. The choices are saved in `vc-audio-distance-players.properties` next to the server settings.
+Everyone may use `/voice` (permission `vcd.player`); each part has its own permission under it (`vcd.player.mode`, `.walls`, `.hud`, `.volume`, `.menu`, `.radio`), so a server can take one away. The choices are saved in `vc-audio-distance-players.properties` next to the server settings.
 
 ### Placeholders
 
@@ -282,6 +284,10 @@ Replies are coloured and clickable: values in `/vcd status` put the command that
 | `/vcd mute <player> [time] [reason]` | Nobody hears the player for `30s`, `10m`, `2h`, `1d`, `1w` or `perm` (no time: until unmuted); muting again changes the time and reason |
 | `/vcd unmute <player>` | Let the player be heard again |
 | `/vcd mutes` | Who is muted, for how long and why, each with an *Unmute* button |
+| `/vcd extras [name on\|off]` | The Paper plugin's extras and their switches: `radio`, `speakers`, `eavesdrop`, `sculk`, `doorway`, `integrations` (all off until turned on; not yet tried in a live game) |
+| `/vcd radio [item <id>\|none]` | The radio: state, who is on the air on which frequency, the item players must hold |
+| `/vcd speaker [list]`, `add <name> [radius] [pickup]`, `tp <name>`, `remove <name>` | Loudspeakers: whoever talks within `pickup` blocks (0.5 - 16) of one is heard from it by everyone within `radius` blocks (1 - 256) |
+| `/vcd eavesdrop [item <id>\|none\|factor <0.05-1>]` | The eavesdrop item (default `minecraft:spyglass`) and how much of the walls' muffling is left for its holder (default 0.3) |
 | `/vcd debug [player]` | Whom a player hears, who hears them, and why not (without a name: you) |
 | `/vcd report` | A bug report to copy: versions, settings that change how voices sound, load, the last problems (no player or zone names) |
 
@@ -290,10 +296,11 @@ Replies are coloured and clickable: values in `/vcd status` put the command that
 | Permission | Allows |
 |---|---|
 | `vcd.status` | `status`, `help`, `zones`, `zone info`, `effects` (looking) |
-| `vcd.settings` | `profile`, `preset`, `walls`, `serverwalls`, `effects` (changing), `lock`, `monitor`, `notices`, `rule`, `group`, `require`, `block`, `reload`, `undo`, `log` |
+| `vcd.settings` | `profile`, `preset`, `walls`, `serverwalls`, `effects` (changing), `extras`, `radio`, `eavesdrop`, `lock`, `monitor`, `notices`, `rule`, `group`, `require`, `block`, `reload`, `undo`, `log` |
 | `vcd.zone` | Making, changing, showing and deleting zones |
 | `vcd.debug` | `debug`, `report` |
 | `vcd.mute` | `mute`, `unmute`, `mutes` |
+| `vcd.speaker` | `speaker add`, `remove`, `tp` |
 | `vcd.admin` | All of the above |
 
 On Fabric, Forge and NeoForge `/vcd` is for operators (level 2+). With LuckPerms or another mod that uses fabric-permissions-api, Fabric checks the same permissions. The *Server* tab shows to anyone who may use any part of `/vcd`.
@@ -384,7 +391,7 @@ Everything here can also be set in game. Every key in the files has a comment in
 | `zone.<kind>.<name>.priority` | whole number | Where zones overlap the highest wins (default 0) |
 | `zone.box.<name>.world`, `.from`, `.to` | world, `x,y,z`, `x,y,z` | The box; `/vcd zone create` writes it |
 
-`<kind>` is `world`, `box`, `region` (WorldGuard, Paper) or `claim` (Open Parties and Claims: `zone.claim.<player>` covers that player's claims and, for a party leader, the whole party's; `zone.claim.server` the server's own claims). A world is its folder name on Paper (`world_nether`) and its dimension on Fabric, Forge and NeoForge (`the_nether`). On equal priority a region wins, then the smaller box. Anything a zone does not set comes from the rest of the file.
+`<kind>` is `world`, `box`, `region` (WorldGuard, Paper), `town` (Towny, Paper), `land` (Lands, Paper) or `claim` (Open Parties and Claims: `zone.claim.<player>` covers that player's claims and, for a party leader, the whole party's; `zone.claim.server` the server's own claims). A world is its folder name on Paper (`world_nether`) and its dimension on Fabric, Forge and NeoForge (`the_nether`). On equal priority a region wins, then the smaller box. Anything a zone does not set comes from the rest of the file.
 
 ```properties
 # A stage heard twice as far, and a soundproof booth
@@ -410,6 +417,26 @@ zone.box.booth.isolated=true
 | `server_air` | true / false | false | Voices dull a little as they near the edge of their range |
 | `mute.<uuid>` | `end\|name\|muted by\|reason` | none | A muted player; `end` is the time in milliseconds since 1970, 0 until unmuted. `/vcd mute` writes these; expired ones are dropped |
 | `metrics` | true / false | true | Plugin only: anonymous usage numbers to [bStats](https://bstats.org) |
+
+</details>
+
+<details>
+<summary>Extras of the Paper plugin (off by default)</summary>
+
+| Key | Values | Default | What it does |
+|---|---|---|---|
+| `server_radio` | true / false | false | Radio: players on the same frequency (`/voice radio`) hear each other at any distance |
+| `radio_item` | item id or empty | empty | Item a player must hold to use the radio, e.g. `minecraft:clock`; empty: none needed |
+| `server_speakers` | true / false | false | Loudspeakers placed with `/vcd speaker add` repeat voices around them |
+| `speaker.<name>` | `world\|x\|y\|z\|pickup\|radius` | none | A loudspeaker; `/vcd speaker add` writes these |
+| `server_eavesdrop` | true / false | false | The eavesdrop item makes walls thinner for its holder |
+| `eavesdrop_item` | item id or empty | `minecraft:spyglass` | The item; empty: nobody can |
+| `eavesdrop_factor` | 0.05 – 1 | 0.3 | What is left of the walls' muffling for the holder |
+| `server_sculk` | true / false | false | A shout or a megaphone voice is a game event for sculk sensors and wardens (at most once per 3 s per player) |
+| `server_doorway` | true / false | false | Players without the addon hear a voice behind a wall from the open door it comes through |
+| `server_integrations` | true / false | false | `zone.town.*` (Towny), `zone.land.*` (Lands), the WorldGuard flag `vcd-zone` and the LuckPerms contexts `vcd:mode`, `vcd:walls`, `vcd:zone` |
+
+All of these are new and have not been tried in a live game yet: turn one on on a test server first. The WorldGuard flag `vcd-zone` takes the name of a zone in this file (`/region flag <region> vcd-zone quiet-library`).
 
 </details>
 

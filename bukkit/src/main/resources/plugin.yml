@@ -4,7 +4,7 @@ main: com.kasper.vcdistance.bukkit.AudioDistanceBukkit
 api-version: '1.20'
 folia-supported: true
 depend: [voicechat]
-softdepend: [WorldGuard, PlaceholderAPI]
+softdepend: [WorldGuard, PlaceholderAPI, Towny, Lands, LuckPerms]
 author: Shamanalle
 website: https://github.com/Shamanalle/voice-physics
 description: >-
@@ -27,6 +27,7 @@ permissions:
       vcd.player.hud: true
       vcd.player.volume: true
       vcd.player.menu: true
+      vcd.player.radio: true
   vcd.player.mode:
     description: /voice mode - quiet or normal (shout needs vcd.shout)
     default: true
@@ -42,6 +43,9 @@ permissions:
   vcd.player.menu:
     description: /voice menu - the settings as a menu
     default: true
+  vcd.player.radio:
+    description: /voice radio - tune the radio (when the server has it on)
+    default: true
   vcd.shout:
     description: /voice mode shout - a longer voice range
     default: op
@@ -54,6 +58,7 @@ permissions:
       vcd.zone: true
       vcd.debug: true
       vcd.mute: true
+      vcd.speaker: true
       vcd.shout: true
   vcd.status:
     description: /vcd status, help, zones and zone info
@@ -69,4 +74,7 @@ permissions:
     default: op
   vcd.mute:
     description: /vcd mute, unmute and mutes - mute a player in voice chat for a while
+    default: op
+  vcd.speaker:
+    description: /vcd speaker add and remove - place and take away loudspeakers
     default: op

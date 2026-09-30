@@ -20,6 +20,12 @@ final class WorldGuardRegions {
     private static Method applicable;
     private static Method getId;
     private static Method getPriority;
+    private static Object zoneFlag;
+    private static Method queryValue;
+    private static boolean flagRegistered;
+
+    /** The WorldGuard region flag a region owner sets to put the region in one of the settings file's zones. */
+    static final String ZONE_FLAG = "vcd-zone";
 
     private WorldGuardRegions() {
     }
@@ -43,6 +49,50 @@ final class WorldGuardRegions {
             return ids;
         } catch (ReflectiveOperationException | RuntimeException e) {
             return List.of();
+        }
+    }
+
+    /**
+     * Registers the {@code vcd-zone} region flag: WorldGuard only accepts flags before it enables, so this runs in
+     * the plugin's {@code onLoad}. Does nothing without WorldGuard; a failure only means the flag does not exist.
+     */
+    static synchronized void registerFlag() {
+        if (flagRegistered) {
+            return;
+        }
+        try {
+            Class<?> worldGuard = Class.forName("com.sk89q.worldguard.WorldGuard");
+            Object instance = worldGuard.getMethod("getInstance").invoke(null);
+            Object registry = worldGuard.getMethod("getFlagRegistry").invoke(instance);
+            Class<?> flagType = Class.forName("com.sk89q.worldguard.protection.flags.Flag");
+            Object flag = Class.forName("com.sk89q.worldguard.protection.flags.StringFlag")
+                    .getConstructor(String.class).newInstance(ZONE_FLAG);
+            Class.forName("com.sk89q.worldguard.protection.flags.registry.FlagRegistry")
+                    .getMethod("register", flagType).invoke(registry, flag);
+            zoneFlag = flag;
+            flagRegistered = true;
+        } catch (ClassNotFoundException e) {
+            // no WorldGuard
+        } catch (ReflectiveOperationException | RuntimeException | LinkageError e) {
+            DistanceConfig.LOGGER.warn("Could not register the WorldGuard flag {}: {}", ZONE_FLAG, e.toString());
+        }
+    }
+
+    /** The zone name the {@code vcd-zone} flag gives at {@code location}, or {@code null} when it is not set or not usable. */
+    static String zoneAt(Location location) {
+        if (zoneFlag == null || !init()) {
+            return null;
+        }
+        try {
+            if (queryValue == null) {
+                Class<?> associable = Class.forName("com.sk89q.worldguard.protection.association.RegionAssociable");
+                queryValue = query.getClass().getMethod("queryValue", Class.forName("com.sk89q.worldedit.util.Location"),
+                        associable, Class.forName("com.sk89q.worldguard.protection.flags.Flag"));
+            }
+            Object value = queryValue.invoke(query, adapt.invoke(null, location), null, zoneFlag);
+            return value instanceof String s && !s.isBlank() ? s.trim() : null;
+        } catch (ReflectiveOperationException | RuntimeException | LinkageError e) {
+            return null;
         }
     }
 

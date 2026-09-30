@@ -38,6 +38,10 @@ public final class ServerSettings {
     private static final int SETTINGS_VERSION = 9;
     private static final String ZONE_PREFIX = "zone.";
     private static final String MUTE_PREFIX = "mute.";
+    private static final String SPEAKER_PREFIX = "speaker.";
+    public static final String DEFAULT_EAVESDROP_ITEM = "minecraft:spyglass";
+    public static final double DEFAULT_EAVESDROP_FACTOR = 0.3;
+    public static final double MIN_EAVESDROP_FACTOR = 0.05;
     public static final String CUSTOM_PRESET = "custom";
 
     public static final int DEFAULT_MAX_STREAMS = 24;
@@ -134,6 +138,17 @@ public final class ServerSettings {
     private volatile boolean serverEffects;
     private volatile boolean serverAir;
     private volatile boolean metrics = true;
+    private volatile boolean serverRadio;
+    private volatile String radioItem = "";
+    private volatile String eavesdropItem = DEFAULT_EAVESDROP_ITEM;
+    private volatile double eavesdropFactor = DEFAULT_EAVESDROP_FACTOR;
+    /** Loudspeakers placed with /vcd speaker, by lower-case name. */
+    private volatile Map<String, Loudspeaker> speakers = Map.of();
+    private volatile boolean serverSpeakers;
+    private volatile boolean serverEavesdrop;
+    private volatile boolean serverSculk;
+    private volatile boolean serverDoorway;
+    private volatile boolean serverIntegrations;
     private volatile long loadedModified = Long.MIN_VALUE;
     private volatile Map<String, Zone> zones = Map.of();
     /** Players muted with /vcd mute, by UUID (ended ones stay until the next save). */
@@ -230,6 +245,87 @@ public final class ServerSettings {
         serverAir = on;
     }
 
+    /** Radio items: holders on one frequency hear each other at any distance (Paper). Off until play-tested. */
+    public boolean isServerRadio() {
+        return serverRadio;
+    }
+
+    public void setServerRadio(boolean on) {
+        serverRadio = on;
+    }
+
+    /** The item a player must hold to use the radio (id like {@code minecraft:clock}), or "" for none needed. */
+    public String getRadioItem() {
+        return radioItem;
+    }
+
+    public void setRadioItem(String id) {
+        radioItem = itemId(id);
+    }
+
+    /** The item a player must hold to eavesdrop (id like {@code minecraft:spyglass}), or "" for nobody. */
+    public String getEavesdropItem() {
+        return eavesdropItem;
+    }
+
+    public void setEavesdropItem(String id) {
+        eavesdropItem = itemId(id);
+    }
+
+    /** How much of the wall muffling an eavesdropper hears, 0.05-1. */
+    public double getEavesdropFactor() {
+        return eavesdropFactor;
+    }
+
+    public void setEavesdropFactor(double f) {
+        eavesdropFactor = DistanceConfig.clamp(f, MIN_EAVESDROP_FACTOR, 1.0);
+    }
+
+    /** Loudspeakers placed by admins repeat voices around them (Paper). Off until play-tested. */
+    public boolean isServerSpeakers() {
+        return serverSpeakers;
+    }
+
+    public void setServerSpeakers(boolean on) {
+        serverSpeakers = on;
+    }
+
+    /** The eavesdrop item thins walls for its holder (Paper). Off until play-tested. */
+    public boolean isServerEavesdrop() {
+        return serverEavesdrop;
+    }
+
+    public void setServerEavesdrop(boolean on) {
+        serverEavesdrop = on;
+    }
+
+    /** Shouting is a game event that sculk sensors and wardens react to (Paper). Off until play-tested. */
+    public boolean isServerSculk() {
+        return serverSculk;
+    }
+
+    public void setServerSculk(boolean on) {
+        serverSculk = on;
+    }
+
+    /** Towny towns, Lands lands, the WorldGuard {@code vcd-zone} flag and LuckPerms contexts (Paper). Off until play-tested. */
+    public boolean isServerIntegrations() {
+        return serverIntegrations;
+    }
+
+    public void setServerIntegrations(boolean on) {
+        serverIntegrations = on;
+    }
+
+    /** Players without the addon hear a walled voice from the doorway (Paper). Off until play-tested. */
+    public boolean isServerDoorway() {
+        return serverDoorway;
+    }
+
+    public void setServerDoorway(boolean on) {
+        serverDoorway = on;
+    }
+
     /** Whether voices for players without the addon may change for another reason than walls. */
     public boolean hasServerRealism() {
         return serverEffects || serverAir;
@@ -284,6 +380,16 @@ public final class ServerSettings {
         serverAir = DistanceConfig.parseBoolean(props, "server_air", false);
         mutes = readMutes(props, file);
         metrics = DistanceConfig.parseBoolean(props, "metrics", true);
+        serverRadio = DistanceConfig.parseBoolean(props, "server_radio", false);
+        radioItem = itemId(props.getProperty("radio_item", ""));
+        eavesdropItem = itemId(props.getProperty("eavesdrop_item", DEFAULT_EAVESDROP_ITEM));
+        eavesdropFactor = DistanceConfig.clamp(DistanceConfig.parseDouble(props, "eavesdrop_factor", DEFAULT_EAVESDROP_FACTOR), MIN_EAVESDROP_FACTOR, 1.0);
+        speakers = readSpeakers(props, file);
+        serverSpeakers = DistanceConfig.parseBoolean(props, "server_speakers", false);
+        serverEavesdrop = DistanceConfig.parseBoolean(props, "server_eavesdrop", false);
+        serverSculk = DistanceConfig.parseBoolean(props, "server_sculk", false);
+        serverDoorway = DistanceConfig.parseBoolean(props, "server_doorway", false);
+        serverIntegrations = DistanceConfig.parseBoolean(props, "server_integrations", false);
 
         // Profile: custom values, or a preset on top of them
         profile.readFrom(props, PROFILE_PREFIX);
@@ -567,6 +673,49 @@ public final class ServerSettings {
                         "Ни имён, ни адресов, ни чата. Числа показывают, какие версии стоит поддерживать. Действует после перезапуска.",
                         "Выключается и для всех плагинов сразу через plugins/bStats/config.yml (enabled: false). По умолчанию true.")
                 .value("metrics", metrics);
+        w.section("12. Extras for the Paper plugin (off until play-tested)", "12. Дополнения плагина для Paper (выключены, пока не проверены в игре)")
+                .comment("true: radio items. A named item with a frequency (/vcd radio, /voice radio): holders on the same",
+                        "frequency hear each other at any distance. Default false.",
+                        "true: рации. Предмет с частотой (/vcd radio, /voice radio): у кого частота одна, те слышат друг друга на любом расстоянии. По умолчанию false.")
+                .value("server_radio", serverRadio)
+                .comment("Item a player must hold (in either hand) to talk and listen on the radio, e.g. minecraft:clock.",
+                        "Empty: no item needed, the frequency alone decides. Default empty.",
+                        "Предмет, который игрок должен держать (в любой руке), чтобы говорить и слушать по рации, например minecraft:clock.",
+                        "Пусто: предмет не нужен, решает одна частота. По умолчанию пусто.")
+                .value("radio_item", radioItem)
+                .comment("true: loudspeakers placed with /vcd speaker add repeat voices to the players around them. Default false.",
+                        "true: громкоговорители, поставленные через /vcd speaker add, повторяют голоса игрокам вокруг. По умолчанию false.")
+                .value("server_speakers", serverSpeakers)
+                .comment("true: the eavesdrop item makes walls thinner for the player who holds it. Default false.",
+                        "true: предмет для подслушивания делает стены тоньше для держащего его игрока. По умолчанию false.")
+                .value("server_eavesdrop", serverEavesdrop)
+                .comment("Item a player must hold (in either hand) to eavesdrop, e.g. minecraft:spyglass. Empty: nobody can. Default minecraft:spyglass.",
+                        "Предмет, который игрок должен держать (в любой руке), чтобы подслушивать, например minecraft:spyglass. Пусто: никто не может. По умолчанию minecraft:spyglass.")
+                .value("eavesdrop_item", eavesdropItem)
+                .comment("How much of the walls' muffling is left for an eavesdropper: 0.05 - 1. 0.3 = a wall sounds about a third as thick. Default 0.3.",
+                        "Сколько от приглушения стенами остаётся подслушивающему: 0.05 - 1. 0.3 = стена звучит примерно втрое тоньше. По умолчанию 0.3.")
+                .value("eavesdrop_factor", eavesdropFactor)
+                .comment("true: a shout is a game event that sculk sensors and wardens react to; whispers and sneaking are not. Default false.",
+                        "true: крик - игровое событие, на него реагируют скалковые датчики и вардены; шёпот и корточки - нет. По умолчанию false.")
+                .value("server_sculk", serverSculk)
+                .comment("true: a player without the addon hears a voice behind a wall from the doorway it comes through.",
+                        "Any failure falls back to the muffled straight path. Default false.",
+                        "true: игрок без аддона слышит голос за стеной из дверного проёма, через который тот доходит.",
+                        "При любой ошибке остаётся приглушённый прямой путь. По умолчанию false.")
+                .value("server_doorway", serverDoorway)
+                .comment("true: zone.town.<name> (Towny) and zone.land.<name> (Lands) zones, the WorldGuard region flag vcd-zone",
+                        "and the LuckPerms contexts vcd:mode, vcd:walls and vcd:zone work. Each needs its plugin. Default false.",
+                        "true: работают зоны zone.town.<имя> (Towny) и zone.land.<имя> (Lands), флаг региона WorldGuard vcd-zone",
+                        "и контексты LuckPerms vcd:mode, vcd:walls и vcd:zone. Каждому нужен свой плагин. По умолчанию false.")
+                .value("server_integrations", serverIntegrations)
+                .comment("Loudspeakers, made with /vcd speaker add <name> [radius] [pickup] where the admin stands:",
+                        "  speaker.<name>=<world>|<x>|<y>|<z>|<pickup blocks>|<radius blocks>",
+                        "Whoever talks within the pickup distance is heard from the speaker by everyone within the radius.",
+                        "Громкоговорители, их делает /vcd speaker add <имя> [радиус] [захват] там, где стоит админ:",
+                        "  speaker.<имя>=<мир>|<x>|<y>|<z>|<захват, блоков>|<радиус, блоков>",
+                        "Кого говорящий в пределах захвата, того слышно из громкоговорителя всем в пределах радиуса.");
+        speakers.values().stream().sorted(java.util.Comparator.comparing(Loudspeaker::key))
+                .forEach(sp -> w.value(SPEAKER_PREFIX + sp.name(), sp.encode()));
         w.save(getPath());
         // Our own write is not an edit to pick up again
         loadedModified = lastModified(getPath());
@@ -620,7 +769,7 @@ public final class ServerSettings {
         if (colon > 0 && Zone.isKind(n.substring(0, colon))) {
             return zones.get(n);
         }
-        for (String kind : new String[]{Zone.BOX, Zone.REGION, Zone.WORLD, Zone.CLAIM}) {
+        for (String kind : new String[]{Zone.BOX, Zone.REGION, Zone.WORLD, Zone.CLAIM, Zone.TOWN, Zone.LAND}) {
             Zone z = zones.get(kind + ":" + n);
             if (z != null) {
                 return z;
@@ -855,6 +1004,51 @@ public final class ServerSettings {
         return profile.isOcclusionEnabled() ? profile.getOcclusionStrength() : 0.0;
     }
 
+    private static Map<String, Loudspeaker> readSpeakers(Properties props, Path file) {
+        Map<String, Loudspeaker> out = new java.util.LinkedHashMap<>();
+        for (String key : props.stringPropertyNames().stream().sorted().toList()) {
+            if (!key.startsWith(SPEAKER_PREFIX)) {
+                continue;
+            }
+            Loudspeaker sp = Loudspeaker.decode(key.substring(SPEAKER_PREFIX.length()), props.getProperty(key));
+            if (sp == null) {
+                DistanceConfig.LOGGER.warn("Ignoring a damaged loudspeaker in {}: {}", file.getFileName(), key);
+            } else {
+                out.put(sp.key(), sp);
+            }
+        }
+        return Map.copyOf(out);
+    }
+
+    /** The loudspeakers by lower-case name. */
+    public Map<String, Loudspeaker> speakers() {
+        return speakers;
+    }
+
+    /** The loudspeaker called {@code name} (case ignored), or {@code null}. */
+    public Loudspeaker speaker(String name) {
+        return name == null ? null : speakers.get(name.toLowerCase(Locale.ROOT));
+    }
+
+    /** Places or replaces a loudspeaker; call {@link #save()} to keep it. */
+    public synchronized void putSpeaker(Loudspeaker speaker) {
+        Map<String, Loudspeaker> next = new java.util.LinkedHashMap<>(speakers);
+        next.put(speaker.key(), speaker);
+        speakers = Map.copyOf(next);
+    }
+
+    /** @return {@code true} when there was such a speaker; call {@link #save()} to keep it */
+    public synchronized boolean removeSpeaker(String name) {
+        String key = name == null ? "" : name.toLowerCase(Locale.ROOT);
+        if (!speakers.containsKey(key)) {
+            return false;
+        }
+        Map<String, Loudspeaker> next = new java.util.LinkedHashMap<>(speakers);
+        next.remove(key);
+        speakers = Map.copyOf(next);
+        return true;
+    }
+
     private static Map<UUID, VoiceMute> readMutes(Properties props, Path file) {
         Map<UUID, VoiceMute> out = new java.util.LinkedHashMap<>();
         for (String key : props.stringPropertyNames()) {
@@ -937,14 +1131,14 @@ public final class ServerSettings {
             int kindEnd = rest.indexOf('.');
             int fieldStart = rest.lastIndexOf('.');
             if (kindEnd <= 0 || fieldStart <= kindEnd + 1) {
-                DistanceConfig.LOGGER.warn("Ignoring '{}' in {}: expected zone.<world|box|region|claim>.<name>.<setting>", key, file);
+                DistanceConfig.LOGGER.warn("Ignoring '{}' in {}: expected zone.<world|box|region|claim|town|land>.<name>.<setting>", key, file);
                 continue;
             }
             String kind = rest.substring(0, kindEnd).toLowerCase(Locale.ROOT);
             String name = Zone.normalize(rest.substring(kindEnd + 1, fieldStart));
             String field = rest.substring(fieldStart + 1).toLowerCase(Locale.ROOT);
             if (!Zone.isKind(kind)) {
-                DistanceConfig.LOGGER.warn("Ignoring '{}' in {}: a zone is a world, a box, a region or a claim", key, file);
+                DistanceConfig.LOGGER.warn("Ignoring '{}' in {}: a zone is a world, a box, a region, a claim, a town or a land", key, file);
                 continue;
             }
             parts.computeIfAbsent(kind + ":" + name, k -> new LinkedHashMap<>()).put(field, props.getProperty(key).trim());

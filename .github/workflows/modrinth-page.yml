@@ -3,7 +3,8 @@ name: Modrinth page
 # Uploads docs/modrinth.md as the Modrinth project page and the English summary from
 # docs/store-description.md as its short description, so the page is edited with a commit.
 # The gallery is docs/gallery.json (file, title, description, featured; the order is the list's order):
-# each picture is uploaded to the project gallery, replacing the one with the same title. Pictures
+# each picture is uploaded to the project gallery, replacing the one with the same title (a picture
+# Modrinth already holds, answered as a duplicate, is left as it is with a warning). Pictures
 # added on the site by hand keep their place. Modrinth accepts 5 MiB per picture.
 # Needs the MODRINTH_TOKEN secret with the "Write projects" scope; without it the upload is skipped
 # with a warning. Pull requests only check that the page, the summary and the gallery can be read.
@@ -130,8 +131,11 @@ jobs:
             # The picture with this title goes first, so an update replaces it
             old=$(jq -r --arg t "${title}" '.gallery[]? | select(.title == $t) | .url' project.json)
             for url in ${old}; do
-              curl -sS -o /dev/null -X DELETE -H "Authorization: ${MODRINTH_TOKEN}" -H "User-Agent: ${agent}" \
-                --get --data-urlencode "url=${url}" "${api}/gallery"
+              deleted=$(curl -sS -o /dev/null -w '%{http_code}' -X DELETE -H "Authorization: ${MODRINTH_TOKEN}" -H "User-Agent: ${agent}" \
+                --get --data-urlencode "url=${url}" "${api}/gallery")
+              if [ "${deleted}" != "204" ]; then
+                echo "::warning::${title}: Modrinth answered ${deleted} when removing the old picture"
+              fi
             done
             enc() { jq -rn --arg v "$1" '$v | @uri'; }
             query="ext=${ext}&featured=${featured}&title=$(enc "${title}")&description=$(enc "${description}")&ordering=${n}"
@@ -139,7 +143,10 @@ jobs:
               -H "Authorization: ${MODRINTH_TOKEN}" -H "User-Agent: ${agent}" -H "Content-Type: image/${ext}" \
               --data-binary "@${file}" "${api}/gallery?${query}")
             echo "${title}: Modrinth answered ${status}"
-            if [ "${status}" != "204" ]; then
+            if [ "${status}" = "400" ] && grep -qi 'duplicate' response.txt; then
+              # The same picture is already in the gallery (nothing changed since the last run)
+              echo "::warning::${title}: the picture is already in the Modrinth gallery, left as it is"
+            elif [ "${status}" != "204" ]; then
               cat response.txt
               exit 1
             fi
