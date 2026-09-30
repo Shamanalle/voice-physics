@@ -106,7 +106,7 @@ final class ConfigWriter {
              Reader reader = new InputStreamReader(in, StandardCharsets.UTF_8)) {
             props.load(reader);
         } catch (IllegalArgumentException e) {
-            // A malformed escape (\u not followed by four hex digits); callers keep their settings on IOException
+            // A malformed unicode escape in the file; callers keep their settings on IOException
             throw new IOException("Malformed escape in " + file.getFileName() + ": " + e.getMessage(), e);
         }
         return props;
