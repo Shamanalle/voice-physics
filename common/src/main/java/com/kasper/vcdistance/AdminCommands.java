@@ -73,10 +73,10 @@ public final class AdminCommands {
         return steps;
     }
 
-    static final String[] SUBCOMMANDS = {"status", "help", "reload", "undo", "log", "profile", "preset", "walls", "serverwalls", "lock",
+    static final String[] SUBCOMMANDS = {"status", "help", "reload", "undo", "log", "profile", "preset", "walls", "serverwalls", "effects", "lock",
             "monitor", "notices", "zones", "zone", "rule", "group", "require", "block", "debug"};
     /** The topics of {@code /vcd help}, in the order they are listed. */
-    static final String[] TOPICS = {"status", "zones", "zone", "profile", "preset", "walls", "serverwalls", "lock", "monitor",
+    static final String[] TOPICS = {"status", "zones", "zone", "profile", "preset", "walls", "serverwalls", "effects", "lock", "monitor",
             "notices", "rule", "group", "require", "block", "debug", "undo", "log", "reload"};
     static final String[] MODES = {"off", "suggest", "enforce"};
     static final String[] PRESETS = {"vanilla", "realistic", "clear", "stealth", "custom", "export", "import"};
@@ -85,6 +85,10 @@ public final class AdminCommands {
     static final String[] GROUP_RULES = {"dead", "spectators", "zones", "open_range"};
     static final String[] REQUIRE = {"off", "suggest", "warn", "kick"};
     static final String[] ON_OFF = {"on", "off"};
+    /** {@code /vcd effects <part> ...}: the server's own air and the strengths the profile has. */
+    static final String[] EFFECT_PARTS = {"on", "off", "air", "water", "weather", "echo", "status"};
+    static final String[] EFFECT_STEPS = {"off", "25", "50", "75", "100", "125", "150"};
+    static final String[] ECHO_STEPS = {"off", "25", "50", "75", "100"};
     /** Changes {@code /vcd undo} can take back, per settings file. */
     static final int UNDO_STEPS = 10;
     /** Players {@code /vcd debug} lists. */
@@ -215,6 +219,7 @@ public final class AdminCommands {
                 wallsNote(r);
             }
             case "serverwalls" -> onOff(r, "serverwalls", on -> settings.setServerWalls(on), "serverwalls_on", "serverwalls_off");
+            case "effects" -> effects(r);
             case "lock" -> {
                 java.util.Set<DistanceConfig.Part> parts = r.args.length > 1
                         ? DistanceConfig.Part.parseSet(String.join(",", Arrays.copyOfRange(r.args, 1, r.args.length))) : null;
@@ -277,6 +282,7 @@ public final class AdminCommands {
             case "status", "help", "?", "zones" -> PERM_STATUS;
             case "debug" -> PERM_DEBUG;
             case "zone" -> ZoneCommands.readOnly(action) ? PERM_STATUS : PERM_ZONE;
+            case "effects" -> action.isEmpty() || action.equalsIgnoreCase("info") || action.equalsIgnoreCase("status") ? PERM_STATUS : PERM_SETTINGS;
             case "reload", "log", "profile", "preset", "walls", "serverwalls", "lock", "monitor", "notices", "rule", "group", "require", "block" -> PERM_SETTINGS;
             default -> null;
         };
@@ -285,7 +291,7 @@ public final class AdminCommands {
     /** Subcommands that may change the settings (their state before is kept for undo). */
     private static boolean changes(String sub) {
         return switch (sub) {
-            case "profile", "preset", "walls", "serverwalls", "lock", "monitor", "notices", "zone", "rule", "group", "require", "block" -> true;
+            case "profile", "preset", "walls", "serverwalls", "effects", "lock", "monitor", "notices", "zone", "rule", "group", "require", "block" -> true;
             default -> false;
         };
     }
@@ -321,6 +327,12 @@ public final class AdminCommands {
                 r.change(p.isOcclusionEnabled() ? pct(p.getOcclusionStrength()) : m.get("off"), "walls"),
                 r.change(onOff(m, settings.isServerWalls()), "serverwalls"),
                 AudioDistancePlugin.SERVER_WALLS.activeStreams(), settings.getMaxStreams())));
+        r.reply.add(CommandReply.line().addAll(m.spans("status.effects", Style.PLAIN,
+                r.change(onOff(m, settings.isServerEffects()), "effects"),
+                r.change(onOff(m, settings.isServerAir()), "effects air"),
+                r.change(effectText(m, p.isUnderwaterEnabled(), p.getUnderwaterStrength()), "effects water"),
+                r.change(effectText(m, p.isWeatherEnabled(), p.getWeatherStrength()), "effects weather"),
+                r.change(effectText(m, p.isReverbEnabled(), p.getReverbStrength()), "effects echo"))));
         r.reply.add(CommandReply.line().addAll(m.spans("status.players", Style.PLAIN, ctx.addonPlayers(), ctx.onlinePlayers())));
         r.reply.add(CommandReply.line().addAll(m.spans("status.profile", Style.PLAIN,
                 r.change(settings.getProfileMode().getId(), "profile"),
@@ -359,6 +371,119 @@ public final class AdminCommands {
         if (!buttons.isEmpty()) {
             r.reply.add(buttons);
         }
+    }
+
+    /**
+     * {@code /vcd effects}: water, weather and echo for players without the addon ({@code on|off}), the
+     * distance air ({@code air on|off}) and the strengths the profile has ({@code water|weather|echo}).
+     */
+    private static void effects(Run r) {
+        ServerSettings settings = r.settings;
+        DistanceConfig p = settings.profile();
+        String part = r.arg(1).toLowerCase(Locale.ROOT);
+        switch (part) {
+            case "", "status", "info" -> effectsView(r);
+            case "on", "off" -> {
+                boolean on = part.equals("on");
+                settings.setServerEffects(on);
+                if (!on) {
+                    AudioDistancePlugin.SERVER_ROOMS.clear();
+                }
+                r.saved(on ? "effects.on" : "effects.off");
+                if (on) {
+                    r.line(Style.MUTED, r.m.get("effects.cost"));
+                }
+            }
+            case "air" -> {
+                Boolean on = r.args.length > 2 ? parseOnOff(r.args[2]) : null;
+                if (on == null) {
+                    r.badValue("effects air", r.arg(2), "on|off", "effects");
+                    return;
+                }
+                settings.setServerAir(on);
+                r.saved(on ? "effects.air_on" : "effects.air_off");
+            }
+            case "water", "weather", "echo" -> {
+                boolean echo = part.equals("echo");
+                double max = echo ? DistanceConfig.REVERB_MAX : DistanceConfig.EFFECT_STRENGTH_MAX;
+                Double value = r.args.length > 2 ? parseStrength(r.args[2], max) : null;
+                if (value == null) {
+                    r.badValue("effects " + part, r.arg(2), (echo ? "0-100" : "0-150") + "|off", "effects");
+                    return;
+                }
+                boolean on = value > 0.0;
+                switch (part) {
+                    case "water" -> {
+                        p.setUnderwaterEnabled(on);
+                        p.setUnderwaterStrength(on ? value : p.getUnderwaterStrength());
+                    }
+                    case "weather" -> {
+                        p.setWeatherEnabled(on);
+                        p.setWeatherStrength(on ? value : p.getWeatherStrength());
+                    }
+                    default -> {
+                        p.setReverbEnabled(on);
+                        p.setReverbStrength(on ? value : p.getReverbStrength());
+                    }
+                }
+                if (on) {
+                    r.saved("effects." + part + "_set", pct(value));
+                } else {
+                    r.saved("effects." + part + "_off");
+                }
+                effectsNote(r);
+            }
+            default -> r.badValue("effects", part, String.join("|", EFFECT_PARTS), "effects");
+        }
+    }
+
+    /** The state of the effects, each part a click away. */
+    private static void effectsView(Run r) {
+        Messages m = r.m;
+        ServerSettings settings = r.settings;
+        DistanceConfig p = settings.profile();
+        r.line(Style.TITLE, m.get("effects.title"));
+        r.reply.add(CommandReply.line().addAll(m.spans("effects.state", Style.PLAIN,
+                r.change(onOff(m, settings.isServerEffects()), "effects"))));
+        r.reply.add(CommandReply.line().addAll(m.spans("effects.strengths", Style.PLAIN,
+                r.change(effectText(m, p.isUnderwaterEnabled(), p.getUnderwaterStrength()), "effects water"),
+                r.change(effectText(m, p.isWeatherEnabled(), p.getWeatherStrength()), "effects weather"),
+                r.change(effectText(m, p.isReverbEnabled(), p.getReverbStrength()), "effects echo"))));
+        r.reply.add(CommandReply.line().addAll(m.spans("effects.air", Style.PLAIN,
+                r.change(onOff(m, settings.isServerAir()), "effects air"))));
+        if (settings.hasServerRealism()) {
+            r.reply.add(CommandReply.line().addAll(m.spans("effects.perf", Style.MUTED,
+                    String.format(Locale.ROOT, "%.2f", AudioDistancePlugin.SERVER_WALLS.perf().averageMs()))));
+        }
+        effectsNote(r);
+        LineBuilder buttons = CommandReply.line();
+        boolean effects = settings.isServerEffects();
+        r.button(buttons, effects ? "btn.effects_off" : "btn.effects_on", Click.RUN, "/vcd effects " + (effects ? "off" : "on"), PERM_SETTINGS);
+        boolean air = settings.isServerAir();
+        r.button(buttons, air ? "btn.air_off" : "btn.air_on", Click.RUN, "/vcd effects air " + (air ? "off" : "on"), PERM_SETTINGS);
+        r.button(buttons, "btn.help", Click.RUN, "/vcd help effects", PERM_STATUS);
+        if (undoable(settings) > 0) {
+            r.button(buttons, "btn.undo", Click.RUN, "/vcd undo", null);
+        }
+        if (!buttons.isEmpty()) {
+            r.reply.add(buttons);
+        }
+    }
+
+    /**
+     * The strengths are the profile's, so players with the addon use them only when the profile is enforced
+     * with the effects locked; the server's own effects reach players without it in any case.
+     */
+    private static void effectsNote(Run r) {
+        ServerSettings s = r.settings;
+        if (s.getProfileMode() != ServerSettings.ProfileMode.ENFORCE || !s.getLockedParts().contains(DistanceConfig.Part.EFFECTS)) {
+            r.line(Style.MUTED, r.m.get("effects.note"));
+        }
+    }
+
+    /** "off", or the strength as a percentage. */
+    private static String effectText(Messages m, boolean enabled, double strength) {
+        return enabled ? pct(strength) : m.get("off");
     }
 
     private static void undo(Run r) {
@@ -866,6 +991,31 @@ public final class AdminCommands {
             }
             // With a % sign it is a percentage; without, 0.6 and 60 both mean 60%
             return Math.min(1.0, percent || d > 1.0 ? d / 100.0 : d);
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    /**
+     * A strength from 0 to {@code max} (1 = 100%) as a fraction: "off", "70%", "70", "0.7" and "150%" for a
+     * maximum of 1.5. Without a % sign a number up to 2 is the fraction itself and a larger one a percentage.
+     */
+    static Double parseStrength(String s, double max) {
+        String v = s.trim().toLowerCase(Locale.ROOT);
+        if (v.equals("off")) {
+            return 0.0;
+        }
+        boolean percent = v.endsWith("%");
+        if (percent) {
+            v = v.substring(0, v.length() - 1);
+        }
+        try {
+            double d = Double.parseDouble(v.replace(',', '.'));
+            if (!Double.isFinite(d) || d < 0.0) {
+                return null;
+            }
+            double fraction = percent || d > 2.0 ? d / 100.0 : d;
+            return fraction > max + 1e-9 ? null : Math.min(max, fraction);
         } catch (NumberFormatException e) {
             return null;
         }
