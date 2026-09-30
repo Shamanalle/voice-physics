@@ -567,6 +567,43 @@ public class ServerWallsTest {
     }
 
     @Test
+    @DisplayName("A muted player's microphone packets are cancelled before Simple Voice Chat sends them anywhere")
+    void mutedMicrophone() {
+        boolean[] cancelled = {false};
+        Map<String, java.util.function.Function<Object[], Object>> pm = new HashMap<>();
+        pm.put("isWhispering", a -> false);
+        pm.put("getOpusEncodedData", a -> pack(tone(0)));
+        de.maxhenkel.voicechat.api.packets.MicrophonePacket mic = proxy(de.maxhenkel.voicechat.api.packets.MicrophonePacket.class, pm);
+        VoicechatConnection player = connection(speaker);
+        Map<String, java.util.function.Function<Object[], Object>> cm = new HashMap<>();
+        cm.put("getPlayer", a -> player.getPlayer());
+        cm.put("isInGroup", a -> false);
+        VoicechatConnection sender = proxy(VoicechatConnection.class, cm);
+        Map<String, java.util.function.Function<Object[], Object>> m = new HashMap<>();
+        m.put("getPacket", a -> mic);
+        m.put("getSenderConnection", a -> sender);
+        m.put("getVoicechat", a -> api());
+        m.put("cancel", a -> {
+            cancelled[0] = true;
+            return true;
+        });
+        de.maxhenkel.voicechat.api.events.MicrophonePacketEvent event =
+                proxy(de.maxhenkel.voicechat.api.events.MicrophonePacketEvent.class, m);
+
+        walls.onMicrophone(event);
+        assertFalse(cancelled[0]);
+        assertTrue(AudioDistancePlugin.TALK.isTalking(speaker, System.nanoTime()));
+        AudioDistancePlugin.TALK.forget(speaker);
+
+        settings.mute(new VoiceMute(speaker, "Speaker", 0L, "Admin", ""));
+        walls.onMicrophone(event);
+        assertTrue(cancelled[0]);
+        assertFalse(AudioDistancePlugin.TALK.isTalking(speaker, System.nanoTime()), "a muted player does not show as talking");
+        assertTrue(AudioDistancePlugin.MUTED_TALK.isTalking(speaker, System.nanoTime()));
+        AudioDistancePlugin.MUTED_TALK.forget(speaker);
+    }
+
+    @Test
     @DisplayName("Group voices: untouched by default, cancelled by the group rules the admin turned on")
     void groupRules() {
         ServerPlayers players = new ServerPlayers();

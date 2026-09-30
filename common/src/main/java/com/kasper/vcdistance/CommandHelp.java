@@ -38,6 +38,9 @@ final class CommandHelp {
                     "rule megaphone_range 3"}),
             Map.entry("group", new String[]{"group dead on", "group spectators on", "group zones on", "group open_range off"}),
             Map.entry("require", new String[]{"require suggest", "require warn", "require kick " + BuildInfo.version()}),
+            Map.entry("mute", new String[]{"mute Steve", "mute Steve 10m", "mute Steve 1h spam in voice", "mute Steve perm"}),
+            Map.entry("unmute", new String[]{"unmute Steve"}),
+            Map.entry("mutes", new String[]{"mutes"}),
             Map.entry("debug", new String[]{"debug", "debug Steve"}));
 
     private CommandHelp() {

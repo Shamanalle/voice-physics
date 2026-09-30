@@ -168,6 +168,15 @@ public final class PlayerCommands {
         PlayerPrefs.Prefs p = prefs.get(r.player);
         ServerSettings settings = AudioDistancePlugin.SERVER_SETTINGS;
         r.line(Style.TITLE, m.get("voice.status.title"));
+        long now = System.currentTimeMillis();
+        VoiceMute mute = settings.muteOf(r.player, now);
+        if (mute != null) {
+            LineBuilder muted = CommandReply.line().addAll(m.spans("voice.status.muted", Style.WARN, AdminCommands.muteTime(m, mute, now)));
+            if (!mute.reason().isEmpty()) {
+                muted.text(" - " + mute.reason(), Style.MUTED);
+            }
+            r.reply.add(muted);
+        }
 
         // How you talk: the current one as a value, the others as buttons
         LineBuilder modes = CommandReply.line().text(m.get("voice.status.mode") + " ", Style.LABEL);

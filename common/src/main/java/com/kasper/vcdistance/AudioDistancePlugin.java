@@ -76,6 +76,8 @@ public class AudioDistancePlugin implements VoicechatPlugin {
     public static final PlayerPrefs PLAYER_PREFS = new PlayerPrefs();
     /** Who spoke a moment ago, for the talking line of players without the addon (server). */
     public static final TalkTracker TALK = new TalkTracker();
+    /** Muted players who tried to talk (for the notice above their hotbar). */
+    public static final TalkTracker MUTED_TALK = new TalkTracker();
     /** The echo of the place each player stands in, for the server's own echo (server). */
     public static final ServerRooms SERVER_ROOMS = new ServerRooms();
 

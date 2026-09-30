@@ -3,11 +3,14 @@ package com.kasper.vcdistance;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
+import java.util.UUID;
 
 /**
  * Server-side settings, stored in {@code config/vc-audio-distance-server.properties} (Fabric) or
@@ -34,6 +37,7 @@ public final class ServerSettings {
      */
     private static final int SETTINGS_VERSION = 9;
     private static final String ZONE_PREFIX = "zone.";
+    private static final String MUTE_PREFIX = "mute.";
     public static final String CUSTOM_PRESET = "custom";
 
     public static final int DEFAULT_MAX_STREAMS = 24;
@@ -131,6 +135,8 @@ public final class ServerSettings {
     private volatile boolean serverAir;
     private volatile long loadedModified = Long.MIN_VALUE;
     private volatile Map<String, Zone> zones = Map.of();
+    /** Players muted with /vcd mute, by UUID (ended ones stay until the next save). */
+    private volatile Map<UUID, VoiceMute> mutes = Map.of();
     private volatile String messagesLanguage = "auto";
 
     public ServerSettings() {
@@ -269,6 +275,7 @@ public final class ServerSettings {
         maxStreams = (int) DistanceConfig.clamp(DistanceConfig.parseDouble(props, "server_walls_max_streams", DEFAULT_MAX_STREAMS), 0, MAX_STREAMS_LIMIT);
         serverEffects = DistanceConfig.parseBoolean(props, "server_effects", false);
         serverAir = DistanceConfig.parseBoolean(props, "server_air", false);
+        mutes = readMutes(props, file);
 
         // Profile: custom values, or a preset on top of them
         profile.readFrom(props, PROFILE_PREFIX);
@@ -530,6 +537,18 @@ public final class ServerSettings {
                         "true: в открытых группах (их слышат и игроки рядом) дальность зон, корточки и мегафон",
                         "действуют на этот голос рядом. По умолчанию true.")
                 .value("open_group_range", openGroupRange);
+
+        w.section("10. Muted players", "10. Заглушённые игроки")
+                .comment("Players muted with /vcd mute: nobody hears them, nearby or in a group, until the time runs out.",
+                        "  mute.<uuid>=<end, epoch ms; 0 = until /vcd unmute>|<name>|<muted by>|<reason>",
+                        "Easiest with /vcd mute <player> [time] [reason], /vcd unmute <player> and /vcd mutes. Ended mutes are removed.",
+                        "Игроки, заглушённые командой /vcd mute: их никто не слышит, ни рядом, ни в группе, пока не выйдет время.",
+                        "  mute.<uuid>=<конец, эпоха в мс; 0 = до /vcd unmute>|<имя>|<кто заглушил>|<причина>",
+                        "Проще всего командами /vcd mute <игрок> [время] [причина], /vcd unmute <игрок> и /vcd mutes. Истёкшие удаляются.");
+        long now = System.currentTimeMillis();
+        mutes.values().stream().filter(m -> m.activeAt(now))
+                .sorted(java.util.Comparator.comparing(m -> m.player().toString()))
+                .forEach(m -> w.value(MUTE_PREFIX + m.player(), m.encode()));
         w.save(getPath());
         // Our own write is not an edit to pick up again
         loadedModified = lastModified(getPath());
@@ -798,6 +817,77 @@ public final class ServerSettings {
             return zone.rules().wallsStrength();
         }
         return profile.isOcclusionEnabled() ? profile.getOcclusionStrength() : 0.0;
+    }
+
+    private static Map<UUID, VoiceMute> readMutes(Properties props, Path file) {
+        Map<UUID, VoiceMute> out = new java.util.LinkedHashMap<>();
+        for (String key : props.stringPropertyNames()) {
+            if (!key.startsWith(MUTE_PREFIX)) {
+                continue;
+            }
+            VoiceMute m = null;
+            try {
+                m = VoiceMute.decode(UUID.fromString(key.substring(MUTE_PREFIX.length()).trim()), props.getProperty(key));
+            } catch (IllegalArgumentException ignored) {
+                // reported below
+            }
+            if (m == null) {
+                DistanceConfig.LOGGER.warn("Ignoring a damaged mute in {}: {}", file.getFileName(), key);
+            } else {
+                out.put(m.player(), m);
+            }
+        }
+        return Map.copyOf(out);
+    }
+
+    /** The mute on {@code player} at {@code nowMillis}, or {@code null} when they may talk. */
+    public VoiceMute muteOf(UUID player, long nowMillis) {
+        VoiceMute m = player == null || mutes.isEmpty() ? null : mutes.get(player);
+        return m != null && m.activeAt(nowMillis) ? m : null;
+    }
+
+    /** The mutes that still hold, the ones ending soonest first and those without end last. */
+    public List<VoiceMute> mutes(long nowMillis) {
+        List<VoiceMute> out = new ArrayList<>();
+        for (VoiceMute m : mutes.values()) {
+            if (m.activeAt(nowMillis)) {
+                out.add(m);
+            }
+        }
+        out.sort(java.util.Comparator.comparingLong((VoiceMute m) -> m.isPermanent() ? Long.MAX_VALUE : m.until())
+                .thenComparing(VoiceMute::name, String.CASE_INSENSITIVE_ORDER));
+        return out;
+    }
+
+    /** Mutes a player, or changes their mute; call {@link #save()} to keep it. */
+    public synchronized void mute(VoiceMute mute) {
+        Map<UUID, VoiceMute> next = new java.util.LinkedHashMap<>(mutes);
+        next.put(mute.player(), mute);
+        mutes = Map.copyOf(next);
+    }
+
+    /** @return {@code true} when the player was muted; call {@link #save()} to keep it */
+    public synchronized boolean unmute(UUID player) {
+        if (!mutes.containsKey(player)) {
+            return false;
+        }
+        Map<UUID, VoiceMute> next = new java.util.LinkedHashMap<>(mutes);
+        next.remove(player);
+        mutes = Map.copyOf(next);
+        return true;
+    }
+
+    /** A mute that still holds by the muted player's name (ignoring case) or UUID, or {@code null}. */
+    public VoiceMute findMute(String nameOrId, long nowMillis) {
+        if (nameOrId == null || nameOrId.isBlank()) {
+            return null;
+        }
+        for (VoiceMute m : mutes(nowMillis)) {
+            if (m.name().equalsIgnoreCase(nameOrId) || m.player().toString().equalsIgnoreCase(nameOrId)) {
+                return m;
+            }
+        }
+        return null;
     }
 
     private static Map<String, Zone> readZones(Properties props, Path file) {

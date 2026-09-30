@@ -57,9 +57,13 @@ public final class ServerHooks {
             }
         }
         ServerSettings settings = AudioDistancePlugin.SERVER_SETTINGS;
+        long nowMillis = System.currentTimeMillis();
         for (ServerPlayers.Info info : online) {
+            boolean mutedBar = muteNotices(settings, info, nowMillis, platform);
             String notice = AudioDistancePlugin.ZONE_NOTICES.update(info, settings.zoneOf(info), settings);
-            if (notice != null) {
+            if (mutedBar) {
+                hudLine.remove(info.id());
+            } else if (notice != null) {
                 platform.actionBar(info.id(), notice);
                 hudLine.remove(info.id());
             } else {
@@ -77,6 +81,47 @@ public final class ServerHooks {
                 platform.message(info.id(), text);
             }
         }
+    }
+
+    /** The end of each online player's mute as last told to them (0 = no end), to tell them when it changes. */
+    private static final java.util.Map<UUID, Long> muteTold = new java.util.concurrent.ConcurrentHashMap<>();
+    /** When the "you are muted" line was last shown above a player's hotbar (in {@link #ticks}). */
+    private static final java.util.Map<UUID, Long> muteBarAt = new java.util.concurrent.ConcurrentHashMap<>();
+
+    /**
+     * Tells a player in chat when they are muted (also on joining while muted) and when they may talk again,
+     * and above the hotbar when they try to talk while muted.
+     *
+     * @return {@code true} when the line above the hotbar was used for it
+     */
+    private static boolean muteNotices(ServerSettings settings, ServerPlayers.Info info, long nowMillis, Platform platform) {
+        UUID id = info.id();
+        VoiceMute mute = settings.muteOf(id, nowMillis);
+        Long told = muteTold.get(id);
+        String language = settings.languageFor(info.language());
+        if (mute == null) {
+            if (told != null) {
+                muteTold.remove(id);
+                muteBarAt.remove(id);
+                platform.message(id, ServerText.get(language, "mute.ended"));
+            }
+            return false;
+        }
+        AdminCommands.Messages m = new AdminCommands.Messages(language);
+        if (told == null || told != mute.until()) {
+            muteTold.put(id, mute.until());
+            String text = m.get("mute.you", AdminCommands.muteTime(m, mute, nowMillis));
+            platform.message(id, mute.reason().isEmpty() ? text : text + " " + m.get("mute.reason", mute.reason()));
+        }
+        if (!AudioDistancePlugin.MUTED_TALK.isTalking(id, System.nanoTime())) {
+            return false;
+        }
+        long at = muteBarAt.getOrDefault(id, Long.MIN_VALUE / 2);
+        if (ticks - at >= HUD_REPEAT_TICKS) {
+            muteBarAt.put(id, ticks);
+            platform.actionBar(id, m.get("mute.bar", AdminCommands.muteTime(m, mute, nowMillis)));
+        }
+        return true;
     }
 
     /** What the talking line last showed each player, and when (in {@link #ticks}). */
@@ -163,6 +208,9 @@ public final class ServerHooks {
         AudioDistancePlugin.TALK.forget(player);
         AudioDistancePlugin.PLAYER_PREFS.forget(player);
         AudioDistancePlugin.SERVER_ROOMS.forget(player);
+        AudioDistancePlugin.MUTED_TALK.forget(player);
+        muteTold.remove(player);
+        muteBarAt.remove(player);
         hudLine.remove(player);
         hudAt.remove(player);
     }

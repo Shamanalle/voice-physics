@@ -54,7 +54,15 @@ final class CommandSuggest {
                 case "group" -> addAll(out, AdminCommands.GROUP_RULES, typed);
                 case "require" -> addAll(out, AdminCommands.REQUIRE, typed);
                 case "block" -> addAll(out, new String[]{"list", "add", "remove", "clear"}, typed);
-                case "debug" -> players(out, ctx, typed);
+                case "debug", "mute" -> players(out, ctx, typed);
+                case "unmute" -> {
+                    if (settings != null) {
+                        long now = System.currentTimeMillis();
+                        for (VoiceMute mute : settings.mutes(now)) {
+                            add(out, mute.name(), typed, AdminCommands.muteTime(m, mute, now));
+                        }
+                    }
+                }
                 case "zones" -> pages(out, settings, typed);
                 case "zone" -> {
                     for (String a : ZoneCommands.ACTIONS) {
@@ -78,6 +86,8 @@ final class CommandSuggest {
                 case "megaphone_range" -> new String[]{"2", "2.5", "3", "4"};
                 default -> new String[0];
             }, typed);
+        } else if (sub.equals("mute") && args.length == 3) {
+            addAll(out, AdminCommands.MUTE_TIMES, typed);
         } else if (sub.equals("effects") && args.length == 3) {
             addAll(out, switch (action) {
                 case "air" -> AdminCommands.ON_OFF;

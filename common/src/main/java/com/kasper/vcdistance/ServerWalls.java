@@ -315,7 +315,14 @@ public final class ServerWalls {
         MicrophonePacket packet = event.getPacket();
         VoicechatConnection sender = event.getSenderConnection();
         if (packet != null && sender != null && sender.getPlayer() != null) {
-            AudioDistancePlugin.TALK.spoke(sender.getPlayer().getUuid(), System.nanoTime());
+            UUID talking = sender.getPlayer().getUuid();
+            if (settings.muteOf(talking, System.currentTimeMillis()) != null) {
+                // Muted with /vcd mute: the voice goes nowhere, nearby or in a group
+                AudioDistancePlugin.MUTED_TALK.spoke(talking, System.nanoTime());
+                event.cancel();
+                return;
+            }
+            AudioDistancePlugin.TALK.spoke(talking, System.nanoTime());
         }
         if (packet == null || sender == null || sender.getPlayer() == null || !rangeRulesFor(sender)
                 || !voiceRulesOn()) {

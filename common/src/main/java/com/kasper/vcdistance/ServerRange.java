@@ -13,7 +13,7 @@ public final class ServerRange {
 
     /** Why a listener does not hear a voice (for {@code /vcd debug}), or {@link #HEARS}. */
     public enum Reason {
-        HEARS, RANGE, ISOLATED, DEAD, SPECTATOR, WORLD, IGNORED
+        HEARS, RANGE, ISOLATED, DEAD, SPECTATOR, WORLD, IGNORED, MUTED
     }
 
     /**
@@ -77,6 +77,9 @@ public final class ServerRange {
      * the admin chose for groups apply; a group has no range, so the distance is 0.
      */
     public static Decision decideGroup(ServerSettings s, ServerPlayers.Info speaker, ServerPlayers.Info listener) {
+        if (s.muteOf(speaker.id(), System.currentTimeMillis()) != null) {
+            return new Decision(Reason.MUTED, 0.0);
+        }
         if (s.isGroupDeadSilent() && !speaker.alive()) {
             return new Decision(Reason.DEAD, 0.0);
         }
@@ -98,6 +101,9 @@ public final class ServerRange {
     public static Decision decide(ServerSettings s, ServerPlayers.Info speaker, ServerPlayers.Info listener,
                                   boolean whispering, double voice, double whisper) {
         double range = rangeOf(s, speaker, whispering, voice, whisper);
+        if (s.muteOf(speaker.id(), System.currentTimeMillis()) != null) {
+            return new Decision(Reason.MUTED, range);
+        }
         if (s.isDeadSilent() && !speaker.alive()) {
             return new Decision(Reason.DEAD, range);
         }

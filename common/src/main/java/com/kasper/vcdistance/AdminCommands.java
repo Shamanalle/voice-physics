@@ -59,7 +59,9 @@ public final class AdminCommands {
     public static final String PERM_ZONE = "vcd.zone";
     /** debug. */
     public static final String PERM_DEBUG = "vcd.debug";
-    public static final String[] PERMISSIONS = {PERM_STATUS, PERM_SETTINGS, PERM_ZONE, PERM_DEBUG};
+    /** mute, unmute, mutes. */
+    public static final String PERM_MUTE = "vcd.mute";
+    public static final String[] PERMISSIONS = {PERM_STATUS, PERM_SETTINGS, PERM_ZONE, PERM_DEBUG, PERM_MUTE};
 
     /** Wall strength suggestions: off, then every 5%. */
     static final String[] WALLS_STEPS = wallsSteps();
@@ -74,10 +76,12 @@ public final class AdminCommands {
     }
 
     static final String[] SUBCOMMANDS = {"status", "help", "reload", "undo", "log", "profile", "preset", "walls", "serverwalls", "effects", "lock",
-            "monitor", "notices", "zones", "zone", "rule", "group", "require", "block", "debug"};
+            "monitor", "notices", "zones", "zone", "rule", "group", "require", "block", "mute", "unmute", "mutes", "debug"};
     /** The topics of {@code /vcd help}, in the order they are listed. */
     static final String[] TOPICS = {"status", "zones", "zone", "profile", "preset", "walls", "serverwalls", "effects", "lock", "monitor",
-            "notices", "rule", "group", "require", "block", "debug", "undo", "log", "reload"};
+            "notices", "rule", "group", "require", "block", "mute", "unmute", "mutes", "debug", "undo", "log", "reload"};
+    /** Times offered for {@code /vcd mute <player>}. */
+    static final String[] MUTE_TIMES = {"10m", "30m", "1h", "1d", "7d", "perm"};
     static final String[] MODES = {"off", "suggest", "enforce"};
     static final String[] PRESETS = {"vanilla", "realistic", "clear", "stealth", "custom", "export", "import"};
     static final String[] LOCK_PARTS = {"all", "none", "curve", "walls", "materials", "effects"};
@@ -238,6 +242,9 @@ public final class AdminCommands {
             case "group" -> group(r);
             case "require" -> require(r);
             case "block" -> block(r);
+            case "mute" -> mute(r);
+            case "unmute" -> unmute(r);
+            case "mutes" -> mutes(r);
             case "debug" -> debug(r);
             default -> CommandHelp.unknown(r, sub);
         }
@@ -281,6 +288,7 @@ public final class AdminCommands {
         return switch (sub.toLowerCase(Locale.ROOT)) {
             case "status", "help", "?", "zones" -> PERM_STATUS;
             case "debug" -> PERM_DEBUG;
+            case "mute", "unmute", "mutes" -> PERM_MUTE;
             case "zone" -> ZoneCommands.readOnly(action) ? PERM_STATUS : PERM_ZONE;
             case "effects" -> action.isEmpty() || action.equalsIgnoreCase("info") || action.equalsIgnoreCase("status") ? PERM_STATUS : PERM_SETTINGS;
             case "reload", "log", "profile", "preset", "walls", "serverwalls", "lock", "monitor", "notices", "rule", "group", "require", "block" -> PERM_SETTINGS;
@@ -291,7 +299,7 @@ public final class AdminCommands {
     /** Subcommands that may change the settings (their state before is kept for undo). */
     private static boolean changes(String sub) {
         return switch (sub) {
-            case "profile", "preset", "walls", "serverwalls", "effects", "lock", "monitor", "notices", "zone", "rule", "group", "require", "block" -> true;
+            case "profile", "preset", "walls", "serverwalls", "effects", "lock", "monitor", "notices", "zone", "rule", "group", "require", "block", "mute", "unmute" -> true;
             default -> false;
         };
     }
@@ -358,6 +366,11 @@ public final class AdminCommands {
         r.reply.add(CommandReply.line().addAll(m.spans("status.zones", Style.PLAIN,
                 new Span(String.valueOf(settings.zones().size()), Style.VALUE, Click.RUN, "/vcd zones", m.get("hover.run", "/vcd zones")),
                 r.change(onOff(m, settings.isZoneNotices()), "notices"))));
+        int muted = settings.mutes(System.currentTimeMillis()).size();
+        if (muted > 0 && ctx.allows(PERM_MUTE)) {
+            r.reply.add(CommandReply.line().addAll(m.spans("status.mutes", Style.PLAIN,
+                    new Span(String.valueOf(muted), Style.VALUE, Click.RUN, "/vcd mutes", m.get("hover.run", "/vcd mutes")))));
+        }
         r.reply.add(CommandReply.line().addAll(m.spans("status.perf", Style.MUTED,
                 String.format(Locale.ROOT, "%.2f", AudioDistancePlugin.SERVER_WALLS.perf().averageMs()))));
         LineBuilder buttons = CommandReply.line();
@@ -484,6 +497,118 @@ public final class AdminCommands {
     /** "off", or the strength as a percentage. */
     private static String effectText(Messages m, boolean enabled, double strength) {
         return enabled ? pct(strength) : m.get("off");
+    }
+
+    /**
+     * {@code /vcd mute <player> [time] [reason]}: nobody hears the player until the time runs out (no time:
+     * until {@code /vcd unmute}). Muting again changes the time and the reason.
+     */
+    private static void mute(Run r) {
+        Messages m = r.m;
+        String who = r.arg(1);
+        if (who.isEmpty()) {
+            r.badValue("mute", "", "<player> [10m|1h|1d|perm] [reason]", "mute");
+            return;
+        }
+        ServerPlayers.Info online = r.ctx.players().byName(who);
+        UUID id = online != null ? online.id() : parseUuid(who);
+        VoiceMute known = online != null ? null : r.settings.findMute(who, System.currentTimeMillis());
+        if (id == null && known != null) {
+            id = known.player();
+        }
+        if (id == null) {
+            r.error("mute.unknown", who);
+            return;
+        }
+        String name = online != null ? online.name() : known != null ? known.name() : who;
+        int reasonFrom = 2;
+        long duration = 0L;
+        String time = r.arg(2);
+        if (!time.isEmpty()) {
+            Long parsed = VoiceMute.parseDuration(time);
+            if (parsed != null) {
+                duration = parsed;
+                reasonFrom = 3;
+            } else if (Character.isDigit(time.charAt(0))) {
+                r.badValue("mute " + who, time, "30s|10m|2h|1d|1w|perm", "mute");
+                return;
+            }
+        }
+        long now = System.currentTimeMillis();
+        VoiceMute mute = new VoiceMute(id, name, duration > 0 ? now + duration : 0L, r.who(), r.rest(reasonFrom));
+        r.settings.mute(mute);
+        LineBuilder line = CommandReply.line().addAll(m.spans("mute.done", Style.OK, name, muteTime(m, mute, now)));
+        r.savedLine(line);
+        if (!mute.reason().isEmpty()) {
+            r.reply.add(CommandReply.line().addAll(m.spans("mute.reason", Style.MUTED, mute.reason())));
+        }
+        LineBuilder buttons = CommandReply.line();
+        r.button(buttons, "btn.unmute", Click.RUN, "/vcd unmute " + name, PERM_MUTE);
+        r.button(buttons, "btn.mutes", Click.RUN, "/vcd mutes", PERM_MUTE);
+        r.reply.add(buttons);
+    }
+
+    /** {@code /vcd unmute <player>}: by name (online or as muted) or UUID. */
+    private static void unmute(Run r) {
+        String who = r.arg(1);
+        if (who.isEmpty()) {
+            r.badValue("unmute", "", "<player>", "unmute");
+            return;
+        }
+        long now = System.currentTimeMillis();
+        VoiceMute mute = r.settings.findMute(who, now);
+        if (mute == null) {
+            ServerPlayers.Info online = r.ctx.players().byName(who);
+            mute = online == null ? null : r.settings.muteOf(online.id(), now);
+        }
+        if (mute == null) {
+            LineBuilder line = CommandReply.line().addAll(r.m.spans("unmute.none", Style.WARN, who));
+            line.button(r.m.get("btn.mutes"), Click.RUN, "/vcd mutes", r.m.get("hover.run", "/vcd mutes"));
+            r.reply.add(line);
+            return;
+        }
+        r.settings.unmute(mute.player());
+        r.saved("unmute.done", mute.name());
+    }
+
+    /** {@code /vcd mutes}: who is muted, for how long more, by whom and why, each with an Unmute button. */
+    private static void mutes(Run r) {
+        Messages m = r.m;
+        long now = System.currentTimeMillis();
+        List<VoiceMute> all = r.settings.mutes(now);
+        if (all.isEmpty()) {
+            LineBuilder line = CommandReply.line().text(m.get("mutes.none"), Style.MUTED);
+            line.button(m.get("btn.mute"), Click.SUGGEST, "/vcd mute ", m.get("hover.suggest", "/vcd mute"));
+            r.reply.add(line);
+            return;
+        }
+        r.line(Style.TITLE, m.get("mutes.title", all.size()));
+        for (VoiceMute mute : all) {
+            String by = ChangeLog.CONSOLE.equals(mute.by()) ? m.get("log.console") : mute.by().isEmpty() ? "-" : mute.by();
+            LineBuilder line = CommandReply.line().text("• ", Style.MUTED)
+                    .addAll(m.spans("mutes.line", Style.PLAIN,
+                            new Span(mute.name(), Style.VALUE, Click.SUGGEST, "/vcd mute " + mute.name() + " ", m.get("hover.change", "/vcd mute " + mute.name())),
+                            mute.isPermanent() ? m.get("mutes.no_end") : m.get("mutes.left", VoiceMute.formatDuration(mute.leftAt(now))),
+                            by));
+            if (!mute.reason().isEmpty()) {
+                line.text(" - " + mute.reason(), Style.MUTED);
+            }
+            line.button(m.get("btn.unmute"), Click.RUN, "/vcd unmute " + mute.name(), m.get("hover.run", "/vcd unmute " + mute.name()));
+            r.reply.add(line);
+        }
+    }
+
+    /** "for 10m" or "until unmuted". */
+    static String muteTime(Messages m, VoiceMute mute, long now) {
+        return mute.isPermanent() ? m.get("mute.forever") : m.get("mute.for", VoiceMute.formatDuration(mute.leftAt(now)));
+    }
+
+    private static UUID parseUuid(String s) {
+        try {
+            return s.length() == 36 ? UUID.fromString(s) : null;
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
     }
 
     private static void undo(Run r) {
@@ -796,6 +921,18 @@ public final class AdminCommands {
         if (group != null) {
             r.reply.add(CommandReply.line().addAll(m.spans("debug.group", Style.PLAIN, group[0],
                     group[1].isEmpty() ? "-" : m.get("group.type." + group[1]))));
+        }
+        VoiceMute mute = settings.muteOf(target.id(), System.currentTimeMillis());
+        if (mute != null) {
+            LineBuilder line = CommandReply.line().addAll(m.spans("debug.muted", Style.WARN,
+                    muteTime(m, mute, System.currentTimeMillis()), mute.by().isEmpty() ? "-" : mute.by()));
+            if (!mute.reason().isEmpty()) {
+                line.text(" - " + mute.reason(), Style.MUTED);
+            }
+            if (r.ctx.allows(PERM_MUTE)) {
+                line.button(m.get("btn.unmute"), Click.RUN, "/vcd unmute " + mute.name(), m.get("hover.run", "/vcd unmute " + mute.name()));
+            }
+            r.reply.add(line);
         }
         r.reply.add(CommandReply.line().addAll(m.spans("debug.range", Style.PLAIN,
                 fmt(ServerRange.rangeOf(settings, target, false, voice, whisper)),
