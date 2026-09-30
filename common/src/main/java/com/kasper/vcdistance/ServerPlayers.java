@@ -20,8 +20,8 @@ public final class ServerPlayers {
      * @param regions   WorldGuard regions at the player's position, highest priority first (Paper only)
      * @param mainHand  item id in the main hand ("minecraft:goat_horn"), or "" when empty
      * @param language  the player's client language ("ru_ru"), or "" when unknown
-     * @param underwater the player's head is under water (Paper); {@code false} where it is not known
-     * @param weather   rain or thunder where the player stands under the open sky (Paper)
+     * @param underwater the player's head is under water; {@code false} where it is not known
+     * @param weather   rain or thunder where the player stands under the open sky
      */
     public record Info(UUID id, String name, String world, double x, double y, double z,
                        boolean sneaking, boolean alive, boolean spectator,

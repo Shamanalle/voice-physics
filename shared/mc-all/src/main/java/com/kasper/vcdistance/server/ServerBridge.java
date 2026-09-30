@@ -2,6 +2,7 @@ package com.kasper.vcdistance.server;
 
 import com.kasper.vcdistance.AdminCommands;
 import com.kasper.vcdistance.AudioDistancePlugin;
+import com.kasper.vcdistance.EnvironmentEffects;
 import com.kasper.vcdistance.ServerHooks;
 import com.kasper.vcdistance.ServerPlayers;
 import com.kasper.vcdistance.Zone;
@@ -40,10 +41,33 @@ public final class ServerBridge {
         String world = ServerZones.dimensionId(String.valueOf(p.level().dimension()));
         String name = p.getName().getString();
         Claims.seen(p.getUUID(), name);
+        // Water and weather are only looked at when the server's effects are on: a couple of cheap reads per player
+        boolean effects = AudioDistancePlugin.SERVER_SETTINGS.isServerEffects();
         return new ServerPlayers.Info(p.getUUID(), name, world,
                 p.getX(), p.getY(), p.getZ(),
                 p.isShiftKeyDown(), p.isAlive(), p.isSpectator(),
-                item(p.getMainHandItem()), item(p.getOffhandItem()), Claims.at(p, world), PlayerLanguage.of(p));
+                item(p.getMainHandItem()), item(p.getOffhandItem()), Claims.at(p, world), PlayerLanguage.of(p),
+                effects && underwater(p), effects ? weather(p) : null);
+    }
+
+    private static boolean underwater(ServerPlayer p) {
+        try {
+            return p.isUnderWater();
+        } catch (Throwable e) {
+            return false;
+        }
+    }
+
+    /** Rain or thunder on the player: the game's own answer for this spot (biome, sky, height). */
+    private static EnvironmentEffects.Weather weather(ServerPlayer p) {
+        try {
+            if (!p.level().isRainingAt(p.blockPosition())) {
+                return EnvironmentEffects.Weather.CLEAR;
+            }
+            return p.level().isThundering() ? EnvironmentEffects.Weather.THUNDER : EnvironmentEffects.Weather.RAIN;
+        } catch (Throwable e) {
+            return EnvironmentEffects.Weather.CLEAR;
+        }
     }
 
     private static String item(ItemStack stack) {
