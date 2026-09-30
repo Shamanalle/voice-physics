@@ -177,6 +177,7 @@
   "command.vc-audio-distance.log.title": "设置的更改（%s），最新的在前：",
   "command.vc-audio-distance.log.none": "还没有更改。通过 /vcd 或“服务器”标签页做的每次更改都会写入设置文件旁的 %s。",
   "command.vc-audio-distance.log.none_by": "%s 没有更改。",
+  "command.vc-audio-distance.walls.note": "这本身只对未装附属模组的玩家生效。装了的玩家保留自己的墙壁设置，除非强制使用服务器配置并锁定墙壁（/vcd profile enforce）。",
   "command.vc-audio-distance.log.undo": "撤销了 %s",
   "command.vc-audio-distance.log.console": "控制台",
   "command.vc-audio-distance.log.file": "完整日志：设置文件旁的 %s。",

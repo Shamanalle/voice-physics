@@ -560,9 +560,10 @@ public class AudioDistancePlugin implements VoicechatPlugin {
 
             float sourceGain = Math.max(0.0F, AL11.alGetSourcef(source, AL11.AL_GAIN));
             AL11.alSourcef(source, AL11.AL_ROLLOFF_FACTOR, 0.0F);
-            AL11.alSourcef(source, AL11.AL_MAX_GAIN, (float) (curve * sourceGain));
+            // OpenAL takes 0 - 1 for both; a volume boost above 100% would be refused and the old value kept
+            AL11.alSourcef(source, AL11.AL_MAX_GAIN, (float) Math.min(1.0, curve * sourceGain));
             // The edge-volume floor scales with the speaker's own volume: muted players stay muted
-            AL11.alSourcef(source, AL11.AL_MIN_GAIN, (float) (c.getMinVolumeFraction() * sourceGain));
+            AL11.alSourcef(source, AL11.AL_MIN_GAIN, (float) Math.min(1.0, c.getMinVolumeFraction() * sourceGain));
         } catch (Throwable t) {
             DistanceConfig.LOGGER.debug("Failed to apply OpenAL parameters to source {}: {}", source, t.toString());
         }

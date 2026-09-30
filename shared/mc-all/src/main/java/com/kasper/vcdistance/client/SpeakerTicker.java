@@ -20,6 +20,8 @@ public final class SpeakerTicker {
 
     private static final long TRACE_INTERVAL_NANOS = TimeUnit.MILLISECONDS.toNanos(50);
     private static final int MAX_TRACES_PER_TICK = 12;
+    /** A voice from farther away is not traced (the server stops at 160): a far source would cost a long walk every tick. */
+    private static final double MAX_TRACE_DISTANCE = 256.0;
     /** The room around the listener is measured this often (34 rays). */
     private static final int ROOM_INTERVAL_TICKS = 10;
     /** The space around each speaker is measured this often, one speaker per tick. */
@@ -131,7 +133,7 @@ public final class SpeakerTicker {
                 s.setBearing(Bearing.relative(source.x - listener.x, source.z - listener.z, yaw));
                 s.setSurroundings(access.isUnderWater(source), access.weatherAt(source));
 
-                if (!tracing) {
+                if (!tracing || s.getDistance() > MAX_TRACE_DISTANCE) {
                     s.clearOcclusion();
                 } else if (budget > 0 && (configChanged || !s.isOcclusionKnown()
                         || now - s.getLastTraceNanos() >= TRACE_INTERVAL_NANOS * slow)) {

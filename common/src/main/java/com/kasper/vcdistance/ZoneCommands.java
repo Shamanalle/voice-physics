@@ -668,7 +668,9 @@ final class ZoneCommands {
         Zone.Box b = z.box();
         double x = (b.x1() + b.x2() + 1) / 2.0;
         double zz = (b.z1() + b.z2() + 1) / 2.0;
-        if (r.ctx.teleport(b.world(), x, b.y1(), zz)) {
+        // The middle of the box, not its floor: a box made round the admin reaches as far down as up
+        double y = (b.y1() + b.y2() + 1) / 2.0;
+        if (r.ctx.teleport(b.world(), x, y, zz)) {
             r.line(Style.OK, r.m.get("zone.tp", z.name()));
         } else {
             r.error("zone.tp_failed", z.name());

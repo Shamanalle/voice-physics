@@ -177,6 +177,7 @@
   "command.vc-audio-distance.log.title": "Mudanças nas configurações (%s), as mais novas primeiro:",
   "command.vc-audio-distance.log.none": "Ainda não há mudanças. Cada mudança feita com /vcd ou na aba Servidor é gravada em %s ao lado do arquivo de configurações.",
   "command.vc-audio-distance.log.none_by": "Não há mudanças de %s.",
+  "command.vc-audio-distance.walls.note": "Por si só, isso só chega aos jogadores sem o addon. Quem o tem mantém as próprias paredes, a menos que o perfil seja imposto com as paredes travadas (/vcd profile enforce).",
   "command.vc-audio-distance.log.undo": "desfez %s",
   "command.vc-audio-distance.log.console": "console",
   "command.vc-audio-distance.log.file": "O registro completo: %s, ao lado do arquivo de configurações.",

@@ -57,7 +57,8 @@ final class ConfigWriter {
     }
 
     ConfigWriter value(String key, String value) {
-        text.append(key).append('=').append(value).append('\n');
+        // Properties reads a backslash as an escape: write it doubled so it comes back as typed
+        text.append(key).append('=').append(value.replace("\\", "\\\\")).append('\n');
         return this;
     }
 
@@ -104,6 +105,9 @@ final class ConfigWriter {
         try (InputStream in = Files.newInputStream(file);
              Reader reader = new InputStreamReader(in, StandardCharsets.UTF_8)) {
             props.load(reader);
+        } catch (IllegalArgumentException e) {
+            // A malformed unicode escape in the file; callers keep their settings on IOException
+            throw new IOException("Malformed escape in " + file.getFileName() + ": " + e.getMessage(), e);
         }
         return props;
     }

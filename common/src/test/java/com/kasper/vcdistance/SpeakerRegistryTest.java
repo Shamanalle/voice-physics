@@ -98,4 +98,15 @@ public class SpeakerRegistryTest {
         assertTrue(Double.isNaN(s.getPathLength()));
         assertFalse(s.isHeardRound());
     }
+
+    @Test
+    @DisplayName("A new speaker is due for its way-round search and its room measurement at any clock value")
+    void newSpeakerIsDue() {
+        SpeakerRegistry.Speaker s = new SpeakerRegistry().onEntityFrame(UUID.randomUUID(), UUID.randomUUID(), false, 48F, new short[960]);
+        for (long now : new long[]{5L, 12_345L, 3_000_000_000L, System.nanoTime()}) {
+            // The client tick asks "now - last >= interval"; a MIN_VALUE start overflowed and never answered yes
+            assertTrue(now - s.getLastPathNanos() >= 250_000_000L, "path at " + now);
+            assertTrue(now - s.getLastRoomNanos() >= 1_000_000_000L, "room at " + now);
+        }
+    }
 }
