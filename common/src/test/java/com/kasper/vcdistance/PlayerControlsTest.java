@@ -180,6 +180,20 @@ public class PlayerControlsTest {
     }
 
     @Test
+    @DisplayName("A shout does not stretch a zone's range or add to a megaphone; quiet always applies")
+    void shoutLimits() throws IOException {
+        Path file = dir.resolve("zone.properties");
+        Files.writeString(file, "zone.world.world.voice_range=10\nmegaphone_item=minecraft:goat_horn\n");
+        ServerSettings s = new ServerSettings(file);
+        s.load();
+        ServerPlayers.Info inZone = player("Anna", 0);
+        AudioDistancePlugin.PLAYER_PREFS.setMode(ANNA, PlayerPrefs.Mode.SHOUT);
+        assertEquals(10.0, ServerRange.rangeOf(s, inZone, false, 48, 24), "zone range stays");
+        AudioDistancePlugin.PLAYER_PREFS.setMode(ANNA, PlayerPrefs.Mode.QUIET);
+        assertEquals(5.0, ServerRange.rangeOf(s, inZone, false, 48, 24));
+    }
+
+    @Test
     @DisplayName("Tab completion: subcommands, modes without shout when not allowed, online players")
     void suggestions() {
         AudioDistancePlugin.PLAYERS.update(player("Bob", 5));
@@ -202,14 +216,16 @@ public class PlayerControlsTest {
         List<ServerPlayers.Info> online = List.of(anna, bob, far);
         long now = System.nanoTime();
 
-        assertEquals("", ServerHooks.talkingText(s, anna, online, now));
+        assertEquals("", ServerHooks.talkingText(s, anna, online, now, id -> true));
         AudioDistancePlugin.TALK.spoke(bob.id(), now);
         AudioDistancePlugin.TALK.spoke(far.id(), now);
-        assertEquals("» Bob 12m", ServerHooks.talkingText(s, anna, online, now));
+        assertEquals("» Bob 12m", ServerHooks.talkingText(s, anna, online, now, id -> true));
         // Not talking any more a second later
-        assertEquals("", ServerHooks.talkingText(s, anna, online, now + 2_000_000_000L));
+        assertEquals("", ServerHooks.talkingText(s, anna, online, now + 2_000_000_000L, id -> true));
+        // A hidden player (vanish) is not listed
+        assertEquals("", ServerHooks.talkingText(s, anna, online, now, id -> !id.equals(bob.id())));
         // An ignored speaker is not listed
         AudioDistancePlugin.PLAYER_PREFS.setVolume(anna.id(), bob.id(), 0);
-        assertEquals("", ServerHooks.talkingText(s, anna, online, now));
+        assertEquals("", ServerHooks.talkingText(s, anna, online, now, id -> true));
     }
 }

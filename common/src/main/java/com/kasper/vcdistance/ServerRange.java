@@ -54,9 +54,15 @@ public final class ServerRange {
         if (speaker.sneaking()) {
             range *= s.getSneakMultiplier();
         }
-        // The speaker's own choice with /voice (quiet, shout)
-        range *= AudioDistancePlugin.PLAYER_PREFS.rangeFactor(speaker.id());
-        if (isMegaphone(s, speaker)) {
+        // The speaker's own choice with /voice: quiet always; a shout never stretches a range the admin
+        // set for a zone, and does not add to a megaphone
+        boolean megaphone = isMegaphone(s, speaker);
+        double own = AudioDistancePlugin.PLAYER_PREFS.rangeFactor(speaker.id());
+        if (own > 1.0 && ((zone != null && zone.rules().changesRange()) || megaphone)) {
+            own = 1.0;
+        }
+        range *= own;
+        if (megaphone) {
             range *= s.getMegaphoneMultiplier();
         }
         return range;

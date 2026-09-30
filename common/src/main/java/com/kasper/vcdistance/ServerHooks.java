@@ -26,6 +26,11 @@ public final class ServerHooks {
 
         /** A short line above the player's hotbar. */
         void actionBar(UUID player, String text);
+
+        /** Whether {@code viewer} may see {@code other} (vanish plugins, spectators); a platform without them says yes. */
+        default boolean canSee(UUID viewer, UUID other) {
+            return true;
+        }
     }
 
     private static long ticks;
@@ -88,11 +93,13 @@ public final class ServerHooks {
     private static void talkingLine(ServerSettings settings, ServerPlayers.Info listener,
                                     Collection<ServerPlayers.Info> online, Platform platform) {
         UUID id = listener.id();
-        if (!AudioDistancePlugin.PLAYER_PREFS.hudFor(id) || AudioDistancePlugin.SERVER_WALLS.hasAddon(id)) {
+        // The monitor's switch (allow_monitor) also covers this line: it tells who is near and how far
+        if (!AudioDistancePlugin.PLAYER_PREFS.hudFor(id) || AudioDistancePlugin.SERVER_WALLS.hasAddon(id)
+                || !settings.isMonitorAllowed()) {
             hudLine.remove(id);
             return;
         }
-        String text = talkingText(settings, listener, online, System.nanoTime());
+        String text = talkingText(settings, listener, online, System.nanoTime(), other -> platform.canSee(id, other));
         String before = hudLine.getOrDefault(id, "");
         long at = hudAt.getOrDefault(id, Long.MIN_VALUE / 2);
         if (text.equals(before) && (text.isEmpty() || ticks - at < HUD_REPEAT_TICKS)) {
@@ -105,14 +112,15 @@ public final class ServerHooks {
 
     /** The talking line for {@code listener}, or "" when nobody they hear is talking. */
     static String talkingText(ServerSettings settings, ServerPlayers.Info listener,
-                              Collection<ServerPlayers.Info> online, long nowNanos) {
+                              Collection<ServerPlayers.Info> online, long nowNanos,
+                              java.util.function.Predicate<UUID> visible) {
         double voice = AudioDistancePlugin.serverVoiceDistance() > 0.0
                 ? AudioDistancePlugin.serverVoiceDistance() : AudioDistancePlugin.FALLBACK_DISTANCE;
         double whisper = AudioDistancePlugin.serverWhisperDistance() > 0.0
                 ? AudioDistancePlugin.serverWhisperDistance() : voice / 2.0;
         java.util.List<ServerPlayers.Info> talking = new java.util.ArrayList<>();
         for (ServerPlayers.Info other : online) {
-            if (!other.id().equals(listener.id()) && AudioDistancePlugin.TALK.isTalking(other.id(), nowNanos)
+            if (!other.id().equals(listener.id()) && visible.test(other.id()) && AudioDistancePlugin.TALK.isTalking(other.id(), nowNanos)
                     && ServerRange.decide(settings, other, listener, false, voice, whisper).hears()) {
                 talking.add(other);
             }

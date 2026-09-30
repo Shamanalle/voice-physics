@@ -261,6 +261,13 @@ public final class AudioDistanceBukkit extends JavaPlugin implements Listener {
             }
 
             @Override
+            public boolean canSee(UUID viewer, UUID other) {
+                Player v = getServer().getPlayer(viewer);
+                Player o = getServer().getPlayer(other);
+                return v == null || o == null || visible(v, o);
+            }
+
+            @Override
             public void actionBar(UUID player, String text) {
                 Player p = getServer().getPlayer(player);
                 if (p != null) {

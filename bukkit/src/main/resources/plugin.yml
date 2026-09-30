@@ -32,6 +32,7 @@ permissions:
       vcd.settings: true
       vcd.zone: true
       vcd.debug: true
+      vcd.shout: true
   vcd.status:
     description: /vcd status, help, zones and zone info
     default: op
