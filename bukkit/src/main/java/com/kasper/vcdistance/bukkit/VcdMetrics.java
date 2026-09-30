@@ -16,7 +16,7 @@ final class VcdMetrics {
     /**
      * The plugin's id on bstats.org (Plugins - Add plugin). While it is 0 nothing is sent.
      */
-    static final int SERVICE_ID = 0;
+    static final int SERVICE_ID = 34426;
 
     private VcdMetrics() {
     }
