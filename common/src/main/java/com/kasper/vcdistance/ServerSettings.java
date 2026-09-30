@@ -134,6 +134,11 @@ public final class ServerSettings {
     private volatile boolean serverEffects;
     private volatile boolean serverAir;
     private volatile boolean metrics = true;
+    private volatile boolean serverRadio;
+    private volatile boolean serverSpeakers;
+    private volatile boolean serverEavesdrop;
+    private volatile boolean serverSculk;
+    private volatile boolean serverDoorway;
     private volatile long loadedModified = Long.MIN_VALUE;
     private volatile Map<String, Zone> zones = Map.of();
     /** Players muted with /vcd mute, by UUID (ended ones stay until the next save). */
@@ -230,6 +235,51 @@ public final class ServerSettings {
         serverAir = on;
     }
 
+    /** Radio items: holders on one frequency hear each other at any distance (Paper). Off until play-tested. */
+    public boolean isServerRadio() {
+        return serverRadio;
+    }
+
+    public void setServerRadio(boolean on) {
+        serverRadio = on;
+    }
+
+    /** Loudspeakers placed by admins repeat voices around them (Paper). Off until play-tested. */
+    public boolean isServerSpeakers() {
+        return serverSpeakers;
+    }
+
+    public void setServerSpeakers(boolean on) {
+        serverSpeakers = on;
+    }
+
+    /** The eavesdrop item thins walls for its holder (Paper). Off until play-tested. */
+    public boolean isServerEavesdrop() {
+        return serverEavesdrop;
+    }
+
+    public void setServerEavesdrop(boolean on) {
+        serverEavesdrop = on;
+    }
+
+    /** Shouting is a game event that sculk sensors and wardens react to (Paper). Off until play-tested. */
+    public boolean isServerSculk() {
+        return serverSculk;
+    }
+
+    public void setServerSculk(boolean on) {
+        serverSculk = on;
+    }
+
+    /** Players without the addon hear a walled voice from the doorway (Paper). Off until play-tested. */
+    public boolean isServerDoorway() {
+        return serverDoorway;
+    }
+
+    public void setServerDoorway(boolean on) {
+        serverDoorway = on;
+    }
+
     /** Whether voices for players without the addon may change for another reason than walls. */
     public boolean hasServerRealism() {
         return serverEffects || serverAir;
@@ -284,6 +334,11 @@ public final class ServerSettings {
         serverAir = DistanceConfig.parseBoolean(props, "server_air", false);
         mutes = readMutes(props, file);
         metrics = DistanceConfig.parseBoolean(props, "metrics", true);
+        serverRadio = DistanceConfig.parseBoolean(props, "server_radio", false);
+        serverSpeakers = DistanceConfig.parseBoolean(props, "server_speakers", false);
+        serverEavesdrop = DistanceConfig.parseBoolean(props, "server_eavesdrop", false);
+        serverSculk = DistanceConfig.parseBoolean(props, "server_sculk", false);
+        serverDoorway = DistanceConfig.parseBoolean(props, "server_doorway", false);
 
         // Profile: custom values, or a preset on top of them
         profile.readFrom(props, PROFILE_PREFIX);
@@ -567,6 +622,25 @@ public final class ServerSettings {
                         "Ни имён, ни адресов, ни чата. Числа показывают, какие версии стоит поддерживать. Действует после перезапуска.",
                         "Выключается и для всех плагинов сразу через plugins/bStats/config.yml (enabled: false). По умолчанию true.")
                 .value("metrics", metrics);
+        w.section("12. Extras for the Paper plugin (off until play-tested)", "12. Дополнения плагина для Paper (выключены, пока не проверены в игре)")
+                .comment("true: radio items. A named item with a frequency (/vcd radio, /voice radio): holders on the same",
+                        "frequency hear each other at any distance. Default false.",
+                        "true: рации. Предмет с частотой (/vcd radio, /voice radio): у кого частота одна, те слышат друг друга на любом расстоянии. По умолчанию false.")
+                .value("server_radio", serverRadio)
+                .comment("true: loudspeakers placed with /vcd speaker add repeat voices to the players around them. Default false.",
+                        "true: громкоговорители, поставленные через /vcd speaker add, повторяют голоса игрокам вокруг. По умолчанию false.")
+                .value("server_speakers", serverSpeakers)
+                .comment("true: the eavesdrop item makes walls thinner for the player who holds it. Default false.",
+                        "true: предмет для подслушивания делает стены тоньше для держащего его игрока. По умолчанию false.")
+                .value("server_eavesdrop", serverEavesdrop)
+                .comment("true: a shout is a game event that sculk sensors and wardens react to; whispers and sneaking are not. Default false.",
+                        "true: крик - игровое событие, на него реагируют скалковые датчики и вардены; шёпот и корточки - нет. По умолчанию false.")
+                .value("server_sculk", serverSculk)
+                .comment("true: a player without the addon hears a voice behind a wall from the doorway it comes through.",
+                        "Any failure falls back to the muffled straight path. Default false.",
+                        "true: игрок без аддона слышит голос за стеной из дверного проёма, через который тот доходит.",
+                        "При любой ошибке остаётся приглушённый прямой путь. По умолчанию false.")
+                .value("server_doorway", serverDoorway);
         w.save(getPath());
         // Our own write is not an edit to pick up again
         loadedModified = lastModified(getPath());

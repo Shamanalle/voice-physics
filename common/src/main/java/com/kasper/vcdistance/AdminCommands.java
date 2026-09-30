@@ -75,10 +75,10 @@ public final class AdminCommands {
         return steps;
     }
 
-    static final String[] SUBCOMMANDS = {"status", "help", "reload", "undo", "log", "profile", "preset", "walls", "serverwalls", "effects", "lock",
+    static final String[] SUBCOMMANDS = {"status", "help", "reload", "undo", "log", "profile", "preset", "walls", "serverwalls", "effects", "extras", "lock",
             "monitor", "notices", "zones", "zone", "rule", "group", "require", "block", "mute", "unmute", "mutes", "debug", "report"};
     /** The topics of {@code /vcd help}, in the order they are listed. */
-    static final String[] TOPICS = {"status", "zones", "zone", "profile", "preset", "walls", "serverwalls", "effects", "lock", "monitor",
+    static final String[] TOPICS = {"status", "zones", "zone", "profile", "preset", "walls", "serverwalls", "effects", "extras", "lock", "monitor",
             "notices", "rule", "group", "require", "block", "mute", "unmute", "mutes", "debug", "report", "undo", "log", "reload"};
     /** Times offered for {@code /vcd mute <player>}. */
     static final String[] MUTE_TIMES = {"10m", "30m", "1h", "1d", "7d", "perm"};
@@ -93,6 +93,8 @@ public final class AdminCommands {
     static final String[] EFFECT_PARTS = {"on", "off", "air", "water", "weather", "echo", "status"};
     static final String[] EFFECT_STEPS = {"off", "25", "50", "75", "100", "125", "150"};
     static final String[] ECHO_STEPS = {"off", "25", "50", "75", "100"};
+    /** {@code /vcd extras <name> on|off}: the Paper plugin's extras, each off until it has been played. */
+    static final String[] EXTRAS = {"radio", "speakers", "eavesdrop", "sculk", "doorway"};
     /** Changes {@code /vcd undo} can take back, per settings file. */
     static final int UNDO_STEPS = 10;
     /** Players {@code /vcd debug} lists. */
@@ -229,6 +231,7 @@ public final class AdminCommands {
             }
             case "serverwalls" -> onOff(r, "serverwalls", on -> settings.setServerWalls(on), "serverwalls_on", "serverwalls_off");
             case "effects" -> effects(r);
+            case "extras" -> extras(r);
             case "lock" -> {
                 java.util.Set<DistanceConfig.Part> parts = r.args.length > 1
                         ? DistanceConfig.Part.parseSet(String.join(",", Arrays.copyOfRange(r.args, 1, r.args.length))) : null;
@@ -296,7 +299,7 @@ public final class AdminCommands {
             case "debug", "report" -> PERM_DEBUG;
             case "mute", "unmute", "mutes" -> PERM_MUTE;
             case "zone" -> ZoneCommands.readOnly(action) ? PERM_STATUS : PERM_ZONE;
-            case "effects" -> action.isEmpty() || action.equalsIgnoreCase("info") || action.equalsIgnoreCase("status") ? PERM_STATUS : PERM_SETTINGS;
+            case "effects", "extras" -> action.isEmpty() || action.equalsIgnoreCase("info") || action.equalsIgnoreCase("status") ? PERM_STATUS : PERM_SETTINGS;
             case "reload", "log", "profile", "preset", "walls", "serverwalls", "lock", "monitor", "notices", "rule", "group", "require", "block" -> PERM_SETTINGS;
             default -> null;
         };
@@ -305,7 +308,7 @@ public final class AdminCommands {
     /** Subcommands that may change the settings (their state before is kept for undo). */
     private static boolean changes(String sub) {
         return switch (sub) {
-            case "profile", "preset", "walls", "serverwalls", "effects", "lock", "monitor", "notices", "zone", "rule", "group", "require", "block", "mute", "unmute" -> true;
+            case "profile", "preset", "walls", "serverwalls", "effects", "extras", "lock", "monitor", "notices", "zone", "rule", "group", "require", "block", "mute", "unmute" -> true;
             default -> false;
         };
     }
@@ -453,6 +456,74 @@ public final class AdminCommands {
                 effectsNote(r);
             }
             default -> r.badValue("effects", part, String.join("|", EFFECT_PARTS), "effects");
+        }
+    }
+
+    /**
+     * {@code /vcd extras}: the Paper plugin's extras (radio, loudspeakers, eavesdrop item, sculk, doorway sound),
+     * each {@code on|off}. They are off until they have been played, so turning one on says so.
+     */
+    private static void extras(Run r) {
+        String name = r.arg(1).toLowerCase(Locale.ROOT);
+        if (name.isEmpty() || name.equals("status") || name.equals("info")) {
+            extrasView(r);
+            return;
+        }
+        if (!Arrays.asList(EXTRAS).contains(name)) {
+            r.badValue("extras", name, String.join("|", EXTRAS), "extras");
+            return;
+        }
+        Boolean on = r.args.length > 2 ? parseOnOff(r.args[2]) : null;
+        if (on == null) {
+            r.badValue("extras " + name, r.arg(2), "on|off", "extras");
+            return;
+        }
+        setExtra(r.settings, name, on);
+        r.saved(on ? "extras.on" : "extras.off", r.m.get("extras.name." + name));
+        if (on) {
+            r.line(Style.MUTED, r.m.get("extras.untested"));
+        }
+    }
+
+    static boolean extra(ServerSettings settings, String name) {
+        return switch (name) {
+            case "radio" -> settings.isServerRadio();
+            case "speakers" -> settings.isServerSpeakers();
+            case "eavesdrop" -> settings.isServerEavesdrop();
+            case "sculk" -> settings.isServerSculk();
+            case "doorway" -> settings.isServerDoorway();
+            default -> false;
+        };
+    }
+
+    private static void setExtra(ServerSettings settings, String name, boolean on) {
+        switch (name) {
+            case "radio" -> settings.setServerRadio(on);
+            case "speakers" -> settings.setServerSpeakers(on);
+            case "eavesdrop" -> settings.setServerEavesdrop(on);
+            case "sculk" -> settings.setServerSculk(on);
+            case "doorway" -> settings.setServerDoorway(on);
+            default -> {
+            }
+        }
+    }
+
+    /** Each extra with its state, a click away from changing it. */
+    private static void extrasView(Run r) {
+        Messages m = r.m;
+        r.line(Style.TITLE, m.get("extras.title"));
+        for (String name : EXTRAS) {
+            r.reply.add(CommandReply.line().addAll(m.spans("extras.row", Style.PLAIN, m.get("extras.name." + name),
+                    r.change(onOff(m, extra(r.settings, name)), "extras " + name))));
+        }
+        r.line(Style.MUTED, m.get("extras.untested"));
+        LineBuilder buttons = CommandReply.line();
+        r.button(buttons, "btn.help", Click.RUN, "/vcd help extras", PERM_STATUS);
+        if (undoable(r.settings) > 0) {
+            r.button(buttons, "btn.undo", Click.RUN, "/vcd undo", null);
+        }
+        if (!buttons.isEmpty()) {
+            r.reply.add(buttons);
         }
     }
 
