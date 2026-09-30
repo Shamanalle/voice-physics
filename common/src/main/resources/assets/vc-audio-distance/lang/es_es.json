@@ -94,7 +94,7 @@
   "command.vc-audio-distance.btn.effects_off": "Desactivar efectos",
   "command.vc-audio-distance.btn.air_on": "Activar aire",
   "command.vc-audio-distance.btn.air_off": "Desactivar aire",
-  "command.vc-audio-distance.help.extras": "/vcd extras [radio|speakers|eavesdrop|sculk|doorway on|off] - extras del plugin, desactivados hasta probarlos en juego",
+  "command.vc-audio-distance.help.extras": "/vcd extras [radio|speakers|eavesdrop|sculk|doorway|integrations on|off] - extras del plugin, desactivados hasta probarlos en juego",
   "command.vc-audio-distance.extras.title": "Extras del plugin de Paper (desactivados hasta probarlos en juego)",
   "command.vc-audio-distance.extras.row": "%s: %s",
   "command.vc-audio-distance.extras.name.radio": "Radio",
@@ -790,5 +790,8 @@
   "command.vc-audio-distance.eavesdrop.item_off": "Ahora nadie puede escuchar a escondidas (sin objeto). Guardado.",
   "command.vc-audio-distance.eavesdrop.factor_set": "Quien escucha oye %s de la atenuación de las paredes. Guardado.",
   "command.vc-audio-distance.btn.eavesdrop_on": "Escuchar sí",
-  "command.vc-audio-distance.btn.eavesdrop_off": "Escuchar no"
+  "command.vc-audio-distance.btn.eavesdrop_off": "Escuchar no",
+  "command.vc-audio-distance.extras.name.integrations": "Integraciones (pueblos, lands, bandera, LuckPerms)",
+  "command.vc-audio-distance.zones.town": "Pueblo",
+  "command.vc-audio-distance.zones.land": "Land"
 }

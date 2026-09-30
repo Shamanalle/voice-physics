@@ -46,6 +46,8 @@ dependencies {
     compileOnly "de.maxhenkel.voicechat:voicechat-api:${project.voicechat_api_version}"
     // Optional: %vcd_...% placeholders when PlaceholderAPI is installed
     compileOnly("me.clip:placeholderapi:2.11.6") { transitive = false }
+    // Optional: the vcd:mode, vcd:walls and vcd:zone contexts when LuckPerms is installed
+    compileOnly("net.luckperms:api:5.4") { transitive = false }
 }
 
 tasks.withType(JavaCompile).configureEach {

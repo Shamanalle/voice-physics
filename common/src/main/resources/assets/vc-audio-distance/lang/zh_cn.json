@@ -94,7 +94,7 @@
   "command.vc-audio-distance.btn.effects_off": "关闭效果",
   "command.vc-audio-distance.btn.air_on": "开启空气",
   "command.vc-audio-distance.btn.air_off": "关闭空气",
-  "command.vc-audio-distance.help.extras": "/vcd extras [radio|speakers|eavesdrop|sculk|doorway on|off] - 插件的附加功能，实机测试前默认关闭",
+  "command.vc-audio-distance.help.extras": "/vcd extras [radio|speakers|eavesdrop|sculk|doorway|integrations on|off] - 插件的附加功能，实机测试前默认关闭",
   "command.vc-audio-distance.extras.title": "Paper 插件的附加功能（实机测试前默认关闭）",
   "command.vc-audio-distance.extras.row": "%s：%s",
   "command.vc-audio-distance.extras.name.radio": "对讲机",
@@ -790,5 +790,8 @@
   "command.vc-audio-distance.eavesdrop.item_off": "现在没人能窃听（未设置物品）。已保存。",
   "command.vc-audio-distance.eavesdrop.factor_set": "窃听者听到墙壁隔音的 %s。已保存。",
   "command.vc-audio-distance.btn.eavesdrop_on": "窃听开",
-  "command.vc-audio-distance.btn.eavesdrop_off": "窃听关"
+  "command.vc-audio-distance.btn.eavesdrop_off": "窃听关",
+  "command.vc-audio-distance.extras.name.integrations": "联动（城镇、领地、旗标、LuckPerms）",
+  "command.vc-audio-distance.zones.town": "城镇",
+  "command.vc-audio-distance.zones.land": "领地"
 }

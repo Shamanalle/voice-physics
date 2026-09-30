@@ -109,7 +109,7 @@ public class ExtrasTest {
         assertEquals(AdminCommands.PERM_STATUS, AdminCommands.permissionFor("extras", ""));
         assertEquals(AdminCommands.PERM_STATUS, AdminCommands.permissionFor("extras", "status"));
         assertEquals(AdminCommands.PERM_SETTINGS, AdminCommands.permissionFor("extras", "radio"));
-        assertEquals(List.of("radio", "speakers", "eavesdrop", "sculk", "doorway"), AdminCommands.suggest("extras "));
+        assertEquals(List.of("radio", "speakers", "eavesdrop", "sculk", "doorway", "integrations"), AdminCommands.suggest("extras "));
         assertEquals(List.of("sculk", "speakers"), AdminCommands.suggest("extras s").stream().sorted().toList());
         assertEquals(List.of("on", "off"), AdminCommands.suggest("extras radio "));
         assertTrue(AdminCommands.suggest("ext").contains("extras"));

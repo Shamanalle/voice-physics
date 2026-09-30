@@ -9,6 +9,7 @@ import com.kasper.vcdistance.PlayerCommands;
 import com.kasper.vcdistance.RoomEstimate;
 import com.kasper.vcdistance.ServerHooks;
 import com.kasper.vcdistance.ServerPlayers;
+import com.kasper.vcdistance.ServerSettings;
 import com.kasper.vcdistance.ServerSculk;
 import com.kasper.vcdistance.Zone;
 import com.kasper.vcdistance.ZoneOutlines;
@@ -77,6 +78,12 @@ public final class AudioDistanceBukkit extends JavaPlugin implements Listener {
         moveOldSettings();
         // Settings live in plugins/<name>/ instead of the loader's config directory
         ModEnvironment.setConfigDir(getDataFolder().toPath());
+        try {
+            // WorldGuard takes flags only before it enables
+            WorldGuardRegions.registerFlag();
+        } catch (Throwable ignored) {
+            // no WorldGuard
+        }
     }
 
     /** The plugin was called VoicechatAudioDistance before 2.2.0: its settings folder moves along once. */
@@ -120,6 +127,11 @@ public final class AudioDistanceBukkit extends JavaPlugin implements Listener {
             VcdPlaceholders.registerIfPresent(this);
         } catch (NoClassDefFoundError e) {
             // PlaceholderAPI is not installed
+        }
+        try {
+            LuckPermsContexts.registerIfPresent(this);
+        } catch (NoClassDefFoundError e) {
+            // LuckPerms is not installed
         }
         VcdMetrics.start(this);
         scheduling.everyTick(this::tick);
@@ -360,7 +372,12 @@ public final class AudioDistanceBukkit extends JavaPlugin implements Listener {
     @SuppressWarnings("deprecation")
     static ServerPlayers.Info info(Player p) {
         Location at = p.getLocation();
-        boolean regions = AudioDistancePlugin.SERVER_SETTINGS.zones().keySet().stream().anyMatch(k -> k.startsWith(Zone.REGION + ":"));
+        ServerSettings settings = AudioDistancePlugin.SERVER_SETTINGS;
+        boolean regions = settings.zones().keySet().stream().anyMatch(k -> k.startsWith(Zone.REGION + ":"));
+        List<String> places = List.of();
+        if (settings.isServerIntegrations() && !settings.zones().isEmpty()) {
+            places = integrationPlaces(settings, at);
+        }
         String language = "";
         try {
             language = p.getLocale();
@@ -372,8 +389,45 @@ public final class AudioDistanceBukkit extends JavaPlugin implements Listener {
                 at.getX(), at.getY(), at.getZ(),
                 p.isSneaking(), !p.isDead(), p.getGameMode() == GameMode.SPECTATOR,
                 item(p.getInventory().getItemInMainHand()), item(p.getInventory().getItemInOffHand()),
-                regions ? WorldGuardRegions.at(at) : List.of(), language == null ? "" : language,
+                places.isEmpty() ? (regions ? WorldGuardRegions.at(at) : List.of()) : withRegions(places, regions ? WorldGuardRegions.at(at) : List.of()),
+                language == null ? "" : language,
                 effects && RoomProbe.underwater(p), effects ? RoomProbe.weather(p) : null);
+    }
+
+    /** The Towny town, the Lands land and the zone a WorldGuard flag names at {@code at}, as the zone lookup writes them. */
+    private static List<String> integrationPlaces(ServerSettings settings, Location at) {
+        List<String> places = new ArrayList<>(3);
+        try {
+            String flagged = WorldGuardRegions.zoneAt(at);
+            if (flagged != null) {
+                places.add(Zone.FLAG + ":" + flagged);
+            }
+            if (hasZoneOf(settings, Zone.TOWN)) {
+                String town = TownyLandsZones.townAt(at);
+                if (town != null) {
+                    places.add(Zone.TOWN + ":" + town);
+                }
+            }
+            if (hasZoneOf(settings, Zone.LAND)) {
+                String land = TownyLandsZones.landAt(at);
+                if (land != null) {
+                    places.add(Zone.LAND + ":" + land);
+                }
+            }
+        } catch (Throwable ignored) {
+            // an integration that changed: the zone falls back to the world's
+        }
+        return places;
+    }
+
+    private static boolean hasZoneOf(ServerSettings settings, String kind) {
+        return settings.zones().keySet().stream().anyMatch(k -> k.startsWith(kind + ":"));
+    }
+
+    private static List<String> withRegions(List<String> places, List<String> regions) {
+        List<String> all = new ArrayList<>(places);
+        all.addAll(regions);
+        return all;
     }
 
     private static String item(ItemStack stack) {
@@ -486,6 +540,16 @@ public final class AudioDistanceBukkit extends JavaPlugin implements Listener {
             @Override
             public int onlinePlayers() {
                 return getServer().getOnlinePlayers().size();
+            }
+
+            @Override
+            public boolean towns() {
+                return TownyLandsZones.townyPresent();
+            }
+
+            @Override
+            public boolean lands() {
+                return TownyLandsZones.landsPresent();
             }
 
             @Override

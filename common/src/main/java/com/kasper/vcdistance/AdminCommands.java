@@ -96,7 +96,7 @@ public final class AdminCommands {
     static final String[] EFFECT_STEPS = {"off", "25", "50", "75", "100", "125", "150"};
     static final String[] ECHO_STEPS = {"off", "25", "50", "75", "100"};
     /** {@code /vcd extras <name> on|off}: the Paper plugin's extras, each off until it has been played. */
-    static final String[] EXTRAS = {"radio", "speakers", "eavesdrop", "sculk", "doorway"};
+    static final String[] EXTRAS = {"radio", "speakers", "eavesdrop", "sculk", "doorway", "integrations"};
     /** Changes {@code /vcd undo} can take back, per settings file. */
     static final int UNDO_STEPS = 10;
     /** Players {@code /vcd debug} lists. */
@@ -154,6 +154,16 @@ public final class AdminCommands {
 
         /** Whether claim zones work here (Open Parties and Claims is installed). */
         default boolean claims() {
+            return false;
+        }
+
+        /** Whether Towny towns can be zones here (Towny is installed). */
+        default boolean towns() {
+            return false;
+        }
+
+        /** Whether Lands lands can be zones here (Lands is installed). */
+        default boolean lands() {
             return false;
         }
 
@@ -693,6 +703,7 @@ public final class AdminCommands {
             case "eavesdrop" -> settings.isServerEavesdrop();
             case "sculk" -> settings.isServerSculk();
             case "doorway" -> settings.isServerDoorway();
+            case "integrations" -> settings.isServerIntegrations();
             default -> false;
         };
     }
@@ -704,6 +715,7 @@ public final class AdminCommands {
             case "eavesdrop" -> settings.setServerEavesdrop(on);
             case "sculk" -> settings.setServerSculk(on);
             case "doorway" -> settings.setServerDoorway(on);
+            case "integrations" -> settings.setServerIntegrations(on);
             default -> {
             }
         }

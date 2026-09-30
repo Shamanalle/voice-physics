@@ -94,7 +94,7 @@
   "command.vc-audio-distance.btn.effects_off": "Выключить эффекты",
   "command.vc-audio-distance.btn.air_on": "Включить воздух",
   "command.vc-audio-distance.btn.air_off": "Выключить воздух",
-  "command.vc-audio-distance.help.extras": "/vcd extras [radio|speakers|eavesdrop|sculk|doorway on|off] - дополнения плагина, выключены, пока не проверены в игре",
+  "command.vc-audio-distance.help.extras": "/vcd extras [radio|speakers|eavesdrop|sculk|doorway|integrations on|off] - дополнения плагина, выключены, пока не проверены в игре",
   "command.vc-audio-distance.extras.title": "Дополнения плагина для Paper (выключены, пока не проверены в игре)",
   "command.vc-audio-distance.extras.row": "%s: %s",
   "command.vc-audio-distance.extras.name.radio": "Рации",
@@ -790,5 +790,8 @@
   "command.vc-audio-distance.eavesdrop.item_off": "Подслушивать теперь никто не может (предмет не задан). Сохранено.",
   "command.vc-audio-distance.eavesdrop.factor_set": "Подслушивающий слышит %s от приглушения стенами. Сохранено.",
   "command.vc-audio-distance.btn.eavesdrop_on": "Подслушивание вкл",
-  "command.vc-audio-distance.btn.eavesdrop_off": "Подслушивание выкл"
+  "command.vc-audio-distance.btn.eavesdrop_off": "Подслушивание выкл",
+  "command.vc-audio-distance.extras.name.integrations": "Интеграции (города, земли, флаг, LuckPerms)",
+  "command.vc-audio-distance.zones.town": "Город",
+  "command.vc-audio-distance.zones.land": "Земля"
 }

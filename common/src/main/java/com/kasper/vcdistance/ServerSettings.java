@@ -148,6 +148,7 @@ public final class ServerSettings {
     private volatile boolean serverEavesdrop;
     private volatile boolean serverSculk;
     private volatile boolean serverDoorway;
+    private volatile boolean serverIntegrations;
     private volatile long loadedModified = Long.MIN_VALUE;
     private volatile Map<String, Zone> zones = Map.of();
     /** Players muted with /vcd mute, by UUID (ended ones stay until the next save). */
@@ -307,6 +308,15 @@ public final class ServerSettings {
         serverSculk = on;
     }
 
+    /** Towny towns, Lands lands, the WorldGuard {@code vcd-zone} flag and LuckPerms contexts (Paper). Off until play-tested. */
+    public boolean isServerIntegrations() {
+        return serverIntegrations;
+    }
+
+    public void setServerIntegrations(boolean on) {
+        serverIntegrations = on;
+    }
+
     /** Players without the addon hear a walled voice from the doorway (Paper). Off until play-tested. */
     public boolean isServerDoorway() {
         return serverDoorway;
@@ -379,6 +389,7 @@ public final class ServerSettings {
         serverEavesdrop = DistanceConfig.parseBoolean(props, "server_eavesdrop", false);
         serverSculk = DistanceConfig.parseBoolean(props, "server_sculk", false);
         serverDoorway = DistanceConfig.parseBoolean(props, "server_doorway", false);
+        serverIntegrations = DistanceConfig.parseBoolean(props, "server_integrations", false);
 
         // Profile: custom values, or a preset on top of them
         profile.readFrom(props, PROFILE_PREFIX);
@@ -692,6 +703,11 @@ public final class ServerSettings {
                         "true: игрок без аддона слышит голос за стеной из дверного проёма, через который тот доходит.",
                         "При любой ошибке остаётся приглушённый прямой путь. По умолчанию false.")
                 .value("server_doorway", serverDoorway)
+                .comment("true: zone.town.<name> (Towny) and zone.land.<name> (Lands) zones, the WorldGuard region flag vcd-zone",
+                        "and the LuckPerms contexts vcd:mode, vcd:walls and vcd:zone work. Each needs its plugin. Default false.",
+                        "true: работают зоны zone.town.<имя> (Towny) и zone.land.<имя> (Lands), флаг региона WorldGuard vcd-zone",
+                        "и контексты LuckPerms vcd:mode, vcd:walls и vcd:zone. Каждому нужен свой плагин. По умолчанию false.")
+                .value("server_integrations", serverIntegrations)
                 .comment("Loudspeakers, made with /vcd speaker add <name> [radius] [pickup] where the admin stands:",
                         "  speaker.<name>=<world>|<x>|<y>|<z>|<pickup blocks>|<radius blocks>",
                         "Whoever talks within the pickup distance is heard from the speaker by everyone within the radius.",
@@ -753,7 +769,7 @@ public final class ServerSettings {
         if (colon > 0 && Zone.isKind(n.substring(0, colon))) {
             return zones.get(n);
         }
-        for (String kind : new String[]{Zone.BOX, Zone.REGION, Zone.WORLD, Zone.CLAIM}) {
+        for (String kind : new String[]{Zone.BOX, Zone.REGION, Zone.WORLD, Zone.CLAIM, Zone.TOWN, Zone.LAND}) {
             Zone z = zones.get(kind + ":" + n);
             if (z != null) {
                 return z;
@@ -1115,14 +1131,14 @@ public final class ServerSettings {
             int kindEnd = rest.indexOf('.');
             int fieldStart = rest.lastIndexOf('.');
             if (kindEnd <= 0 || fieldStart <= kindEnd + 1) {
-                DistanceConfig.LOGGER.warn("Ignoring '{}' in {}: expected zone.<world|box|region|claim>.<name>.<setting>", key, file);
+                DistanceConfig.LOGGER.warn("Ignoring '{}' in {}: expected zone.<world|box|region|claim|town|land>.<name>.<setting>", key, file);
                 continue;
             }
             String kind = rest.substring(0, kindEnd).toLowerCase(Locale.ROOT);
             String name = Zone.normalize(rest.substring(kindEnd + 1, fieldStart));
             String field = rest.substring(fieldStart + 1).toLowerCase(Locale.ROOT);
             if (!Zone.isKind(kind)) {
-                DistanceConfig.LOGGER.warn("Ignoring '{}' in {}: a zone is a world, a box, a region or a claim", key, file);
+                DistanceConfig.LOGGER.warn("Ignoring '{}' in {}: a zone is a world, a box, a region, a claim, a town or a land", key, file);
                 continue;
             }
             parts.computeIfAbsent(kind + ":" + name, k -> new LinkedHashMap<>()).put(field, props.getProperty(key).trim());

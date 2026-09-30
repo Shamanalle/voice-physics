@@ -188,6 +188,12 @@ final class CommandSuggest {
                     if (ctx != null && ctx.claims()) {
                         claims(out, ctx, settings, typed);
                     }
+                    if (ctx != null && ctx.towns()) {
+                        add(out, Zone.TOWN + ":", typed, null);
+                    }
+                    if (ctx != null && ctx.lands()) {
+                        add(out, Zone.LAND + ":", typed, null);
+                    }
                 } else if (args.length == 4) {
                     addAll(out, ZoneCommands.SETTINGS, typed);
                 } else if (args.length == 5) {

@@ -94,7 +94,7 @@
   "command.vc-audio-distance.btn.effects_off": "Effekte aus",
   "command.vc-audio-distance.btn.air_on": "Luft an",
   "command.vc-audio-distance.btn.air_off": "Luft aus",
-  "command.vc-audio-distance.help.extras": "/vcd extras [radio|speakers|eavesdrop|sculk|doorway on|off] - Extras des Plugins, aus, bis sie im Spiel erprobt sind",
+  "command.vc-audio-distance.help.extras": "/vcd extras [radio|speakers|eavesdrop|sculk|doorway|integrations on|off] - Extras des Plugins, aus, bis sie im Spiel erprobt sind",
   "command.vc-audio-distance.extras.title": "Extras des Paper-Plugins (aus, bis sie im Spiel erprobt sind)",
   "command.vc-audio-distance.extras.row": "%s: %s",
   "command.vc-audio-distance.extras.name.radio": "Funk",
@@ -790,5 +790,8 @@
   "command.vc-audio-distance.eavesdrop.item_off": "Jetzt kann niemand lauschen (kein Gegenstand gesetzt). Gespeichert.",
   "command.vc-audio-distance.eavesdrop.factor_set": "Lauschende hören %s der Wanddämpfung. Gespeichert.",
   "command.vc-audio-distance.btn.eavesdrop_on": "Lauschen an",
-  "command.vc-audio-distance.btn.eavesdrop_off": "Lauschen aus"
+  "command.vc-audio-distance.btn.eavesdrop_off": "Lauschen aus",
+  "command.vc-audio-distance.extras.name.integrations": "Integrationen (Städte, Lands, Flagge, LuckPerms)",
+  "command.vc-audio-distance.zones.town": "Stadt",
+  "command.vc-audio-distance.zones.land": "Land"
 }

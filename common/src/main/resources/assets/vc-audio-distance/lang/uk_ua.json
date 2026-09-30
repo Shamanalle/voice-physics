@@ -94,7 +94,7 @@
   "command.vc-audio-distance.btn.effects_off": "Вимкнути ефекти",
   "command.vc-audio-distance.btn.air_on": "Увімкнути повітря",
   "command.vc-audio-distance.btn.air_off": "Вимкнути повітря",
-  "command.vc-audio-distance.help.extras": "/vcd extras [radio|speakers|eavesdrop|sculk|doorway on|off] - доповнення плагіна, вимкнені, доки не перевірені в грі",
+  "command.vc-audio-distance.help.extras": "/vcd extras [radio|speakers|eavesdrop|sculk|doorway|integrations on|off] - доповнення плагіна, вимкнені, доки не перевірені в грі",
   "command.vc-audio-distance.extras.title": "Доповнення плагіна для Paper (вимкнені, доки не перевірені в грі)",
   "command.vc-audio-distance.extras.row": "%s: %s",
   "command.vc-audio-distance.extras.name.radio": "Рації",
@@ -790,5 +790,8 @@
   "command.vc-audio-distance.eavesdrop.item_off": "Підслуховувати тепер ніхто не може (предмет не задано). Збережено.",
   "command.vc-audio-distance.eavesdrop.factor_set": "Той, хто підслуховує, чує %s від приглушення стінами. Збережено.",
   "command.vc-audio-distance.btn.eavesdrop_on": "Підслуховування вкл",
-  "command.vc-audio-distance.btn.eavesdrop_off": "Підслуховування викл"
+  "command.vc-audio-distance.btn.eavesdrop_off": "Підслуховування викл",
+  "command.vc-audio-distance.extras.name.integrations": "Інтеграції (міста, землі, прапор, LuckPerms)",
+  "command.vc-audio-distance.zones.town": "Місто",
+  "command.vc-audio-distance.zones.land": "Земля"
 }

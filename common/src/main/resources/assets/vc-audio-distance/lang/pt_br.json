@@ -94,7 +94,7 @@
   "command.vc-audio-distance.btn.effects_off": "Desativar efeitos",
   "command.vc-audio-distance.btn.air_on": "Ativar ar",
   "command.vc-audio-distance.btn.air_off": "Desativar ar",
-  "command.vc-audio-distance.help.extras": "/vcd extras [radio|speakers|eavesdrop|sculk|doorway on|off] - extras do plugin, desligados até serem testados no jogo",
+  "command.vc-audio-distance.help.extras": "/vcd extras [radio|speakers|eavesdrop|sculk|doorway|integrations on|off] - extras do plugin, desligados até serem testados no jogo",
   "command.vc-audio-distance.extras.title": "Extras do plugin para Paper (desligados até serem testados no jogo)",
   "command.vc-audio-distance.extras.row": "%s: %s",
   "command.vc-audio-distance.extras.name.radio": "Rádio",
@@ -790,5 +790,8 @@
   "command.vc-audio-distance.eavesdrop.item_off": "Agora ninguém pode espionar (sem item). Salvo.",
   "command.vc-audio-distance.eavesdrop.factor_set": "Quem espiona ouve %s da atenuação das paredes. Salvo.",
   "command.vc-audio-distance.btn.eavesdrop_on": "Espionar on",
-  "command.vc-audio-distance.btn.eavesdrop_off": "Espionar off"
+  "command.vc-audio-distance.btn.eavesdrop_off": "Espionar off",
+  "command.vc-audio-distance.extras.name.integrations": "Integrações (cidades, lands, flag, LuckPerms)",
+  "command.vc-audio-distance.zones.town": "Cidade",
+  "command.vc-audio-distance.zones.land": "Land"
 }

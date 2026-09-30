@@ -94,7 +94,7 @@
   "command.vc-audio-distance.btn.effects_off": "Effects off",
   "command.vc-audio-distance.btn.air_on": "Air on",
   "command.vc-audio-distance.btn.air_off": "Air off",
-  "command.vc-audio-distance.help.extras": "/vcd extras [radio|speakers|eavesdrop|sculk|doorway on|off] - the plugin's extras, off until played",
+  "command.vc-audio-distance.help.extras": "/vcd extras [radio|speakers|eavesdrop|sculk|doorway|integrations on|off] - the plugin's extras, off until played",
   "command.vc-audio-distance.extras.title": "Extras of the Paper plugin (off until they have been played)",
   "command.vc-audio-distance.extras.row": "%s: %s",
   "command.vc-audio-distance.extras.name.radio": "Radio",
@@ -790,5 +790,8 @@
   "command.vc-audio-distance.eavesdrop.item_off": "Nobody can eavesdrop now (no item set). Saved.",
   "command.vc-audio-distance.eavesdrop.factor_set": "Eavesdroppers hear %s of the walls' muffling. Saved.",
   "command.vc-audio-distance.btn.eavesdrop_on": "Eavesdrop on",
-  "command.vc-audio-distance.btn.eavesdrop_off": "Eavesdrop off"
+  "command.vc-audio-distance.btn.eavesdrop_off": "Eavesdrop off",
+  "command.vc-audio-distance.extras.name.integrations": "Integrations (towns, lands, flag, LuckPerms)",
+  "command.vc-audio-distance.zones.town": "Town",
+  "command.vc-audio-distance.zones.land": "Land"
 }

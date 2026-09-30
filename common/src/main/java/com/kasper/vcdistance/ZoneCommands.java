@@ -126,13 +126,13 @@ final class ZoneCommands {
 
     /** How commands name a zone: its name, or "claim:steve" for claims (a player may share a world's name). */
     static String ref(Zone z) {
-        return Zone.CLAIM.equals(z.kind()) ? Zone.CLAIM + ":" + z.name() : z.name();
+        return Zone.prefixedKind(z.kind() + ":") != null ? z.kind() + ":" + z.name() : z.name();
     }
 
     /** Boxes, then regions, claims and worlds, each by name. */
     static List<Zone> sorted(ServerSettings settings) {
         List<Zone> zones = new ArrayList<>(settings.zones().values());
-        List<String> order = List.of(Zone.BOX, Zone.REGION, Zone.CLAIM, Zone.WORLD);
+        List<String> order = List.of(Zone.BOX, Zone.REGION, Zone.CLAIM, Zone.TOWN, Zone.LAND, Zone.WORLD);
         zones.sort(Comparator.comparingInt((Zone z) -> order.indexOf(z.kind())).thenComparing(Zone::name));
         return zones;
     }
@@ -439,8 +439,8 @@ final class ZoneCommands {
         }
         Zone z = r.settings.findZone(r.arg(2));
         // "claim:steve" names the claims of a player (Open Parties and Claims)
-        boolean claim = r.arg(2).toLowerCase(Locale.ROOT).startsWith(Zone.CLAIM + ":");
-        String name = AdminCommands.clean(claim ? r.arg(2).substring(Zone.CLAIM.length() + 1) : r.arg(2));
+        String prefixed = Zone.prefixedKind(r.arg(2));
+        String name = AdminCommands.clean(prefixed != null ? r.arg(2).substring(prefixed.length() + 1) : r.arg(2));
         if (name.isEmpty()) {
             r.badValue("zone set", r.arg(2), syntax, "zone");
             return;
@@ -460,12 +460,12 @@ final class ZoneCommands {
             return;
         }
         if (r.args.length == 4) {
-            choices(r, z, claim ? Zone.CLAIM + ":" + name : name, key);
+            choices(r, z, prefixed != null ? prefixed + ":" + name : name, key);
             return;
         }
         if (z == null) {
             // A world, or a player's claims, get a zone just by setting something on them
-            z = new Zone(claim ? Zone.CLAIM : Zone.WORLD, name, null, null);
+            z = new Zone(prefixed != null ? prefixed : Zone.WORLD, name, null, null);
         }
         String value = r.rest(4).trim();
         boolean reset = value.equalsIgnoreCase("default") || value.equals("-");
