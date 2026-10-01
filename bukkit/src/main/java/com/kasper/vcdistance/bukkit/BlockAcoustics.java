@@ -161,7 +161,9 @@ final class BlockAcoustics {
         if (custom != null) {
             return custom;
         }
-        if (Tag.WOOL.isTagged(m) || Tag.WOOL_CARPETS.isTagged(m)) {
+        String carpet = m.name();
+        // Tag.WOOL_CARPETS is 1.19.3+, so wool carpets are found by name (moss carpet is not wool)
+        if (Tag.WOOL.isTagged(m) || (carpet.endsWith("_CARPET") && !carpet.startsWith("MOSS"))) {
             return AcousticMaterial.WOOL;
         }
         if (Tag.LEAVES.isTagged(m)) {

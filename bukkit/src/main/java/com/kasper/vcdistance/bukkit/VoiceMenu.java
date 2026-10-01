@@ -83,7 +83,7 @@ final class VoiceMenu implements InventoryHolder {
         }
         inventory.setItem(QUIET, modeItem(Material.FEATHER, PlayerPrefs.Mode.QUIET, prefs, true, PlayerPrefs.QUIET_FACTOR));
         inventory.setItem(NORMAL, modeItem(Material.PAPER, PlayerPrefs.Mode.NORMAL, prefs, true, 1.0));
-        inventory.setItem(SHOUT, modeItem(Material.GOAT_HORN, PlayerPrefs.Mode.SHOUT, prefs, canShout, PlayerPrefs.SHOUT_FACTOR));
+        inventory.setItem(SHOUT, modeItem(shoutIcon(), PlayerPrefs.Mode.SHOUT, prefs, canShout, PlayerPrefs.SHOUT_FACTOR));
 
         Zone wallsZone = AudioDistancePlugin.SERVER_SETTINGS.wallsZoneOf(AudioDistancePlugin.PLAYERS.get(player));
         if (wallsLocked) {
@@ -209,5 +209,11 @@ final class VoiceMenu implements InventoryHolder {
                 event.setCancelled(true);
             }
         }
+    }
+
+    /** Goat horn (1.19+); 1.18 servers have none, so a bell stands in. */
+    private static Material shoutIcon() {
+        Material horn = Material.matchMaterial("GOAT_HORN");
+        return horn != null ? horn : Material.BELL;
     }
 }
