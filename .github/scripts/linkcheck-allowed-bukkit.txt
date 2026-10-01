@@ -56,3 +56,13 @@ method org/apache/logging/log4j/Logger.debug(Ljava/lang/String;[Ljava/lang/Objec
 method org/apache/logging/log4j/Logger.error(Ljava/lang/String;[Ljava/lang/Object;)V
 method org/apache/logging/log4j/Logger.info(Ljava/lang/String;[Ljava/lang/Object;)V
 method org/apache/logging/log4j/Logger.warn(Ljava/lang/String;[Ljava/lang/Object;)V
+
+# The same logger, seen from the other side: the reference API carries SLF4J, the 1.16.5 / 1.17 Paper API jars do not.
+# AddonLog loads its SLF4J sink only after Class.forName finds SLF4J, so on those servers it never runs.
+type org/slf4j/Logger
+type org/slf4j/LoggerFactory
+method org/slf4j/LoggerFactory.getLogger(Ljava/lang/String;)Lorg/slf4j/Logger;
+method org/slf4j/Logger.debug(Ljava/lang/String;[Ljava/lang/Object;)V
+method org/slf4j/Logger.error(Ljava/lang/String;[Ljava/lang/Object;)V
+method org/slf4j/Logger.info(Ljava/lang/String;[Ljava/lang/Object;)V
+method org/slf4j/Logger.warn(Ljava/lang/String;[Ljava/lang/Object;)V
