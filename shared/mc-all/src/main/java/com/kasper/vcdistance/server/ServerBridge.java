@@ -107,7 +107,7 @@ public final class ServerBridge {
             public void message(UUID player, String text) {
                 ServerPlayer p = server.getPlayerList().getPlayer(player);
                 if (p != null) {
-                    p.sendSystemMessage(ChatLink.of(text));
+                    Mc.say(p, ChatLink.of(text));
                 }
             }
 
@@ -125,7 +125,7 @@ public final class ServerBridge {
                 if (p != null) {
                     // A system message shown as the overlay: the same line above the hotbar as
                     // displayClientMessage(text, true), and clients see it as a game message
-                    p.sendSystemMessage(Txt.literal(text), true);
+                    Mc.overlay(p, Txt.literal(text));
                 }
             }
         });
@@ -165,7 +165,7 @@ public final class ServerBridge {
     /** What /vcd needs from the server, for a command run from {@code source} (a player, the console, a command block). */
     public static AdminCommands.Context context(CommandSourceStack source, VcdCommand.Server hooks) {
         MinecraftServer server = source.getServer();
-        ServerPlayer player = source.getPlayer();
+        ServerPlayer player = Mc.player(source);
         UUID sender = player == null ? null : player.getUUID();
         return new AdminCommands.Context() {
             @Override
@@ -268,7 +268,7 @@ public final class ServerBridge {
             if (server.getPlayerList().getPlayer(player) == null) {
                 return false;
             }
-            server.getCommands().performPrefixedCommand(server.createCommandSourceStack().withSuppressedOutput(), command);
+            Mc.run(server, command);
             return true;
         } catch (Throwable t) {
             return false;

@@ -1,5 +1,7 @@
 package com.kasper.vcdistance.compat;
 
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import net.minecraft.Util;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.Registry;
@@ -15,7 +17,7 @@ import net.minecraft.world.level.block.Block;
 import java.io.IOException;
 import java.io.InputStream;
 
-/** Minecraft 1.18 - 1.19.2 shapes of the calls in the modern {@code Mc}. */
+/** Minecraft 1.18.2 shapes of the calls in the modern {@code Mc}. */
 public final class Mc {
 
     private Mc() {
@@ -54,23 +56,27 @@ public final class Mc {
     }
 
     public static ServerPlayer player(CommandSourceStack source) {
-        return source.getPlayer();
+        try {
+            return source.getPlayerOrException();
+        } catch (CommandSyntaxException e) {
+            return null;
+        }
     }
 
     public static void say(ServerPlayer player, Component text) {
-        player.sendSystemMessage(text);
+        player.sendMessage(text, Util.NIL_UUID);
     }
 
     /** A system message shown as the overlay: the line above the hotbar. */
     public static void overlay(ServerPlayer player, Component text) {
-        player.sendSystemMessage(text, true);
+        player.displayClientMessage(text, true);
     }
 
     public static void run(MinecraftServer server, String command) {
-        server.getCommands().performPrefixedCommand(server.createCommandSourceStack().withSuppressedOutput(), command);
+        server.getCommands().performCommand(server.createCommandSourceStack().withSuppressedOutput(), command);
     }
 
     public static InputStream open(Resource resource) throws IOException {
-        return resource.open();
+        return resource.getInputStream();
     }
 }

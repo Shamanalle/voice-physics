@@ -7,7 +7,7 @@ import com.kasper.vcdistance.client.MinecraftWorldAccess;
 import com.kasper.vcdistance.client.SpeakerTicker;
 import com.kasper.vcdistance.client.SvcSettingsButton;
 import net.fabricmc.api.ClientModInitializer;
-import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
+import net.fabricmc.fabric.api.client.command.v1.ClientCommandManager;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
@@ -55,8 +55,7 @@ public class AudioDistanceClient implements ClientModInitializer {
         }
 
         // /voicephysics opens the settings (also from the clickable link in chat)
-        ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) ->
-                dispatcher.register(ClientHints.openCommand()));
+        ClientCommandManager.DISPATCHER.register(ClientHints.openCommand());
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             ticker.tick();

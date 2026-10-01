@@ -1,5 +1,6 @@
 package com.kasper.vcdistance.server;
 
+import com.kasper.vcdistance.compat.Mc;
 import com.kasper.vcdistance.AdminCommands;
 import net.minecraft.commands.CommandSourceStack;
 
@@ -21,7 +22,7 @@ public final class VcdPermissions {
     }
 
     public static boolean allows(CommandSourceStack source, String permission) {
-        if (source.getPlayer() == null) {
+        if (Mc.player(source) == null) {
             return true;
         }
         Method m = check();

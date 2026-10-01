@@ -97,6 +97,22 @@ jobs:
         # own upload is repacked with a marker so it differs. Fabric API is optional wherever the file
         # also serves Forge or NeoForge: a required one would be pulled into those installs too.
         include:
+          - name: Fabric for 1.18.2
+            file: fabric-{v}+mc1.18.2.jar
+            target: mc1.18.2
+            loaders: fabric quilt
+            game-versions: 1.18.2
+            java: 17
+            dependencies: simple-voice-chat(required) fabric-api(required) modmenu(optional)
+            curseforge: true
+          - name: Forge for 1.18.2
+            file: forge-{v}+mc1.18.2.jar
+            target: mc1.18.2-forge
+            loaders: forge
+            game-versions: 1.18.2
+            java: 17
+            dependencies: simple-voice-chat(required)
+            curseforge: true
           - name: Fabric for 1.19.2
             file: fabric-{v}+mc1.19.2.jar
             target: mc1.19.2

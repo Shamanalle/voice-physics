@@ -49,7 +49,7 @@ public final class VcdCommand {
 
     private static int run(CommandContext<CommandSourceStack> ctx, String args, Server hooks) {
         CommandSourceStack source = ctx.getSource();
-        ServerPlayer player = source.getPlayer();
+        ServerPlayer player = Mc.player(source);
         if (player != null) {
             // Commands like zone pos1 need where the admin stands right now
             AudioDistancePlugin.PLAYERS.update(ServerBridge.info(player));

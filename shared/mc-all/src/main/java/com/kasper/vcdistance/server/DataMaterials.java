@@ -1,5 +1,6 @@
 package com.kasper.vcdistance.server;
 
+import com.kasper.vcdistance.compat.Mc;
 import com.kasper.vcdistance.BlockDataRules;
 import com.kasper.vcdistance.DistanceConfig;
 import com.kasper.vcdistance.Problems;
@@ -89,7 +90,7 @@ public final class DataMaterials {
                 for (Resource resource : e.getValue()) {
                     pack++;
                     String name = e.getKey() + (e.getValue().size() > 1 ? " (" + kind + " " + pack + ")" : "");
-                    try (InputStream in = resource.open()) {
+                    try (InputStream in = Mc.open(resource)) {
                         byte[] bytes = in.readNBytes(MAX_BYTES + 1);
                         if (bytes.length > MAX_BYTES) {
                             unreadable.add(name + ": larger than 1 MB");

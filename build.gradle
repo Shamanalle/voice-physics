@@ -7,6 +7,7 @@ plugins {
 // (distance curves, configured through config/vc-audio-distance.properties) without the other features.
 // Every loader has a build of its own now, so only the Fabric jar and its Quilt listing are left here.
 def releaseTargets = [
+        [project: ':fabric-1.18', target: 'mc1.18.2', aliases: []],
         [project: ':fabric-1.19', target: 'mc1.19.2', aliases: []],
         [project: ':fabric-1.20', target: 'mc1.20.1', aliases: []],
         [project: ':fabric-1.20.4', target: 'mc1.20.2-1.20.4', aliases: []],
@@ -15,9 +16,10 @@ def releaseTargets = [
         [project: ':fabric-26', target: 'mc26.x', aliases: ['neoforge', 'forge']],
 ]
 
-// Full builds of their own: Forge 1.19.2 and 1.20.1 (remapped to Forge's names by reobfJar), Forge 1.20.6 - 26.x
+// Full builds of their own: Forge 1.18.2, 1.19.2 and 1.20.1 (remapped to Forge's names by reobfJar), Forge 1.20.6 - 26.x
 // and NeoForge 1.20.5 - 1.21.11
 def loaderTargets = [
+        [project: ':forge-1.18', task: 'reobfJar', file: 'voice-physics-forge-%s+mc1.18.2.jar'],
         [project: ':forge-1.19', task: 'reobfJar', file: 'voice-physics-forge-%s+mc1.19.2.jar'],
         [project: ':forge-1.20.1', task: 'reobfJar', file: 'voice-physics-forge-%s+mc1.20.1.jar'],
         [project: ':forge-1.20.6', task: 'jar', file: 'voice-physics-forge-%s+mc1.20.6.jar'],
