@@ -1,5 +1,7 @@
 package com.kasper.vcdistance.client;
 
+import com.kasper.vcdistance.compat.Txt;
+
 import net.minecraft.client.gui.components.AbstractSliderButton;
 import net.minecraft.network.chat.Component;
 
@@ -21,7 +23,7 @@ public class RangeSlider extends AbstractSliderButton {
 
     public RangeSlider(int x, int y, int width, int height, double min, double max, double step,
                        DoubleSupplier getter, DoubleConsumer setter, DoubleFunction<Component> label) {
-        super(x, y, width, height, Component.empty(), toPosition(getter.getAsDouble(), min, max));
+        super(x, y, width, height, Txt.empty(), toPosition(getter.getAsDouble(), min, max));
         this.min = min;
         this.max = max;
         this.step = step;

@@ -34,11 +34,16 @@ public final class ServerLink {
      * @param name    the zone's name, or "" when a zone was left
      * @param message the zone's own entry message, or {@code null}
      */
+    @com.github.bsideup.jabel.Desugar
     public record ZoneNotice(String name, String message) {
     }
 
+    @com.github.bsideup.jabel.Desugar
+
     private record Merged(LinkProtocol.ServerProfile profile, DistanceConfig own, int ownRevision, DistanceConfig config) {
     }
+
+    @com.github.bsideup.jabel.Desugar
 
     private record Nearby(Map<UUID, VoiceState> states, LinkProtocol.GroupInfo group, long receivedNanos) {
         boolean fresh(long nowNanos) {

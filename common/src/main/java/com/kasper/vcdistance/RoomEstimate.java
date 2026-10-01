@@ -27,6 +27,7 @@ import java.util.List;
  * @param early           early reflections off the nearest walls
  * @param echoes          distinct repeats off far cliffs (none indoors)
  */
+@com.github.bsideup.jabel.Desugar
 public record RoomEstimate(Kind kind, double enclosure, double meanFree, double decaySeconds, double wet,
                            double damping, double preDelaySeconds, Taps early, Taps echoes) {
 
@@ -64,6 +65,7 @@ public record RoomEstimate(Kind kind, double enclosure, double meanFree, double 
      * @param delays in seconds
      * @param gains  0 - 1, one per delay
      */
+    @com.github.bsideup.jabel.Desugar
     public record Taps(double[] delays, double[] gains) {
 
         public static final Taps NONE = new Taps(new double[0], new double[0]);
@@ -141,6 +143,7 @@ public record RoomEstimate(Kind kind, double enclosure, double meanFree, double 
      * @param distance in blocks
      * @param material the block's material
      */
+    @com.github.bsideup.jabel.Desugar
     public record Hit(double distance, AcousticMaterial material) {
     }
 

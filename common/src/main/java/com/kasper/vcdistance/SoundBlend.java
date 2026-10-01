@@ -14,6 +14,7 @@ import java.util.function.DoubleUnaryOperator;
  * @param muffle    muffle of the mix, 0 - 1
  * @param lossDb    loss of the mix on top of the volume curve at {@code distance}, in dB
  */
+@com.github.bsideup.jabel.Desugar
 public record SoundBlend(double pathShare, double direct, double distance, double muffle, double lossDb) {
 
     /**

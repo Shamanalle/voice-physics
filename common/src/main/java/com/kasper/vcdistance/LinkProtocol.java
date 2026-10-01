@@ -61,8 +61,9 @@ public final class LinkProtocol {
      * @param groupHear other members of the receiver's group, anywhere, who hear it; -1 when not in a group or unknown
      * @param groupDeaf other members who cannot (sound off, disconnected); -1 when unknown
      */
+    @com.github.bsideup.jabel.Desugar
     public record GroupInfo(Set<UUID> mates, Set<UUID> isolated, int groupHear, int groupDeaf) {
-        public static final GroupInfo NONE = new GroupInfo(Set.of(), Set.of(), -1, -1);
+        public static final GroupInfo NONE = new GroupInfo(Jv.setOf(), Jv.setOf(), -1, -1);
 
         public boolean hasTotals() {
             return groupHear >= 0 && groupDeaf >= 0;
@@ -81,6 +82,7 @@ public final class LinkProtocol {
      * @param serverNotices the server shows zone changes above the hotbar itself (2.5.0+), so the
      *                      client does not show them again
      */
+    @com.github.bsideup.jabel.Desugar
     public record ServerProfile(ServerSettings.ProfileMode mode, DistanceConfig config,
                                 double voiceDistance, double whisperDistance, boolean serverWalls, String zone,
                                 String zoneMessage, Double echo, boolean admin,
@@ -153,7 +155,7 @@ public final class LinkProtocol {
         if (p == null || DistanceConfig.parseDouble(p, "protocol", -1) < 1) {
             return null;
         }
-        DistanceConfig config = new DistanceConfig(Path.of("server-profile.properties"));
+        DistanceConfig config = new DistanceConfig(java.nio.file.Paths.get("server-profile.properties"));
         config.readFrom(p, PROFILE_PREFIX);
         return new ServerProfile(
                 ServerSettings.ProfileMode.fromId(p.getProperty("mode"), ServerSettings.ProfileMode.OFF),
@@ -202,11 +204,12 @@ public final class LinkProtocol {
     }
 
     /** What the Server tab shows: the reply lines and the server's settings ({@link ServerSettings#writeState}). */
+    @com.github.bsideup.jabel.Desugar
     public record AdminReply(java.util.List<String> lines, Properties state) {
     }
 
     public static String adminReply(java.util.List<String> lines, ServerSettings settings) {
-        return adminReply(lines, settings, Map.of());
+        return adminReply(lines, settings, Jv.mapOf());
     }
 
     /**
@@ -295,7 +298,7 @@ public final class LinkProtocol {
             hear = -1;
             deaf = -1;
         }
-        return new GroupInfo(Set.copyOf(mates), Set.copyOf(isolated), hear, deaf);
+        return new GroupInfo(Jv.copyOfSet(mates), Jv.copyOfSet(isolated), hear, deaf);
     }
 
     /** @return the state per player, or {@code null} when the text is not a valid nearby message; unknown entries are skipped */

@@ -73,7 +73,7 @@ public final class AddonCheck {
         if (version == null) {
             return false;
         }
-        return minimum == null || minimum.isBlank() || compare(version, minimum) >= 0;
+        return minimum == null || Jv.isBlank(minimum) || compare(version, minimum) >= 0;
     }
 
     /** Compares "1.8.0+mc26.x" with "1.8": numbers part by part, whatever follows '+' or '-' ignored. */

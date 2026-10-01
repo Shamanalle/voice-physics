@@ -31,7 +31,7 @@ public final class ServerSculk {
     /** The players whose voice was loud since the last call; each is returned once. */
     public static java.util.List<java.util.UUID> drain() {
         java.util.List<java.util.UUID> out = new java.util.ArrayList<>();
-        for (java.util.UUID id : java.util.List.copyOf(PENDING)) {
+        for (java.util.UUID id : com.kasper.vcdistance.Jv.copyOf(PENDING)) {
             if (PENDING.remove(id)) {
                 out.add(id);
             }

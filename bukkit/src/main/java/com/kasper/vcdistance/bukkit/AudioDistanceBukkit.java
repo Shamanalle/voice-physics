@@ -110,7 +110,7 @@ public final class AudioDistanceBukkit extends JavaPlugin implements Listener {
             return;
         }
         scheduling = Scheduling.create(this);
-        thickness = new BukkitThickness(scheduling.isRegionized());
+        thickness = new BukkitThickness(scheduling);
         AudioDistancePlugin.ensureServerSettings();
         service.registerPlugin(new ServerPlugin());
 
@@ -391,7 +391,7 @@ public final class AudioDistanceBukkit extends JavaPlugin implements Listener {
         Location at = p.getLocation();
         ServerSettings settings = AudioDistancePlugin.SERVER_SETTINGS;
         boolean regions = settings.zones().keySet().stream().anyMatch(k -> k.startsWith(Zone.REGION + ":"));
-        List<String> places = List.of();
+        List<String> places = com.kasper.vcdistance.Jv.listOf();
         if (settings.isServerIntegrations() && !settings.zones().isEmpty()) {
             places = integrationPlaces(settings, at);
         }
@@ -406,7 +406,7 @@ public final class AudioDistanceBukkit extends JavaPlugin implements Listener {
                 at.getX(), at.getY(), at.getZ(),
                 p.isSneaking(), !p.isDead(), p.getGameMode() == GameMode.SPECTATOR,
                 item(p.getInventory().getItemInMainHand()), item(p.getInventory().getItemInOffHand()),
-                places.isEmpty() ? (regions ? WorldGuardRegions.at(at) : List.of()) : withRegions(places, regions ? WorldGuardRegions.at(at) : List.of()),
+                places.isEmpty() ? (regions ? WorldGuardRegions.at(at) : com.kasper.vcdistance.Jv.listOf()) : withRegions(places, regions ? WorldGuardRegions.at(at) : com.kasper.vcdistance.Jv.listOf()),
                 language == null ? "" : language,
                 effects && RoomProbe.underwater(p), effects ? RoomProbe.weather(p) : null);
     }

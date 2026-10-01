@@ -14,6 +14,7 @@ import java.util.UUID;
  * @param by     who muted them (a name, or {@link ChangeLog#CONSOLE})
  * @param reason why, or ""
  */
+@com.github.bsideup.jabel.Desugar
 public record VoiceMute(UUID player, String name, long until, String by, String reason) {
 
     /** Shortest and longest mute that can be given with a time. */

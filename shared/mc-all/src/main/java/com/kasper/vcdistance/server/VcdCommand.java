@@ -1,5 +1,8 @@
 package com.kasper.vcdistance.server;
 
+import com.kasper.vcdistance.compat.Mc;
+import com.kasper.vcdistance.compat.Txt;
+
 import com.kasper.vcdistance.AdminCommands;
 import com.kasper.vcdistance.AudioDistancePlugin;
 import com.kasper.vcdistance.CommandReply;
@@ -46,7 +49,7 @@ public final class VcdCommand {
 
     private static int run(CommandContext<CommandSourceStack> ctx, String args, Server hooks) {
         CommandSourceStack source = ctx.getSource();
-        ServerPlayer player = source.getPlayer();
+        ServerPlayer player = Mc.player(source);
         if (player != null) {
             // Commands like zone pos1 need where the admin stands right now
             AudioDistancePlugin.PLAYERS.update(ServerBridge.info(player));
@@ -54,7 +57,7 @@ public final class VcdCommand {
         CommandReply reply = AdminCommands.execute(args, AudioDistancePlugin.SERVER_SETTINGS, ServerBridge.context(source, hooks));
         for (CommandReply.Line line : reply.lines()) {
             Component text = ReplyComponents.of(line);
-            source.sendSuccess(() -> text, false);
+            Mc.success(source, text);
         }
         return 1;
     }
@@ -68,7 +71,7 @@ public final class VcdCommand {
             if (s.tooltip() == null) {
                 word.suggest(s.text());
             } else {
-                word.suggest(s.text(), Component.literal(s.tooltip()));
+                word.suggest(s.text(), Txt.literal(s.tooltip()));
             }
         }
         return word.buildFuture();

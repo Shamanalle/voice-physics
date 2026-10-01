@@ -51,7 +51,7 @@ public final class ServerHooks {
             players.update(info);
             ids.add(info.id());
         }
-        for (ServerPlayers.Info known : List.copyOf(players.all())) {
+        for (ServerPlayers.Info known : Jv.copyOf(players.all())) {
             if (!ids.contains(known.id())) {
                 players.remove(known.id());
             }

@@ -10,6 +10,7 @@ import java.util.function.Function;
  * players whose state is unknown are counted separately. In a Simple Voice Chat group the group's
  * members count too, wherever they are ({@code group} of them).
  */
+@com.github.bsideup.jabel.Desugar
 public record HearingEstimate(int inRange, int hear, int deaf, int unknown, int group) {
 
     public static final HearingEstimate NONE = new HearingEstimate(0, 0, 0, 0, 0);

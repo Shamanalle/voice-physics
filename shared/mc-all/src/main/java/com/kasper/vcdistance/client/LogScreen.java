@@ -1,11 +1,14 @@
 package com.kasper.vcdistance.client;
 
+import com.kasper.vcdistance.compat.Txt;
+import com.kasper.vcdistance.compat.Btn;
+import com.kasper.vcdistance.compat.Tip;
+
 import com.kasper.vcdistance.AudioDistancePlugin;
 import com.kasper.vcdistance.ChangeLog;
 import com.kasper.vcdistance.LinkProtocol;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
-import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
@@ -21,7 +24,7 @@ import java.util.List;
  * <p>
  * Version subclasses only forward rendering through a {@link Canvas} and switch screens.
  */
-public abstract class LogScreen extends Screen {
+public abstract class LogScreen extends com.kasper.vcdistance.compat.BaseScreen {
 
     private static final String K = "gui.vc-audio-distance.";
     private static final int MAX_WIDTH = 420;
@@ -55,7 +58,7 @@ public abstract class LogScreen extends Screen {
     private int undoable;
 
     protected LogScreen(Screen parent) {
-        super(Component.translatable(K + "log.title"));
+        super(Txt.translatable(K + "log.title"));
         this.parent = parent;
     }
 
@@ -86,11 +89,11 @@ public abstract class LogScreen extends Screen {
         filterBox = new EditBox(this.font, left, 22, boxW, 20, tr("log.filter"));
         filterBox.setMaxLength(32);
         filterBox.setValue(who);
-        filterBox.setTooltip(tip("log.filter.tooltip"));
+        Tip.set(filterBox, tip("log.filter.tooltip"));
         addRenderableWidget(filterBox);
-        addRenderableWidget(Button.builder(tr("log.apply"), b -> ask(1, typedName()))
+        addRenderableWidget(Btn.builder(tr("log.apply"), b -> ask(1, typedName()))
                 .bounds(left + boxW + GAP, 22, applyW, 20).tooltip(tip("log.filter.tooltip")).build());
-        addRenderableWidget(Button.builder(tr("log.all"), b -> {
+        addRenderableWidget(Btn.builder(tr("log.all"), b -> {
             filterBox.setValue("");
             ask(1, "");
         }).bounds(right - allW, 22, allW, 20).build());
@@ -98,8 +101,8 @@ public abstract class LogScreen extends Screen {
         // Pager: previous and next page either side of the page number
         int page = shown == null ? 1 : shown.page();
         int pages = shown == null ? 1 : shown.pages();
-        Button prev = Button.builder(Component.literal("‹"), b -> ask(page - 1, who)).bounds(left, pagerY, 30, 20).build();
-        Button next = Button.builder(Component.literal("›"), b -> ask(page + 1, who)).bounds(right - 30, pagerY, 30, 20).build();
+        Button prev = Btn.builder(Txt.literal("‹"), b -> ask(page - 1, who)).bounds(left, pagerY, 30, 20).build();
+        Button next = Btn.builder(Txt.literal("›"), b -> ask(page + 1, who)).bounds(right - 30, pagerY, 30, 20).build();
         prev.active = shown != null && page > 1;
         next.active = shown != null && page < pages;
         addRenderableWidget(prev);
@@ -107,15 +110,15 @@ public abstract class LogScreen extends Screen {
 
         // Footer: undo, copy, back
         int bw = (w - GAP * 2) / 3;
-        Button undo = Button.builder(tr("server.log.undo"), b -> undoLast())
+        Button undo = Btn.builder(tr("server.log.undo"), b -> undoLast())
                 .bounds(left, footerY, bw, 20).tooltip(tip("server.log.undo.tooltip")).build();
         undo.active = undoable > 0;
         addRenderableWidget(undo);
-        copyButton = Button.builder(tr(copiedTicks > 0 ? "log.copied" : "log.copy"), b -> copyPage())
+        copyButton = Btn.builder(tr(copiedTicks > 0 ? "log.copied" : "log.copy"), b -> copyPage())
                 .bounds(left + bw + GAP, footerY, bw, 20).tooltip(tip("log.copy.tooltip")).build();
         copyButton.active = shown != null && !shown.entries().isEmpty();
         addRenderableWidget(copyButton);
-        addRenderableWidget(Button.builder(tr("log.back"), b -> onClose()).bounds(right - bw, footerY, bw, 20).build());
+        addRenderableWidget(Btn.builder(tr("log.back"), b -> onClose()).bounds(right - bw, footerY, bw, 20).build());
 
         if (!asked) {
             asked = true;
@@ -226,10 +229,10 @@ public abstract class LogScreen extends Screen {
             c.centered(none, this.width / 2, listTop + 20, Palette.TEXT_MUTED);
         }
         List<ChangeLog.Entry> entries = shown.entries();
-        int timeW = c.width(Component.literal("00.00 00:00")) + 8;
+        int timeW = c.width(Txt.literal("00.00 00:00")) + 8;
         int whoW = 0;
         for (ChangeLog.Entry e : entries) {
-            whoW = Math.max(whoW, c.width(Component.literal(who(e))));
+            whoW = Math.max(whoW, c.width(Txt.literal(who(e))));
         }
         whoW = Math.min(whoW + 8, (right - left) / 3);
         int rows = Math.min(entries.size(), Math.max(0, (listBottom - listTop) / LINE));
@@ -239,7 +242,7 @@ public abstract class LogScreen extends Screen {
             if (i % 2 == 0) {
                 c.fill(left, y - 1, right, y + LINE - 1, 0x14FFFFFF);
             }
-            c.text(Component.literal(TIME.format(e.time())), left + 2, y, Palette.TEXT_MUTED);
+            c.text(Txt.literal(TIME.format(e.time())), left + 2, y, Palette.TEXT_MUTED);
             c.text(fit(c, who(e), whoW - 8), left + 2 + timeW, y, Palette.TEXT);
             String command = e.undo() ? tr("server.log.undone", e.command()).getString() : e.command();
             int x = left + 2 + timeW + whoW;
@@ -261,20 +264,20 @@ public abstract class LogScreen extends Screen {
     /** {@code text} cut with an ellipsis so that it fits in {@code max} pixels. */
     private static Component fit(Canvas c, String text, int max) {
         String s = text;
-        if (c.width(Component.literal(s)) <= max) {
-            return Component.literal(s);
+        if (c.width(Txt.literal(s)) <= max) {
+            return Txt.literal(s);
         }
-        while (s.length() > 1 && c.width(Component.literal(s + "…")) > max) {
+        while (s.length() > 1 && c.width(Txt.literal(s + "…")) > max) {
             s = s.substring(0, s.length() - 1);
         }
-        return Component.literal(s + "…");
+        return Txt.literal(s + "…");
     }
 
-    private static Tooltip tip(String key) {
-        return Tooltip.create(tr(key));
+    private static Tip tip(String key) {
+        return Tip.create(tr(key));
     }
 
     private static Component tr(String key, Object... args) {
-        return Component.translatable(K + key, args);
+        return Txt.translatable(K + key, args);
     }
 }

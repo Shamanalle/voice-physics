@@ -28,6 +28,7 @@ public final class ChangeLog {
      * @param command what was typed, "/vcd walls 60"
      * @param undo    the change took back {@code command}
      */
+    @com.github.bsideup.jabel.Desugar
     public record Entry(Instant time, String who, String command, boolean undo) {
     }
 
@@ -40,7 +41,7 @@ public final class ChangeLog {
 
     public static Path fileFor(ServerSettings settings) {
         Path parent = settings.getPath().toAbsolutePath().getParent();
-        return parent == null ? Path.of(FILE) : parent.resolve(FILE);
+        return parent == null ? java.nio.file.Paths.get(FILE) : parent.resolve(FILE);
     }
 
     /** Adds a change; a log that cannot be written never stops the command. */
@@ -52,7 +53,7 @@ public final class ChangeLog {
             if (Files.isRegularFile(file) && Files.size(file) >= MAX_BYTES) {
                 Files.move(file, old(file), StandardCopyOption.REPLACE_EXISTING);
             }
-            Files.writeString(file, line, StandardCharsets.UTF_8, StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+            Jv.writeString(file, line, StandardCharsets.UTF_8, StandardOpenOption.CREATE, StandardOpenOption.APPEND);
         } catch (IOException e) {
             DistanceConfig.LOGGER.warn("Could not write {}: {}", file, e.getMessage());
             Problems.record("Writing " + file.getFileName() + ": " + e.getMessage());
@@ -98,10 +99,12 @@ public final class ChangeLog {
      *
      * @param who a player's name or {@link #CONSOLE}, or {@code null} for everyone
      */
+    @com.github.bsideup.jabel.Desugar
     public record View(int page, String who) {
     }
 
     /** One page of the changes; {@code total} counts every change that matches, not only this page's. */
+    @com.github.bsideup.jabel.Desugar
     public record Page(List<Entry> entries, int page, int pages, int total, String who) {
     }
 
@@ -146,7 +149,7 @@ public final class ChangeLog {
         int pages = Math.max(1, (matching.size() + PAGE - 1) / PAGE);
         int p = Math.max(1, Math.min(pages, view.page()));
         List<Entry> slice = matching.subList(Math.min(matching.size(), (p - 1) * PAGE), Math.min(matching.size(), p * PAGE));
-        return new Page(List.copyOf(slice), p, pages, matching.size(), view.who() == null ? "" : view.who());
+        return new Page(Jv.copyOf(slice), p, pages, matching.size(), view.who() == null ? "" : view.who());
     }
 
     /** Writes a page as the {@code logpage.*} lines of the admin reply (read back by {@link #readPage}). */

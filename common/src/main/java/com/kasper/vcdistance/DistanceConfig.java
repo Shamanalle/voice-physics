@@ -1,8 +1,5 @@
 package com.kasper.vcdistance;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -17,7 +14,7 @@ import java.util.Properties;
  */
 public final class DistanceConfig {
 
-    public static final Logger LOGGER = LoggerFactory.getLogger("VC-AudioDistance");
+    public static final AddonLog LOGGER = new AddonLog("VC-AudioDistance");
 
     /** 3: the file is written with a comment for every key; 4: interface section; 5: echo, water, weather; 6: sound around corners;
      * 7: the HUD moves from the top left (under Simple Voice Chat's group list) to the top right;

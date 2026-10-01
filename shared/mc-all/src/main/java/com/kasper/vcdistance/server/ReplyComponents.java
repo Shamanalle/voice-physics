@@ -1,5 +1,7 @@
 package com.kasper.vcdistance.server;
 
+import com.kasper.vcdistance.compat.Txt;
+
 import com.kasper.vcdistance.CommandReply;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.ClickEvent;
@@ -15,7 +17,7 @@ public final class ReplyComponents {
     }
 
     public static Component of(CommandReply.Line line) {
-        MutableComponent out = Component.literal("");
+        MutableComponent out = Txt.literal("");
         for (CommandReply.Span span : line.spans()) {
             Style style = Style.EMPTY.withColor(color(span.style()));
             if (span.style() == CommandReply.Style.TITLE) {
@@ -28,12 +30,12 @@ public final class ReplyComponents {
                 }
             }
             if (span.hover() != null) {
-                HoverEvent hover = ChatLink.hover(Component.literal(span.hover()));
+                HoverEvent hover = ChatLink.hover(Txt.literal(span.hover()));
                 if (hover != null) {
                     style = style.withHoverEvent(hover);
                 }
             }
-            out.append(Component.literal(span.text()).withStyle(style));
+            out.append(Txt.literal(span.text()).withStyle(style));
         }
         return out;
     }

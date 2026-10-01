@@ -12,7 +12,7 @@ import java.util.UUID;
 public final class ServerPlaceholders {
 
     /** Every placeholder, in the order the documentation lists them. */
-    public static final List<String> NAMES = List.of(
+    public static final List<String> NAMES = Jv.listOf(
             "mode", "mode_name", "talking", "muted", "mute_left", "mute_reason", "range", "whisper_range",
             "walls", "zone", "addon", "talking_near", "muted_count");
 

@@ -22,6 +22,7 @@ public final class EnvironmentEffects {
     }
 
     /** Muffle (0 - 1) and loss in dB. */
+    @com.github.bsideup.jabel.Desugar
     public record Effect(double muffle, double lossDb) {
 
         public static final Effect NONE = new Effect(0.0, 0.0);

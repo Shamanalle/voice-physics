@@ -23,7 +23,7 @@ public final class OpsFile {
 
     private final Path file;
     private long modified = Long.MIN_VALUE;
-    private Map<UUID, Integer> levels = Map.of();
+    private Map<UUID, Integer> levels = Jv.mapOf();
 
     public OpsFile(Path file) {
         this.file = file;
@@ -43,9 +43,9 @@ public final class OpsFile {
                 return;
             }
             modified = m;
-            levels = Files.exists(file) ? parse(Files.readString(file, StandardCharsets.UTF_8)) : Map.of();
+            levels = Files.exists(file) ? parse(Jv.readString(file, StandardCharsets.UTF_8)) : Jv.mapOf();
         } catch (IOException | RuntimeException e) {
-            levels = Map.of();
+            levels = Jv.mapOf();
         }
     }
 

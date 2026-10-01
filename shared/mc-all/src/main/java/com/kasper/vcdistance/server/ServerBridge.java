@@ -1,5 +1,8 @@
 package com.kasper.vcdistance.server;
 
+import com.kasper.vcdistance.compat.Mc;
+import com.kasper.vcdistance.compat.Txt;
+
 import com.kasper.vcdistance.AdminCommands;
 import com.kasper.vcdistance.AudioDistancePlugin;
 import com.kasper.vcdistance.EnvironmentEffects;
@@ -9,7 +12,6 @@ import com.kasper.vcdistance.Zone;
 import com.kasper.vcdistance.ZoneOutlines;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
@@ -38,7 +40,7 @@ public final class ServerBridge {
 
     /** A player as the voice rules see them. */
     public static ServerPlayers.Info info(ServerPlayer p) {
-        String world = ServerZones.dimensionId(String.valueOf(p.level().dimension()));
+        String world = ServerZones.dimensionId(String.valueOf(Mc.level(p).dimension()));
         String name = p.getName().getString();
         Claims.seen(p.getUUID(), name);
         // Water and weather are only looked at when the server's effects are on: a couple of cheap reads per player
@@ -61,10 +63,10 @@ public final class ServerBridge {
     /** Rain or thunder on the player: the game's own answer for this spot (biome, sky, height). */
     private static EnvironmentEffects.Weather weather(ServerPlayer p) {
         try {
-            if (!p.level().isRainingAt(p.blockPosition())) {
+            if (!Mc.level(p).isRainingAt(p.blockPosition())) {
                 return EnvironmentEffects.Weather.CLEAR;
             }
-            return p.level().isThundering() ? EnvironmentEffects.Weather.THUNDER : EnvironmentEffects.Weather.RAIN;
+            return Mc.level(p).isThundering() ? EnvironmentEffects.Weather.THUNDER : EnvironmentEffects.Weather.RAIN;
         } catch (Throwable e) {
             return EnvironmentEffects.Weather.CLEAR;
         }
@@ -74,7 +76,7 @@ public final class ServerBridge {
         if (stack == null || stack.isEmpty()) {
             return "";
         }
-        return String.valueOf(BuiltInRegistries.ITEM.getKey(stack.getItem()));
+        return Mc.itemId(stack.getItem());
     }
 
     /**
@@ -85,7 +87,7 @@ public final class ServerBridge {
         DataMaterials.tick(server);
         ZoneOutlines.tick((id, world, points) -> {
             ServerPlayer p = server.getPlayerList().getPlayer(id);
-            if (p != null && Zone.sameWorld(ServerZones.dimensionId(String.valueOf(p.level().dimension())), world)) {
+            if (p != null && Zone.sameWorld(ServerZones.dimensionId(String.valueOf(Mc.level(p).dimension())), world)) {
                 ParticleSender.endRods(p, points);
             }
         });
@@ -105,7 +107,7 @@ public final class ServerBridge {
             public void message(UUID player, String text) {
                 ServerPlayer p = server.getPlayerList().getPlayer(player);
                 if (p != null) {
-                    p.sendSystemMessage(ChatLink.of(text));
+                    Mc.say(p, ChatLink.of(text));
                 }
             }
 
@@ -113,7 +115,7 @@ public final class ServerBridge {
             public void kick(UUID player, String text) {
                 ServerPlayer p = server.getPlayerList().getPlayer(player);
                 if (p != null) {
-                    p.connection.disconnect(Component.literal(text));
+                    p.connection.disconnect(Txt.literal(text));
                 }
             }
 
@@ -123,7 +125,7 @@ public final class ServerBridge {
                 if (p != null) {
                     // A system message shown as the overlay: the same line above the hotbar as
                     // displayClientMessage(text, true), and clients see it as a game message
-                    p.sendSystemMessage(Component.literal(text), true);
+                    Mc.overlay(p, Txt.literal(text));
                 }
             }
         });
@@ -163,7 +165,7 @@ public final class ServerBridge {
     /** What /vcd needs from the server, for a command run from {@code source} (a player, the console, a command block). */
     public static AdminCommands.Context context(CommandSourceStack source, VcdCommand.Server hooks) {
         MinecraftServer server = source.getServer();
-        ServerPlayer player = source.getPlayer();
+        ServerPlayer player = Mc.player(source);
         UUID sender = player == null ? null : player.getUUID();
         return new AdminCommands.Context() {
             @Override
@@ -266,7 +268,7 @@ public final class ServerBridge {
             if (server.getPlayerList().getPlayer(player) == null) {
                 return false;
             }
-            server.getCommands().performPrefixedCommand(server.createCommandSourceStack().withSuppressedOutput(), command);
+            Mc.run(server, command);
             return true;
         } catch (Throwable t) {
             return false;
@@ -279,7 +281,7 @@ public final class ServerBridge {
      * @return the reply to send back, or {@code null}
      */
     public static String admin(ServerPlayer player, String text, VcdCommand.Server hooks) {
-        MinecraftServer server = player.level().getServer();
+        MinecraftServer server = Mc.level(player).getServer();
         if (server == null) {
             return null;
         }

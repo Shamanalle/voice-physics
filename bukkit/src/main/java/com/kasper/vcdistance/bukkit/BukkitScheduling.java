@@ -1,6 +1,7 @@
 package com.kasper.vcdistance.bukkit;
 
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -35,6 +36,16 @@ final class BukkitScheduling implements Scheduling {
         } else {
             plugin.getServer().getScheduler().runTask(plugin, task);
         }
+    }
+
+    @Override
+    public boolean ownsPlayer(Player player) {
+        return true;
+    }
+
+    @Override
+    public boolean ownsLocation(Location location) {
+        return true;
     }
 
     @Override

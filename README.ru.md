@@ -7,7 +7,7 @@
 [![Modrinth](https://img.shields.io/badge/Modrinth-скачать-00AF5C?logo=modrinth&logoColor=white)](https://modrinth.com/project/u8mD6TL9)
 [![CurseForge](https://img.shields.io/badge/CurseForge-скачать-F16436?logo=curseforge&logoColor=white)](https://www.curseforge.com/projects/1712556)
 [![Release](https://img.shields.io/github/v/release/Shamanalle/voice-physics?logo=github&color=brightgreen)](https://github.com/Shamanalle/voice-physics/releases)
-[![Minecraft](https://img.shields.io/badge/Minecraft-1.20%20%E2%80%93%2026.3-blue.svg)](#версии-и-файлы)
+[![Minecraft](https://img.shields.io/badge/Minecraft-1.16.5%20%E2%80%93%2026.3-blue.svg)](#версии-и-файлы)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 | Дистанция | Стены | Эффекты | HUD |
@@ -149,33 +149,42 @@
 
 | Загрузчик | Minecraft | Файл | Java | Simple Voice Chat |
 |---|---|---|---|---|
-| **Fabric / Quilt** | 1.20 – 1.20.1 | `voice-physics-fabric-2.10.1+mc1.20.1.jar` | 17+ | 2.4.0+ |
-| **Fabric / Quilt** | 1.20.2 – 1.20.4 | `voice-physics-fabric-2.10.1+mc1.20.2-1.20.4.jar` | 17+ | 2.4.0+ |
-| **Fabric / Quilt** | 1.20.5 – 1.20.6 | `voice-physics-fabric-2.10.1+mc1.20.5-1.20.6.jar` | 21+ | 2.5.0+ |
-| **Fabric / Quilt** | 1.21 – 1.21.11 | `voice-physics-fabric-2.10.1+mc1.21.x.jar` | 21+ | 2.5.0+ |
-| **Fabric / Quilt** | 26.1 – 26.3 | `voice-physics-fabric-2.10.1+mc26.x.jar` | 25+ | 2.6.0+ |
-| **Forge** | 1.20 – 1.20.1 | `voice-physics-forge-2.10.1+mc1.20.1.jar` | 17+ | 2.4.0+ |
-| **Forge** | 1.20.2 – 1.20.4 | `voice-physics-forge-2.10.1+mc1.20.2-1.20.4.jar` | 17+ | 2.4.0+ |
-| **Forge** | 1.20.6 | `voice-physics-forge-2.10.1+mc1.20.6.jar` | 21+ | 2.5.0+ |
-| **Forge** | 1.21 – 1.21.1 | `voice-physics-forge-2.10.1+mc1.21-1.21.1.jar` | 21+ | 2.5.0+ |
-| **Forge** | 1.21.3 – 1.21.5 | `voice-physics-forge-2.10.1+mc1.21.3-1.21.5.jar` | 21+ | 2.5.0+ |
-| **Forge** | 1.21.6 – 1.21.8 | `voice-physics-forge-2.10.1+mc1.21.6-1.21.8.jar` | 21+ | 2.5.0+ |
-| **Forge** | 1.21.9 – 1.21.10 | `voice-physics-forge-2.10.1+mc1.21.9-1.21.10.jar` | 21+ | 2.5.0+ |
-| **Forge** | 1.21.11 | `voice-physics-forge-2.10.1+mc1.21.11.jar` | 21+ | 2.5.0+ |
-| **Forge** | 26.1 – 26.3 | `voice-physics-forge-2.10.1+mc26.x.jar` | 25+ | 2.6.0+ |
-| **NeoForge** | 1.20.1 | `voice-physics-forge-2.10.1+mc1.20.1.jar` | 17+ | 2.4.0+ |
-| **NeoForge** | 1.20.2 – 1.20.3 | `voice-physics-neoforge-2.10.1+mc1.20.2-1.20.3.jar` | 17+ | 2.4.0+ |
-| **NeoForge** | 1.20.4 | `voice-physics-neoforge-2.10.1+mc1.20.4.jar` | 17+ | 2.4.0+ |
-| **NeoForge** | 1.20.5 – 1.20.6 | `voice-physics-neoforge-2.10.1+mc1.20.5-1.20.6.jar` | 21+ | 2.5.0+ |
-| **NeoForge** | 1.21 – 1.21.1 | `voice-physics-neoforge-2.10.1+mc1.21-1.21.1.jar` | 21+ | 2.5.0+ |
-| **NeoForge** | 1.21.2 – 1.21.5 | `voice-physics-neoforge-2.10.1+mc1.21.2-1.21.5.jar` | 21+ | 2.5.0+ |
-| **NeoForge** | 1.21.6 – 1.21.8 | `voice-physics-neoforge-2.10.1+mc1.21.6-1.21.8.jar` | 21+ | 2.5.0+ |
-| **NeoForge** | 1.21.9 – 1.21.10 | `voice-physics-neoforge-2.10.1+mc1.21.9-1.21.10.jar` | 21+ | 2.5.0+ |
-| **NeoForge** | 1.21.11 | `voice-physics-neoforge-2.10.1+mc1.21.11.jar` | 21+ | 2.5.0+ |
-| **NeoForge** | 26.1 – 26.3 | `voice-physics-neoforge-2.10.1+mc26.x.jar` | 25+ | 2.6.0+ |
-| **Paper / Purpur / Folia / Spigot / Bukkit** | 1.20 – 26.3 | `voice-physics-bukkit-2.10.1.jar` | 17+ | версия для Bukkit |
+| **Fabric / Quilt** | 1.16.5 | `voice-physics-fabric-2.10.2+mc1.16.5.jar` | 8+ | 2.4.0+ |
+| **Fabric / Quilt** | 1.17.1 | `voice-physics-fabric-2.10.2+mc1.17.1.jar` | 16+ | 2.4.0+ |
+| **Fabric / Quilt** | 1.18.2 | `voice-physics-fabric-2.10.2+mc1.18.2.jar` | 17+ | 2.4.0+ |
+| **Fabric / Quilt** | 1.19.2 | `voice-physics-fabric-2.10.2+mc1.19.2.jar` | 17+ | 2.4.0+ |
+| **Fabric / Quilt** | 1.19.4 | `voice-physics-fabric-2.10.2+mc1.19.4.jar` | 17+ | 2.4.0+ |
+| **Fabric / Quilt** | 1.20 – 1.20.1 | `voice-physics-fabric-2.10.2+mc1.20.1.jar` | 17+ | 2.4.0+ |
+| **Fabric / Quilt** | 1.20.2 – 1.20.4 | `voice-physics-fabric-2.10.2+mc1.20.2-1.20.4.jar` | 17+ | 2.4.0+ |
+| **Fabric / Quilt** | 1.20.5 – 1.20.6 | `voice-physics-fabric-2.10.2+mc1.20.5-1.20.6.jar` | 21+ | 2.5.0+ |
+| **Fabric / Quilt** | 1.21 – 1.21.11 | `voice-physics-fabric-2.10.2+mc1.21.x.jar` | 21+ | 2.5.0+ |
+| **Fabric / Quilt** | 26.1 – 26.3 | `voice-physics-fabric-2.10.2+mc26.x.jar` | 25+ | 2.6.0+ |
+| **Forge** | 1.16.5 | `voice-physics-forge-2.10.2+mc1.16.5.jar` | 8 – 16 | 2.4.0+ |
+| **Forge** | 1.18.2 | `voice-physics-forge-2.10.2+mc1.18.2.jar` | 17+ | 2.4.0+ |
+| **Forge** | 1.19.2 | `voice-physics-forge-2.10.2+mc1.19.2.jar` | 17+ | 2.4.0+ |
+| **Forge** | 1.20 – 1.20.1 | `voice-physics-forge-2.10.2+mc1.20.1.jar` | 17+ | 2.4.0+ |
+| **Forge** | 1.20.2 – 1.20.4 | `voice-physics-forge-2.10.2+mc1.20.2-1.20.4.jar` | 17+ | 2.4.0+ |
+| **Forge** | 1.20.6 | `voice-physics-forge-2.10.2+mc1.20.6.jar` | 21+ | 2.5.0+ |
+| **Forge** | 1.21 – 1.21.1 | `voice-physics-forge-2.10.2+mc1.21-1.21.1.jar` | 21+ | 2.5.0+ |
+| **Forge** | 1.21.3 – 1.21.5 | `voice-physics-forge-2.10.2+mc1.21.3-1.21.5.jar` | 21+ | 2.5.0+ |
+| **Forge** | 1.21.6 – 1.21.8 | `voice-physics-forge-2.10.2+mc1.21.6-1.21.8.jar` | 21+ | 2.5.0+ |
+| **Forge** | 1.21.9 – 1.21.10 | `voice-physics-forge-2.10.2+mc1.21.9-1.21.10.jar` | 21+ | 2.5.0+ |
+| **Forge** | 1.21.11 | `voice-physics-forge-2.10.2+mc1.21.11.jar` | 21+ | 2.5.0+ |
+| **Forge** | 26.1 – 26.3 | `voice-physics-forge-2.10.2+mc26.x.jar` | 25+ | 2.6.0+ |
+| **NeoForge** | 1.20.1 | `voice-physics-forge-2.10.2+mc1.20.1.jar` | 17+ | 2.4.0+ |
+| **NeoForge** | 1.20.2 – 1.20.3 | `voice-physics-neoforge-2.10.2+mc1.20.2-1.20.3.jar` | 17+ | 2.4.0+ |
+| **NeoForge** | 1.20.4 | `voice-physics-neoforge-2.10.2+mc1.20.4.jar` | 17+ | 2.4.0+ |
+| **NeoForge** | 1.20.5 – 1.20.6 | `voice-physics-neoforge-2.10.2+mc1.20.5-1.20.6.jar` | 21+ | 2.5.0+ |
+| **NeoForge** | 1.21 – 1.21.1 | `voice-physics-neoforge-2.10.2+mc1.21-1.21.1.jar` | 21+ | 2.5.0+ |
+| **NeoForge** | 1.21.2 – 1.21.5 | `voice-physics-neoforge-2.10.2+mc1.21.2-1.21.5.jar` | 21+ | 2.5.0+ |
+| **NeoForge** | 1.21.6 – 1.21.8 | `voice-physics-neoforge-2.10.2+mc1.21.6-1.21.8.jar` | 21+ | 2.5.0+ |
+| **NeoForge** | 1.21.9 – 1.21.10 | `voice-physics-neoforge-2.10.2+mc1.21.9-1.21.10.jar` | 21+ | 2.5.0+ |
+| **NeoForge** | 1.21.11 | `voice-physics-neoforge-2.10.2+mc1.21.11.jar` | 21+ | 2.5.0+ |
+| **NeoForge** | 26.1 – 26.3 | `voice-physics-neoforge-2.10.2+mc26.x.jar` | 25+ | 2.6.0+ |
+| **Paper / Purpur / Folia / Spigot / Bukkit** | 1.16.5 – 26.3 | `voice-physics-bukkit-2.10.2.jar` | 8+ (17+ с 1.18) | версия для Bukkit |
 
 - **Fabric**, **Forge** и **NeoForge** — полный аддон, для клиента и сервера. Для Fabric нужен [Fabric API](https://modrinth.com/mod/fabric-api); [Mod Menu](https://modrinth.com/mod/modmenu) — по желанию. На Forge для 1.21.6 – 1.21.7 нет HUD голоса: этот Forge не умеет его добавлять. NeoForge 1.20.1 — ответвление Forge 1.20.1 и берёт файл для Forge. Файлу для NeoForge 1.20.4 нужен NeoForge 20.4.80 или новее.
+- **Старый Minecraft** (1.16.5 – 1.19.4) получает те же возможности, что и новые файлы. Сам Simple Voice Chat всё ещё обновляется для 1.16.5, 1.18.2 и 1.19.2, а для 1.17.1 и 1.19.4 остановился на 2.5.12, с которой аддон работает. Forge 1.16.5 работает на Java 8 – 16, Fabric 1.16.5 на 8 и новее, Fabric 1.17.1 на 16 и новее. Minecraft 1.19.3 и Forge для 1.17.1 и 1.19.4 не собираются.
 - **Плагин** — только серверная часть. Заходить можно с аддоном, без него или вообще без модов.
 
 ## Совместимость

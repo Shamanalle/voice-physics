@@ -63,7 +63,7 @@ public class SettingsScreenGameTest implements FabricClientGameTest {
                 new Zone.Box("minecraft:overworld", 100, 60, 100, 140, 90, 140), 0));
         AudioDistancePlugin.LINK.setAdminSender(text -> { });
         AudioDistancePlugin.LINK.onProfile(LinkProtocol.profile(settings, null, 48.0, 16.0, true));
-        AudioDistancePlugin.LINK.onAdminReply(LinkProtocol.adminReply(java.util.List.of(), settings));
+        AudioDistancePlugin.LINK.onAdminReply(LinkProtocol.adminReply(com.kasper.vcdistance.Jv.listOf(), settings));
     }
 
     /** A page of the change log as the server would send it, so the Log screen has lines to show. */
@@ -83,7 +83,7 @@ public class SettingsScreenGameTest implements FabricClientGameTest {
         java.util.Map<String, String> state = new java.util.LinkedHashMap<>();
         state.put("undo", "3");
         ChangeLog.writePage(new ChangeLog.Page(entries, 1, 4, 37, ""), state);
-        AudioDistancePlugin.LINK.onAdminReply(LinkProtocol.adminReply(java.util.List.of(), new ServerSettings(), state));
+        AudioDistancePlugin.LINK.onAdminReply(LinkProtocol.adminReply(com.kasper.vcdistance.Jv.listOf(), new ServerSettings(), state));
     }
 
     private static void shootTabs(ClientGameTestContext context, String language, int[] window) {

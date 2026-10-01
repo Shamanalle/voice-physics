@@ -1,0 +1,185 @@
+package com.kasper.vcdistance.client;
+
+import com.kasper.vcdistance.AcousticMaterial;
+import com.kasper.vcdistance.BlockDataRules;
+import com.kasper.vcdistance.BlockRules;
+import net.minecraft.core.Registry;
+import com.kasper.vcdistance.DistanceConfig;
+import com.kasper.vcdistance.RayBundle;
+import com.kasper.vcdistance.VoxelRay;
+import net.minecraft.core.BlockPos;
+import net.minecraft.tags.BlockTags;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.IronBarsBlock;
+import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.shapes.VoxelShape;
+
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
+/**
+ * Acoustic ray casting through blocks for Minecraft 1.17.1, used by the client and the server.
+ * <p>
+ * A block only counts when the ray actually crosses its collision shape, so slabs, open doors,
+ * fences and carpets are treated by their real geometry rather than as full cubes. A ray that only
+ * grazes a block's corner counts it by the short way it runs inside; doors, trapdoors, fences and
+ * bars count fully whenever they are crossed, since they are thin by nature, and open doors and
+ * trapdoors a tenth.
+ */
+public final class BlockAcoustics {
+
+    private static final Map<BlockState, AcousticMaterial> MATERIALS = new ConcurrentHashMap<>();
+
+    /** The block rules the cached materials were worked out with; a change of rules drops the cache. */
+    private static volatile BlockRules appliedRules = BlockRules.EMPTY;
+    /** The same for the rules from data files ({@code voice_physics/materials.json}). */
+    private static volatile BlockRules appliedData = BlockRules.EMPTY;
+
+    /** Takes the rules of the settings the trace runs with (the player's, or the server's when the server does the walls). */
+    private static void refreshRules(BlockRules rules) {
+        BlockRules data = BlockDataRules.current();
+        if (rules != appliedRules || data != appliedData) {
+            appliedRules = rules;
+            appliedData = data;
+            MATERIALS.clear();
+        }
+    }
+
+    /** The material the player's or the server's block rules give this block, then the data files', or {@code null}. */
+    private static AcousticMaterial custom(BlockState state) {
+        BlockRules rules = appliedRules;
+        BlockRules data = appliedData;
+        if (rules.isEmpty() && data.isEmpty()) {
+            return null;
+        }
+        String id = String.valueOf(Registry.BLOCK.getKey(state.getBlock()));
+        java.util.function.Predicate<String> hasTag = tag -> BlockTags.getAllTags().getMatchingTags(state.getBlock()).stream().anyMatch(t -> tag.equals(String.valueOf(t)));
+        AcousticMaterial own = rules.find(id, hasTag);
+        return own != null ? own : data.find(id, hasTag);
+    }
+
+    private BlockAcoustics() {
+    }
+
+    /** Acoustic thickness (in stone blocks) along one straight ray, using {@code weights} per material. */
+    public static double traceRay(Level level, Vec3 from, Vec3 to, DistanceConfig weights) {
+        if (level == null) {
+            return 0.0;
+        }
+        refreshRules(weights.getBlockRules());
+        double[] thickness = {0.0};
+        BlockGetter.traverseBlocks(from, to, thickness, (acc, pos) -> {
+            BlockState state = level.getBlockState(pos);
+            if (!state.getFluidState().isEmpty()) {
+                acc[0] += weights.getMaterialWeight(AcousticMaterial.LIQUID);
+            }
+            if (!state.isAir()) {
+                VoxelShape shape = state.getCollisionShape(level, pos);
+                if (!shape.isEmpty() && shape.clip(from, to, pos) != null) {
+                    AcousticMaterial material = MATERIALS.computeIfAbsent(state, BlockAcoustics::classify);
+                    acc[0] += weights.getMaterialWeight(material) * share(state, material, shape.bounds(), pos, from, to);
+                }
+            }
+            return acc[0] >= WorldAccess.MAX_RAY_THICKNESS ? Boolean.TRUE : null;
+        }, acc -> null);
+        return thickness[0];
+    }
+
+    /** How much of the block's weight the ray takes: grazing a corner counts less than crossing it. */
+    static double share(BlockState state, AcousticMaterial material, AABB box, BlockPos pos, Vec3 from, Vec3 to) {
+        if (isPanel(state, material)) {
+            return AcousticMaterial.panelShare(state.hasProperty(BlockStateProperties.OPEN) && state.getValue(BlockStateProperties.OPEN));
+        }
+        return RayBundle.chordWeight(VoxelRay.chord(from.x, from.y, from.z, to.x, to.y, to.z,
+                pos.getX() + box.minX, pos.getY() + box.minY, pos.getZ() + box.minZ,
+                pos.getX() + box.maxX, pos.getY() + box.maxY, pos.getZ() + box.maxZ));
+    }
+
+    /** Doors, trapdoors (wooden or metal), fences and bars: thin by nature. */
+    private static boolean isPanel(BlockState state, AcousticMaterial material) {
+        return material == AcousticMaterial.DOOR || material == AcousticMaterial.THIN
+                || (material == AcousticMaterial.METAL && (state.is(BlockTags.DOORS) || state.is(BlockTags.TRAPDOORS)));
+    }
+
+    /** {@code true} when sound passes this block freely: air, water, open doors and gates, fences, bars. */
+    public static boolean isOpenForSound(BlockGetter level, int x, int y, int z) {
+        if (level == null) {
+            return true;
+        }
+        BlockPos pos = new BlockPos(x, y, z);
+        BlockState state = level.getBlockState(pos);
+        if (state.isAir() || state.getCollisionShape(level, pos).isEmpty()) {
+            return true;
+        }
+        if (state.hasProperty(BlockStateProperties.OPEN) && state.getValue(BlockStateProperties.OPEN)) {
+            return true;
+        }
+        return MATERIALS.computeIfAbsent(state, BlockAcoustics::classify) == AcousticMaterial.THIN;
+    }
+
+    /** The material of a surface an echo bounces off. */
+    public static AcousticMaterial echoMaterial(BlockState state) {
+        refreshRules(appliedRules);
+        return MATERIALS.computeIfAbsent(state, BlockAcoustics::classify);
+    }
+
+    /** Block tags can differ between servers, so the material cache is dropped on world change. */
+    public static void clearCache() {
+        MATERIALS.clear();
+    }
+
+    static AcousticMaterial classify(BlockState state) {
+        AcousticMaterial custom = custom(state);
+        if (custom != null) {
+            return custom;
+        }
+        if (state.is(BlockTags.WOOL) || state.is(BlockTags.CARPETS)) {
+            return AcousticMaterial.WOOL;
+        }
+        if (state.is(BlockTags.LEAVES)) {
+            return AcousticMaterial.LEAVES;
+        }
+        if (state.is(BlockTags.DOORS) || state.is(BlockTags.TRAPDOORS)) {
+            // Iron and copper doors (mined with a pickaxe) are metal
+            return state.is(BlockTags.MINEABLE_WITH_PICKAXE) ? AcousticMaterial.METAL : AcousticMaterial.DOOR;
+        }
+        if (state.is(BlockTags.FENCES) || state.is(BlockTags.FENCE_GATES)) {
+            return AcousticMaterial.THIN;
+        }
+        // Ice sounds like glass, so it is checked first
+        if (state.is(BlockTags.ICE)) {
+            return AcousticMaterial.ICE;
+        }
+        SoundType sound = state.getSoundType();
+        if (sound == SoundType.GLASS) {
+            return AcousticMaterial.GLASS;
+        }
+        if (state.getBlock() instanceof IronBarsBlock) {
+            return AcousticMaterial.THIN;
+        }
+        if (sound == SoundType.METAL || sound == SoundType.COPPER || sound == SoundType.NETHERITE_BLOCK
+                || sound == SoundType.ANVIL) {
+            return AcousticMaterial.METAL;
+        }
+        if (state.is(BlockTags.LOGS) || state.is(BlockTags.PLANKS) || state.is(BlockTags.MINEABLE_WITH_AXE)
+                || sound == SoundType.WOOD) {
+            return AcousticMaterial.WOOD;
+        }
+        // Everything else by the tool that mines it
+        if (state.is(BlockTags.MINEABLE_WITH_HOE)) {
+            return AcousticMaterial.SOFT;
+        }
+        if (state.is(BlockTags.MINEABLE_WITH_SHOVEL)) {
+            return AcousticMaterial.EARTH;
+        }
+        if (state.is(BlockTags.MINEABLE_WITH_PICKAXE)) {
+            return AcousticMaterial.STONE;
+        }
+        return AcousticMaterial.OTHER;
+    }
+}

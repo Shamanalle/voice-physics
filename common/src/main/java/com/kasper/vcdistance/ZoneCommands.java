@@ -44,6 +44,7 @@ final class ZoneCommands {
     static final String CONFIRM = "confirm";
 
     /** Corners picked with {@code zone pos1/pos2}, per admin, until the server stops. */
+    @com.github.bsideup.jabel.Desugar
     private record Corner(String world, int x, int y, int z) {
     }
 
@@ -132,7 +133,7 @@ final class ZoneCommands {
     /** Boxes, then regions, claims and worlds, each by name. */
     static List<Zone> sorted(ServerSettings settings) {
         List<Zone> zones = new ArrayList<>(settings.zones().values());
-        List<String> order = List.of(Zone.BOX, Zone.REGION, Zone.CLAIM, Zone.TOWN, Zone.LAND, Zone.WORLD);
+        List<String> order = Jv.listOf(Zone.BOX, Zone.REGION, Zone.CLAIM, Zone.TOWN, Zone.LAND, Zone.WORLD);
         zones.sort(Comparator.comparingInt((Zone z) -> order.indexOf(z.kind())).thenComparing(Zone::name));
         return zones;
     }
@@ -190,8 +191,8 @@ final class ZoneCommands {
             String hover = (value == null ? m.get("default") + "\n" : "")
                     + (mayChange ? m.get("hover.change", "/vcd zone set " + ref(z) + " " + setting) : "");
             line.add(mayChange
-                    ? new Span(shown, style, Click.SUGGEST, "/vcd zone set " + ref(z) + " " + setting + " ", hover.strip())
-                    : new Span(shown, style, null, null, hover.isBlank() ? null : hover.strip()));
+                    ? new Span(shown, style, Click.SUGGEST, "/vcd zone set " + ref(z) + " " + setting + " ", Jv.strip(hover))
+                    : new Span(shown, style, null, null, Jv.isBlank(hover) ? null : Jv.strip(hover)));
             inLine++;
         }
         r.reply.add(line);

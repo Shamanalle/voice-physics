@@ -101,8 +101,13 @@ case "${loader}" in
     mkdir -p mods
     modrinth simple-voice-chat "[\"${loader}\"]" mods/voicechat.jar || exit 1
     cp "${addon}" mods/
-    echo "-Xmx2G" > user_jvm_args.txt
-    run=(bash ./run.sh nogui)
+    if [ -f run.sh ]; then
+      echo "-Xmx2G" > user_jvm_args.txt
+      run=(bash ./run.sh nogui)
+    else
+      # Forge 1.16.5 and older have no run.sh: the installer leaves the launch jar
+      run=(java -Xmx2G -jar "forge-${loader_version}.jar" nogui)
+    fi
     settings="config/vc-audio-distance-server.properties"
     ;;
   paper | folia)

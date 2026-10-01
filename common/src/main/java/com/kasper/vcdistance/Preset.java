@@ -22,6 +22,7 @@ public enum Preset {
      * The full-volume zone of a preset: a share of the server's voice range, or a distance in blocks
      * kept within {@code minShare} - {@code maxShare} of the range, so it fits small and large ranges.
      */
+    @com.github.bsideup.jabel.Desugar
     record FullVolume(double blocks, double minShare, double maxShare) {
 
         static FullVolume share(double share) {

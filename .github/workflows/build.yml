@@ -66,6 +66,8 @@ jobs:
           - { module: neoforge-1.21.8, key: nf1218_neoforge_oldest }
           - { module: neoforge-1.21.10, key: nf12110_neoforge_oldest }
           - { module: neoforge-1.21.11, key: nf12111_neoforge_oldest }
+          - { module: forge-1.18, key: forge118_version_oldest }
+          - { module: forge-1.19, key: forge119_version_oldest }
           - { module: forge-1.20.1, key: forge120_version_oldest }
           - { module: forge-1.20.6, key: forge1206_version_oldest }
           - { module: forge-1.21, key: forge121_version_oldest }
@@ -73,6 +75,7 @@ jobs:
           - { module: forge-1.21.10, key: forge12110_version_oldest }
           - { module: forge-26, key: forge26_version_oldest }
           # Builds of their own (Gradle 8 on Java 21)
+          - { module: legacy/forge-1.16.5, key: forge1165_version_oldest }
           - { module: legacy/forge-1.20.4, key: forge1204_version_oldest }
           - { module: legacy/neoforge-1.20.2, key: nf1202_neoforge_oldest }
           - { module: legacy/neoforge-1.20.4, key: nf1204_neoforge_oldest }
@@ -95,7 +98,9 @@ jobs:
             legacy/*)
               cd "${{ matrix.module }}"
               wrapper=gradlew; [ -f gradlew ] || wrapper=../neoforge-1.20.4/gradlew
-              JAVA_HOME="${JAVA_HOME_21_X64}" sh "${wrapper}" compileJava -PloaderOverride=${oldest} --no-daemon ;;
+              # legacy/forge-1.16.5 needs a JDK 17 (Jabel), the others a 21
+              home="${JAVA_HOME_21_X64}"; case "${{ matrix.module }}" in *1.16.5) home="${JAVA_HOME_17_X64}";; esac
+              JAVA_HOME="${home}" sh "${wrapper}" compileJava -PloaderOverride=${oldest} --no-daemon ;;
             *)
               ./gradlew :${{ matrix.module }}:compileJava -PloaderOverride.${{ matrix.module }}=${oldest} --configure-on-demand --no-daemon ;;
           esac

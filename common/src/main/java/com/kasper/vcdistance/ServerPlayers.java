@@ -23,6 +23,7 @@ public final class ServerPlayers {
      * @param underwater the player's head is under water; {@code false} where it is not known
      * @param weather   rain or thunder where the player stands under the open sky
      */
+    @com.github.bsideup.jabel.Desugar
     public record Info(UUID id, String name, String world, double x, double y, double z,
                        boolean sneaking, boolean alive, boolean spectator,
                        String mainHand, String offHand, List<String> regions, String language,

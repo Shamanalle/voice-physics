@@ -21,6 +21,7 @@ public final class Problems {
      * @param what  where and what, "Server walls: IllegalStateException: boom"
      * @param count how often since the start
      */
+    @com.github.bsideup.jabel.Desugar
     public record Problem(Instant last, String what, int count) {
     }
 

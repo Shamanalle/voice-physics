@@ -22,7 +22,7 @@ final class CommandSuggest {
 
     static List<Suggestion> suggest(String input, ServerSettings settings, Context ctx) {
         String text = input == null ? "" : input;
-        String[] args = text.stripLeading().split("\\s+", -1);
+        String[] args = Jv.stripLeading(text).split("\\s+", -1);
         String typed = args[args.length - 1];
         Messages m = settings == null ? null : new Messages(language(settings, ctx));
         List<Suggestion> out = new ArrayList<>();

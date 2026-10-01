@@ -1,0 +1,41 @@
+plugins {
+    id 'java-library'
+}
+
+// The sources of ':common' compiled to Java 8 bytecode, for the Minecraft 1.16.5 builds (see gradle/jabel.gradle)
+base {
+    archivesName = "voice-physics-common-j8"
+}
+
+repositories {
+    mavenCentral()
+    maven {
+        name = "henkelmax.public"
+        url = 'https://maven.maxhenkel.de/repository/public'
+    }
+}
+
+apply from: "${rootDir}/gradle/jabel.gradle"
+
+sourceSets {
+    main {
+        java.srcDir "${rootDir}/common/src/main/java"
+        resources.srcDir "${rootDir}/common/src/main/resources"
+    }
+}
+
+dependencies {
+    compileOnly "org.slf4j:slf4j-api:${project.slf4j_version}"
+    compileOnly "org.apache.logging.log4j:log4j-api:2.17.1"
+
+    compileOnly "de.maxhenkel.voicechat:voicechat-api:${project.voicechat_api_version}"
+    compileOnly "org.lwjgl:lwjgl:${project.lwjgl_version}"
+    compileOnly "org.lwjgl:lwjgl-openal:${project.lwjgl_version}"
+}
+
+processResources {
+    inputs.property "version", project.mod_version
+    filesMatching("vc-audio-distance-build.properties") {
+        expand "version": project.mod_version
+    }
+}
