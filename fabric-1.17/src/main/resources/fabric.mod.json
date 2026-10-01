@@ -31,7 +31,7 @@
   },
   "depends": {
     "fabricloader": ">=0.14.21",
-    "fabric-api": "*",
+    "fabric": "*",
     "minecraft": "1.17.1",
     "java": ">=16",
     "voicechat": ">=1.17.1-2.4.0"
