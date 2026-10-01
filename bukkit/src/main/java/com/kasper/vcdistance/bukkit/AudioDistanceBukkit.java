@@ -555,6 +555,11 @@ public final class AudioDistanceBukkit extends JavaPlugin implements Listener {
             }
 
             @Override
+            public boolean plugin() {
+                return true;
+            }
+
+            @Override
             public int onlinePlayers() {
                 return getServer().getOnlinePlayers().size();
             }

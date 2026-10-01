@@ -6,6 +6,28 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 *Все заметные изменения проекта описываются в этом файле. Каждая версия описана сначала на английском, затем на русском.*
 
+## [2.10.1] - 2026-10-01
+
+### English
+
+#### Added
+- **Server tab: effects for players without the addon.** A new "Effects without the addon" section sets what `/vcd effects` sets: effects on/off, air on/off, and water, weather and echo strength in 10% steps (water and weather up to 150%, echo up to 100%, 0 = off). Every button sends the same `/vcd` command, so nothing changes for the console.
+- **Server tab: plugin extras.** On the Paper/Folia plugin only, a new "Plugin extras" section (closed by default) has a switch for each of radio, loudspeakers, eavesdrop item, sculk and wardens, doorway sound and integrations, and a step button for the eavesdrop factor. The section is not shown on Fabric, Forge or NeoForge servers, which have none of these. The extras are still not play-tested; the section says so.
+- The buttons grey out for players without the `vcd.settings` permission, as the others do.
+
+#### Not in the panel, on purpose
+Placing and removing loudspeakers, the radio and eavesdrop items, mutes, `undo`, `report`, `debug`, `reload` and the Towny/Lands zone names stay commands only: they need text, a place or a player, or are rare.
+
+### Русский
+
+#### Добавлено
+- **Вкладка «Сервер»: эффекты для игроков без аддона.** Новый раздел «Эффекты без аддона» задаёт то же, что `/vcd effects`: эффекты вкл/выкл, воздух вкл/выкл, силу воды, погоды и эха шагами по 10% (вода и погода до 150%, эхо до 100%, 0 = выключено). Каждая кнопка отправляет ту же команду `/vcd`, так что для консоли ничего не меняется.
+- **Вкладка «Сервер»: дополнения плагина.** Только на плагине Paper/Folia появился раздел «Дополнения плагина» (по умолчанию свёрнут): переключатель для рации, громкоговорителей, предмета подслушивания, скалка и вардена, звука через двери и интеграций, и кнопка шага для коэффициента подслушивания. На серверах Fabric, Forge и NeoForge раздела нет: там этих возможностей нет. Дополнения всё ещё не проверены в игре, об этом сказано в разделе.
+- Кнопки неактивны у игроков без права `vcd.settings`, как и остальные.
+
+#### Намеренно не в панели
+Расстановка и удаление громкоговорителей, предметы рации и подслушивания, мьюты, `undo`, `report`, `debug`, `reload` и названия зон Towny/Lands остаются только командами: им нужен текст, место или игрок, либо они нужны редко.
+
 ## [2.10.0] - 2026-09-30
 
 ### English

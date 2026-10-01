@@ -963,6 +963,20 @@ public final class ServerSettings {
         p.setProperty(prefix + "require_addon", requireAddon.getId());
         p.setProperty(prefix + "min_addon_version", minAddonVersion);
         p.setProperty(prefix + "block_rules", profile.getBlockRules().serialize());
+        // Realism for players without the addon (0 when an effect is off, like walls_strength)
+        p.setProperty(prefix + "server_effects", String.valueOf(serverEffects));
+        p.setProperty(prefix + "server_air", String.valueOf(serverAir));
+        p.setProperty(prefix + "water_strength", DistanceConfig.format(profile.isUnderwaterEnabled() ? profile.getUnderwaterStrength() : 0.0));
+        p.setProperty(prefix + "weather_strength", DistanceConfig.format(profile.isWeatherEnabled() ? profile.getWeatherStrength() : 0.0));
+        p.setProperty(prefix + "echo_strength", DistanceConfig.format(profile.isReverbEnabled() ? profile.getReverbStrength() : 0.0));
+        // The plugin's extras
+        p.setProperty(prefix + "server_radio", String.valueOf(serverRadio));
+        p.setProperty(prefix + "server_speakers", String.valueOf(serverSpeakers));
+        p.setProperty(prefix + "server_eavesdrop", String.valueOf(serverEavesdrop));
+        p.setProperty(prefix + "server_sculk", String.valueOf(serverSculk));
+        p.setProperty(prefix + "server_doorway", String.valueOf(serverDoorway));
+        p.setProperty(prefix + "server_integrations", String.valueOf(serverIntegrations));
+        p.setProperty(prefix + "eavesdrop_factor", DistanceConfig.format(eavesdropFactor));
         int n = 0;
         for (Zone z : zones.values()) {
             Zone.Rules r = z.rules();

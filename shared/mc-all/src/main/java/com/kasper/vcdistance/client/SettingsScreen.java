@@ -896,6 +896,8 @@ public abstract class SettingsScreen extends Screen {
     private static final String[] SERVER_PRESETS = {"custom", "vanilla", "realistic", "clear", "stealth"};
     private static final String[] SERVER_REQUIRE = {"off", "suggest", "warn", "kick"};
     private static final String[] SERVER_SNEAK = {"1", "0.7", "0.5", "0.3"};
+    /** How much of the walls' muffling an eavesdropper keeps (/vcd eavesdrop factor). */
+    private static final String[] SERVER_EAVESDROP = {"0.1", "0.3", "0.5", "0.75", "1"};
     private static final String[] ZONE_RANGE = {"-", "0.4", "2", "3"};
     private static final String[] ZONE_WALLS = {"-", "0", "0.5", "1"};
     private static final String[] ZONE_ECHO = {"-", "off", "0.5", "0.9"};
@@ -987,7 +989,7 @@ public abstract class SettingsScreen extends Screen {
     }
 
     /** Server tab sections the admin has closed; kept while the game runs. Groups and the addon requirement start closed. */
-    private static final java.util.Set<String> closedSections = new java.util.HashSet<>(java.util.List.of("groups", "addon", "blocks"));
+    private static final java.util.Set<String> closedSections = new java.util.HashSet<>(java.util.List.of("groups", "addon", "blocks", "extras"));
 
     private static boolean sectionOpen(String id) {
         return !closedSections.contains(id);
@@ -1016,6 +1018,26 @@ public abstract class SettingsScreen extends Screen {
     private int heading(String key, int y) {
         headings.add(new Heading(tr(key), y, right));
         return y + 13;
+    }
+
+    /** The plugin's extras, as {@code /vcd extras} names them. */
+    private static final String[] EXTRAS = {"radio", "speakers", "eavesdrop", "sculk", "doorway", "integrations"};
+
+    /**
+     * A strength in 10% steps: − and + either side of the value (0 = off), {@code key} says what it is. The
+     * value in {@code st} is a share (1 = 100%).
+     */
+    private void strengthRow(String key, java.util.Properties st, String property, int maxPct, int x, int y, int w,
+                             String command) {
+        int value = (int) Math.round(parse(st.getProperty(property, "0")) * 100.0);
+        int down = Math.max(0, (value + 9) / 10 * 10 - 10);
+        int up = Math.min(maxPct, value / 10 * 10 + 10);
+        Component shown = value == 0 ? tr("off") : Component.literal(value + "%");
+        serverButton(Component.literal("−"), key + ".tooltip", x, y, 20, down == 0 ? command + " off" : command + " " + down + "%")
+                .active &= value > 0;
+        serverButton(tr(key, shown), key + ".tooltip", x + 22, y, w - 44, command + " " + up + "%").active &= value < maxPct;
+        serverButton(Component.literal("+"), key + ".tooltip", x + w - 20, y, 20, command + " " + up + "%")
+                .active &= value < maxPct;
     }
 
     private void initServer() {
@@ -1066,6 +1088,47 @@ public abstract class SettingsScreen extends Screen {
             y += ROW;
         }
         y += 4;
+
+        // Water, weather, air and echo the server adds for players without the addon
+        boolean effectsOn = "true".equals(st.getProperty("server_effects"));
+        y = sectionHead("effects", "server.section.effects", tr("server.effects", tr(effectsOn ? "on" : "off")), y);
+        if (sectionOpen("effects")) {
+            serverToggle("server.effects", st, "server_effects", "false", left, y, half, "effects");
+            serverToggle("server.effects.air", st, "server_air", "false", x2, y, half, "effects air");
+            y += ROW;
+            strengthRow("server.effects.water", st, "water_strength", 150, left, y, half, "effects water");
+            strengthRow("server.effects.weather", st, "weather_strength", 150, x2, y, half, "effects weather");
+            y += ROW;
+            strengthRow("server.effects.echo", st, "echo_strength", 100, left, y, half, "effects echo");
+            y += ROW;
+        }
+        y += 4;
+
+        // The plugin's extras: only the Paper/Folia plugin has them
+        if ("true".equals(st.getProperty("plugin"))) {
+            int extrasOn = 0;
+            for (String extra : EXTRAS) {
+                extrasOn += "true".equals(st.getProperty("server_" + extra)) ? 1 : 0;
+            }
+            y = sectionHead("extras", "server.section.extras", Component.literal(extrasOn + "/" + EXTRAS.length), y);
+            if (sectionOpen("extras")) {
+                for (int i = 0; i < EXTRAS.length; i += 2) {
+                    serverToggle("server.extras." + EXTRAS[i], st, "server_" + EXTRAS[i], "false", left, y, half, "extras " + EXTRAS[i]);
+                    if (i + 1 < EXTRAS.length) {
+                        serverToggle("server.extras." + EXTRAS[i + 1], st, "server_" + EXTRAS[i + 1], "false", x2, y, half,
+                                "extras " + EXTRAS[i + 1]);
+                    }
+                    y += ROW;
+                }
+                String factor = st.getProperty("eavesdrop_factor", "0.3");
+                serverButton(tr("server.extras.factor", pct(parse(factor))), "server.extras.factor.tooltip", left, y, half,
+                        "eavesdrop factor " + next(SERVER_EAVESDROP, factor));
+                y += ROW;
+                headings.add(new Heading(tr("server.extras.hint"), y, right));
+                y += 13;
+            }
+            y += 4;
+        }
 
         // Game rules
         String sneak = st.getProperty("sneak_range_multiplier", "1");
