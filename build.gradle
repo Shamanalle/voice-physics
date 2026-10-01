@@ -8,6 +8,7 @@ plugins {
 // Every loader has a build of its own now, so only the Fabric jar and its Quilt listing are left here.
 def releaseTargets = [
         [project: ':fabric-1.16', target: 'mc1.16.5', aliases: []],
+        [project: ':fabric-1.17', target: 'mc1.17.1', aliases: []],
         [project: ':fabric-1.18', target: 'mc1.18.2', aliases: []],
         [project: ':fabric-1.19', target: 'mc1.19.2', aliases: []],
         [project: ':fabric-1.19.4', target: 'mc1.19.4', aliases: []],

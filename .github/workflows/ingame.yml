@@ -52,6 +52,7 @@ jobs:
       matrix:
         include:
           - { loader: fabric, mc: '1.16.5', jar: 'voice-physics-fabric-*+mc1.16.5.jar', java: '17' }
+          - { loader: fabric, mc: '1.17.1', jar: 'voice-physics-fabric-*+mc1.17.1.jar', java: '17' }
           - { loader: fabric, mc: '1.18.2', jar: 'voice-physics-fabric-*+mc1.18.2.jar', java: '17' }
           - { loader: fabric, mc: '1.19.2', jar: 'voice-physics-fabric-*+mc1.19.2.jar', java: '21' }
           - { loader: fabric, mc: '1.19.4', jar: 'voice-physics-fabric-*+mc1.19.4.jar', java: '21' }

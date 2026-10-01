@@ -113,6 +113,14 @@ jobs:
             java: 8
             dependencies: simple-voice-chat(required)
             curseforge: true
+          - name: Fabric for 1.17.1
+            file: fabric-{v}+mc1.17.1.jar
+            target: mc1.17.1
+            loaders: fabric quilt
+            game-versions: 1.17.1
+            java: 16
+            dependencies: simple-voice-chat(required) fabric-api(required) modmenu(optional)
+            curseforge: true
           - name: Fabric for 1.18.2
             file: fabric-{v}+mc1.18.2.jar
             target: mc1.18.2
