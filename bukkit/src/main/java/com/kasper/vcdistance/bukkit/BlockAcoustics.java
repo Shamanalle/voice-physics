@@ -19,6 +19,7 @@ import org.bukkit.block.data.Openable;
 import org.bukkit.block.data.Waterlogged;
 import org.bukkit.util.BoundingBox;
 
+import java.util.Collection;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
@@ -122,7 +123,7 @@ final class BlockAcoustics {
                     bx, by, bz, bx + 1.0, by + 1.0, bz + 1.0));
         }
         double best = 0.0;
-        for (BoundingBox box : block.getCollisionShape().getBoundingBoxes()) {
+        for (BoundingBox box : collisionBoxes(block)) {
             // Collision boxes are relative to the block
             double chord = VoxelRay.chord(fromX, fromY, fromZ, toX, toY, toZ,
                     bx + box.getMinX(), by + box.getMinY(), bz + box.getMinZ(),
@@ -171,7 +172,7 @@ final class BlockAcoustics {
         }
         if (Tag.DOORS.isTagged(m) || Tag.TRAPDOORS.isTagged(m)) {
             // Iron and copper doors (mined with a pickaxe) are metal
-            return Tag.MINEABLE_PICKAXE.isTagged(m) ? AcousticMaterial.METAL : AcousticMaterial.DOOR;
+            return mineable("pickaxe", m) ? AcousticMaterial.METAL : AcousticMaterial.DOOR;
         }
         if (Tag.FENCES.isTagged(m) || Tag.FENCE_GATES.isTagged(m)) {
             return AcousticMaterial.THIN;
@@ -192,21 +193,47 @@ final class BlockAcoustics {
                 || name.equals("netherite_block") || name.endsWith("anvil")) {
             return AcousticMaterial.METAL;
         }
-        if (Tag.LOGS.isTagged(m) || Tag.PLANKS.isTagged(m) || Tag.MINEABLE_AXE.isTagged(m) || name.contains("bamboo")
+        if (Tag.LOGS.isTagged(m) || Tag.PLANKS.isTagged(m) || mineable("axe", m) || name.contains("bamboo")
                 || isWood(sound)) {
             return AcousticMaterial.WOOD;
         }
         // Everything else by the tool that mines it
-        if (Tag.MINEABLE_HOE.isTagged(m)) {
+        if (mineable("hoe", m)) {
             return AcousticMaterial.SOFT;
         }
-        if (Tag.MINEABLE_SHOVEL.isTagged(m)) {
+        if (mineable("shovel", m)) {
             return AcousticMaterial.EARTH;
         }
-        if (Tag.MINEABLE_PICKAXE.isTagged(m)) {
+        if (mineable("pickaxe", m)) {
             return AcousticMaterial.STONE;
         }
         return AcousticMaterial.OTHER;
+    }
+
+    // Minecraft 1.16 - 1.16.5 have no mineable/* tags (1.17+), so the lookup returns null there and the
+    // sound and name checks decide
+    private static boolean mineable(String tool, Material m) {
+        try {
+            Tag<Material> tag = Bukkit.getTag(Tag.REGISTRY_BLOCKS, NamespacedKey.minecraft("mineable/" + tool), Material.class);
+            return tag != null && tag.isTagged(m);
+        } catch (Throwable t) {
+            return false;
+        }
+    }
+
+    // Block#getCollisionShape is missing from the 1.16 API: there the block's bounding box (absolute) stands in
+    private static Collection<BoundingBox> collisionBoxes(Block block) {
+        try {
+            Object shape = Block.class.getMethod("getCollisionShape").invoke(block);
+            Object boxes = shape.getClass().getMethod("getBoundingBoxes").invoke(shape);
+            @SuppressWarnings("unchecked")
+            Collection<BoundingBox> list = (Collection<BoundingBox>) boxes;
+            return list;
+        } catch (ReflectiveOperationException | RuntimeException e) {
+            BoundingBox box = block.getBoundingBox();
+            return java.util.Collections.singletonList(new BoundingBox(box.getMinX() - block.getX(), box.getMinY() - block.getY(),
+                    box.getMinZ() - block.getZ(), box.getMaxX() - block.getX(), box.getMaxY() - block.getY(), box.getMaxZ() - block.getZ()));
+        }
     }
 
     // Sound was an enum and became a registry interface in 1.21.3, so sounds are compared through
@@ -222,6 +249,15 @@ final class BlockAcoustics {
         }
     }
 
+    // Sounds newer than 1.16 (copper) are looked up by name
+    private static Object named(String field) {
+        try {
+            return Sound.class.getField(field).get(null);
+        } catch (ReflectiveOperationException | RuntimeException e) {
+            return null;
+        }
+    }
+
     private static boolean isGlass(Sound sound) {
         try {
             return sound != null && Objects.equals(sound, Sound.BLOCK_GLASS_BREAK);
@@ -233,7 +269,7 @@ final class BlockAcoustics {
     private static boolean isMetal(Sound sound) {
         try {
             return sound != null && (Objects.equals(sound, Sound.BLOCK_METAL_BREAK)
-                    || Objects.equals(sound, Sound.BLOCK_COPPER_BREAK)
+                    || Objects.equals(sound, named("BLOCK_COPPER_BREAK"))
                     || Objects.equals(sound, Sound.BLOCK_NETHERITE_BLOCK_BREAK)
                     || Objects.equals(sound, Sound.BLOCK_ANVIL_BREAK));
         } catch (Throwable t) {

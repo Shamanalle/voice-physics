@@ -7,6 +7,7 @@ plugins {
 // (distance curves, configured through config/vc-audio-distance.properties) without the other features.
 // Every loader has a build of its own now, so only the Fabric jar and its Quilt listing are left here.
 def releaseTargets = [
+        [project: ':fabric-1.16', target: 'mc1.16.5', aliases: []],
         [project: ':fabric-1.18', target: 'mc1.18.2', aliases: []],
         [project: ':fabric-1.19', target: 'mc1.19.2', aliases: []],
         [project: ':fabric-1.20', target: 'mc1.20.1', aliases: []],

@@ -97,7 +97,7 @@ final class VoiceMenu implements InventoryHolder {
         if (hasAddon || !AudioDistancePlugin.SERVER_SETTINGS.isMonitorAllowed()) {
             inventory.setItem(HUD, item(Material.BARRIER, ChatColor.GRAY + t(hasAddon ? "voice.status.hud_addon" : "voice.status.hud_server_off")));
         } else {
-            inventory.setItem(HUD, toggle(Material.SPYGLASS, t("voice.status.hud", onOff(prefs.hud())), prefs.hud(), true));
+            inventory.setItem(HUD, toggle(spyglass(), t("voice.status.hud", onOff(prefs.hud())), prefs.hud(), true));
         }
         if (AudioDistancePlugin.PLAYER_PREFS.canUndo(player)) {
             inventory.setItem(UNDO, item(Material.ARROW, ChatColor.YELLOW + t("btn.undo")));
@@ -215,5 +215,11 @@ final class VoiceMenu implements InventoryHolder {
     private static Material shoutIcon() {
         Material horn = Material.matchMaterial("GOAT_HORN");
         return horn != null ? horn : Material.BELL;
+    }
+
+    /** The spyglass (1.17+); a compass on 1.16. */
+    private static Material spyglass() {
+        Material m = Material.matchMaterial("SPYGLASS");
+        return m != null ? m : Material.COMPASS;
     }
 }

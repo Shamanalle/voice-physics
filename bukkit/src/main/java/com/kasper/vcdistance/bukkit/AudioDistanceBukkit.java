@@ -110,7 +110,7 @@ public final class AudioDistanceBukkit extends JavaPlugin implements Listener {
             return;
         }
         scheduling = Scheduling.create(this);
-        thickness = new BukkitThickness(scheduling.isRegionized());
+        thickness = new BukkitThickness(scheduling);
         AudioDistancePlugin.ensureServerSettings();
         service.registerPlugin(new ServerPlugin());
 

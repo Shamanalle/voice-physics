@@ -24,10 +24,12 @@ final class BukkitThickness implements ServerWalls.ThicknessProvider {
     /** Beyond this nobody hears proximity voice anyway; do not trace across the map. */
     private static final double MAX_TRACE_DISTANCE = 160.0;
 
+    private final Scheduling scheduling;
     private final boolean regionized;
 
-    BukkitThickness(boolean regionized) {
-        this.regionized = regionized;
+    BukkitThickness(Scheduling scheduling) {
+        this.scheduling = scheduling;
+        this.regionized = scheduling.isRegionized();
     }
 
     @Override
@@ -70,7 +72,7 @@ final class BukkitThickness implements ServerWalls.ThicknessProvider {
         if (!(listener instanceof Player player) || !(levelObject instanceof World world)) {
             return null;
         }
-        if (regionized && !Bukkit.isOwnedByCurrentRegion(player)) {
+        if (regionized && !scheduling.ownsPlayer(player)) {
             return null;
         }
         Location ear = player.getEyeLocation();
@@ -90,7 +92,7 @@ final class BukkitThickness implements ServerWalls.ThicknessProvider {
             sy = mouth.getY();
             sz = mouth.getZ();
         }
-        if (regionized && !Bukkit.isOwnedByCurrentRegion(new Location(world, sx, sy, sz))) {
+        if (regionized && !scheduling.ownsLocation(new Location(world, sx, sy, sz))) {
             return null;
         }
         double dx = sx - ear.getX();

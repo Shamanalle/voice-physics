@@ -2,6 +2,7 @@ package com.kasper.vcdistance.bukkit;
 
 import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -46,11 +47,21 @@ final class FoliaScheduling implements Scheduling {
 
     @Override
     public void onPlayer(Player player, Runnable task) {
-        if (Bukkit.isOwnedByCurrentRegion(player)) {
+        if (ownsPlayer(player)) {
             task.run();
         } else {
             player.getScheduler().run(plugin, t -> task.run(), null);
         }
+    }
+
+    @Override
+    public boolean ownsPlayer(Player player) {
+        return Bukkit.isOwnedByCurrentRegion(player);
+    }
+
+    @Override
+    public boolean ownsLocation(Location location) {
+        return Bukkit.isOwnedByCurrentRegion(location);
     }
 
     @Override
