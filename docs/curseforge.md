@@ -46,7 +46,7 @@ Players **without the addon** also hear voices muffled through walls.
 - **Mute** a player's voice for a time or for good, with `/vcd mute`.
 - **Paper extras** (off by default, not yet tried in a live game): a radio, loudspeakers, an eavesdrop item, a sculk reaction to shouts, doorway sound, and Towny, Lands, WorldGuard and LuckPerms integrations. `/vcd extras` lists the switches.
 - **Paper:** `/voice` for every player (talk quietly or shout, walls off for yourself, per-player volume) and PlaceholderAPI placeholders for scoreboards and tab lists.
-- **In-game Server tab** for admins, clickable `/vcd` commands with undo, and a log of who changed what.
+- **In-game Server tab** for admins: the effects for players without the addon and the Paper extras are switches there, plus clickable `/vcd` commands with undo and a log of who changed what.
 
 ## Which file do I need?
 

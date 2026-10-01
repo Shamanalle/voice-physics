@@ -44,7 +44,7 @@ Players **without the addon** also hear voices muffled through walls.
 - **Mute** a player's voice for a time or for good, with `/vcd mute`.
 - **Paper extras** (off by default, not yet tried in a live game): a radio, loudspeakers, an eavesdrop item, a sculk reaction to shouts, doorway sound, and Towny, Lands, WorldGuard and LuckPerms integrations. `/vcd extras` lists the switches.
 - **Paper:** `/voice` for every player (talk quietly or shout, walls off for yourself, per-player volume) and PlaceholderAPI placeholders for scoreboards and tab lists.
-- **In-game Server tab** for admins, clickable `/vcd` commands with undo, and a log of who changed what.
+- **In-game Server tab** for admins: the effects for players without the addon and the Paper extras are switches there, plus clickable `/vcd` commands with undo and a log of who changed what.
 
 ## Which file do I need?
 
@@ -108,7 +108,7 @@ Minecraft 1.20 – 1.20.6, 1.21 – 1.21.11 and 26.1 – 26.3.
 - **Заглушение** голоса игрока на время или насовсем командой `/vcd mute`.
 - **Дополнения Paper** (по умолчанию выключены, ещё не опробованы в живой игре): рация, громкоговорители, предмет для подслушивания, реакция скалка на крик, звук через дверной проём и интеграции с Towny, Lands, WorldGuard и LuckPerms. Переключатели — в `/vcd extras`.
 - **Paper:** `/voice` для каждого игрока (говорить тише или кричать, свои стены выключить, громкость каждого) и плейсхолдеры PlaceholderAPI для скорбордов и таба.
-- **Вкладка «Сервер» в игре** для админов, кликабельные команды `/vcd` с отменой и журнал того, кто что менял.
+- **Вкладка «Сервер» в игре** для админов: эффекты для игроков без аддона и дополнения Paper включаются там переключателями, плюс кликабельные команды `/vcd` с отменой и журнал того, кто что менял.
 
 ## Какой файл нужен?
 

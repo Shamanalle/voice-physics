@@ -108,6 +108,11 @@ public final class AdminCommands {
         /** "Fabric", "NeoForge" or "Paper", for the status line. */
         String platform();
 
+        /** Whether this is the Paper/Folia plugin, which alone has the extras; the Server tab shows them only there. */
+        default boolean plugin() {
+            return false;
+        }
+
         int onlinePlayers();
 
         int addonPlayers();
