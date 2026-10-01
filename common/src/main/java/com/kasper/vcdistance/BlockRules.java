@@ -21,11 +21,12 @@ public final class BlockRules {
     /** How many rules one list holds. */
     public static final int MAX_RULES = 64;
 
-    public static final BlockRules EMPTY = new BlockRules(List.of());
+    public static final BlockRules EMPTY = new BlockRules(Jv.listOf());
 
     private static final Pattern KEY = Pattern.compile("#?[a-z0-9_.\\-]+(:[a-z0-9_.\\-/]+)?");
 
     /** One rule: {@code key} is {@code namespace:path}, with a leading {@code #} for a tag. */
+    @com.github.bsideup.jabel.Desugar
     public record Rule(String key, AcousticMaterial material) {
 
         public boolean isTag() {
@@ -46,7 +47,7 @@ public final class BlockRules {
 
     /** A list without the {@link #MAX_RULES} limit, for the rules that come from data files (mods can list many blocks). */
     static BlockRules of(List<Rule> rules) {
-        return rules.isEmpty() ? EMPTY : new BlockRules(List.copyOf(rules));
+        return rules.isEmpty() ? EMPTY : new BlockRules(Jv.copyOf(rules));
     }
 
     public boolean isEmpty() {
@@ -102,7 +103,7 @@ public final class BlockRules {
 
     /** Reads {@code id=material,#tag=material}; parts that are not a rule are left out, so a hand-edited line never breaks. */
     public static BlockRules parse(String text) {
-        if (text == null || text.isBlank()) {
+        if (text == null || Jv.isBlank(text)) {
             return EMPTY;
         }
         List<Rule> out = new ArrayList<>();

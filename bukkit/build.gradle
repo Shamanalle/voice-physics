@@ -5,10 +5,10 @@ plugins {
 }
 
 // This build script reads common's source set, and ':bukkit' is configured before ':common'
-evaluationDependsOn(':common')
+evaluationDependsOn(':common-j8')
 
-// Bukkit, Spigot, Paper and Purpur 1.20+: the server side only (there is no client on Bukkit).
-// Compiled against the 1.20.1 API and uses only API that later versions still have.
+// Bukkit, Spigot, Paper and Purpur 1.16.5+: the server side only (there is no client on Bukkit).
+// Compiled against the 1.16.5 API (Java 8 bytecode, see gradle/jabel.gradle) and uses only API that later versions still have.
 version = project.mod_version
 
 base {
@@ -38,11 +38,11 @@ configurations {
 }
 
 dependencies {
-    implementation project(':common')
+    implementation project(':common-j8')
     bundled "org.bstats:bstats-bukkit:3.1.0"
     compileOnly "org.bstats:bstats-bukkit:3.1.0"
 
-    compileOnly "io.papermc.paper:paper-api:${project.bukkit_api_version}"
+    compileOnly "com.destroystokyo.paper:paper-api:${project.bukkit_api_version}"
     compileOnly "de.maxhenkel.voicechat:voicechat-api:${project.voicechat_api_version}"
     // Optional: %vcd_...% placeholders when PlaceholderAPI is installed
     compileOnly("me.clip:placeholderapi:2.11.6") { transitive = false }
@@ -50,15 +50,22 @@ dependencies {
     compileOnly("net.luckperms:api:5.4") { transitive = false }
 }
 
-tasks.withType(JavaCompile).configureEach {
-    options.release = 17
-    options.encoding = 'UTF-8'
-}
+apply from: "${rootDir}/gradle/jabel.gradle"
 
-java {
-    sourceCompatibility = JavaVersion.VERSION_17
-    targetCompatibility = JavaVersion.VERSION_17
+// Folia's scheduler API exists only in the 1.20.1+ Paper API, so FoliaScheduling is a source set of its own
+// compiled against that API (it is loaded only on Folia, which needs Java 17+ anyway) and goes into the same jar
+sourceSets {
+    folia {
+        compileClasspath += sourceSets.main.output + configurations.compileClasspath
+    }
 }
+configurations.foliaCompileClasspath {
+    attributes.attribute(TargetJvmVersion.TARGET_JVM_VERSION_ATTRIBUTE, 17)
+}
+dependencies {
+    foliaCompileOnly "io.papermc.paper:paper-api:1.20.1-R0.1-SNAPSHOT"
+}
+tasks.named('compileFoliaJava') { dependsOn 'compileJava' }
 
 processResources {
     inputs.property "version", project.version
@@ -78,7 +85,8 @@ tasks.named('shadowJar') {
     archiveClassifier = ''
     configurations = [project.configurations.bundled]
     from(sourceSets.main.output)
-    from(project(':common').sourceSets.main.output) {
+    from(sourceSets.folia.output)
+    from(project(':common-j8').sourceSets.main.output) {
         exclude 'assets/vc-audio-distance/icon.png'
     }
     relocate 'org.bstats', 'com.kasper.vcdistance.libs.bstats'
@@ -104,7 +112,7 @@ tasks.named('build') { dependsOn 'checkPluginJar' }
 tasks.named('checkPluginJar') { dependsOn 'shadowJar' }
 
 // The Paper API the plugin is checked against by .github/workflows/compat-bukkit.yml: the plugin jar,
-// built against bukkit_api_version, must link against every later Paper release the same way.
+// built against bukkit_api_version (1.16.5; the Folia part against 1.20.1), must link against every later Paper release the same way.
 // -PcompatPaperApi=<paper-api version> picks the version; newer ones need Java 21 or 25, so the
 // configuration asks for the newest Java instead of the plugin's own 17.
 configurations {
@@ -122,7 +130,8 @@ configurations {
 }
 
 dependencies {
-    compatPaper "io.papermc.paper:paper-api:${project.findProperty('compatPaperApi') ?: project.bukkit_api_version}"
+    // The reference is the 1.20.1 API (the Folia classes are compiled against it); 1.16.5 has another group
+    compatPaper "${project.findProperty('compatPaperGroup') ?: 'io.papermc.paper'}:paper-api:${project.findProperty('compatPaperApi') ?: '1.20.1-R0.1-SNAPSHOT'}"
     compatPaper "de.maxhenkel.voicechat:voicechat-api:${project.voicechat_api_version}"
 }
 

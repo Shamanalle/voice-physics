@@ -1,0 +1,85 @@
+plugins {
+    id 'net.neoforged.moddev.legacyforge' version '2.0.147'
+    id 'java'
+}
+
+// Its jar carries the classes of ':common', so that module is configured first (configure-on-demand)
+evaluationDependsOn(':common')
+
+// Forge 1.19.2: the full addon. The code shared with the Fabric builds is compiled here against
+// Minecraft's own names and turned into Forge's runtime names by reobfJar; only the hooks into Forge
+// (package com.kasper.vcdistance.forge) and a few small version adapters are Forge's own.
+def target = "mc1.19.2"
+version = "${project.mod_version}+${target}"
+
+base {
+    archivesName = "voice-physics-forge"
+}
+
+repositories {
+    mavenCentral()
+    maven {
+        name = "henkelmax.public"
+        url = 'https://maven.maxhenkel.de/repository/public'
+    }
+}
+
+// The build against the oldest Forge it supports (1.19.2-43.0.0, .github/workflows/build.yml) passes -PloaderOverride.forge-1.20.1=<version>
+legacyForge {
+    version = project.findProperty("loaderOverride.${project.name}") ?: project.forge119_version
+}
+
+// Shared files that need Fabric, or that Forge replaces with its own version (same path in this module)
+def sharedRoots = ["${rootDir}/shared/mc-all/src/main/java", "${rootDir}/shared/mc-1.20-1.21/src/main/java"]
+// Minecraft 1.19 draws with PoseStack and has no button builder: shared/mc-1.19 replaces the files that differ
+def ownRoot = "${rootDir}/shared/mc-1.19/src/main/java"
+def replaced = [
+        'com/kasper/vcdistance/AudioDistanceClient.java',
+        'com/kasper/vcdistance/AudioDistanceMod.java',
+        'com/kasper/vcdistance/ModMenuIntegration.java',
+        'com/kasper/vcdistance/client/HudHook.java',
+        'com/kasper/vcdistance/client/PoseScaler.java',
+        'com/kasper/vcdistance/server/AdminPermission.java',
+]
+def overridden = fileTree(ownRoot).files.collect { it.path.substring(new File(ownRoot).path.length() + 1).replace('\\', '/') }
+
+sourceSets {
+    main {
+        java {
+            sharedRoots.each { srcDir it }
+            srcDir ownRoot
+            exclude { FileTreeElement e ->
+                String path = e.relativePath.pathString
+                boolean inOwn = e.file.path.startsWith(new File(ownRoot).path)
+                boolean inShared = sharedRoots.any { e.file.path.startsWith(new File(it).path) }
+                (replaced.contains(path) && (inShared || inOwn)) || (inShared && overridden.contains(path))
+            }
+        }
+    }
+}
+
+dependencies {
+    implementation project(':common')
+    compileOnly "de.maxhenkel.voicechat:voicechat-api:${project.voicechat_api_version}"
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.release = 17
+    options.encoding = 'UTF-8'
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
+processResources {
+    inputs.property "version", project.version
+    filesMatching("META-INF/mods.toml") {
+        expand "version": project.version
+    }
+}
+
+jar {
+    from project(':common').sourceSets.main.output
+}

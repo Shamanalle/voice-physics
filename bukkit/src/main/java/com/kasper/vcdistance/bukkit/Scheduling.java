@@ -1,5 +1,6 @@
 package com.kasper.vcdistance.bukkit;
 
+import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -22,10 +23,25 @@ interface Scheduling {
     /** Runs {@code task} on the thread that owns {@code player}: now when that is this thread, otherwise soon. */
     void onPlayer(Player player, Runnable task);
 
+    /** Whether this thread owns {@code player}: always on Bukkit, the player's region on Folia. */
+    boolean ownsPlayer(Player player);
+
+    /** Whether this thread owns the blocks around {@code location}. */
+    boolean ownsLocation(Location location);
+
     void cancelAll();
 
     static Scheduling create(JavaPlugin plugin) {
-        return isFolia() ? new FoliaScheduling(plugin) : new BukkitScheduling(plugin);
+        if (isFolia()) {
+            // FoliaScheduling is compiled against a newer API (source set folia), so main code reaches it by name
+            try {
+                return (Scheduling) Class.forName("com.kasper.vcdistance.bukkit.FoliaScheduling")
+                        .getDeclaredConstructor(JavaPlugin.class).newInstance(plugin);
+            } catch (ReflectiveOperationException e) {
+                throw new IllegalStateException("Folia scheduling is unavailable", e);
+            }
+        }
+        return new BukkitScheduling(plugin);
     }
 
     static boolean isFolia() {

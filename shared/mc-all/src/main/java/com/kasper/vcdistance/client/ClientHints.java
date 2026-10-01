@@ -1,5 +1,7 @@
 package com.kasper.vcdistance.client;
 
+import com.kasper.vcdistance.compat.Txt;
+
 import com.kasper.vcdistance.AudioDistancePlugin;
 import com.kasper.vcdistance.DistanceConfig;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
@@ -50,21 +52,21 @@ public final class ClientHints {
         config.setWelcomeShown(true);
         config.save();
         Component message = openKey != null && !openKey.isUnbound()
-                ? Component.translatable("message.vc-audio-distance.welcome.key", openKey.getTranslatedKeyMessage())
-                : Component.translatable("message.vc-audio-distance.welcome.button");
+                ? Txt.translatable("message.vc-audio-distance.welcome.key", openKey.getTranslatedKeyMessage())
+                : Txt.translatable("message.vc-audio-distance.welcome.button");
         chat.accept(withOpenLink(message));
     }
 
     /** {@code message}, then a clickable "[Open settings]" that runs {@code /voicephysics}. */
     public static Component withOpenLink(Component message) {
         Component link = com.kasper.vcdistance.server.ChatLink.command(
-                Component.translatable("message.vc-audio-distance.open"), "/" + COMMAND);
-        return Component.empty().append(message).append(Component.literal(" ")).append(link);
+                Txt.translatable("message.vc-audio-distance.open"), "/" + COMMAND);
+        return Txt.empty().append(message).append(Txt.literal(" ")).append(link);
     }
 
     /** The chat message about a server's own sound profile; a suggested one comes with the link to apply it. */
     public static Component serverProfileMessage(boolean enforced) {
-        Component message = Component.translatable("message.vc-audio-distance.server_profile." + (enforced ? "enforce" : "suggest"));
+        Component message = Txt.translatable("message.vc-audio-distance.server_profile." + (enforced ? "enforce" : "suggest"));
         return enforced ? message : withOpenLink(message);
     }
 
@@ -112,7 +114,7 @@ public final class ClientHints {
             toldMonitorOff = false;
         } else if (!toldMonitorOff && config.getHudMode() != com.kasper.vcdistance.HudMode.OFF) {
             toldMonitorOff = true;
-            HudOverlay.flash(Component.translatable("gui.vc-audio-distance.hud.hidden"));
+            HudOverlay.flash(Txt.translatable("gui.vc-audio-distance.hud.hidden"));
         }
     }
 
@@ -121,10 +123,10 @@ public final class ClientHints {
         com.kasper.vcdistance.ServerLink.ZoneNotice zone = AudioDistancePlugin.LINK.consumeZoneNotice();
         if (zone != null) {
             HudOverlay.flash(zone.name().isEmpty()
-                    ? Component.translatable("gui.vc-audio-distance.hud.zone_left")
+                    ? Txt.translatable("gui.vc-audio-distance.hud.zone_left")
                     : zone.message() != null
-                    ? Component.literal(zone.message())
-                    : Component.translatable("gui.vc-audio-distance.hud.zone", zone.name()));
+                    ? Txt.literal(zone.message())
+                    : Txt.translatable("gui.vc-audio-distance.hud.zone", zone.name()));
         }
     }
 

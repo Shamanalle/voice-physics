@@ -1,5 +1,7 @@
 package com.kasper.vcdistance.client;
 
+import com.kasper.vcdistance.compat.Txt;
+
 import com.kasper.vcdistance.AudioDistancePlugin;
 import com.kasper.vcdistance.BuildInfo;
 import com.kasper.vcdistance.DistanceConfig;
@@ -124,7 +126,7 @@ final class ClientCommands {
         DistanceConfig config = AudioDistancePlugin.CONFIG;
         config.setHudMode(mode);
         config.save();
-        say(ok("hud", Component.translatable(mode.getTranslationKey())));
+        say(ok("hud", Txt.translatable(mode.getTranslationKey())));
         return 1;
     }
 
@@ -137,9 +139,9 @@ final class ClientCommands {
     }
 
     private static int presetUsage() {
-        MutableComponent line = Component.translatable(KEY + "preset.choose").withStyle(ChatFormatting.GRAY);
+        MutableComponent line = Txt.translatable(KEY + "preset.choose").withStyle(ChatFormatting.GRAY);
         for (String p : PRESETS) {
-            line.append(" ").append(button(Component.translatable(ServerSettings.presetByName(p).getTranslationKey()),
+            line.append(" ").append(button(Txt.translatable(ServerSettings.presetByName(p).getTranslationKey()),
                     "/" + ClientHints.COMMAND + " preset " + p, false));
         }
         say(line);
@@ -162,18 +164,18 @@ final class ClientCommands {
         p.apply(config, range, !AudioDistancePlugin.LINK.isLocked(DistanceConfig.Part.WALLS));
         config.setChosenPreset(p, range);
         config.save();
-        say(ok("preset", Component.translatable(p.getTranslationKey())));
+        say(ok("preset", Txt.translatable(p.getTranslationKey())));
         return 1;
     }
 
     private static int showCode() {
         String code = ProfileCode.encode(AudioDistancePlugin.config());
-        say(Component.translatable(KEY + "code.show").withStyle(ChatFormatting.GRAY));
-        say(Component.literal(code).withStyle(Style.EMPTY.withColor(ChatFormatting.WHITE)
+        say(Txt.translatable(KEY + "code.show").withStyle(ChatFormatting.GRAY));
+        say(Txt.literal(code).withStyle(Style.EMPTY.withColor(ChatFormatting.WHITE)
                         .withClickEvent(ChatLink.click("copy_to_clipboard", code))
-                        .withHoverEvent(ChatLink.hover(Component.translatable(KEY + "copy.hover"))))
+                        .withHoverEvent(ChatLink.hover(Txt.translatable(KEY + "copy.hover"))))
                 .append(" ")
-                .append(button(Component.translatable(KEY + "copy"), code, true)));
+                .append(button(Txt.translatable(KEY + "copy"), code, true)));
         return 1;
     }
 
@@ -223,39 +225,39 @@ final class ClientCommands {
         config.save();
         say(ok("reset", String.join(", ", done)));
         if (locked) {
-            say(Component.translatable(KEY + "locked").withStyle(ChatFormatting.YELLOW));
+            say(Txt.translatable(KEY + "locked").withStyle(ChatFormatting.YELLOW));
         }
         return 1;
     }
 
     private static int status() {
         DistanceConfig own = AudioDistancePlugin.CONFIG;
-        say(Component.translatable(KEY + "status.title", BuildInfo.version()).withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD));
+        say(Txt.translatable(KEY + "status.title", BuildInfo.version()).withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD));
         LinkProtocol.ServerProfile p = AudioDistancePlugin.LINK.profile();
         if (p == null) {
-            say(Component.translatable(KEY + "status.no_server").withStyle(ChatFormatting.GRAY));
+            say(Txt.translatable(KEY + "status.no_server").withStyle(ChatFormatting.GRAY));
         } else {
-            say(Component.translatable(KEY + "status.server",
-                    value(Component.translatable(KEY + "status.mode." + p.mode().getId()))).withStyle(ChatFormatting.GRAY));
+            say(Txt.translatable(KEY + "status.server",
+                    value(Txt.translatable(KEY + "status.mode." + p.mode().getId()))).withStyle(ChatFormatting.GRAY));
             if (p.mode() == ServerSettings.ProfileMode.ENFORCE && !p.locked().isEmpty()) {
-                say(Component.translatable(KEY + "status.locked", value(DistanceConfig.Part.format(p.locked())))
+                say(Txt.translatable(KEY + "status.locked", value(DistanceConfig.Part.format(p.locked())))
                         .withStyle(ChatFormatting.GRAY));
             }
             if (p.zone() != null && !p.zone().isEmpty()) {
-                say(Component.translatable(KEY + "status.zone", value(p.zone())).withStyle(ChatFormatting.GRAY));
+                say(Txt.translatable(KEY + "status.zone", value(p.zone())).withStyle(ChatFormatting.GRAY));
             }
         }
         double range = AudioDistancePlugin.getServerMaxDistance();
-        say(Component.translatable(KEY + "status.range", value(format(range)),
+        say(Txt.translatable(KEY + "status.range", value(format(range)),
                 value(format(range * AudioDistancePlugin.LINK.whisperShare()))).withStyle(ChatFormatting.GRAY));
         Preset preset = own.getChosenPreset();
-        say(Component.translatable(KEY + "status.own",
-                value(preset == null ? Component.translatable(KEY + "status.custom") : Component.translatable(preset.getTranslationKey())),
-                value(Component.translatable(own.getHudMode().getTranslationKey()))).withStyle(ChatFormatting.GRAY));
-        say(Component.empty()
-                .append(button(Component.translatable(KEY + "button.settings"), "/" + ClientHints.COMMAND, false))
+        say(Txt.translatable(KEY + "status.own",
+                value(preset == null ? Txt.translatable(KEY + "status.custom") : Txt.translatable(preset.getTranslationKey())),
+                value(Txt.translatable(own.getHudMode().getTranslationKey()))).withStyle(ChatFormatting.GRAY));
+        say(Txt.empty()
+                .append(button(Txt.translatable(KEY + "button.settings"), "/" + ClientHints.COMMAND, false))
                 .append(" ")
-                .append(button(Component.translatable(KEY + "button.help"), "/" + ClientHints.COMMAND + " help", false)));
+                .append(button(Txt.translatable(KEY + "button.help"), "/" + ClientHints.COMMAND + " help", false)));
         return 1;
     }
 
@@ -264,12 +266,12 @@ final class ClientCommands {
         List<String> lines = com.kasper.vcdistance.ClientReport.lines(gameVersion(), AudioDistancePlugin.CONFIG,
                 AudioDistancePlugin.LINK, AudioDistancePlugin.getServerMaxDistance());
         String text = String.join("\n", lines);
-        say(Component.translatable(KEY + "report.title").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD)
-                .append(" ").append(button(Component.translatable(KEY + "copy"), text, true)));
+        say(Txt.translatable(KEY + "report.title").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD)
+                .append(" ").append(button(Txt.translatable(KEY + "copy"), text, true)));
         for (String line : lines) {
-            say(Component.literal(line).withStyle(ChatFormatting.GRAY));
+            say(Txt.literal(line).withStyle(ChatFormatting.GRAY));
         }
-        say(Component.translatable(KEY + "report.hint").withStyle(ChatFormatting.DARK_GRAY));
+        say(Txt.translatable(KEY + "report.hint").withStyle(ChatFormatting.DARK_GRAY));
         return 1;
     }
 
@@ -294,7 +296,7 @@ final class ClientCommands {
     }
 
     private static int help() {
-        say(Component.translatable(KEY + "help.title").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD));
+        say(Txt.translatable(KEY + "help.title").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD));
         String base = "/" + ClientHints.COMMAND;
         String[][] lines = {
                 {"open", base + " "},
@@ -306,12 +308,12 @@ final class ClientCommands {
                 {"log", base + " log"},
                 {"report", base + " report"}};
         for (String[] l : lines) {
-            String[] parts = Component.translatable(KEY + "help." + l[0]).getString().split(" - ", 2);
-            MutableComponent line = Component.literal(parts[0]).withStyle(Style.EMPTY.withColor(ChatFormatting.WHITE)
+            String[] parts = Txt.translatable(KEY + "help." + l[0]).getString().split(" - ", 2);
+            MutableComponent line = Txt.literal(parts[0]).withStyle(Style.EMPTY.withColor(ChatFormatting.WHITE)
                     .withClickEvent(ChatLink.click("suggest_command", l[1]))
-                    .withHoverEvent(ChatLink.hover(Component.translatable(KEY + "type.hover"))));
+                    .withHoverEvent(ChatLink.hover(Txt.translatable(KEY + "type.hover"))));
             if (parts.length > 1) {
-                line.append(Component.literal(" - " + parts[1]).withStyle(ChatFormatting.DARK_GRAY));
+                line.append(Txt.literal(" - " + parts[1]).withStyle(ChatFormatting.DARK_GRAY));
             }
             say(line);
         }
@@ -330,11 +332,11 @@ final class ClientCommands {
     }
 
     private static MutableComponent ok(String key, Object... args) {
-        return Component.translatable(KEY + key, values(args)).withStyle(ChatFormatting.GREEN);
+        return Txt.translatable(KEY + key, values(args)).withStyle(ChatFormatting.GREEN);
     }
 
     private static MutableComponent error(String key, Object... args) {
-        return Component.translatable(KEY + key, values(args)).withStyle(ChatFormatting.RED);
+        return Txt.translatable(KEY + key, values(args)).withStyle(ChatFormatting.RED);
     }
 
     private static Object[] values(Object[] args) {
@@ -346,14 +348,14 @@ final class ClientCommands {
     }
 
     private static MutableComponent value(Object v) {
-        MutableComponent c = v instanceof Component comp ? comp.copy() : Component.literal(String.valueOf(v));
+        MutableComponent c = v instanceof Component comp ? comp.copy() : Txt.literal(String.valueOf(v));
         return c.withStyle(ChatFormatting.WHITE);
     }
 
     /** "[label]" that runs {@code command}, or copies it with {@code copy}. */
     private static MutableComponent button(Component label, String action, boolean copy) {
         ClickEvent click = ChatLink.click(copy ? "copy_to_clipboard" : "run_command", action);
-        HoverEvent hover = ChatLink.hover(copy ? Component.translatable(KEY + "copy.hover") : Component.literal(action));
+        HoverEvent hover = ChatLink.hover(copy ? Txt.translatable(KEY + "copy.hover") : Txt.literal(action));
         Style style = Style.EMPTY.withColor(ChatFormatting.AQUA);
         if (click != null) {
             style = style.withClickEvent(click);
@@ -361,7 +363,7 @@ final class ClientCommands {
         if (hover != null) {
             style = style.withHoverEvent(hover);
         }
-        return Component.literal("[").append(label).append("]").withStyle(style);
+        return Txt.literal("[").append(label).append("]").withStyle(style);
     }
 
     private static String format(double blocks) {

@@ -24,6 +24,8 @@ public final class ZoneOutlines {
     /** Larger boxes get sparser edges, so a refresh never sends more than this. */
     static final int MAX_POINTS = 600;
 
+    @com.github.bsideup.jabel.Desugar
+
     private record Shown(Zone.Box box, long untilNanos) {
     }
 

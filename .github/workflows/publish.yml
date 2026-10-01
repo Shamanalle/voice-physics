@@ -97,6 +97,70 @@ jobs:
         # own upload is repacked with a marker so it differs. Fabric API is optional wherever the file
         # also serves Forge or NeoForge: a required one would be pulled into those installs too.
         include:
+          - name: Fabric for 1.16.5
+            file: fabric-{v}+mc1.16.5.jar
+            target: mc1.16.5
+            loaders: fabric quilt
+            game-versions: 1.16.5
+            java: 8
+            dependencies: simple-voice-chat(required) fabric-api(required) modmenu(optional)
+            curseforge: true
+          - name: Forge for 1.16.5
+            file: forge-{v}+mc1.16.5.jar
+            target: mc1.16.5-forge
+            loaders: forge
+            game-versions: 1.16.5
+            java: 8
+            dependencies: simple-voice-chat(required)
+            curseforge: true
+          - name: Fabric for 1.17.1
+            file: fabric-{v}+mc1.17.1.jar
+            target: mc1.17.1
+            loaders: fabric quilt
+            game-versions: 1.17.1
+            java: 16
+            dependencies: simple-voice-chat(required) fabric-api(required) modmenu(optional)
+            curseforge: true
+          - name: Fabric for 1.18.2
+            file: fabric-{v}+mc1.18.2.jar
+            target: mc1.18.2
+            loaders: fabric quilt
+            game-versions: 1.18.2
+            java: 17
+            dependencies: simple-voice-chat(required) fabric-api(required) modmenu(optional)
+            curseforge: true
+          - name: Forge for 1.18.2
+            file: forge-{v}+mc1.18.2.jar
+            target: mc1.18.2-forge
+            loaders: forge
+            game-versions: 1.18.2
+            java: 17
+            dependencies: simple-voice-chat(required)
+            curseforge: true
+          - name: Fabric for 1.19.2
+            file: fabric-{v}+mc1.19.2.jar
+            target: mc1.19.2
+            loaders: fabric quilt
+            game-versions: 1.19.2
+            java: 17
+            dependencies: simple-voice-chat(required) fabric-api(required) modmenu(optional)
+            curseforge: true
+          - name: Forge for 1.19.2
+            file: forge-{v}+mc1.19.2.jar
+            target: mc1.19.2-forge
+            loaders: forge
+            game-versions: 1.19.2
+            java: 17
+            dependencies: simple-voice-chat(required)
+            curseforge: true
+          - name: Fabric for 1.19.4
+            file: fabric-{v}+mc1.19.4.jar
+            target: mc1.19.4
+            loaders: fabric quilt
+            game-versions: 1.19.4
+            java: 17
+            dependencies: simple-voice-chat(required) fabric-api(required) modmenu(optional)
+            curseforge: true
           - name: Fabric for 1.20 – 1.20.1
             file: fabric-{v}+mc1.20.1.jar
             target: mc1.20.1
@@ -270,9 +334,9 @@ jobs:
             file: bukkit-{v}.jar
             target: bukkit
             loaders: paper purpur folia spigot bukkit
-            # Every release since 1.20. compat-bukkit.yml checks them against Paper's API, except 1.20.5
+            # Every release since 1.16.5. compat-bukkit.yml checks them against Paper's API, except 1.20.5
             # (its API can no longer be resolved) and 1.21.2 and 26.1 (Spigot only: Paper skipped them)
-            game-versions: 1.20 1.20.1 1.20.2 1.20.3 1.20.4 1.20.5 1.20.6 1.21 1.21.1 1.21.2 1.21.3 1.21.4 1.21.5 1.21.6 1.21.7 1.21.8 1.21.9 1.21.10 1.21.11 26.1 26.1.1 26.1.2 26.2 26.3
+            game-versions: 1.16.5 1.17 1.17.1 1.18.2 1.19 1.19.1 1.19.2 1.19.3 1.19.4 1.20 1.20.1 1.20.2 1.20.3 1.20.4 1.20.5 1.20.6 1.21 1.21.1 1.21.2 1.21.3 1.21.4 1.21.5 1.21.6 1.21.7 1.21.8 1.21.9 1.21.10 1.21.11 26.1 26.1.1 26.1.2 26.2 26.3
             java: 17
             dependencies: simple-voice-chat(required)
             curseforge: false

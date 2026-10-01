@@ -1,5 +1,7 @@
 package com.kasper.vcdistance.server;
 
+import com.kasper.vcdistance.compat.Txt;
+
 import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
@@ -8,7 +10,6 @@ import net.minecraft.network.chat.Style;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
-import java.lang.reflect.RecordComponent;
 import java.net.URI;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -35,22 +36,22 @@ public final class ChatLink {
     public static Component of(String text) {
         Matcher m = URL.matcher(text);
         if (failed || !m.find()) {
-            return Component.literal(text);
+            return Txt.literal(text);
         }
-        MutableComponent out = Component.literal("");
+        MutableComponent out = Txt.literal("");
         int last = 0;
         do {
-            out.append(Component.literal(text.substring(last, m.start())));
+            out.append(Txt.literal(text.substring(last, m.start())));
             String url = m.group();
             ClickEvent click = openUrl(url);
-            MutableComponent link = Component.literal(url);
+            MutableComponent link = Txt.literal(url);
             if (click != null) {
                 link = link.withStyle(Style.EMPTY.withClickEvent(click).withUnderlined(true));
             }
             out.append(link);
             last = m.end();
         } while (m.find());
-        out.append(Component.literal(text.substring(last)));
+        out.append(Txt.literal(text.substring(last)));
         return out;
     }
 
@@ -63,7 +64,7 @@ public final class ChatLink {
         if (click == null) {
             return text;
         }
-        return Component.empty().append(text).withStyle(Style.EMPTY.withClickEvent(click).withUnderlined(true));
+        return Txt.empty().append(text).withStyle(Style.EMPTY.withClickEvent(click).withUnderlined(true));
     }
 
     private static ClickEvent openUrl(String url) {
@@ -92,8 +93,8 @@ public final class ChatLink {
             if (HoverEvent.class.isInterface()) {
                 // 1.21.5 and newer: HoverEvent.ShowText(Component)
                 for (Class<?> nested : HoverEvent.class.getDeclaredClasses()) {
-                    RecordComponent[] parts = nested.isRecord() ? nested.getRecordComponents() : null;
-                    if (parts != null && parts.length == 1 && parts[0].getType() == Component.class) {
+                    Class<?>[] parts = com.kasper.vcdistance.Jv.recordTypes(nested);
+                    if (parts != null && parts.length == 1 && parts[0] == Component.class) {
                         Constructor<?> c = nested.getDeclaredConstructor(Component.class);
                         c.setAccessible(true);
                         return (HoverEvent) c.newInstance(text);
@@ -150,16 +151,16 @@ public final class ChatLink {
             if (ClickEvent.class.isInterface()) {
                 // 1.21.5 and newer: a record per action, e.g. ClickEvent.OpenUrl(URI), ClickEvent.RunCommand(String)
                 for (Class<?> nested : ClickEvent.class.getDeclaredClasses()) {
-                    RecordComponent[] parts = nested.isRecord() ? nested.getRecordComponents() : null;
+                    Class<?>[] parts = com.kasper.vcdistance.Jv.recordTypes(nested);
                     if (parts == null || parts.length != 1) {
                         continue;
                     }
-                    Object arg = parts[0].getType() == URI.class ? URI.create(value)
-                            : parts[0].getType() == String.class ? value : null;
+                    Object arg = parts[0] == URI.class ? URI.create(value)
+                            : parts[0] == String.class ? value : null;
                     if (arg == null) {
                         continue;
                     }
-                    Constructor<?> c = nested.getDeclaredConstructor(parts[0].getType());
+                    Constructor<?> c = nested.getDeclaredConstructor(parts[0]);
                     c.setAccessible(true);
                     Object event = c.newInstance(arg);
                     if (hasAction(event, action)) {

@@ -45,7 +45,7 @@ public final class ServerText {
      * all give "ru_ru"; anything unknown gives English.
      */
     public static String language(String code) {
-        if (code == null || code.isBlank()) {
+        if (code == null || Jv.isBlank(code)) {
             return DEFAULT_LANGUAGE;
         }
         String c = code.trim().toLowerCase(Locale.ROOT).replace('-', '_');
@@ -105,9 +105,9 @@ public final class ServerText {
                         texts.put(e.getKey(), e.getValue());
                     }
                 }
-                Files.writeString(dir.resolve(l + ".json"), json(texts), StandardCharsets.UTF_8);
+                Jv.writeString(dir.resolve(l + ".json"), json(texts), StandardCharsets.UTF_8);
             }
-            Files.writeString(dir.resolve("README.txt"), String.join(System.lineSeparator(),
+            Jv.writeString(dir.resolve("README.txt"), String.join(System.lineSeparator(),
                     "Voice Physics: texts the server sends (/vcd replies, messages to players).",
                     "Change any line; a file you add (fr_fr.json, ...) becomes a new language. Lines you delete",
                     "come back from the built-in texts. /vcd reload (or saving the settings file) reads them again.",
@@ -130,7 +130,7 @@ public final class ServerText {
             Path file = dir.resolve(language + ".json");
             if (Files.isRegularFile(file)) {
                 try {
-                    texts.putAll(parse(Files.readString(file, StandardCharsets.UTF_8)));
+                    texts.putAll(parse(Jv.readString(file, StandardCharsets.UTF_8)));
                 } catch (IOException | RuntimeException e) {
                     DistanceConfig.LOGGER.warn("Could not read {}, using the built-in texts: {}", file, e.toString());
                 }
@@ -173,12 +173,12 @@ public final class ServerText {
         String path = "/assets/vc-audio-distance/lang/" + language + ".json";
         try (InputStream in = ServerText.class.getResourceAsStream(path)) {
             if (in == null) {
-                return Map.of();
+                return Jv.mapOf();
             }
-            return parse(new String(in.readAllBytes(), StandardCharsets.UTF_8));
+            return parse(new String(Jv.readAllBytes(in), StandardCharsets.UTF_8));
         } catch (IOException | RuntimeException e) {
             DistanceConfig.LOGGER.warn("Could not read {}: {}", path, e.toString());
-            return Map.of();
+            return Jv.mapOf();
         }
     }
 

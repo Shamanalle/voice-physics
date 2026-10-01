@@ -1,0 +1,174 @@
+package com.kasper.vcdistance.client;
+
+import com.kasper.vcdistance.compat.Mc;
+import com.kasper.vcdistance.AudioDistancePlugin;
+import com.kasper.vcdistance.Bearing;
+import com.kasper.vcdistance.EnvironmentEffects;
+import com.kasper.vcdistance.NearbyPlayers;
+import com.kasper.vcdistance.RoomEstimate;
+import com.kasper.vcdistance.SpeakerRegistry;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.player.AbstractClientPlayer;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.core.BlockPos;
+import net.minecraft.tags.FluidTags;
+import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+
+/**
+ * Client world access for Minecraft 1.20 - 1.21.x.
+ */
+public final class MinecraftWorldAccess implements WorldAccess {
+
+    private static final long ENTITY_SEARCH_INTERVAL = TimeUnit.SECONDS.toNanos(1);
+
+    @Override
+    public boolean inWorld() {
+        Minecraft mc = Minecraft.getInstance();
+        return mc.level != null && mc.player != null;
+    }
+
+    @Override
+    public Object worldIdentity() {
+        return Minecraft.getInstance().level;
+    }
+
+    /**
+     * The player's eyes. {@code Camera.getPosition()} and {@code Entity.position()} are not available
+     * on every 1.21.x release (removed in 1.21.11 and 1.21.9), {@code getEyePosition()} is.
+     */
+    @Override
+    public Vec3 listenerPosition() {
+        Minecraft mc = Minecraft.getInstance();
+        return mc.player != null ? Mc.eye(mc.player) : null;
+    }
+
+    @Override
+    public double listenerYaw() {
+        Minecraft mc = Minecraft.getInstance();
+        return mc.player != null ? Mc.yRot(mc.player) : 0.0;
+    }
+
+    @Override
+    public Vec3 entitySpeakerPosition(SpeakerRegistry.Speaker speaker, long nowNanos) {
+        Minecraft mc = Minecraft.getInstance();
+        ClientLevel level = mc.level;
+        if (level == null || speaker.getEntityId() == null) {
+            return null;
+        }
+        Entity entity = null;
+        int cachedId = speaker.getCachedEntityNetworkId();
+        if (cachedId != Integer.MIN_VALUE) {
+            Entity candidate = level.getEntity(cachedId);
+            if (candidate != null && speaker.getEntityId().equals(candidate.getUUID())) {
+                entity = candidate;
+            }
+        }
+        if (entity == null) {
+            entity = level.getPlayerByUUID(speaker.getEntityId());
+        }
+        if (entity == null && mc.player != null && nowNanos - speaker.getLastEntitySearchNanos() > ENTITY_SEARCH_INTERVAL) {
+            speaker.setLastEntitySearchNanos(nowNanos);
+            double r = Math.max(16.0, speaker.getMaxDistance()) + 8.0;
+            Vec3 p = Mc.eye(mc.player);
+            List<Entity> found = level.getEntities((Entity) null, new AABB(p.x - r, p.y - r, p.z - r, p.x + r, p.y + r, p.z + r),
+                    e -> speaker.getEntityId().equals(e.getUUID()));
+            entity = found.isEmpty() ? null : found.get(0);
+        }
+        if (entity == null) {
+            return null;
+        }
+        speaker.setCachedEntityNetworkId(entity.getId());
+        if (speaker.getDisplayName() == null) {
+            speaker.setDisplayName(entity.getName().getString());
+        }
+        return Mc.eye(entity);
+    }
+
+    @Override
+    public List<NearbyPlayers.Player> nearbyPlayers(Vec3 listener, double range) {
+        Minecraft mc = Minecraft.getInstance();
+        LocalPlayer self = mc.player;
+        if (mc.level == null || self == null || listener == null) {
+            return com.kasper.vcdistance.Jv.listOf();
+        }
+        List<NearbyPlayers.Player> list = new ArrayList<>();
+        double yaw = Mc.yRot(self);
+        for (AbstractClientPlayer p : mc.level.players()) {
+            if (p == self || (p.isSpectator() && !self.isSpectator()) || p.isInvisibleTo(self)) {
+                continue;
+            }
+            Vec3 eye = Mc.eye(p);
+            double d = listener.distanceTo(eye);
+            if (d <= range) {
+                list.add(new NearbyPlayers.Player(p.getUUID(), p.getName().getString(), d,
+                        Bearing.relative(eye.x - listener.x, eye.z - listener.z, yaw)));
+            }
+        }
+        return list;
+    }
+
+    @Override
+    public RoomEstimate.Hit rayHit(Vec3 from, double dx, double dy, double dz, double maxDistance) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.level == null || mc.player == null) {
+            return null;
+        }
+        Vec3 to = from.add(dx * maxDistance, dy * maxDistance, dz * maxDistance);
+        BlockHitResult hit = mc.level.clip(new ClipContext(from, to, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, mc.player));
+        if (hit.getType() == HitResult.Type.MISS) {
+            return null;
+        }
+        return new RoomEstimate.Hit(hit.getLocation().distanceTo(from), BlockAcoustics.echoMaterial(mc.level.getBlockState(hit.getBlockPos())));
+    }
+
+    @Override
+    public boolean isOpenForSound(int x, int y, int z) {
+        return BlockAcoustics.isOpenForSound(Minecraft.getInstance().level, x, y, z);
+    }
+
+    @Override
+    public boolean isUnderWater(Vec3 point) {
+        Minecraft mc = Minecraft.getInstance();
+        return mc.level != null && mc.level.getFluidState(BlockPos.containing(point.x, point.y, point.z)).is(FluidTags.WATER);
+    }
+
+    @Override
+    public EnvironmentEffects.Weather weatherAt(Vec3 point) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.level == null || !mc.level.isRainingAt(BlockPos.containing(point.x, point.y, point.z))) {
+            return EnvironmentEffects.Weather.CLEAR;
+        }
+        return mc.level.isThundering() ? EnvironmentEffects.Weather.THUNDER : EnvironmentEffects.Weather.RAIN;
+    }
+
+    @Override
+    public com.kasper.vcdistance.PlaceTuning.Place placeAt(Vec3 point) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.level == null) {
+            return com.kasper.vcdistance.PlaceTuning.Place.UNKNOWN;
+        }
+        BlockPos pos = BlockPos.containing(point.x, point.y, point.z);
+        return new com.kasper.vcdistance.PlaceTuning.Place(String.valueOf(mc.level.dimension()),
+                Mc.biomeId(mc.level, pos), point.y, mc.level.canSeeSky(pos));
+    }
+
+    @Override
+    public double traceRay(Vec3 from, Vec3 to) {
+        return BlockAcoustics.traceRay(Minecraft.getInstance().level, from, to, AudioDistancePlugin.config());
+    }
+
+    @Override
+    public void reset() {
+        BlockAcoustics.clearCache();
+    }
+}

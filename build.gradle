@@ -7,6 +7,11 @@ plugins {
 // (distance curves, configured through config/vc-audio-distance.properties) without the other features.
 // Every loader has a build of its own now, so only the Fabric jar and its Quilt listing are left here.
 def releaseTargets = [
+        [project: ':fabric-1.16', target: 'mc1.16.5', aliases: []],
+        [project: ':fabric-1.17', target: 'mc1.17.1', aliases: []],
+        [project: ':fabric-1.18', target: 'mc1.18.2', aliases: []],
+        [project: ':fabric-1.19', target: 'mc1.19.2', aliases: []],
+        [project: ':fabric-1.19.4', target: 'mc1.19.4', aliases: []],
         [project: ':fabric-1.20', target: 'mc1.20.1', aliases: []],
         [project: ':fabric-1.20.4', target: 'mc1.20.2-1.20.4', aliases: []],
         [project: ':fabric-1.20.6', target: 'mc1.20.5-1.20.6', aliases: []],
@@ -14,9 +19,11 @@ def releaseTargets = [
         [project: ':fabric-26', target: 'mc26.x', aliases: ['neoforge', 'forge']],
 ]
 
-// Full builds of their own: Forge 1.20.1 (remapped to Forge's names by reobfJar), Forge 1.20.6 - 26.x
+// Full builds of their own: Forge 1.18.2, 1.19.2 and 1.20.1 (remapped to Forge's names by reobfJar), Forge 1.20.6 - 26.x
 // and NeoForge 1.20.5 - 1.21.11
 def loaderTargets = [
+        [project: ':forge-1.18', task: 'reobfJar', file: 'voice-physics-forge-%s+mc1.18.2.jar'],
+        [project: ':forge-1.19', task: 'reobfJar', file: 'voice-physics-forge-%s+mc1.19.2.jar'],
         [project: ':forge-1.20.1', task: 'reobfJar', file: 'voice-physics-forge-%s+mc1.20.1.jar'],
         [project: ':forge-1.20.6', task: 'jar', file: 'voice-physics-forge-%s+mc1.20.6.jar'],
         [project: ':forge-1.21', task: 'jar', file: 'voice-physics-forge-%s+mc1.21-1.21.1.jar'],
@@ -32,7 +39,7 @@ def loaderTargets = [
         [project: ':neoforge-1.21.11', task: 'jar', file: 'voice-physics-neoforge-%s+mc1.21.11.jar'],
 ]
 
-// Builds of their own, with Gradle 8 (legacy/*): Forge 1.20.2 - 1.20.4 runs with SRG names, which only
+// Builds of their own, with Gradle 8 (legacy/*): Forge 1.16.5 (Architectury Loom, Java 8) and Forge 1.20.2 - 1.20.4 run with SRG names, which only
 // ForgeGradle 6 remaps to, and ForgeGradle 6 cannot share this build with ForgeGradle 7. NeoForge 1.20.2 -
 // 1.20.4 need NeoGradle 7, which cannot share it either. A legacy/ project without a Gradle wrapper of its
 // own runs the wrapper of legacy/neoforge-1.20.4. They need a
@@ -42,10 +49,14 @@ def legacyTargets = [
         [dir: 'legacy/forge-1.20.4', file: 'voice-physics-forge-%s+mc1.20.2-1.20.4.jar'],
         [dir: 'legacy/neoforge-1.20.2', file: 'voice-physics-neoforge-%s+mc1.20.2-1.20.3.jar'],
         [dir: 'legacy/neoforge-1.20.4', file: 'voice-physics-neoforge-%s+mc1.20.4.jar'],
+        // Java 8 bytecode through Jabel, whose javac plugin needs a JDK 17 (see legacy/forge-1.16.5/settings.gradle)
+        [dir: 'legacy/forge-1.16.5', file: 'voice-physics-forge-%s+mc1.16.5.jar', jdk: '17'],
 ]
 
-def legacyJavaHome = {
-    def home = ['LEGACY_JAVA_HOME', 'JAVA_HOME_21_X64', 'JAVA_HOME_17_X64'].collect { System.getenv(it) }.find { it }
+// A target with jdk: '17' needs exactly that one (LEGACY_JAVA_HOME may point at a JDK 17 or 21)
+def legacyJavaHome = { String jdk = null ->
+    def names = jdk == '17' ? ['JAVA_HOME_17_X64', 'LEGACY_JAVA_HOME'] : ['LEGACY_JAVA_HOME', 'JAVA_HOME_21_X64', 'JAVA_HOME_17_X64']
+    def home = names.collect { System.getenv(it) }.find { it }
     if (home == null) {
         throw new GradleException('The legacy/ builds need Gradle 8 on Java 17 or 21: set LEGACY_JAVA_HOME to such a JDK')
     }
@@ -61,7 +72,7 @@ legacyTargets.each { t ->
         def wrapper = file("${t.dir}/gradlew").exists() ? 'gradlew' : '../neoforge-1.20.4/gradlew'
         commandLine 'sh', wrapper, 'build', '--no-daemon', '--stacktrace'
         doFirst {
-            environment 'JAVA_HOME', legacyJavaHome()
+            environment 'JAVA_HOME', legacyJavaHome(t.jdk)
         }
     }
 }

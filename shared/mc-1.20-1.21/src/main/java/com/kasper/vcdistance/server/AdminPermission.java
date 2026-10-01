@@ -1,5 +1,6 @@
 package com.kasper.vcdistance.server;
 
+import com.kasper.vcdistance.compat.Mc;
 import com.kasper.vcdistance.OpsFile;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.commands.CommandSourceStack;
@@ -19,7 +20,7 @@ public final class AdminPermission {
     }
 
     public static boolean isAdmin(CommandSourceStack source) {
-        ServerPlayer player = source.getPlayer();
+        ServerPlayer player = Mc.player(source);
         if (player == null) {
             return true;
         }

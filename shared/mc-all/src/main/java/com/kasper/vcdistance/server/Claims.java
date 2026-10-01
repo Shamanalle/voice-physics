@@ -1,5 +1,6 @@
 package com.kasper.vcdistance.server;
 
+import com.kasper.vcdistance.compat.Mc;
 import com.kasper.vcdistance.AudioDistancePlugin;
 import com.kasper.vcdistance.DistanceConfig;
 import com.kasper.vcdistance.Zone;
@@ -36,6 +37,8 @@ public final class Claims {
     private static final long RECHECK_NANOS = 2_000_000_000L;
     private static final long NAMES_NANOS = 60_000_000_000L;
 
+    @com.github.bsideup.jabel.Desugar
+
     private record Looked(String world, int chunkX, int chunkZ, long nanos, List<String> ids) {
     }
 
@@ -55,7 +58,7 @@ public final class Claims {
      */
     public static List<String> at(ServerPlayer player, String world) {
         if (failed || !hasClaimZones() || !installed()) {
-            return List.of();
+            return com.kasper.vcdistance.Jv.listOf();
         }
         int chunkX = (int) Math.floor(player.getX()) >> 4;
         int chunkZ = (int) Math.floor(player.getZ()) >> 4;
@@ -67,11 +70,11 @@ public final class Claims {
         }
         List<String> ids;
         try {
-            ids = lookup(((ServerLevel) player.level()).getServer(), world, chunkX, chunkZ);
+            ids = lookup(((ServerLevel) Mc.level(player)).getServer(), world, chunkX, chunkZ);
         } catch (Throwable t) {
             failed = true;
             DistanceConfig.LOGGER.warn("Could not read Open Parties and Claims, claim zones are off: {}", t.toString());
-            return List.of();
+            return com.kasper.vcdistance.Jv.listOf();
         }
         CACHE.put(player.getUUID(), new Looked(world, chunkX, chunkZ, now, ids));
         return ids;
@@ -127,7 +130,7 @@ public final class Claims {
         }
         Object claim = get.invoke(manager, dimension(get.getParameterTypes()[0], world), chunkX, chunkZ);
         if (claim == null) {
-            return List.of();
+            return com.kasper.vcdistance.Jv.listOf();
         }
         UUID owner = (UUID) invoke(claim.getClass(), claim, "getPlayerId");
         List<String> ids = new ArrayList<>();
@@ -157,7 +160,7 @@ public final class Claims {
     }
 
     private static void add(List<String> ids, String name) {
-        if (name != null && !name.isBlank()) {
+        if (name != null && !com.kasper.vcdistance.Jv.isBlank(name)) {
             String id = Zone.CLAIM + ":" + name.trim().toLowerCase(Locale.ROOT);
             if (!ids.contains(id)) {
                 ids.add(id);
@@ -190,10 +193,10 @@ public final class Claims {
 
     /** usercache.json in the server's folder: every player who has joined. */
     private static void readUserCache() {
-        Path file = Path.of("usercache.json");
+        Path file = java.nio.file.Paths.get("usercache.json");
         try {
             if (Files.isRegularFile(file)) {
-                Matcher m = USER.matcher(Files.readString(file, StandardCharsets.UTF_8));
+                Matcher m = USER.matcher(com.kasper.vcdistance.Jv.readString(file, StandardCharsets.UTF_8));
                 while (m.find()) {
                     NAMES.putIfAbsent(UUID.fromString(m.group(2)), m.group(1));
                 }
@@ -251,7 +254,7 @@ public final class Claims {
             if (t.getSuperclass() != null) {
                 todo.add(t.getSuperclass());
             }
-            todo.addAll(List.of(t.getInterfaces()));
+            todo.addAll(com.kasper.vcdistance.Jv.listOf(t.getInterfaces()));
         }
         return out;
     }

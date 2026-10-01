@@ -17,6 +17,7 @@ public final class PlaceTuning {
      * @param y         the height of the head
      * @param sky       whether the open sky is above
      */
+    @com.github.bsideup.jabel.Desugar
     public record Place(String dimension, String biome, double y, boolean sky) {
         public static final Place UNKNOWN = new Place("", "", 64.0, true);
 
@@ -33,6 +34,7 @@ public final class PlaceTuning {
      * @param air   how much far voices lose their treble, 0 - 1 (1 = the most, at the edge of the range)
      * @param where a short English name of the place for reports and the monitor, or "" for an ordinary place
      */
+    @com.github.bsideup.jabel.Desugar
     public record Tuning(double echo, double air, String where) {
         public static final Tuning NONE = new Tuning(1.0, 0.0, "");
 

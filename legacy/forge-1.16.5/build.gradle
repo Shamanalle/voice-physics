@@ -1,0 +1,130 @@
+plugins {
+    id 'java'
+    id 'dev.architectury.loom' version '1.10.455'
+}
+
+// Forge 1.16.5: the full addon. The code shared with the other builds is compiled here against
+// Mojang's names and turned into Forge's runtime (SRG) names by remapJar. Minecraft 1.16.5 runs on
+// Java 8, so the Java 17 sources (the common module included) are compiled to Java 8 bytecode with Jabel
+// (gradle/jabel.gradle of the main build explains it). The Forge hooks are this module's own.
+def repoRoot = file('../..')
+def props = new Properties()
+new File(repoRoot, 'gradle.properties').withInputStream { props.load(it) }
+
+// The build against the oldest Forge it supports (.github/workflows/build.yml) passes -PloaderOverride=<version>
+def forgeVersion = project.findProperty('loaderOverride') ?: props.getProperty('forge1165_version')
+def minecraftVersion = forgeVersion.substring(0, forgeVersion.indexOf('-'))
+def modVersion = props.getProperty('mod_version')
+
+version = "${modVersion}+mc1.16.5"
+group = props.getProperty('maven_group')
+
+base {
+    archivesName = 'voice-physics-forge'
+}
+
+loom {
+    silentMojangMappingsLicense()
+}
+
+repositories {
+    mavenCentral()
+    maven {
+        name = 'henkelmax.public'
+        url = 'https://maven.maxhenkel.de/repository/public'
+    }
+}
+
+configurations {
+    jabel
+}
+
+// In order of precedence: a file in an earlier folder replaces the file with the same path in a later one
+def ownRoot = file('src/main/java')
+def sharedRoots = [
+        "${repoRoot}/shared/mc-1.16/src/main/java",
+        "${repoRoot}/shared/mc-1.18/src/main/java",
+        "${repoRoot}/shared/mc-1.19/src/main/java",
+        "${repoRoot}/shared/mc-1.20-1.21/src/main/java",
+        "${repoRoot}/shared/mc-all/src/main/java",
+        "${repoRoot}/common/src/main/java",
+].collect { new File(it) }
+// The Fabric hooks, which Forge replaces with its own
+def fabricOnly = [
+        'com/kasper/vcdistance/AudioDistanceClient.java',
+        'com/kasper/vcdistance/AudioDistanceMod.java',
+        'com/kasper/vcdistance/ModMenuIntegration.java',
+        'com/kasper/vcdistance/client/HudHook.java',
+        'com/kasper/vcdistance/client/PoseScaler.java',
+        'com/kasper/vcdistance/server/AdminPermission.java',
+]
+
+sourceSets {
+    main {
+        java {
+            sharedRoots.each { srcDir it }
+            exclude { FileTreeElement e ->
+                if (e.directory) {
+                    return false
+                }
+                def path = e.relativePath.pathString
+                def index = sharedRoots.findIndexOf { e.file.path.startsWith(it.path + File.separator) }
+                if (index < 0) {
+                    return false
+                }
+                def before = [ownRoot] + sharedRoots.take(index)
+                fabricOnly.contains(path) || before.any { new File(it, path).exists() }
+            }
+        }
+        resources {
+            srcDir "${repoRoot}/common/src/main/resources"
+        }
+    }
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:${minecraftVersion}"
+    mappings loom.officialMojangMappings()
+    forge "net.minecraftforge:forge:${forgeVersion}"
+    compileOnly "de.maxhenkel.voicechat:voicechat-api:${props.getProperty('voicechat_api_version')}"
+    // Minecraft 1.16.5 has log4j 2 only; AddonLog (common) logs through it, and names SLF4J for the newer versions
+    compileOnly 'org.apache.logging.log4j:log4j-api:2.17.1'
+    compileOnly "org.slf4j:slf4j-api:${props.getProperty('slf4j_version')}"
+
+    jabel 'com.github.bsideup.jabel:jabel-javac-plugin:1.0.0'
+    jabel 'net.bytebuddy:byte-buddy-agent:1.15.10'
+    jabel 'net.bytebuddy:byte-buddy:1.15.10'
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.release = 8
+    options.encoding = 'UTF-8'
+    options.fork = true
+    def jvm = ['-Djdk.attach.allowAttachSelf=true']
+    ['comp', 'parser', 'util', 'code', 'tree', 'main', 'file', 'api'].each {
+        jvm << "--add-exports=jdk.compiler/com.sun.tools.javac.${it}=ALL-UNNAMED".toString()
+        jvm << "--add-opens=jdk.compiler/com.sun.tools.javac.${it}=ALL-UNNAMED".toString()
+    }
+    options.forkOptions.jvmArgs = jvm
+    options.annotationProcessorPath = configurations.jabel
+    options.compilerArgs += ['-Xplugin:jabel']
+}
+
+processResources {
+    inputs.property 'version', version
+    filesMatching('META-INF/mods.toml') {
+        expand 'version': version
+    }
+    filesMatching('vc-audio-distance-build.properties') {
+        expand 'version': modVersion
+    }
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}
+
+remapJar {
+    archiveClassifier = ''
+}

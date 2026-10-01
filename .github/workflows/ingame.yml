@@ -51,6 +51,11 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          - { loader: fabric, mc: '1.16.5', jar: 'voice-physics-fabric-*+mc1.16.5.jar', java: '17' }
+          - { loader: fabric, mc: '1.17.1', jar: 'voice-physics-fabric-*+mc1.17.1.jar', java: '17' }
+          - { loader: fabric, mc: '1.18.2', jar: 'voice-physics-fabric-*+mc1.18.2.jar', java: '17' }
+          - { loader: fabric, mc: '1.19.2', jar: 'voice-physics-fabric-*+mc1.19.2.jar', java: '21' }
+          - { loader: fabric, mc: '1.19.4', jar: 'voice-physics-fabric-*+mc1.19.4.jar', java: '21' }
           - { loader: fabric, mc: '1.20.1', jar: 'voice-physics-fabric-*+mc1.20.1.jar', java: '21' }
           - { loader: fabric, mc: '1.20.4', jar: 'voice-physics-fabric-*+mc1.20.2-1.20.4.jar', java: '21' }
           - { loader: fabric, mc: '1.20.6', jar: 'voice-physics-fabric-*+mc1.20.5-1.20.6.jar', java: '21' }
@@ -72,6 +77,13 @@ jobs:
           - { loader: neoforge, mc: '1.21.9', jar: 'voice-physics-neoforge-*+mc1.21.9-1.21.10.jar', java: '21', version: 'nf12110_neoforge_oldest' }
           - { loader: neoforge, mc: '1.21.10', jar: 'voice-physics-neoforge-*+mc1.21.9-1.21.10.jar', java: '21', version: 'nf12110_neoforge' }
           - { loader: neoforge, mc: '1.21.11', jar: 'voice-physics-neoforge-*+mc1.21.11.jar', java: '21', version: 'nf12111_neoforge' }
+          # Forge 1.16.5 runs on Java 8: this is where the Java 8 bytecode of the shared code is loaded for real
+          - { loader: forge, mc: '1.16.5', jar: 'voice-physics-forge-*+mc1.16.5.jar', java: '8', version: 'forge1165_version_oldest', label: 'oldest' }
+          - { loader: forge, mc: '1.16.5', jar: 'voice-physics-forge-*+mc1.16.5.jar', java: '8', version: 'forge1165_version' }
+          - { loader: forge, mc: '1.18.2', jar: 'voice-physics-forge-*+mc1.18.2.jar', java: '17', version: 'forge118_version_oldest', label: 'oldest' }
+          - { loader: forge, mc: '1.18.2', jar: 'voice-physics-forge-*+mc1.18.2.jar', java: '17', version: 'forge118_version' }
+          - { loader: forge, mc: '1.19.2', jar: 'voice-physics-forge-*+mc1.19.2.jar', java: '17', version: 'forge119_version_oldest', label: 'oldest' }
+          - { loader: forge, mc: '1.19.2', jar: 'voice-physics-forge-*+mc1.19.2.jar', java: '17', version: 'forge119_version' }
           - { loader: forge, mc: '1.20', jar: 'voice-physics-forge-*+mc1.20.1.jar', java: '17', version: 'forge120_version_oldest' }
           - { loader: forge, mc: '1.20.1', jar: 'voice-physics-forge-*+mc1.20.1.jar', java: '17', version: 'forge120_version' }
           - { loader: neoforge, mc: '1.20.1', jar: 'voice-physics-forge-*+mc1.20.1.jar', java: '17', version: 'nf1201_forge' }
@@ -89,6 +101,10 @@ jobs:
           - { loader: forge, mc: '1.21.11', jar: 'voice-physics-forge-*+mc1.21.11.jar', java: '21', version: 'forge12111_version' }
           - { loader: forge, mc: '26.1', jar: 'voice-physics-forge-*+mc26.x.jar', java: '25', version: 'forge26_version_oldest' }
           - { loader: forge, mc: '26.3', jar: 'voice-physics-forge-*+mc26.x.jar', java: '25', version: 'forge26_version' }
+          - { loader: paper, mc: '1.16.5', jar: 'voice-physics-bukkit-*.jar', java: '8' }
+          - { loader: paper, mc: '1.17.1', jar: 'voice-physics-bukkit-*.jar', java: '17' }
+          - { loader: paper, mc: '1.18.2', jar: 'voice-physics-bukkit-*.jar', java: '17' }
+          - { loader: paper, mc: '1.19.4', jar: 'voice-physics-bukkit-*.jar', java: '17' }
           - { loader: paper, mc: '1.20', jar: 'voice-physics-bukkit-*.jar', java: '21' }
           - { loader: paper, mc: '1.20.1', jar: 'voice-physics-bukkit-*.jar', java: '21' }
           - { loader: paper, mc: '1.20.5', jar: 'voice-physics-bukkit-*.jar', java: '21' }

@@ -55,6 +55,7 @@ public final class CommandReply {
      * @param action the command (with its slash) or the text to copy
      * @param hover  shown when the mouse is over the span, or {@code null}
      */
+    @com.github.bsideup.jabel.Desugar
     public record Span(String text, Style style, Click click, String action, String hover) {
 
         public Span {
@@ -80,10 +81,11 @@ public final class CommandReply {
     }
 
     /** One chat line. */
+    @com.github.bsideup.jabel.Desugar
     public record Line(List<Span> spans) {
 
         public Line {
-            spans = List.copyOf(spans);
+            spans = Jv.copyOf(spans);
         }
 
         /** The text as typed out, buttons included. */
@@ -103,7 +105,7 @@ public final class CommandReply {
                     b.append(s.text());
                 }
             }
-            return b.toString().strip();
+            return Jv.strip(b.toString());
         }
     }
 

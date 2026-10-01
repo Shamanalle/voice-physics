@@ -51,18 +51,18 @@ public final class PlayerCommands {
     static final int LIST_VOLUMES = 8;
 
     /** Examples per topic of {@code /voice help}; commands, so the same in every language. */
-    static final Map<String, String[]> EXAMPLES = Map.ofEntries(
-            Map.entry("status", new String[]{"status"}),
-            Map.entry("mode", new String[]{"mode quiet", "mode normal", "mode shout"}),
-            Map.entry("walls", new String[]{"walls on", "walls off"}),
-            Map.entry("hud", new String[]{"hud on", "hud off"}),
-            Map.entry("volume", new String[]{"volume Steve 50", "volume Steve 100"}),
-            Map.entry("ignore", new String[]{"ignore Steve"}),
-            Map.entry("unignore", new String[]{"unignore Steve"}),
-            Map.entry("radio", new String[]{"radio", "radio 1200", "radio off"}),
-            Map.entry("undo", new String[]{"undo"}),
-            Map.entry("reset", new String[]{"reset"}),
-            Map.entry("menu", new String[]{"menu"}));
+    static final Map<String, String[]> EXAMPLES = Jv.mapOfEntries(
+            Jv.entry("status", new String[]{"status"}),
+            Jv.entry("mode", new String[]{"mode quiet", "mode normal", "mode shout"}),
+            Jv.entry("walls", new String[]{"walls on", "walls off"}),
+            Jv.entry("hud", new String[]{"hud on", "hud off"}),
+            Jv.entry("volume", new String[]{"volume Steve 50", "volume Steve 100"}),
+            Jv.entry("ignore", new String[]{"ignore Steve"}),
+            Jv.entry("unignore", new String[]{"unignore Steve"}),
+            Jv.entry("radio", new String[]{"radio", "radio 1200", "radio off"}),
+            Jv.entry("undo", new String[]{"undo"}),
+            Jv.entry("reset", new String[]{"reset"}),
+            Jv.entry("menu", new String[]{"menu"}));
     /** The topics in the order {@code /voice help} lists them. */
     static final String[] TOPICS = {"status", "mode", "walls", "hud", "volume", "ignore", "unignore", "radio", "undo", "reset", "menu"};
 
@@ -515,7 +515,7 @@ public final class PlayerCommands {
     /** Completions for the last word of {@code input}, only for what the player may use. */
     public static List<String> suggest(String input, Context ctx) {
         if (!ctx.allows(PERM)) {
-            return List.of();
+            return Jv.listOf();
         }
         String text = input == null ? "" : input;
         String[] words = text.split("\\s+", -1);
@@ -544,7 +544,7 @@ public final class PlayerCommands {
                     }
                     case "walls", "hud" -> {
                         if (words.length == 2) {
-                            options.addAll(List.of(ON_OFF));
+                            options.addAll(Jv.listOf(ON_OFF));
                         }
                     }
                     case "volume", "ignore", "unignore" -> {
@@ -553,17 +553,17 @@ public final class PlayerCommands {
                                 options.add(p.name());
                             }
                         } else if (words.length == 3 && sub.equals("volume")) {
-                            options.addAll(List.of("0", "25", "50", "75", "100"));
+                            options.addAll(Jv.listOf("0", "25", "50", "75", "100"));
                         }
                     }
                     case "radio" -> {
                         if (words.length == 2) {
-                            options.addAll(List.of(RADIO_STEPS));
+                            options.addAll(Jv.listOf(RADIO_STEPS));
                         }
                     }
                     case "help", "?" -> {
                         if (words.length == 2) {
-                            options.addAll(List.of(TOPICS));
+                            options.addAll(Jv.listOf(TOPICS));
                         }
                     }
                     default -> {
@@ -625,7 +625,7 @@ public final class PlayerCommands {
         /** "/voice mode: "loud" does not work. Allowed: quiet|normal|shout" with buttons to retype and for help. */
         void badValue(String command, String value, String allowed, String topic) {
             LineBuilder line = CommandReply.line();
-            if (value == null || value.isBlank()) {
+            if (value == null || Jv.isBlank(value)) {
                 line.addAll(m.spans("error.missing", Style.ERROR, "/voice " + command, new Span(allowed, Style.VALUE)));
             } else {
                 line.addAll(m.spans("error.value", Style.ERROR, "/voice " + command, value, new Span(allowed, Style.VALUE)));

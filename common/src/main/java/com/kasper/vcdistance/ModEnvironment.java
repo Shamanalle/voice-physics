@@ -44,7 +44,7 @@ public final class ModEnvironment {
                 return forge;
             }
         }
-        return Path.of("config");
+        return java.nio.file.Paths.get("config");
     }
 
     public static boolean isModLoaded(String modId) {

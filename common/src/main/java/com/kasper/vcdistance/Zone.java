@@ -20,6 +20,7 @@ import java.util.Map;
  * @param box      the box's world and corners (boxes only)
  * @param priority where zones overlap, the highest priority wins
  */
+@com.github.bsideup.jabel.Desugar
 public record Zone(String kind, String name, ServerSettings.ProfileMode mode, String preset,
                    Rules rules, Box box, int priority) {
 
@@ -37,7 +38,7 @@ public record Zone(String kind, String name, ServerSettings.ProfileMode mode, St
     public static final String FLAG = "flag";
 
     /** The kinds a region entry names with a prefix: "claim:steve", "town:springfield", "land:atlantis". */
-    private static final List<String> PREFIXED = List.of(CLAIM, TOWN, LAND);
+    private static final List<String> PREFIXED = Jv.listOf(CLAIM, TOWN, LAND);
 
     public Zone(String kind, String name, ServerSettings.ProfileMode mode, String preset) {
         this(kind, name, mode, preset, Rules.NONE, null, 0);
@@ -58,6 +59,7 @@ public record Zone(String kind, String name, ServerSettings.ProfileMode mode, St
      * @param isolated        voices neither leave nor enter the zone
      * @param enterMessage    shown to players who enter (instead of the zone's name), or {@code null}
      */
+    @com.github.bsideup.jabel.Desugar
     public record Rules(Double voiceRange, Double whisperRange, Double rangeMultiplier, Double wallsStrength,
                         Double echo, boolean isolated, String enterMessage) {
 
@@ -73,6 +75,7 @@ public record Zone(String kind, String name, ServerSettings.ProfileMode mode, St
     }
 
     /** An axis-aligned box of blocks in one world, both corners included. */
+    @com.github.bsideup.jabel.Desugar
     public record Box(String world, int x1, int y1, int z1, int x2, int y2, int z2) {
 
         public Box {

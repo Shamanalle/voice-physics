@@ -61,7 +61,7 @@ final class VcdPlaceholders extends PlaceholderExpansion {
 
     @Override
     public List<String> getPlaceholders() {
-        return ServerPlaceholders.NAMES.stream().map(n -> "%vcd_" + n + "%").toList();
+        return ServerPlaceholders.NAMES.stream().map(n -> "%vcd_" + n + "%").collect(java.util.stream.Collectors.toList());
     }
 
     @Override

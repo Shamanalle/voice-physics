@@ -37,6 +37,7 @@ public final class SoundPath {
      *                right-angled corner, about 3.14 back round a wall)
      * @param corners how many corners it goes round
      */
+    @com.github.bsideup.jabel.Desugar
     public record Result(double length, double direct, double openingX, double openingY, double openingZ,
                          double turn, int corners) {
 

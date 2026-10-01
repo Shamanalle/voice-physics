@@ -1,7 +1,7 @@
 name: Paper plugin compatibility
 
-# Checks the Paper / Purpur / Spigot plugin on every Minecraft release from 1.20 on. The plugin is
-# built against gradle.properties' bukkit_api_version; LinkCheck.java then checks that every class,
+# Checks the Paper / Purpur / Spigot plugin on every Minecraft release from 1.16.5 on. The plugin is
+# built against gradle.properties' bukkit_api_version (1.16.5, the Folia part against 1.20.1); LinkCheck.java then checks that every class,
 # method, field and override it uses resolves on each later Paper API the same way. Reviewed, safe
 # differences are listed in .github/scripts/linkcheck-allowed-bukkit.txt. The versions come
 # from Mojang's release list and the Paper API versions from PaperMC's maven.
@@ -34,8 +34,13 @@ jobs:
           meta=$(curl -fsSL https://repo.papermc.io/repository/maven-public/io/papermc/paper/paper-api/maven-metadata.xml)
           entries=()
           for mc in $(printf '%s\n' ${releases} | sort -V); do
-            # Only 1.20 and later
-            [ "$(printf '%s\n%s\n' 1.20 "${mc}" | sort -V | head -1)" = "1.20" ] || continue
+            # Only 1.16.5 and later (1.16.5's Paper API has its own group, com.destroystokyo.paper)
+            [ "$(printf '%s\n%s\n' 1.16.5 "${mc}" | sort -V | head -1)" = "1.16.5" ] || continue
+            if [ "${mc}" = "1.16.5" ]; then
+              echo "Minecraft 1.16.5: Paper API 1.16.5-R0.1-SNAPSHOT (com.destroystokyo.paper)"
+              entries+=("$(jq -cn '{mc: "1.16.5", api: "1.16.5-R0.1-SNAPSHOT", group: "com.destroystokyo.paper"}')")
+              continue
+            fi
             esc="${mc//./\\.}"
             api=$(grep -oP "<version>\K${esc}-R0\.1-SNAPSHOT(?=</version>)" <<< "${meta}" | tail -1 || true)
             if [ -z "${api}" ]; then
@@ -87,7 +92,7 @@ jobs:
       - name: Classpath of Paper ${{ matrix.mc }}
         id: target
         run: |
-          if ./gradlew :bukkit:writeCompatClasspath --no-daemon -PcompatPaperApi=${{ matrix.api }}; then
+          if ./gradlew :bukkit:writeCompatClasspath --no-daemon -PcompatPaperApi=${{ matrix.api }} ${{ matrix.group && format('-PcompatPaperGroup={0}', matrix.group) || '' }}; then
             cp bukkit/build/compat-classpath.txt "${RUNNER_TEMP}/target-classpath.txt"
             echo "resolved=true" >> "$GITHUB_OUTPUT"
           else

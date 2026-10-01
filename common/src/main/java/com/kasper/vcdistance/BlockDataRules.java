@@ -31,6 +31,7 @@ public final class BlockDataRules {
     public static final int MAX = 4096;
 
     /** One file as found, in order from the lowest pack to the highest. */
+    @com.github.bsideup.jabel.Desugar
     public record Source(String name, String json) {
     }
 
@@ -41,8 +42,9 @@ public final class BlockDataRules {
      * @param files    how many files were read
      * @param problems mistakes found, one line each ("pack/file: what")
      */
+    @com.github.bsideup.jabel.Desugar
     public record Loaded(BlockRules rules, int files, List<String> problems) {
-        public static final Loaded NONE = new Loaded(BlockRules.EMPTY, 0, List.of());
+        public static final Loaded NONE = new Loaded(BlockRules.EMPTY, 0, Jv.listOf());
 
         /** "12 rules from 2 files" for reports. */
         public String summary() {
@@ -143,7 +145,7 @@ public final class BlockDataRules {
             }
             out.add(new BlockRules.Rule(e.getKey(), e.getValue()));
         }
-        return new Loaded(BlockRules.of(out), files, List.copyOf(problems));
+        return new Loaded(BlockRules.of(out), files, Jv.copyOf(problems));
     }
 
     /** @return whether the file says {@code "replace": true} */

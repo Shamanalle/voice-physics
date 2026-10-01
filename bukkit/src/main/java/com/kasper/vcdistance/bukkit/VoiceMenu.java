@@ -83,7 +83,7 @@ final class VoiceMenu implements InventoryHolder {
         }
         inventory.setItem(QUIET, modeItem(Material.FEATHER, PlayerPrefs.Mode.QUIET, prefs, true, PlayerPrefs.QUIET_FACTOR));
         inventory.setItem(NORMAL, modeItem(Material.PAPER, PlayerPrefs.Mode.NORMAL, prefs, true, 1.0));
-        inventory.setItem(SHOUT, modeItem(Material.GOAT_HORN, PlayerPrefs.Mode.SHOUT, prefs, canShout, PlayerPrefs.SHOUT_FACTOR));
+        inventory.setItem(SHOUT, modeItem(shoutIcon(), PlayerPrefs.Mode.SHOUT, prefs, canShout, PlayerPrefs.SHOUT_FACTOR));
 
         Zone wallsZone = AudioDistancePlugin.SERVER_SETTINGS.wallsZoneOf(AudioDistancePlugin.PLAYERS.get(player));
         if (wallsLocked) {
@@ -97,7 +97,7 @@ final class VoiceMenu implements InventoryHolder {
         if (hasAddon || !AudioDistancePlugin.SERVER_SETTINGS.isMonitorAllowed()) {
             inventory.setItem(HUD, item(Material.BARRIER, ChatColor.GRAY + t(hasAddon ? "voice.status.hud_addon" : "voice.status.hud_server_off")));
         } else {
-            inventory.setItem(HUD, toggle(Material.SPYGLASS, t("voice.status.hud", onOff(prefs.hud())), prefs.hud(), true));
+            inventory.setItem(HUD, toggle(spyglass(), t("voice.status.hud", onOff(prefs.hud())), prefs.hud(), true));
         }
         if (AudioDistancePlugin.PLAYER_PREFS.canUndo(player)) {
             inventory.setItem(UNDO, item(Material.ARROW, ChatColor.YELLOW + t("btn.undo")));
@@ -136,7 +136,7 @@ final class VoiceMenu implements InventoryHolder {
     }
 
     private static ItemStack item(Material material, String name) {
-        return item(material, name, List.of());
+        return item(material, name, com.kasper.vcdistance.Jv.listOf());
     }
 
     @SuppressWarnings("deprecation")
@@ -209,5 +209,17 @@ final class VoiceMenu implements InventoryHolder {
                 event.setCancelled(true);
             }
         }
+    }
+
+    /** Goat horn (1.19+); 1.18 servers have none, so a bell stands in. */
+    private static Material shoutIcon() {
+        Material horn = Material.matchMaterial("GOAT_HORN");
+        return horn != null ? horn : Material.BELL;
+    }
+
+    /** The spyglass (1.17+); a compass on 1.16. */
+    private static Material spyglass() {
+        Material m = Material.matchMaterial("SPYGLASS");
+        return m != null ? m : Material.COMPASS;
     }
 }

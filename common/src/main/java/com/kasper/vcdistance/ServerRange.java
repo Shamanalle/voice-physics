@@ -20,6 +20,7 @@ public final class ServerRange {
      * @param reason   {@link Reason#HEARS} when the voice reaches the listener
      * @param distance the voice's range in blocks, for the packet (the client fades the voice over it)
      */
+    @com.github.bsideup.jabel.Desugar
     public record Decision(Reason reason, double distance) {
 
         public boolean hears() {

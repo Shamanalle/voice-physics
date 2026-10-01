@@ -20,6 +20,7 @@ public final class NearbyPlayers {
      *
      * @param bearing degrees from where the listener looks, positive to the right ({@link Bearing})
      */
+    @com.github.bsideup.jabel.Desugar
     public record Player(UUID id, String name, double distance, double bearing) {
 
         public Player(UUID id, String name, double distance) {
@@ -31,6 +32,7 @@ public final class NearbyPlayers {
      * One line of the monitor: a voice being heard ({@code speaker} set), or a nearby player who is
      * not talking. {@code state} is {@code null} when the server did not say.
      */
+    @com.github.bsideup.jabel.Desugar
     public record Row(SpeakerRegistry.Speaker speaker, UUID playerId, String name, double distance, double bearing,
                       VoiceState state) {
 
@@ -39,13 +41,13 @@ public final class NearbyPlayers {
         }
     }
 
-    private volatile List<Player> players = List.of();
+    private volatile List<Player> players = Jv.listOf();
 
     /** Replaces the list (client main thread). */
     public void update(List<Player> nearby) {
         List<Player> sorted = new ArrayList<>(nearby);
         sorted.sort(Comparator.comparingDouble(Player::distance));
-        players = List.copyOf(sorted);
+        players = Jv.copyOf(sorted);
     }
 
     /** Nearby players, closest first. */
@@ -54,7 +56,7 @@ public final class NearbyPlayers {
     }
 
     public void clear() {
-        players = List.of();
+        players = Jv.listOf();
     }
 
     /**
