@@ -1,5 +1,6 @@
 package com.kasper.vcdistance.server;
 
+import com.kasper.vcdistance.compat.Mc;
 import com.kasper.vcdistance.compat.Txt;
 
 import com.kasper.vcdistance.AdminCommands;
@@ -56,7 +57,7 @@ public final class VcdCommand {
         CommandReply reply = AdminCommands.execute(args, AudioDistancePlugin.SERVER_SETTINGS, ServerBridge.context(source, hooks));
         for (CommandReply.Line line : reply.lines()) {
             Component text = ReplyComponents.of(line);
-            source.sendSuccess(() -> text, false);
+            Mc.success(source, text);
         }
         return 1;
     }

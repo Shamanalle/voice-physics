@@ -1,5 +1,6 @@
 package com.kasper.vcdistance.server;
 
+import com.kasper.vcdistance.compat.Mc;
 import com.kasper.vcdistance.AudioDistancePlugin;
 import com.kasper.vcdistance.DistanceConfig;
 import com.kasper.vcdistance.Zone;
@@ -67,7 +68,7 @@ public final class Claims {
         }
         List<String> ids;
         try {
-            ids = lookup(((ServerLevel) player.level()).getServer(), world, chunkX, chunkZ);
+            ids = lookup(((ServerLevel) Mc.level(player)).getServer(), world, chunkX, chunkZ);
         } catch (Throwable t) {
             failed = true;
             DistanceConfig.LOGGER.warn("Could not read Open Parties and Claims, claim zones are off: {}", t.toString());

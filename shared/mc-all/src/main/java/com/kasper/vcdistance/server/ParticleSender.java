@@ -1,5 +1,6 @@
 package com.kasper.vcdistance.server;
 
+import com.kasper.vcdistance.compat.Mc;
 import com.kasper.vcdistance.DistanceConfig;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
@@ -38,7 +39,7 @@ final class ParticleSender {
                 DistanceConfig.LOGGER.info("Zone borders cannot be drawn in this Minecraft version");
                 return;
             }
-            ServerLevel level = (ServerLevel) player.level();
+            ServerLevel level = (ServerLevel) Mc.level(player);
             for (double[] p : points) {
                 if (twoFlags) {
                     m.invoke(level, player, ParticleTypes.END_ROD, true, false, p[0], p[1], p[2], 1, 0.0, 0.0, 0.0, 0.0);

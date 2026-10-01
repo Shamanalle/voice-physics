@@ -1,7 +1,7 @@
 package com.kasper.vcdistance.client;
 
+import com.kasper.vcdistance.compat.Mc;
 import net.minecraft.client.Minecraft;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -46,6 +46,6 @@ final class BlockPicker {
     }
 
     private static String idOf(Block block) {
-        return block == null || block == Blocks.AIR ? "" : String.valueOf(BuiltInRegistries.BLOCK.getKey(block));
+        return block == null || block == Blocks.AIR ? "" : Mc.blockId(block);
     }
 }

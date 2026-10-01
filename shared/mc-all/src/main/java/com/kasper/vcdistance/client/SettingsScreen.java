@@ -1,5 +1,6 @@
 package com.kasper.vcdistance.client;
 
+import com.kasper.vcdistance.compat.Mc;
 import com.kasper.vcdistance.compat.Txt;
 import com.kasper.vcdistance.compat.Btn;
 import com.kasper.vcdistance.compat.Tip;
@@ -312,7 +313,7 @@ public abstract class SettingsScreen extends Screen {
     /** Adds a widget below the tabs: it scrolls with the content. */
     private <T extends AbstractWidget> T content(T widget) {
         scrolled.add(widget);
-        scrolledY.add(widget.getY());
+        scrolledY.add(Mc.y(widget));
         addRenderableWidget(widget);
         return widget;
     }
@@ -338,7 +339,7 @@ public abstract class SettingsScreen extends Screen {
         for (int i = 0; i < scrolled.size(); i++) {
             AbstractWidget widget = scrolled.get(i);
             int y = scrolledY.get(i) - scroll;
-            widget.setY(y);
+            Mc.setY(widget, y);
             // A widget cut by the edge of the band is hidden until it scrolls fully into view
             widget.visible = y >= viewTop && y + widget.getHeight() <= viewBottom;
         }
@@ -414,8 +415,8 @@ public abstract class SettingsScreen extends Screen {
         int bw = (w - GAP * (slots - 1)) / slots;
         int x = right - bw * buttons.size() - GAP * (buttons.size() - 1);
         for (Button b : buttons) {
-            b.setX(x);
-            b.setY(footerY);
+            Mc.setX(b, x);
+            Mc.setY(b, footerY);
             b.setWidth(bw);
             addRenderableWidget(b);
             x += bw + GAP;
@@ -1611,7 +1612,7 @@ public abstract class SettingsScreen extends Screen {
         }
         for (AbstractWidget widget : lockedWidgets) {
             if (widget.visible) {
-                lockIcon(c, widget.getX() + widget.getWidth() - 11, widget.getY() + (widget.getHeight() - 8) / 2);
+                lockIcon(c, Mc.x(widget) + widget.getWidth() - 11, Mc.y(widget) + (widget.getHeight() - 8) / 2);
             }
         }
         if (maxScroll > 0) {
@@ -1623,8 +1624,8 @@ public abstract class SettingsScreen extends Screen {
     }
 
     private static void mark(Canvas c, AbstractWidget b) {
-        int x1 = b.getX();
-        int y1 = b.getY();
+        int x1 = Mc.x(b);
+        int y1 = Mc.y(b);
         int x2 = x1 + b.getWidth();
         int y2 = y1 + b.getHeight();
         c.frame(x1 - 1, y1 - 1, x2 + 1, y2 + 1, 0x00000000, Palette.withAlpha(Palette.ACCENT, 0xC0));
@@ -1677,7 +1678,7 @@ public abstract class SettingsScreen extends Screen {
         Component voice = tr("legend.voice");
         Component whisper = tr("legend.whisper");
         int legendW = c.width(voice) + c.width(whisper) + 36;
-        int headRight = listenButton != null ? listenButton.getX() - 8 : x2;
+        int headRight = listenButton != null ? Mc.x(listenButton) - 8 : x2;
         boolean legend = c.width(summary) + legendW + 14 <= headRight - x1;
         c.text(fit(c, summary, (legend ? headRight - legendW : headRight) - x1 - 2), x1 + 1, headerY, Palette.TEXT_DIM);
         if (legend) {
