@@ -16,6 +16,8 @@ plugins {
 rootProject.name = "voicechat-audio-distance-addon"
 
 include "common"
+include "common-j8"
+include "fabric-1.16"
 include "fabric-1.18"
 include "fabric-1.19"
 include "forge-1.18"

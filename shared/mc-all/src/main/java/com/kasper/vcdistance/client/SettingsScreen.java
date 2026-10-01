@@ -48,7 +48,7 @@ import java.util.Map;
  * <p>
  * Version subclasses only forward rendering through a {@link Canvas} and switch screens.
  */
-public abstract class SettingsScreen extends Screen {
+public abstract class SettingsScreen extends com.kasper.vcdistance.compat.BaseScreen {
 
     private static final String K = "gui.vc-audio-distance.";
     private static final int MAX_WIDTH = 420;
@@ -86,6 +86,8 @@ public abstract class SettingsScreen extends Screen {
         }
     }
 
+    @com.github.bsideup.jabel.Desugar
+
     private record Example(String key, AcousticMaterial material, int blocks) {
     }
 
@@ -103,6 +105,7 @@ public abstract class SettingsScreen extends Screen {
     };
 
     /** A section title on the Server tab, at a content y; its rule runs to {@code lineEnd}. */
+    @com.github.bsideup.jabel.Desugar
     private record Heading(Component text, int y, int lineEnd) {
     }
 
@@ -731,8 +734,8 @@ public abstract class SettingsScreen extends Screen {
     }
 
     private void addBlock(String text, String noneKey, BlockRules rules, boolean server) {
-        String key = text == null || text.isBlank() ? null : BlockRules.normalize(text);
-        if (text == null || text.isBlank()) {
+        String key = text == null || com.kasper.vcdistance.Jv.isBlank(text) ? null : BlockRules.normalize(text);
+        if (text == null || com.kasper.vcdistance.Jv.isBlank(text)) {
             blockMessage = tr(noneKey);
         } else if (key == null) {
             blockMessage = tr("blocks.invalid");
@@ -993,7 +996,7 @@ public abstract class SettingsScreen extends Screen {
     }
 
     /** Server tab sections the admin has closed; kept while the game runs. Groups and the addon requirement start closed. */
-    private static final java.util.Set<String> closedSections = new java.util.HashSet<>(java.util.List.of("groups", "addon", "blocks", "extras"));
+    private static final java.util.Set<String> closedSections = new java.util.HashSet<>(com.kasper.vcdistance.Jv.listOf("groups", "addon", "blocks", "extras"));
 
     private static boolean sectionOpen(String id) {
         return !closedSections.contains(id);
@@ -1406,7 +1409,7 @@ public abstract class SettingsScreen extends Screen {
     /** The server's answer to the last change ("Saved ..."), or a hint, left of Done in the footer. */
     private void paintServerStatus(Canvas c) {
         LinkProtocol.AdminReply reply = AudioDistancePlugin.LINK.adminReply();
-        java.util.List<String> lines = reply == null ? List.of() : reply.lines();
+        java.util.List<String> lines = reply == null ? com.kasper.vcdistance.Jv.listOf() : reply.lines();
         Component status = lines.isEmpty() || lines.get(0).startsWith("Voice Physics")
                 ? tr("server.hint") : Txt.literal(lines.get(lines.size() - 1));
         int w = right - left;
@@ -1802,7 +1805,7 @@ public abstract class SettingsScreen extends Screen {
         int hoverX = 0;
         int hoverY = 0;
         List<SpeakerRegistry.Speaker> dots = AudioDistancePlugin.LINK.isMonitorAllowed()
-                ? AudioDistancePlugin.SPEAKERS.active(System.nanoTime()) : List.of();
+                ? AudioDistancePlugin.SPEAKERS.active(System.nanoTime()) : com.kasper.vcdistance.Jv.listOf();
         for (SpeakerRegistry.Speaker s : dots) {
             if (s.getDistance() < 0.0) {
                 continue;

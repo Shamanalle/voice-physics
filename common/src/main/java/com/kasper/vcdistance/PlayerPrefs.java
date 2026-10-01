@@ -48,9 +48,10 @@ public final class PlayerPrefs {
      * One player's choices; volumes are in percent, 0-99 (100 is the default and not stored); the radio
      * is a frequency {@link #RADIO_MIN}-{@link #RADIO_MAX}, or 0 when it is off.
      */
+    @com.github.bsideup.jabel.Desugar
     public record Prefs(Mode mode, boolean walls, boolean hud, Map<UUID, Integer> volumes, int radio) {
 
-        public static final Prefs DEFAULT = new Prefs(Mode.NORMAL, true, false, Map.of(), 0);
+        public static final Prefs DEFAULT = new Prefs(Mode.NORMAL, true, false, Jv.mapOf(), 0);
 
         public boolean isDefault() {
             return mode == Mode.NORMAL && walls && !hud && volumes.isEmpty() && radio == 0;
@@ -79,7 +80,7 @@ public final class PlayerPrefs {
             } else {
                 next.put(other, Math.max(0, percent));
             }
-            return new Prefs(mode, walls, hud, Map.copyOf(next), radio);
+            return new Prefs(mode, walls, hud, Jv.copyOf(next), radio);
         }
     }
 

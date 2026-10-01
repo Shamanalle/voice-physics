@@ -96,7 +96,7 @@ public final class ProfileCode {
                 return null;
             }
             Properties p = new Properties();
-            for (String line : out.toString(StandardCharsets.UTF_8).split("\n")) {
+            for (String line : Jv.utf8(out).split("\n")) {
                 int eq = line.indexOf('=');
                 if (eq > 0) {
                     p.setProperty(line.substring(0, eq).trim(), line.substring(eq + 1).trim());

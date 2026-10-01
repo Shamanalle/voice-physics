@@ -32,7 +32,7 @@ final class WorldGuardRegions {
 
     static List<String> at(Location location) {
         if (!init()) {
-            return List.of();
+            return com.kasper.vcdistance.Jv.listOf();
         }
         try {
             Object weLocation = adapt.invoke(null, location);
@@ -48,7 +48,7 @@ final class WorldGuardRegions {
             }
             return ids;
         } catch (ReflectiveOperationException | RuntimeException e) {
-            return List.of();
+            return com.kasper.vcdistance.Jv.listOf();
         }
     }
 
@@ -90,7 +90,7 @@ final class WorldGuardRegions {
                         associable, Class.forName("com.sk89q.worldguard.protection.flags.Flag"));
             }
             Object value = queryValue.invoke(query, adapt.invoke(null, location), null, zoneFlag);
-            return value instanceof String s && !s.isBlank() ? s.trim() : null;
+            return value instanceof String s && !com.kasper.vcdistance.Jv.isBlank(s) ? s.trim() : null;
         } catch (ReflectiveOperationException | RuntimeException | LinkageError e) {
             return null;
         }

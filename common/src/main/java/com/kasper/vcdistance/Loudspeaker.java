@@ -11,6 +11,7 @@ import java.util.Locale;
  * @param pickup how close a talker must be to the speaker's position to be picked up, in blocks
  * @param radius how far from the speaker players hear it, in blocks
  */
+@com.github.bsideup.jabel.Desugar
 public record Loudspeaker(String name, String world, double x, double y, double z, double pickup, double radius) {
 
     public static final double DEFAULT_PICKUP = 3.0;
@@ -69,7 +70,7 @@ public record Loudspeaker(String name, String world, double x, double y, double 
             return null;
         }
         String[] p = text.split("\\|", -1);
-        if (p.length < 4 || p[0].isBlank()) {
+        if (p.length < 4 || com.kasper.vcdistance.Jv.isBlank(p[0])) {
             return null;
         }
         try {

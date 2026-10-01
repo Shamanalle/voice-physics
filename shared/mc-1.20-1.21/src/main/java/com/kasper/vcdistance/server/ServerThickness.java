@@ -1,5 +1,6 @@
 package com.kasper.vcdistance.server;
 
+import com.kasper.vcdistance.compat.Mc;
 import com.kasper.vcdistance.AudioDistancePlugin;
 import com.kasper.vcdistance.ServerWalls;
 import com.kasper.vcdistance.client.BlockAcoustics;
@@ -28,7 +29,7 @@ public final class ServerThickness implements ServerWalls.ThicknessProvider {
         if (!(listener instanceof ServerPlayer player) || !(levelObject instanceof ServerLevel level)) {
             return Double.NaN;
         }
-        Vec3 ear = player.getEyePosition();
+        Vec3 ear = Mc.eye(player);
         Vec3 source;
         if (speakerEntity != null) {
             // Looked up in the listener's own level, so both are always in the same dimension
@@ -43,7 +44,7 @@ public final class ServerThickness implements ServerWalls.ThicknessProvider {
             if (speaker == null) {
                 return Double.NaN;
             }
-            source = speaker.getEyePosition();
+            source = Mc.eye(speaker);
         } else {
             source = new Vec3(x, y, z);
         }

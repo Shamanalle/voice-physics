@@ -36,7 +36,7 @@ public final class ServerRadio {
                                                      ServerPlayers.Info speaker, double hearRange) {
         int frequency = frequency(s, prefs, speaker);
         if (frequency == 0 || (s.isDeadSilent() && !speaker.alive())) {
-            return List.of();
+            return Jv.listOf();
         }
         List<ServerPlayers.Info> out = new ArrayList<>();
         for (ServerPlayers.Info other : players.all()) {

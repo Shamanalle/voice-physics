@@ -79,4 +79,25 @@ public final class Mc {
     public static InputStream open(Resource resource) throws IOException {
         return resource.getInputStream();
     }
+
+    public static net.minecraft.server.packs.resources.ResourceManager resources(MinecraftServer server) {
+        return server.getResourceManager();
+    }
+
+    /** Resource listing of versions before the 1.19 one (a Collection of locations), {@code null} where it is the newer one. */
+    public static java.util.Map<String, java.util.List<Resource>> listOld(net.minecraft.server.packs.resources.ResourceManager resources, String path) {
+        return null;
+    }
+
+    public static net.minecraft.world.phys.Vec3 eye(Entity entity) {
+        return entity.getEyePosition();
+    }
+
+    public static float yRot(Entity entity) {
+        return entity.getYRot();
+    }
+
+    public static String biomeId(Level level, net.minecraft.core.BlockPos pos) {
+        return String.valueOf(level.getBiome(pos).unwrapKey().orElse(null));
+    }
 }

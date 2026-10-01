@@ -143,16 +143,16 @@ public final class ServerSettings {
     private volatile String eavesdropItem = DEFAULT_EAVESDROP_ITEM;
     private volatile double eavesdropFactor = DEFAULT_EAVESDROP_FACTOR;
     /** Loudspeakers placed with /vcd speaker, by lower-case name. */
-    private volatile Map<String, Loudspeaker> speakers = Map.of();
+    private volatile Map<String, Loudspeaker> speakers = Jv.mapOf();
     private volatile boolean serverSpeakers;
     private volatile boolean serverEavesdrop;
     private volatile boolean serverSculk;
     private volatile boolean serverDoorway;
     private volatile boolean serverIntegrations;
     private volatile long loadedModified = Long.MIN_VALUE;
-    private volatile Map<String, Zone> zones = Map.of();
+    private volatile Map<String, Zone> zones = Jv.mapOf();
     /** Players muted with /vcd mute, by UUID (ended ones stay until the next save). */
-    private volatile Map<UUID, VoiceMute> mutes = Map.of();
+    private volatile Map<UUID, VoiceMute> mutes = Jv.mapOf();
     private volatile String messagesLanguage = "auto";
 
     public ServerSettings() {
@@ -164,7 +164,7 @@ public final class ServerSettings {
      */
     public ServerSettings(Path path) {
         this.path = path;
-        this.profile = new DistanceConfig(Path.of(FILE_NAME));
+        this.profile = new DistanceConfig(java.nio.file.Paths.get(FILE_NAME));
     }
 
     public Path getPath() {
@@ -1020,7 +1020,7 @@ public final class ServerSettings {
 
     private static Map<String, Loudspeaker> readSpeakers(Properties props, Path file) {
         Map<String, Loudspeaker> out = new java.util.LinkedHashMap<>();
-        for (String key : props.stringPropertyNames().stream().sorted().toList()) {
+        for (String key : Jv.toList(props.stringPropertyNames().stream().sorted())) {
             if (!key.startsWith(SPEAKER_PREFIX)) {
                 continue;
             }
@@ -1031,7 +1031,7 @@ public final class ServerSettings {
                 out.put(sp.key(), sp);
             }
         }
-        return Map.copyOf(out);
+        return Jv.copyOf(out);
     }
 
     /** The loudspeakers by lower-case name. */
@@ -1048,7 +1048,7 @@ public final class ServerSettings {
     public synchronized void putSpeaker(Loudspeaker speaker) {
         Map<String, Loudspeaker> next = new java.util.LinkedHashMap<>(speakers);
         next.put(speaker.key(), speaker);
-        speakers = Map.copyOf(next);
+        speakers = Jv.copyOf(next);
     }
 
     /** @return {@code true} when there was such a speaker; call {@link #save()} to keep it */
@@ -1059,7 +1059,7 @@ public final class ServerSettings {
         }
         Map<String, Loudspeaker> next = new java.util.LinkedHashMap<>(speakers);
         next.remove(key);
-        speakers = Map.copyOf(next);
+        speakers = Jv.copyOf(next);
         return true;
     }
 
@@ -1081,7 +1081,7 @@ public final class ServerSettings {
                 out.put(m.player(), m);
             }
         }
-        return Map.copyOf(out);
+        return Jv.copyOf(out);
     }
 
     /** The mute on {@code player} at {@code nowMillis}, or {@code null} when they may talk. */
@@ -1107,7 +1107,7 @@ public final class ServerSettings {
     public synchronized void mute(VoiceMute mute) {
         Map<UUID, VoiceMute> next = new java.util.LinkedHashMap<>(mutes);
         next.put(mute.player(), mute);
-        mutes = Map.copyOf(next);
+        mutes = Jv.copyOf(next);
     }
 
     /** @return {@code true} when the player was muted; call {@link #save()} to keep it */
@@ -1117,13 +1117,13 @@ public final class ServerSettings {
         }
         Map<UUID, VoiceMute> next = new java.util.LinkedHashMap<>(mutes);
         next.remove(player);
-        mutes = Map.copyOf(next);
+        mutes = Jv.copyOf(next);
         return true;
     }
 
     /** A mute that still holds by the muted player's name (ignoring case) or UUID, or {@code null}. */
     public VoiceMute findMute(String nameOrId, long nowMillis) {
-        if (nameOrId == null || nameOrId.isBlank()) {
+        if (nameOrId == null || Jv.isBlank(nameOrId)) {
             return null;
         }
         for (VoiceMute m : mutes(nowMillis)) {
@@ -1137,7 +1137,7 @@ public final class ServerSettings {
     private static Map<String, Zone> readZones(Properties props, Path file) {
         // kind:name -> field -> value
         Map<String, Map<String, String>> parts = new LinkedHashMap<>();
-        for (String key : props.stringPropertyNames().stream().sorted().toList()) {
+        for (String key : Jv.toList(props.stringPropertyNames().stream().sorted())) {
             if (!key.startsWith(ZONE_PREFIX)) {
                 continue;
             }
@@ -1416,7 +1416,7 @@ public final class ServerSettings {
             if (!Files.exists(file)) {
                 save();
             }
-            return Files.readString(file, java.nio.charset.StandardCharsets.UTF_8);
+            return Jv.readString(file, java.nio.charset.StandardCharsets.UTF_8);
         } catch (IOException e) {
             return null;
         }
@@ -1428,7 +1428,7 @@ public final class ServerSettings {
             return false;
         }
         try {
-            Files.writeString(getPath(), snapshot, java.nio.charset.StandardCharsets.UTF_8);
+            Jv.writeString(getPath(), snapshot, java.nio.charset.StandardCharsets.UTF_8);
         } catch (IOException e) {
             DistanceConfig.LOGGER.error("Could not write {}: {}", getPath(), e.getMessage());
             return false;

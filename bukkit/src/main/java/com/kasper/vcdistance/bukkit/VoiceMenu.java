@@ -136,7 +136,7 @@ final class VoiceMenu implements InventoryHolder {
     }
 
     private static ItemStack item(Material material, String name) {
-        return item(material, name, List.of());
+        return item(material, name, com.kasper.vcdistance.Jv.listOf());
     }
 
     @SuppressWarnings("deprecation")

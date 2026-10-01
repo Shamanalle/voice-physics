@@ -1,5 +1,6 @@
 package com.kasper.vcdistance.client;
 
+import com.kasper.vcdistance.compat.Mc;
 import com.kasper.vcdistance.AudioDistancePlugin;
 import com.kasper.vcdistance.Bearing;
 import com.kasper.vcdistance.EnvironmentEffects;
@@ -48,13 +49,13 @@ public final class MinecraftWorldAccess implements WorldAccess {
     @Override
     public Vec3 listenerPosition() {
         Minecraft mc = Minecraft.getInstance();
-        return mc.player != null ? mc.player.getEyePosition() : null;
+        return mc.player != null ? Mc.eye(mc.player) : null;
     }
 
     @Override
     public double listenerYaw() {
         Minecraft mc = Minecraft.getInstance();
-        return mc.player != null ? mc.player.getYRot() : 0.0;
+        return mc.player != null ? Mc.yRot(mc.player) : 0.0;
     }
 
     @Override
@@ -78,7 +79,7 @@ public final class MinecraftWorldAccess implements WorldAccess {
         if (entity == null && mc.player != null && nowNanos - speaker.getLastEntitySearchNanos() > ENTITY_SEARCH_INTERVAL) {
             speaker.setLastEntitySearchNanos(nowNanos);
             double r = Math.max(16.0, speaker.getMaxDistance()) + 8.0;
-            Vec3 p = mc.player.getEyePosition();
+            Vec3 p = Mc.eye(mc.player);
             List<Entity> found = level.getEntities((Entity) null, new AABB(p.x - r, p.y - r, p.z - r, p.x + r, p.y + r, p.z + r),
                     e -> speaker.getEntityId().equals(e.getUUID()));
             entity = found.isEmpty() ? null : found.get(0);
@@ -90,7 +91,7 @@ public final class MinecraftWorldAccess implements WorldAccess {
         if (speaker.getDisplayName() == null) {
             speaker.setDisplayName(entity.getName().getString());
         }
-        return entity.getEyePosition();
+        return Mc.eye(entity);
     }
 
     @Override
@@ -98,15 +99,15 @@ public final class MinecraftWorldAccess implements WorldAccess {
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer self = mc.player;
         if (mc.level == null || self == null || listener == null) {
-            return List.of();
+            return com.kasper.vcdistance.Jv.listOf();
         }
         List<NearbyPlayers.Player> list = new ArrayList<>();
-        double yaw = self.getYRot();
+        double yaw = Mc.yRot(self);
         for (AbstractClientPlayer p : mc.level.players()) {
             if (p == self || (p.isSpectator() && !self.isSpectator()) || p.isInvisibleTo(self)) {
                 continue;
             }
-            Vec3 eye = p.getEyePosition();
+            Vec3 eye = Mc.eye(p);
             double d = listener.distanceTo(eye);
             if (d <= range) {
                 list.add(new NearbyPlayers.Player(p.getUUID(), p.getName().getString(), d,
@@ -158,7 +159,7 @@ public final class MinecraftWorldAccess implements WorldAccess {
         }
         BlockPos pos = new BlockPos(point.x, point.y, point.z);
         return new com.kasper.vcdistance.PlaceTuning.Place(String.valueOf(mc.level.dimension()),
-                String.valueOf(mc.level.getBiome(pos).unwrapKey().orElse(null)), point.y, mc.level.canSeeSky(pos));
+                Mc.biomeId(mc.level, pos), point.y, mc.level.canSeeSky(pos));
     }
 
     @Override

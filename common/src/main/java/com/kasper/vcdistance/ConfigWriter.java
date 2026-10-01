@@ -25,7 +25,7 @@ import java.util.Properties;
  */
 final class ConfigWriter {
 
-    private static final String RULE = "# " + "=".repeat(78);
+    private static final String RULE = "# " + Jv.repeat("=", 78);
 
     private final StringBuilder text = new StringBuilder();
 
@@ -42,7 +42,7 @@ final class ConfigWriter {
     /** A section heading. */
     ConfigWriter section(String english, String russian) {
         text.append('\n').append("# ---------- ").append(english).append(" / ").append(russian)
-                .append(" ").append("-".repeat(Math.max(4, 60 - english.length() - russian.length())))
+                .append(" ").append(Jv.repeat("-", Math.max(4, 60 - english.length() - russian.length())))
                 .append('\n');
         return this;
     }

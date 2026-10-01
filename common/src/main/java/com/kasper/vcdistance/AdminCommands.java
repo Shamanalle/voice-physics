@@ -154,7 +154,7 @@ public final class AdminCommands {
 
         /** The server's worlds, for suggestions. */
         default Collection<String> worlds() {
-            return List.of();
+            return Jv.listOf();
         }
 
         /** Whether claim zones work here (Open Parties and Claims is installed). */
@@ -179,10 +179,12 @@ public final class AdminCommands {
     }
 
     /** A completion for the word being typed, with a short explanation (or {@code null}). */
+    @com.github.bsideup.jabel.Desugar
     public record Suggestion(String text, String tooltip) {
     }
 
     /** A change {@code /vcd undo} can take back: the settings before it, and the command that made it. */
+    @com.github.bsideup.jabel.Desugar
     private record Change(String before, String command, String permission) {
     }
 
@@ -1331,7 +1333,7 @@ public final class AdminCommands {
          */
         void badValue(String command, String value, String allowed, String topic) {
             LineBuilder line = CommandReply.line();
-            if (value == null || value.isBlank()) {
+            if (value == null || Jv.isBlank(value)) {
                 line.addAll(m.spans("error.missing", Style.ERROR, "/vcd " + command, new Span(allowed, Style.VALUE)));
             } else {
                 line.addAll(m.spans("error.value", Style.ERROR, "/vcd " + command, value, new Span(allowed, Style.VALUE)));

@@ -81,6 +81,8 @@ public final class ServerWalls {
 
     private final PerfMeter perf = new PerfMeter();
 
+    @com.github.bsideup.jabel.Desugar
+
     private record PairKey(UUID channel, UUID listener) {
     }
 

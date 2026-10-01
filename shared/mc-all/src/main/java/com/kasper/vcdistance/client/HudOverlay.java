@@ -43,6 +43,7 @@ public final class HudOverlay {
     private static boolean loggedFailure;
 
     /** One HUD line: a colored mark (filled, or hollow for a quiet voice; 0 = none) and the text. */
+    @com.github.bsideup.jabel.Desugar
     private record Line(Component text, int dotColor, int textColor, boolean hollow) {
 
         Line(Component text, int dotColor, int textColor) {

@@ -32,7 +32,7 @@ public final class DataMaterials {
 
     /** Server tick: reads the data packs when the server starts and after {@code /reload}. */
     public static void tick(MinecraftServer server) {
-        ResourceManager resources = server.getResourceManager();
+        ResourceManager resources = Mc.resources(server);
         if (resources == serverResources) {
             return;
         }
@@ -46,6 +46,10 @@ public final class DataMaterials {
      */
     @SuppressWarnings("unchecked")
     private static Map<String, List<Resource>> list(ResourceManager resources) throws Exception {
+        Map<String, List<Resource>> old = Mc.listOld(resources, BlockDataRules.PATH);
+        if (old != null) {
+            return old;
+        }
         java.lang.reflect.Method method = null;
         for (String name : new String[]{"listResourceStacks", "listResources"}) {
             for (java.lang.reflect.Method m : ResourceManager.class.getMethods()) {
@@ -73,7 +77,7 @@ public final class DataMaterials {
         Map<String, List<Resource>> found = new TreeMap<>();
         for (Map.Entry<?, ?> e : ((Map<?, ?>) method.invoke(resources, "voice_physics", filter)).entrySet()) {
             Object value = e.getValue();
-            found.put(String.valueOf(e.getKey()), value instanceof List<?> ? (List<Resource>) value : List.of((Resource) value));
+            found.put(String.valueOf(e.getKey()), value instanceof List<?> ? (List<Resource>) value : com.kasper.vcdistance.Jv.listOf((Resource) value));
         }
         return found;
     }
@@ -91,7 +95,7 @@ public final class DataMaterials {
                     pack++;
                     String name = e.getKey() + (e.getValue().size() > 1 ? " (" + kind + " " + pack + ")" : "");
                     try (InputStream in = Mc.open(resource)) {
-                        byte[] bytes = in.readNBytes(MAX_BYTES + 1);
+                        byte[] bytes = com.kasper.vcdistance.Jv.readNBytes(in, MAX_BYTES + 1);
                         if (bytes.length > MAX_BYTES) {
                             unreadable.add(name + ": larger than 1 MB");
                             continue;
@@ -109,7 +113,7 @@ public final class DataMaterials {
         if (!unreadable.isEmpty()) {
             List<String> problems = new ArrayList<>(unreadable);
             problems.addAll(loaded.problems());
-            loaded = new BlockDataRules.Loaded(loaded.rules(), loaded.files(), List.copyOf(problems));
+            loaded = new BlockDataRules.Loaded(loaded.rules(), loaded.files(), com.kasper.vcdistance.Jv.copyOf(problems));
         }
         if (loaded.files() > 0 || !loaded.problems().isEmpty()) {
             DistanceConfig.LOGGER.info("Block materials from {}s: {}", kind, loaded.summary());

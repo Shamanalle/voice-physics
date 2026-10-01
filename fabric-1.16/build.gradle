@@ -1,0 +1,75 @@
+plugins {
+    id 'fabric-loom' version '1.18.2'
+    id 'java'
+}
+
+// Its jar carries the classes of ':common', so that module is configured first (configure-on-demand)
+evaluationDependsOn(':common-j8')
+
+// Minecraft 1.16.5 (Java 8, see gradle/jabel.gradle): as 1.18.2 (shared/mc-1.18) plus what 1.16 lacks (shared/mc-1.16);
+// later roots replace files of the same path in earlier ones
+def target = "mc1.16.5"
+version = "${project.mod_version}+${target}"
+
+base {
+    archivesName = "voice-physics-fabric"
+}
+
+repositories {
+    mavenCentral()
+    maven {
+        name = "henkelmax.public"
+        url = 'https://maven.maxhenkel.de/repository/public'
+    }
+    maven {
+        name = "TerraformersMC"
+        url = 'https://maven.terraformersmc.com/releases'
+    }
+}
+
+def roots = ["shared/mc-all", "shared/mc-1.20-1.21", "shared/mc-1.19", "shared/mc-1.18", "shared/mc-1.16"].collect { "${rootDir}/${it}/src/main/java".toString() }
+def relative = { String root -> fileTree(root).files.collect { it.path.substring(new File(root).path.length() + 1).replace('\\', '/') } as Set }
+def provided = roots.collect { relative(it) }
+
+sourceSets {
+    main {
+        java {
+            roots.each { srcDir it }
+            exclude { FileTreeElement e ->
+                int i = roots.findIndexOf { e.file.path.startsWith(new File(it).path + File.separator) }
+                String path = e.relativePath.pathString
+                (i + 1 ..< roots.size()).any { provided[it].contains(path) }
+            }
+        }
+    }
+}
+
+dependencies {
+    implementation project(':common-j8')
+
+    minecraft "com.mojang:minecraft:${project.mc116_minecraft}"
+    mappings loom.officialMojangMappings()
+    modImplementation "net.fabricmc:fabric-loader:${project.mc116_fabric_loader}"
+    modImplementation "net.fabricmc.fabric-api:fabric-api:${project.mc116_fabric_api}"
+
+    compileOnly "de.maxhenkel.voicechat:voicechat-api:${project.voicechat_api_version}"
+    modCompileOnly "com.terraformersmc:modmenu:${project.mc116_modmenu}"
+}
+
+apply from: "${rootDir}/gradle/jabel.gradle"
+
+processResources {
+    inputs.property "version", project.version
+
+    filesMatching(["fabric.mod.json"]) {
+        expand "version": project.version
+    }
+}
+
+jar {
+    from project(':common-j8').sourceSets.main.output
+}
+
+remapJar {
+    archiveClassifier = ''
+}

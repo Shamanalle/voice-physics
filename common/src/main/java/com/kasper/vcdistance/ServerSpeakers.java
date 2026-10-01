@@ -10,6 +10,7 @@ import java.util.List;
 public final class ServerSpeakers {
 
     /** One speaker that picked a talker up, and the players who should hear it from there. */
+    @com.github.bsideup.jabel.Desugar
     public record Delivery(Loudspeaker speaker, List<ServerPlayers.Info> listeners) {
     }
 
@@ -24,7 +25,7 @@ public final class ServerSpeakers {
     public static List<Delivery> deliveries(ServerSettings s, PlayerPrefs prefs, ServerPlayers players,
                                             ServerPlayers.Info talker, double hearRange) {
         if (!s.isServerSpeakers() || s.speakers().isEmpty() || (s.isDeadSilent() && !talker.alive())) {
-            return List.of();
+            return Jv.listOf();
         }
         List<Delivery> out = new ArrayList<>();
         for (Loudspeaker speaker : s.speakers().values()) {

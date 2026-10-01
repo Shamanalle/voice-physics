@@ -98,7 +98,7 @@ public final class MinecraftWorldAccess implements WorldAccess {
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer self = mc.player;
         if (mc.level == null || self == null || listener == null) {
-            return List.of();
+            return com.kasper.vcdistance.Jv.listOf();
         }
         List<NearbyPlayers.Player> list = new ArrayList<>();
         double yaw = self.getYRot();

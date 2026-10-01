@@ -42,7 +42,7 @@ final class TownyLandsZones {
         }
         try {
             Object name = townName.invoke(townyApi, at);
-            return name instanceof String s && !s.isBlank() ? s : null;
+            return name instanceof String s && !com.kasper.vcdistance.Jv.isBlank(s) ? s : null;
         } catch (ReflectiveOperationException | RuntimeException e) {
             return null;
         }
@@ -63,7 +63,7 @@ final class TownyLandsZones {
                 return null;
             }
             Object name = landName.invoke(land);
-            return name instanceof String s && !s.isBlank() ? s : null;
+            return name instanceof String s && !com.kasper.vcdistance.Jv.isBlank(s) ? s : null;
         } catch (ReflectiveOperationException | RuntimeException e) {
             return null;
         }

@@ -24,7 +24,7 @@ import java.util.List;
  * <p>
  * Version subclasses only forward rendering through a {@link Canvas} and switch screens.
  */
-public abstract class LogScreen extends Screen {
+public abstract class LogScreen extends com.kasper.vcdistance.compat.BaseScreen {
 
     private static final String K = "gui.vc-audio-distance.";
     private static final int MAX_WIDTH = 420;
