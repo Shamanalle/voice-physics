@@ -11,16 +11,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### English
 
 #### Added
-- **The Paper/Purpur/Folia/Spigot plugin now also runs on Minecraft 1.18.2 – 1.19.4** (it needed 1.20 before). The same jar; Java 17 is enough. `api-version` in `plugin.yml` is lowered to 1.18 so older servers load it.
-- The plugin is checked against every Paper API from 1.18.2 on (`compat-bukkit.yml`) and started on real Paper 1.18.2 and 1.19.4 servers in the in-game tests.
-- Fabric, Forge and NeoForge files are unchanged: they stay 1.20 and newer.
+- **Older Minecraft, same features.** The addon now also runs on **Minecraft 1.16.5, 1.17.1, 1.18.2, 1.19.2 and 1.19.4**:
+  - Fabric / Quilt for 1.16.5, 1.17.1, 1.18.2, 1.19.2 and 1.19.4.
+  - Forge for 1.16.5, 1.18.2 and 1.19.2.
+  - The Paper/Purpur/Folia/Spigot plugin on **1.16.5 – 1.19.4** (it needed 1.20 before). The same jar for every version; `api-version` in `plugin.yml` is lowered to 1.16 so older servers load it. Where an API is missing on 1.16 (mineable tags, `Block#getCollisionShape`, spyglass), the plugin falls back to what 1.16 has; the Folia part is compiled apart.
+- Java 8 for the 1.16.5 and 1.17.1 builds: the shared code is built as Java 8 bytecode, so it loads on the Java those versions use. Everything else still runs on its usual Java.
+- Compatibility checks: the plugin is linked against every Paper API from 1.16.5 on (`compat-bukkit.yml`), every new file is built against the oldest loader of its range, and real servers start in the in-game tests (Fabric 1.16.5, 1.17.1, 1.18.2, 1.19.2, 1.19.4; Forge 1.16.5 on Java 8, 1.18.2, 1.19.2; Paper 1.16.5, 1.17.1, 1.18.2, 1.19.4).
+- Not built: Minecraft 1.19.3, Forge for 1.17.1 and 1.19.4 (Simple Voice Chat itself stopped at 2.5.12 there), and 1.12.2.
 
 ### Русский
 
 #### Добавлено
-- **Плагин Paper/Purpur/Folia/Spigot теперь работает и на Minecraft 1.18.2 – 1.19.4** (раньше нужна была 1.20). Тот же jar, достаточно Java 17. `api-version` в `plugin.yml` снижен до 1.18, чтобы старые серверы его загружали.
-- Плагин проверяется на каждом Paper API начиная с 1.18.2 (`compat-bukkit.yml`) и запускается на настоящих серверах Paper 1.18.2 и 1.19.4 в игровых тестах.
-- Файлы Fabric, Forge и NeoForge не изменились: по-прежнему 1.20 и новее.
+- **Старый Minecraft, те же возможности.** Аддон теперь работает и на **Minecraft 1.16.5, 1.17.1, 1.18.2, 1.19.2 и 1.19.4**:
+  - Fabric / Quilt для 1.16.5, 1.17.1, 1.18.2, 1.19.2 и 1.19.4.
+  - Forge для 1.16.5, 1.18.2 и 1.19.2.
+  - Плагин Paper/Purpur/Folia/Spigot на **1.16.5 – 1.19.4** (раньше нужна была 1.20). Один и тот же jar для всех версий; `api-version` в `plugin.yml` снижен до 1.16, чтобы старые серверы его загружали. Где API нет на 1.16 (теги mineable, `Block#getCollisionShape`, подзорная труба), плагин использует то, что есть в 1.16; часть для Folia компилируется отдельно.
+- Java 8 для сборок 1.16.5 и 1.17.1: общий код собирается как байткод Java 8, поэтому загружается на той Java, которую используют эти версии. Остальное по-прежнему работает на своей Java.
+- Проверки совместимости: плагин проверяется на каждом Paper API начиная с 1.16.5 (`compat-bukkit.yml`), каждый новый файл собирается на самом старом загрузчике своего диапазона, а в игровых тестах запускаются настоящие серверы (Fabric 1.16.5, 1.17.1, 1.18.2, 1.19.2, 1.19.4; Forge 1.16.5 на Java 8, 1.18.2, 1.19.2; Paper 1.16.5, 1.17.1, 1.18.2, 1.19.4).
+- Не собираются: Minecraft 1.19.3, Forge для 1.17.1 и 1.19.4 (сам Simple Voice Chat там остановился на 2.5.12) и 1.12.2.
 
 ## [2.10.1] - 2026-10-01
 
