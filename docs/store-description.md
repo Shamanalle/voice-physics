@@ -10,7 +10,7 @@ The Modrinth project page is `docs/modrinth.md`: the whole page, in English, wit
 
 **Name:** Simple Voice Chat: Voice Physics
 
-**Summary:** Voices that behave like sound: they fade with distance, get muffled by walls, come round corners and echo in caves. A HUD shows who is talking and who hears you. Servers get sound zones, game rules and walls even for players without the addon.
+**Summary:** Realistic proximity voice chat for Simple Voice Chat: voices fade with distance, are muffled by walls (occlusion), come through doors and echo in caves. HUD, presets and sound zones; server-side walls work even for players without the mod.
 
 **Categories:** Utility, Social, Game Mechanics
 
@@ -20,7 +20,7 @@ The Modrinth project page is `docs/modrinth.md`: the whole page, in English, wit
 
 **Название:** Simple Voice Chat: Voice Physics
 
-**Краткое описание** (на площадках только на английском, как выше). Перевод: Голоса ведут себя как звук: затихают с расстоянием, глохнут за стенами, доносятся из-за угла и отдаются эхом в пещерах. HUD показывает, кто говорит и кто слышит вас. Серверу — звуковые зоны, правила игры и стены даже для игроков без аддона.
+**Краткое описание** (на площадках только на английском, как выше). Перевод: Реалистичный проксимити-чат для Simple Voice Chat: голоса затихают с расстоянием, глохнут за стенами (окклюзия), доносятся через двери и отдаются эхом в пещерах. HUD, пресеты и звуковые зоны; стены на сервере работают даже для игроков без мода.
 
 **Категории:** Utility, Social, Game Mechanics
 

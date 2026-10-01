@@ -1,4 +1,4 @@
-A server plugin for [Simple Voice Chat](https://www.curseforge.com/minecraft/bukkit-plugins/simple-voice-chat) on Paper, Purpur, Folia and Spigot. Voices get muffled behind walls for every player, sound zones change how far a voice carries, and game rules decide who hears whom.
+A server plugin for [Simple Voice Chat](https://www.curseforge.com/minecraft/bukkit-plugins/simple-voice-chat) on Paper, Purpur, Folia and Spigot. Proximity voice chat gets realistic: voices are muffled behind walls (occlusion) for every player, sound zones change how far a voice carries, and game rules decide who hears whom.
 
 Players don't need to install anything. Those who also install the [Voice Physics mod](https://www.curseforge.com/projects/1712556) on their client get the rest: distance curves, round corners, echo in caves, water and rain, a HUD and a monitor.
 

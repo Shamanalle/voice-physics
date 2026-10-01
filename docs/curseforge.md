@@ -1,4 +1,4 @@
-An addon for [Simple Voice Chat](https://modrinth.com/plugin/simple-voice-chat) that makes voices behave like sound: they fade with distance, get muffled behind walls, come round corners through doorways and echo in caves.
+An addon for [Simple Voice Chat](https://modrinth.com/plugin/simple-voice-chat) that makes proximity voice chat sound real: voices fade with distance, get muffled behind walls (occlusion), come round corners through doorways and echo in caves.
 
 Install it on your client, on the server, or on both. Each works on its own. On Paper, Purpur, Folia and Spigot servers use the [Voice Physics plugin](https://www.curseforge.com/projects/1715914) instead.
 
