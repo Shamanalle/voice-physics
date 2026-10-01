@@ -145,6 +145,14 @@ jobs:
             java: 17
             dependencies: simple-voice-chat(required)
             curseforge: true
+          - name: Fabric for 1.19.4
+            file: fabric-{v}+mc1.19.4.jar
+            target: mc1.19.4
+            loaders: fabric quilt
+            game-versions: 1.19.4
+            java: 17
+            dependencies: simple-voice-chat(required) fabric-api(required) modmenu(optional)
+            curseforge: true
           - name: Fabric for 1.20 – 1.20.1
             file: fabric-{v}+mc1.20.1.jar
             target: mc1.20.1

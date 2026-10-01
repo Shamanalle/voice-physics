@@ -10,6 +10,7 @@ def releaseTargets = [
         [project: ':fabric-1.16', target: 'mc1.16.5', aliases: []],
         [project: ':fabric-1.18', target: 'mc1.18.2', aliases: []],
         [project: ':fabric-1.19', target: 'mc1.19.2', aliases: []],
+        [project: ':fabric-1.19.4', target: 'mc1.19.4', aliases: []],
         [project: ':fabric-1.20', target: 'mc1.20.1', aliases: []],
         [project: ':fabric-1.20.4', target: 'mc1.20.2-1.20.4', aliases: []],
         [project: ':fabric-1.20.6', target: 'mc1.20.5-1.20.6', aliases: []],

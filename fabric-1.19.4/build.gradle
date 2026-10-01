@@ -1,0 +1,82 @@
+plugins {
+    id 'fabric-loom' version '1.18.2'
+    id 'java'
+}
+
+// Its jar carries the classes of ':common', so that module is configured first (configure-on-demand)
+evaluationDependsOn(':common')
+
+// Minecraft 1.19.4: the screens still draw with PoseStack (GuiGraphics came in 1.20), but it has the 1.19.3+
+// widgets and registries, so shared/mc-1.19 is taken and the files that differ again come from shared/mc-1.19.4
+def target = "mc1.19.4"
+version = "${project.mod_version}+${target}"
+
+base {
+    archivesName = "voice-physics-fabric"
+}
+
+repositories {
+    mavenCentral()
+    maven {
+        name = "henkelmax.public"
+        url = 'https://maven.maxhenkel.de/repository/public'
+    }
+    maven {
+        name = "TerraformersMC"
+        url = 'https://maven.terraformersmc.com/releases'
+    }
+}
+
+// Later roots replace files of the same path in earlier ones: mc-all < mc-1.20-1.21 < mc-1.19 < mc-1.19.4
+def roots = ["shared/mc-all", "shared/mc-1.20-1.21", "shared/mc-1.19", "shared/mc-1.19.4"].collect { "${rootDir}/${it}/src/main/java".toString() }
+def pathsOf = { String root -> fileTree(root).files.collect { it.path.substring(new File(root).path.length() + 1).replace('\\', '/') } as Set }
+def laterPaths = roots.indexed().collectEntries { i, root -> [(root): roots.drop(i + 1).collectMany { pathsOf(it) } as Set] }
+
+sourceSets {
+    main {
+        java {
+            roots.each { srcDir it }
+            exclude { FileTreeElement e ->
+                roots.any { root -> e.file.path.startsWith(new File(root).path + File.separator) && laterPaths[root].contains(e.relativePath.pathString) }
+            }
+        }
+    }
+}
+
+dependencies {
+    implementation project(':common')
+
+    minecraft "com.mojang:minecraft:${project.mc1194_minecraft}"
+    mappings loom.officialMojangMappings()
+    modImplementation "net.fabricmc:fabric-loader:${project.mc1194_fabric_loader}"
+    modImplementation "net.fabricmc.fabric-api:fabric-api:${project.mc1194_fabric_api}"
+
+    compileOnly "de.maxhenkel.voicechat:voicechat-api:${project.voicechat_api_version}"
+    modCompileOnly "com.terraformersmc:modmenu:${project.mc1194_modmenu}"
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.release = 17
+    options.encoding = 'UTF-8'
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
+processResources {
+    inputs.property "version", project.version
+
+    filesMatching(["fabric.mod.json"]) {
+        expand "version": project.version
+    }
+}
+
+jar {
+    from project(':common').sourceSets.main.output
+}
+
+remapJar {
+    archiveClassifier = ''
+}
