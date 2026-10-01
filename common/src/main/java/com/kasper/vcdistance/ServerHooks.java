@@ -254,6 +254,7 @@ public final class ServerHooks {
     static java.util.Map<String, String> tabState(ServerSettings settings, AdminCommands.Context ctx) {
         java.util.Map<String, String> out = new java.util.LinkedHashMap<>();
         out.put("undo", String.valueOf(AdminCommands.undoable(settings)));
+        out.put("plugin", String.valueOf(ctx.plugin()));
         for (String permission : AdminCommands.PERMISSIONS) {
             out.put("allows." + permission, String.valueOf(ctx.allows(permission)));
         }
