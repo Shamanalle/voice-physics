@@ -87,8 +87,9 @@ dependencies {
     mappings loom.officialMojangMappings()
     forge "net.minecraftforge:forge:${forgeVersion}"
     compileOnly "de.maxhenkel.voicechat:voicechat-api:${props.getProperty('voicechat_api_version')}"
-    // Minecraft 1.16.5 has log4j 2 only; AddonLog (common) logs through it
+    // Minecraft 1.16.5 has log4j 2 only; AddonLog (common) logs through it, and names SLF4J for the newer versions
     compileOnly 'org.apache.logging.log4j:log4j-api:2.17.1'
+    compileOnly "org.slf4j:slf4j-api:${props.getProperty('slf4j_version')}"
 
     jabel 'com.github.bsideup.jabel:jabel-javac-plugin:1.0.0'
     jabel 'net.bytebuddy:byte-buddy-agent:1.15.10'
