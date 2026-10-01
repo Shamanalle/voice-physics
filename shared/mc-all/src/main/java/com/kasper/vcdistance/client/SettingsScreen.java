@@ -1,5 +1,9 @@
 package com.kasper.vcdistance.client;
 
+import com.kasper.vcdistance.compat.Txt;
+import com.kasper.vcdistance.compat.Btn;
+import com.kasper.vcdistance.compat.Tip;
+
 import com.kasper.vcdistance.AcousticMaterial;
 import com.kasper.vcdistance.AdminCommands;
 import com.kasper.vcdistance.AttenuationModel;
@@ -23,7 +27,6 @@ import com.kasper.vcdistance.VoiceState;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
-import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
@@ -170,7 +173,7 @@ public abstract class SettingsScreen extends Screen {
     private int seenAdminReplies = -1;
 
     protected SettingsScreen(Screen parent) {
-        super(Component.translatable(K + "title"));
+        super(Txt.translatable(K + "title"));
         this.parent = parent;
         this.config.ensureLoaded();
         this.snapshot = config.copy();
@@ -270,7 +273,7 @@ public abstract class SettingsScreen extends Screen {
         for (int i = 0; i < tabs.length; i++) {
             Tab t = tabs[i];
             int tabW = i == tabs.length - 1 ? right - x : tabWs[i];
-            Button b = Button.builder(tr(t.key), btn -> switchTab(t)).bounds(x, 22, tabW, 20).build();
+            Button b = Btn.builder(tr(t.key), btn -> switchTab(t)).bounds(x, 22, tabW, 20).build();
             x += tabW + GAP;
             addRenderableWidget(b);
             if (t == tab) {
@@ -325,7 +328,7 @@ public abstract class SettingsScreen extends Screen {
             if (AudioDistancePlugin.LINK.isLocked(e.getValue())) {
                 AbstractWidget widget = e.getKey();
                 widget.active = false;
-                widget.setTooltip(tip("locked.tooltip"));
+                Tip.set(widget, tip("locked.tooltip"));
                 lockedWidgets.add(widget);
             }
         }
@@ -370,17 +373,17 @@ public abstract class SettingsScreen extends Screen {
         List<Button> buttons = new ArrayList<>();
         if (tab != Tab.SERVER) {
             if (codeMode) {
-                copyButton = Button.builder(tr(copyFeedback != null ? copyFeedback : "code.copy"), b -> copyCode())
+                copyButton = Btn.builder(tr(copyFeedback != null ? copyFeedback : "code.copy"), b -> copyCode())
                         .tooltip(tip("code.copy.tooltip")).build();
-                pasteButton = Button.builder(tr(pasteFeedback != null ? pasteFeedback : "code.paste"), b -> pasteCode())
+                pasteButton = Btn.builder(tr(pasteFeedback != null ? pasteFeedback : "code.paste"), b -> pasteCode())
                         .tooltip(tip("code.paste.tooltip")).build();
                 if (anyLocked()) {
                     pasteButton.active = false;
-                    pasteButton.setTooltip(tip("locked.tooltip"));
+                    Tip.set(pasteButton, tip("locked.tooltip"));
                 }
                 buttons.add(copyButton);
                 buttons.add(pasteButton);
-                buttons.add(Button.builder(tr("code.back"), b -> {
+                buttons.add(Btn.builder(tr("code.back"), b -> {
                     codeMode = false;
                     rebuild();
                 }).build());
@@ -393,18 +396,18 @@ public abstract class SettingsScreen extends Screen {
                     default -> null;
                 };
                 if (resetKey != null) {
-                    Button reset = Button.builder(tr("reset.tab"), b -> resetTab()).tooltip(tip(resetKey)).build();
+                    Button reset = Btn.builder(tr("reset.tab"), b -> resetTab()).tooltip(tip(resetKey)).build();
                     reset.active = canResetTab();
                     buttons.add(reset);
                 }
-                buttons.add(Button.builder(tr("code"), b -> {
+                buttons.add(Btn.builder(tr("code"), b -> {
                     codeMode = true;
                     rebuild();
                 }).tooltip(tip("code.tooltip")).build());
-                buttons.add(Button.builder(tr("cancel"), b -> cancel()).tooltip(tip("cancel.tooltip")).build());
+                buttons.add(Btn.builder(tr("cancel"), b -> cancel()).tooltip(tip("cancel.tooltip")).build());
             }
         }
-        buttons.add(Button.builder(tr("done"), b -> saveAndClose()).tooltip(tip("done.tooltip")).build());
+        buttons.add(Btn.builder(tr("done"), b -> saveAndClose()).tooltip(tip("done.tooltip")).build());
 
         // On the Server tab Done keeps the width of a four-button row; the server's reply goes left of it
         int slots = tab == Tab.SERVER ? 4 : buttons.size();
@@ -470,7 +473,7 @@ public abstract class SettingsScreen extends Screen {
         if (AudioDistancePlugin.LINK.isSuggested()) {
             Component label = tr("server.apply");
             int bw = Math.min(this.font.width(label) + 16, w / 2);
-            addRenderableWidget(Button.builder(label, b -> {
+            addRenderableWidget(Btn.builder(label, b -> {
                 config.copyFrom(profile.config());
                 rebuild();
             }).bounds(right - bw, 2, bw, 16).tooltip(tip("server.apply.tooltip")).build());
@@ -495,13 +498,13 @@ public abstract class SettingsScreen extends Screen {
         for (int i = 0; i < presets.length; i++) {
             Preset p = presets[i];
             int x = i == presets.length - 1 ? right - pw : left + i * (pw + GAP);
-            Button b = Button.builder(Component.translatable(p.getTranslationKey()), btn -> {
+            Button b = Btn.builder(Txt.translatable(p.getTranslationKey()), btn -> {
                 double range = AudioDistancePlugin.getServerMaxDistance();
                 // A preset sets the curve and the walls, but never walls the server locks
                 p.apply(config, range, !AudioDistancePlugin.LINK.isLocked(DistanceConfig.Part.WALLS));
                 config.setChosenPreset(p, range);
                 rebuild();
-            }).bounds(x, y, pw, 20).tooltip(Tooltip.create(Component.translatable(p.getTooltipKey()))).build();
+            }).bounds(x, y, pw, 20).tooltip(Tip.create(Txt.translatable(p.getTooltipKey()))).build();
             presetButtons.add(b);
             presetOrder.add(p);
             edit(b, DistanceConfig.Part.CURVE);
@@ -512,7 +515,7 @@ public abstract class SettingsScreen extends Screen {
         // enforces its profile). One width for both labels so it does not jump when it toggles.
         graphHeaderY = y;
         int lw = Math.max(this.font.width(tr("listen")), this.font.width(tr("listen.stop"))) + 12;
-        listenButton = content(Button.builder(previewStep >= 0 ? tr("listen.stop") : tr("listen"), b -> togglePreview())
+        listenButton = content(Btn.builder(previewStep >= 0 ? tr("listen.stop") : tr("listen"), b -> togglePreview())
                 .bounds(right - lw, y, lw, 14).tooltip(tip("listen.tooltip")).build());
         graphTop = y + 17;
 
@@ -534,7 +537,7 @@ public abstract class SettingsScreen extends Screen {
                 v -> tr("whisper", pct(v))), "whisper.tooltip"), DistanceConfig.Part.CURVE);
 
         // The rest of the curve is for tuning: a section that opens, like the materials
-        content(Button.builder(Component.literal(distanceMoreOpen ? "▾ " : "▸ ").append(tr("distance.more")), b -> {
+        content(Btn.builder(Txt.literal(distanceMoreOpen ? "▾ " : "▸ ").append(tr("distance.more")), b -> {
             distanceMoreOpen = !distanceMoreOpen;
             rebuild();
         }).bounds(left, rows + ROW, w, 20).tooltip(tip("distance.more.tooltip")).build());
@@ -543,11 +546,11 @@ public abstract class SettingsScreen extends Screen {
             return;
         }
         int more = rows + ROW * 2;
-        edit(Button.builder(modelLabel(), b -> {
+        edit(Btn.builder(modelLabel(), b -> {
             config.setModel(config.getModel().next());
             b.setMessage(modelLabel());
-            b.setTooltip(Tooltip.create(Component.translatable(config.getModel().getTooltipKey())));
-        }).bounds(left, more, colW, 20).tooltip(Tooltip.create(Component.translatable(shown().getModel().getTooltipKey()))).build(),
+            Tip.set(b, Tip.create(Txt.translatable(config.getModel().getTooltipKey())));
+        }).bounds(left, more, colW, 20).tooltip(Tip.create(Txt.translatable(shown().getModel().getTooltipKey()))).build(),
                 DistanceConfig.Part.CURVE);
 
         edit(withTip(new RangeSlider(col2, more, colW, 20,
@@ -570,7 +573,7 @@ public abstract class SettingsScreen extends Screen {
         int colW = (w - GAP) / 2;
         int y = contentTop;
 
-        edit(Button.builder(wallsLabel(), b -> {
+        edit(Btn.builder(wallsLabel(), b -> {
             config.setOcclusionEnabled(!config.isOcclusionEnabled());
             b.setMessage(wallsLabel());
             if (strengthSlider != null) {
@@ -596,7 +599,7 @@ public abstract class SettingsScreen extends Screen {
         y = panelBottom + 6;
 
         // Materials: a section that opens under the preview
-        content(Button.builder(Component.literal(materialsOpen ? "▾ " : "▸ ").append(tr("materials.section")), b -> {
+        content(Btn.builder(Txt.literal(materialsOpen ? "▾ " : "▸ ").append(tr("materials.section")), b -> {
             materialsOpen = !materialsOpen;
             rebuild();
         }).bounds(left, y, w, 20).tooltip(tip("materials.hint")).build());
@@ -614,7 +617,7 @@ public abstract class SettingsScreen extends Screen {
                 int x = col == cols - 1 ? right - cellW : left + col * (cellW + GAP);
                 int cy = y + (i / cols) * ROW;
                 if (i == materials.length) {
-                    edit(Button.builder(tr("materials.reset"), b -> {
+                    edit(Btn.builder(tr("materials.reset"), b -> {
                         config.resetMaterials();
                         rebuild();
                     }).bounds(x, cy, cellW, 20).tooltip(tip("materials.reset.tooltip")).build(), DistanceConfig.Part.MATERIALS);
@@ -623,8 +626,8 @@ public abstract class SettingsScreen extends Screen {
                 AcousticMaterial m = materials[i];
                 RangeSlider slider = new RangeSlider(x, cy, cellW, 20, 0.0, AcousticMaterial.MAX_WEIGHT, 0.05,
                         () -> shown().getMaterialWeight(m), v -> config.setMaterialWeight(m, v),
-                        v -> tr("material.value", Component.translatable(m.getTranslationKey()), pct(v)));
-                slider.setTooltip(Tooltip.create(Component.translatable(m.getTooltipKey())));
+                        v -> tr("material.value", Txt.translatable(m.getTranslationKey()), pct(v)));
+                Tip.set(slider, Tip.create(Txt.translatable(m.getTooltipKey())));
                 edit(slider, DistanceConfig.Part.MATERIALS);
             }
             y += ((cells + cols - 1) / cols) * ROW;
@@ -654,11 +657,11 @@ public abstract class SettingsScreen extends Screen {
         notes.add(new Heading(tr("blocks.hint"), y, right));
         y += 12;
         int third = (w - GAP * 2) / 3;
-        blockWidget(Button.builder(tr("blocks.look"), b -> addBlock(BlockPicker.lookedAt(), "blocks.none_looked", rules, server))
+        blockWidget(Btn.builder(tr("blocks.look"), b -> addBlock(BlockPicker.lookedAt(), "blocks.none_looked", rules, server))
                 .bounds(left, y, third, 20).tooltip(tip("blocks.look.tooltip")).build(), server, st);
-        blockWidget(Button.builder(tr("blocks.hand"), b -> addBlock(BlockPicker.inHand(), "blocks.none_held", rules, server))
+        blockWidget(Btn.builder(tr("blocks.hand"), b -> addBlock(BlockPicker.inHand(), "blocks.none_held", rules, server))
                 .bounds(left + third + GAP, y, third, 20).tooltip(tip("blocks.hand.tooltip")).build(), server, st);
-        Button clear = Button.builder(tr("blocks.clear"), b -> {
+        Button clear = Btn.builder(tr("blocks.clear"), b -> {
             if (server) {
                 AudioDistancePlugin.LINK.sendAdmin("block clear");
             } else {
@@ -674,9 +677,9 @@ public abstract class SettingsScreen extends Screen {
         int addW = Math.min(third, this.font.width(tr("blocks.add")) + 16);
         EditBox field = new EditBox(this.font, left, y, w - addW - GAP, 20, tr("blocks.field"));
         field.setMaxLength(100);
-        field.setTooltip(tip("blocks.field.tooltip"));
+        Tip.set(field, tip("blocks.field.tooltip"));
         blockWidget(field, server, st);
-        blockWidget(Button.builder(tr("blocks.add"), b -> addBlock(field.getValue(), "blocks.invalid", rules, server))
+        blockWidget(Btn.builder(tr("blocks.add"), b -> addBlock(field.getValue(), "blocks.invalid", rules, server))
                 .bounds(right - addW, y, addW, 20).tooltip(tip("blocks.add.tooltip")).build(), server, st);
         y += ROW;
 
@@ -687,8 +690,8 @@ public abstract class SettingsScreen extends Screen {
         int matW = Math.min(110, w / 3);
         int matX = right - matW - 20 - GAP;
         for (BlockRules.Rule rule : rules.rules()) {
-            ruleLabels.add(new Heading(Component.literal(rule.key()), y + 6, matX - GAP));
-            blockWidget(Button.builder(Component.translatable(rule.material().getTranslationKey()), b -> {
+            ruleLabels.add(new Heading(Txt.literal(rule.key()), y + 6, matX - GAP));
+            blockWidget(Btn.builder(Txt.translatable(rule.material().getTranslationKey()), b -> {
                 AcousticMaterial[] all = AcousticMaterial.values();
                 AcousticMaterial next = all[(rule.material().ordinal() + 1) % all.length];
                 if (server) {
@@ -698,7 +701,7 @@ public abstract class SettingsScreen extends Screen {
                     rebuild();
                 }
             }).bounds(matX, y, matW, 20).tooltip(tip("blocks.material.tooltip")).build(), server, st);
-            blockWidget(Button.builder(Component.literal("×"), b -> {
+            blockWidget(Btn.builder(Txt.literal("×"), b -> {
                 if (server) {
                     AudioDistancePlugin.LINK.sendAdmin("block remove " + rule.key());
                 } else {
@@ -758,7 +761,7 @@ public abstract class SettingsScreen extends Screen {
         int w = right - left;
         int colW = (w - GAP) / 2;
         int y = contentTop;
-        edit(Button.builder(onOff("effects.reverb", shown().isReverbEnabled()), b -> {
+        edit(Btn.builder(onOff("effects.reverb", shown().isReverbEnabled()), b -> {
             config.setReverbEnabled(!config.isReverbEnabled());
             b.setMessage(onOff("effects.reverb", config.isReverbEnabled()));
             if (reverbSlider != null) {
@@ -773,7 +776,7 @@ public abstract class SettingsScreen extends Screen {
         edit(withTip(reverbSlider, "effects.reverb.strength.tooltip"), DistanceConfig.Part.EFFECTS);
 
         // Water and weather: on or off, and how strong, like the echo
-        edit(Button.builder(onOff("effects.water", shown().isUnderwaterEnabled()), b -> {
+        edit(Btn.builder(onOff("effects.water", shown().isUnderwaterEnabled()), b -> {
             config.setUnderwaterEnabled(!config.isUnderwaterEnabled());
             b.setMessage(onOff("effects.water", config.isUnderwaterEnabled()));
             if (waterSlider != null) {
@@ -787,7 +790,7 @@ public abstract class SettingsScreen extends Screen {
         waterSlider.active = shown().isUnderwaterEnabled();
         edit(withTip(waterSlider, "effects.water.strength.tooltip"), DistanceConfig.Part.EFFECTS);
 
-        edit(Button.builder(onOff("effects.weather", shown().isWeatherEnabled()), b -> {
+        edit(Btn.builder(onOff("effects.weather", shown().isWeatherEnabled()), b -> {
             config.setWeatherEnabled(!config.isWeatherEnabled());
             b.setMessage(onOff("effects.weather", config.isWeatherEnabled()));
             if (weatherSlider != null) {
@@ -801,11 +804,11 @@ public abstract class SettingsScreen extends Screen {
         weatherSlider.active = shown().isWeatherEnabled();
         edit(withTip(weatherSlider, "effects.weather.strength.tooltip"), DistanceConfig.Part.EFFECTS);
 
-        edit(Button.builder(onOff("effects.corners", shown().isDiffractionEnabled()), b -> {
+        edit(Btn.builder(onOff("effects.corners", shown().isDiffractionEnabled()), b -> {
             config.setDiffractionEnabled(!config.isDiffractionEnabled());
             b.setMessage(onOff("effects.corners", config.isDiffractionEnabled()));
         }).bounds(left, y + ROW * 3, colW, 20).tooltip(tip("effects.corners.tooltip")).build(), DistanceConfig.Part.EFFECTS);
-        edit(Button.builder(onOff("effects.place", shown().isPlaceTuning()), b -> {
+        edit(Btn.builder(onOff("effects.place", shown().isPlaceTuning()), b -> {
             config.setPlaceTuning(!config.isPlaceTuning());
             b.setMessage(onOff("effects.place", config.isPlaceTuning()));
         }).bounds(right - colW, y + ROW * 3, colW, 20).tooltip(tip("effects.place.tooltip")).build(), DistanceConfig.Part.EFFECTS);
@@ -829,11 +832,11 @@ public abstract class SettingsScreen extends Screen {
         int col2 = right - colW;
         int y = contentTop;
         DistanceConfig prefs = config;
-        content(Button.builder(HudOverlay.modeLabel(prefs.getHudMode()), b -> {
+        content(Btn.builder(HudOverlay.modeLabel(prefs.getHudMode()), b -> {
             prefs.setHudMode(prefs.getHudMode().next());
             b.setMessage(HudOverlay.modeLabel(prefs.getHudMode()));
         }).bounds(left, y, colW, 20).tooltip(tip("hud.mode.tooltip")).build());
-        content(Button.builder(HudOverlay.cornerLabel(prefs.getHudCorner()), b -> {
+        content(Btn.builder(HudOverlay.cornerLabel(prefs.getHudCorner()), b -> {
             prefs.setHudCorner(prefs.getHudCorner().next());
             b.setMessage(HudOverlay.cornerLabel(prefs.getHudCorner()));
         }).bounds(col2, y, colW, 20).tooltip(tip("hud.corner.tooltip")).build());
@@ -844,20 +847,20 @@ public abstract class SettingsScreen extends Screen {
         content(withTip(new RangeSlider(col2, y + ROW, colW, 20, 0.0, 1.0, 0.05,
                 prefs::getHudBackground, prefs::setHudBackground, v -> tr("hud.background", pct(v))), "hud.background.tooltip"));
 
-        content(Button.builder(onOff("hud.compact", prefs.isHudCompact()), b -> {
+        content(Btn.builder(onOff("hud.compact", prefs.isHudCompact()), b -> {
             prefs.setHudCompact(!prefs.isHudCompact());
             b.setMessage(onOff("hud.compact", prefs.isHudCompact()));
         }).bounds(left, y + ROW * 2, colW, 20).tooltip(tip("hud.compact.tooltip")).build());
-        content(Button.builder(colorsLabel(), b -> {
+        content(Btn.builder(colorsLabel(), b -> {
             prefs.setColorblind(!prefs.isColorblind());
             b.setMessage(colorsLabel());
         }).bounds(col2, y + ROW * 2, colW, 20).tooltip(tip("colors.tooltip")).build());
 
-        content(Button.builder(onOff("hud.contrast", prefs.isHudContrast()), b -> {
+        content(Btn.builder(onOff("hud.contrast", prefs.isHudContrast()), b -> {
             prefs.setHudContrast(!prefs.isHudContrast());
             b.setMessage(onOff("hud.contrast", prefs.isHudContrast()));
         }).bounds(left, y + ROW * 3, colW, 20).tooltip(tip("hud.contrast.tooltip")).build());
-        content(Button.builder(onOff("hud.markers", prefs.isHudMarkers()), b -> {
+        content(Btn.builder(onOff("hud.markers", prefs.isHudMarkers()), b -> {
             prefs.setHudMarkers(!prefs.isHudMarkers());
             b.setMessage(onOff("hud.markers", prefs.isHudMarkers()));
         }).bounds(col2, y + ROW * 3, colW, 20).tooltip(tip("hud.markers.tooltip")).build());
@@ -875,7 +878,7 @@ public abstract class SettingsScreen extends Screen {
 
     private void initMonitor() {
         int colW = (right - left - GAP) / 2;
-        content(Button.builder(viewLabel(), b -> {
+        content(Btn.builder(viewLabel(), b -> {
             radarView = !radarView;
             b.setMessage(viewLabel());
         }).bounds(left, contentTop, colW, 20).tooltip(tip("monitor.view.tooltip")).build());
@@ -943,9 +946,9 @@ public abstract class SettingsScreen extends Screen {
     }
 
     private Button serverButton(Component label, String tooltip, int x, int y, int w, String command) {
-        Button b = Button.builder(label, btn -> AudioDistancePlugin.LINK.sendAdmin(command)).bounds(x, y, w, 20).build();
+        Button b = Btn.builder(label, btn -> AudioDistancePlugin.LINK.sendAdmin(command)).bounds(x, y, w, 20).build();
         if (tooltip != null) {
-            b.setTooltip(tip(tooltip));
+            Tip.set(b, tip(tooltip));
         }
         b.active = mayRun(serverState(), command);
         return content(b);
@@ -970,10 +973,10 @@ public abstract class SettingsScreen extends Screen {
 
     private static Component presetName(String name) {
         return switch (name == null ? "custom" : name) {
-            case "vanilla" -> Component.translatable(Preset.VANILLA.getTranslationKey());
-            case "realistic" -> Component.translatable(Preset.REALISTIC.getTranslationKey());
-            case "clear" -> Component.translatable(Preset.CLEAR.getTranslationKey());
-            case "stealth" -> Component.translatable(Preset.ATMOSPHERIC.getTranslationKey());
+            case "vanilla" -> Txt.translatable(Preset.VANILLA.getTranslationKey());
+            case "realistic" -> Txt.translatable(Preset.REALISTIC.getTranslationKey());
+            case "clear" -> Txt.translatable(Preset.CLEAR.getTranslationKey());
+            case "stealth" -> Txt.translatable(Preset.ATMOSPHERIC.getTranslationKey());
             default -> tr("server.preset.custom");
         };
     }
@@ -984,7 +987,7 @@ public abstract class SettingsScreen extends Screen {
             case "none" -> tr("server.locked.none");
             case "curve" -> tr("server.locked.curve");
             case "curve,walls,materials", "curve,walls" -> tr("server.locked.curve_walls");
-            default -> Component.literal(locked);
+            default -> Txt.literal(locked);
         };
     }
 
@@ -1001,11 +1004,11 @@ public abstract class SettingsScreen extends Screen {
      */
     private int sectionHead(String id, String key, Component summary, int y) {
         boolean open = sectionOpen(id);
-        Component label = Component.literal(open ? "▾ " : "▸ ").append(tr(key));
+        Component label = Txt.literal(open ? "▾ " : "▸ ").append(tr(key));
         if (!open && summary != null) {
-            label = label.copy().append(Component.literal("  ·  ")).append(summary);
+            label = label.copy().append(Txt.literal("  ·  ")).append(summary);
         }
-        content(Button.builder(label, b -> {
+        content(Btn.builder(label, b -> {
             if (!closedSections.remove(id)) {
                 closedSections.add(id);
             }
@@ -1032,11 +1035,11 @@ public abstract class SettingsScreen extends Screen {
         int value = (int) Math.round(parse(st.getProperty(property, "0")) * 100.0);
         int down = Math.max(0, (value + 9) / 10 * 10 - 10);
         int up = Math.min(maxPct, value / 10 * 10 + 10);
-        Component shown = value == 0 ? tr("off") : Component.literal(value + "%");
-        serverButton(Component.literal("−"), key + ".tooltip", x, y, 20, down == 0 ? command + " off" : command + " " + down + "%")
+        Component shown = value == 0 ? tr("off") : Txt.literal(value + "%");
+        serverButton(Txt.literal("−"), key + ".tooltip", x, y, 20, down == 0 ? command + " off" : command + " " + down + "%")
                 .active &= value > 0;
         serverButton(tr(key, shown), key + ".tooltip", x + 22, y, w - 44, command + " " + up + "%").active &= value < maxPct;
-        serverButton(Component.literal("+"), key + ".tooltip", x + w - 20, y, 20, command + " " + up + "%")
+        serverButton(Txt.literal("+"), key + ".tooltip", x + w - 20, y, 20, command + " " + up + "%")
                 .active &= value < maxPct;
     }
 
@@ -1071,15 +1074,15 @@ public abstract class SettingsScreen extends Screen {
 
         // Walls: − and + in 5% steps either side of the value
         int wallsPct = (int) Math.round(parse(st.getProperty("walls_strength", "0")) * 100.0);
-        y = sectionHead("walls", "server.section.walls", wallsPct == 0 ? tr("off") : Component.literal(wallsPct + "%"), y);
+        y = sectionHead("walls", "server.section.walls", wallsPct == 0 ? tr("off") : Txt.literal(wallsPct + "%"), y);
         if (sectionOpen("walls")) {
             int down = Math.max(0, (wallsPct + 4) / 5 * 5 - 5);
             int up = Math.min(100, wallsPct / 5 * 5 + 5);
-            serverButton(Component.literal("−"), "server.walls.tooltip", left, y, 20, down == 0 ? "walls off" : "walls " + down)
+            serverButton(Txt.literal("−"), "server.walls.tooltip", left, y, 20, down == 0 ? "walls off" : "walls " + down)
                     .active &= wallsPct > 0;
-            serverButton(tr("server.walls", wallsPct == 0 ? tr("off") : Component.literal(wallsPct + "%")), "server.walls.tooltip",
+            serverButton(tr("server.walls", wallsPct == 0 ? tr("off") : Txt.literal(wallsPct + "%")), "server.walls.tooltip",
                     left + 22, y, half - 44, "walls " + up).active &= wallsPct < 100;
-            serverButton(Component.literal("+"), "server.walls.tooltip", left + half - 20, y, 20, "walls " + up)
+            serverButton(Txt.literal("+"), "server.walls.tooltip", left + half - 20, y, 20, "walls " + up)
                     .active &= wallsPct < 100;
             serverToggle("server.server_walls", st, "server_walls", "false", x2, y, half, "serverwalls");
             y += ROW;
@@ -1110,7 +1113,7 @@ public abstract class SettingsScreen extends Screen {
             for (String extra : EXTRAS) {
                 extrasOn += "true".equals(st.getProperty("server_" + extra)) ? 1 : 0;
             }
-            y = sectionHead("extras", "server.section.extras", Component.literal(extrasOn + "/" + EXTRAS.length), y);
+            y = sectionHead("extras", "server.section.extras", Txt.literal(extrasOn + "/" + EXTRAS.length), y);
             if (sectionOpen("extras")) {
                 for (int i = 0; i < EXTRAS.length; i += 2) {
                     serverToggle("server.extras." + EXTRAS[i], st, "server_" + EXTRAS[i], "false", left, y, half, "extras " + EXTRAS[i]);
@@ -1137,7 +1140,7 @@ public abstract class SettingsScreen extends Screen {
             serverButton(tr("server.sneak", pct(parse(sneak))), "server.sneak.tooltip", left, y, half,
                     "rule sneak " + next(SERVER_SNEAK, sneak));
             String megaphone = st.getProperty("megaphone_item", "");
-            serverButton(tr("server.megaphone", megaphone.isEmpty() ? tr("off") : Component.translatable("item.minecraft.goat_horn")),
+            serverButton(tr("server.megaphone", megaphone.isEmpty() ? tr("off") : Txt.translatable("item.minecraft.goat_horn")),
                     "server.megaphone.tooltip", x2, y, half, "rule megaphone " + (megaphone.isEmpty() ? MEGAPHONE : "off"));
             y += ROW;
             serverToggle("server.dead", st, "dead_players_silent", "false", left, y, half, "rule dead");
@@ -1170,7 +1173,7 @@ public abstract class SettingsScreen extends Screen {
 
         // Blocks (often from other mods) that count as a material of their own
         BlockRules serverRules = BlockRules.parse(st.getProperty("block_rules"));
-        y = sectionHead("blocks", "blocks.section", Component.literal(String.valueOf(serverRules.size())), y);
+        y = sectionHead("blocks", "blocks.section", Txt.literal(String.valueOf(serverRules.size())), y);
         if (sectionOpen("blocks")) {
             y = initBlockRules(y, w, true, st);
         }
@@ -1192,7 +1195,7 @@ public abstract class SettingsScreen extends Screen {
         int openW = Math.min(w / 3, this.font.width(tr("server.log.open")) + 16);
         int buttons = openW + (undo > 0 ? undoW + GAP : 0);
         headings.add(new Heading(tr("server.section.log"), y + 6, right - buttons - 8));
-        Button open = content(Button.builder(tr("server.log.open"), btn -> openScreen(newLogScreen(this)))
+        Button open = content(Btn.builder(tr("server.log.open"), btn -> openScreen(newLogScreen(this)))
                 .bounds(right - openW, y, openW, 20).tooltip(tip("server.log.open.tooltip")).build());
         open.active = mayRun(st, "log");
         if (undo > 0) {
@@ -1212,9 +1215,9 @@ public abstract class SettingsScreen extends Screen {
             } catch (RuntimeException ex) {
                 when = "";
             }
-            Component who = "@console".equals(e[1]) ? tr("server.log.console") : Component.literal(e[1]);
-            Component line = Component.literal(when + "  ").append(who).append(Component.literal("  "))
-                    .append("true".equals(e[2]) ? tr("server.log.undone", e[3]) : Component.literal(e[3]));
+            Component who = "@console".equals(e[1]) ? tr("server.log.console") : Txt.literal(e[1]);
+            Component line = Txt.literal(when + "  ").append(who).append(Txt.literal("  "))
+                    .append("true".equals(e[2]) ? tr("server.log.undone", e[3]) : Txt.literal(e[3]));
             notes.add(new Heading(line, y, right));
             y += 11;
         }
@@ -1267,9 +1270,9 @@ public abstract class SettingsScreen extends Screen {
             boolean picked = name.equals(selectedZone);
             Component label = zoneLabel(z);
             if (name.equals(here)) {
-                label = Component.empty().append(label).append(Component.literal(" · ")).append(tr("server.zone.here"));
+                label = Txt.empty().append(label).append(Txt.literal(" · ")).append(tr("server.zone.here"));
             }
-            content(Button.builder(Component.literal(picked ? "▾ " : "▸ ").append(label), btn -> {
+            content(Btn.builder(Txt.literal(picked ? "▾ " : "▸ ").append(label), btn -> {
                 selectedZone = name.equals(selectedZone) ? null : name;
                 confirmDelete = null;
                 rebuild();
@@ -1278,14 +1281,14 @@ public abstract class SettingsScreen extends Screen {
             if (!picked) {
                 continue;
             }
-            serverButton(tr("server.zone.range", "-".equals(z[6]) ? tr("server.default") : Component.literal("×" + z[6])),
+            serverButton(tr("server.zone.range", "-".equals(z[6]) ? tr("server.default") : Txt.literal("×" + z[6])),
                     "server.zone.range.tooltip", left, y, third,
                     "zone set " + ref + " range_multiplier " + zoneValue(next(ZONE_RANGE, z[6])));
-            serverButton(tr("server.zone.walls", "-".equals(z[7]) ? tr("server.default") : Component.literal(pct(parse(z[7])))),
+            serverButton(tr("server.zone.walls", "-".equals(z[7]) ? tr("server.default") : Txt.literal(pct(parse(z[7])))),
                     "server.zone.walls.tooltip", x2, y, third,
                     "zone set " + ref + " walls " + zoneValue(next(ZONE_WALLS, z[7])));
             serverButton(tr("server.zone.echo", "-".equals(z[8]) ? tr("server.default")
-                            : "off".equals(z[8]) ? tr("off") : Component.literal(pct(parse(z[8])))),
+                            : "off".equals(z[8]) ? tr("off") : Txt.literal(pct(parse(z[8])))),
                     "server.zone.echo.tooltip", x3, y, third,
                     "zone set " + ref + " echo " + zoneValue(next(ZONE_ECHO, z[8])));
             y += ROW;
@@ -1296,7 +1299,7 @@ public abstract class SettingsScreen extends Screen {
             serverButton(tr("server.zone.show"), "server.zone.show.tooltip", x2, y, third, "zone show " + ref)
                     .active = "box".equals(z[0]);
             boolean confirm = name.equals(confirmDelete);
-            content(Button.builder(tr(confirm ? "server.zone.delete.confirm" : "server.zone.delete"), btn -> {
+            content(Btn.builder(tr(confirm ? "server.zone.delete.confirm" : "server.zone.delete"), btn -> {
                 if (name.equals(confirmDelete)) {
                     confirmDelete = null;
                     selectedZone = null;
@@ -1313,8 +1316,8 @@ public abstract class SettingsScreen extends Screen {
                 EditBox field = content(new EditBox(this.font, x2, y, third, 20, tr("server.zone.rename")));
                 field.setMaxLength(32);
                 field.setValue(name);
-                field.setTooltip(tip("server.zone.rename.tooltip"));
-                Button rename = content(Button.builder(tr("server.zone.rename"), btn -> {
+                Tip.set(field, tip("server.zone.rename.tooltip"));
+                Button rename = content(Btn.builder(tr("server.zone.rename"), btn -> {
                     String to = field.getValue().trim().toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9_\\-]", "");
                     if (!to.isEmpty() && !to.equals(name)) {
                         selectedZone = to;
@@ -1346,16 +1349,16 @@ public abstract class SettingsScreen extends Screen {
     private static Component zoneLabel(String[] z) {
         List<Component> parts = new ArrayList<>();
         if (!"-".equals(z[6])) {
-            parts.add(tr("server.zone.range", Component.literal("×" + z[6])));
+            parts.add(tr("server.zone.range", Txt.literal("×" + z[6])));
         }
         if (!"-".equals(z[4])) {
             parts.add(tr("server.zone.voice", blocks(parse(z[4]))));
         }
         if (!"-".equals(z[7])) {
-            parts.add(tr("server.zone.walls", Component.literal(pct(parse(z[7])))));
+            parts.add(tr("server.zone.walls", Txt.literal(pct(parse(z[7])))));
         }
         if (!"-".equals(z[8])) {
-            parts.add(tr("server.zone.echo", "off".equals(z[8]) ? tr("off") : Component.literal(pct(parse(z[8])))));
+            parts.add(tr("server.zone.echo", "off".equals(z[8]) ? tr("off") : Txt.literal(pct(parse(z[8])))));
         }
         if ("true".equalsIgnoreCase(z[9])) {
             parts.add(tr("server.zone.isolated_short"));
@@ -1363,9 +1366,9 @@ public abstract class SettingsScreen extends Screen {
         if (!"-".equals(z[3])) {
             parts.add(presetName(z[3]));
         }
-        Component label = Component.empty().append(tr("server.kind." + z[0])).append(Component.literal(" " + z[1]));
+        Component label = Txt.empty().append(tr("server.kind." + z[0])).append(Txt.literal(" " + z[1]));
         for (Component p : parts) {
-            label = Component.empty().append(label).append(Component.literal(" · ")).append(p);
+            label = Txt.empty().append(label).append(Txt.literal(" · ")).append(p);
         }
         return label;
     }
@@ -1404,7 +1407,7 @@ public abstract class SettingsScreen extends Screen {
         LinkProtocol.AdminReply reply = AudioDistancePlugin.LINK.adminReply();
         java.util.List<String> lines = reply == null ? List.of() : reply.lines();
         Component status = lines.isEmpty() || lines.get(0).startsWith("Voice Physics")
-                ? tr("server.hint") : Component.literal(lines.get(lines.size() - 1));
+                ? tr("server.hint") : Txt.literal(lines.get(lines.size() - 1));
         int w = right - left;
         int doneW = (w - GAP * 3) / 4;
         // Two lines when it does not fit in one: the footer is 20 high
@@ -1688,7 +1691,7 @@ public abstract class SettingsScreen extends Screen {
 
         c.frame(x1, y1, x2, y2, Palette.PANEL, Palette.PANEL_BORDER);
         // Volume scale on the left, distance scale along the bottom
-        int scaleW = c.width(Component.literal("100%")) + 4;
+        int scaleW = c.width(Txt.literal("100%")) + 4;
         int px1 = x1 + 4 + scaleW;
         int px2 = x2 - 8;
         int py1 = y1 + 8;
@@ -1706,7 +1709,7 @@ public abstract class SettingsScreen extends Screen {
                 c.vLine(px1 + pw * i / 4, py1, py2, Palette.GRID);
             }
             if (i % 2 == 0 || ph >= 60) {
-                c.right(Component.literal((25 * i) + "%"), px1 - 3, gy - 3, Palette.TEXT_MUTED);
+                c.right(Txt.literal((25 * i) + "%"), px1 - 3, gy - 3, Palette.TEXT_MUTED);
             }
         }
         // Full-volume zone: shaded, with its edge marked
@@ -1782,11 +1785,11 @@ public abstract class SettingsScreen extends Screen {
             int x = px1 + pw * i / 4;
             int ly = py2 + 3;
             if (i == 0) {
-                c.text(Component.literal("0"), x, ly, Palette.TEXT_MUTED);
+                c.text(Txt.literal("0"), x, ly, Palette.TEXT_MUTED);
             } else if (i == 4) {
                 c.right(lastMark, x + 1, ly, Palette.TEXT_MUTED);
             } else {
-                Component mark = Component.literal(blocks(maxDist * i / 4.0));
+                Component mark = Txt.literal(blocks(maxDist * i / 4.0));
                 if (x + (c.width(mark) + 1) / 2 + 4 <= lastLeft) {
                     c.centered(mark, x, ly, Palette.TEXT_MUTED);
                 }
@@ -1949,7 +1952,7 @@ public abstract class SettingsScreen extends Screen {
         RoomEstimate room = env.room();
         boolean reverbOn = shown.isReverbEnabled() && status != AudioDistancePlugin.OcclusionStatus.SOUND_PHYSICS;
         double level = (room.wet() > 0.0 ? room.wet() : room.echoes().loudest()) * shown.getReverbStrength();
-        c.text(fit(c, Component.translatable(room.kind().getTranslationKey()), w), x, rowY,
+        c.text(fit(c, Txt.translatable(room.kind().getTranslationKey()), w), x, rowY,
                 reverbOn && room.isAudible() ? Palette.TEXT : Palette.TEXT_MUTED);
         rowY += 12;
         Component detail = null;
@@ -1962,11 +1965,11 @@ public abstract class SettingsScreen extends Screen {
             c.text(fit(c, detail, w), x, rowY, Palette.TEXT_DIM);
             rowY += 12;
         }
-        int barRight = right - 8 - c.width(Component.literal("100%")) - 4;
+        int barRight = right - 8 - c.width(Txt.literal("100%")) - 4;
         c.fill(x, rowY + 1, barRight, rowY + 7, 0x22FFFFFF);
         c.fill(x, rowY + 1, x + (int) Math.round(Math.min(1.0, reverbOn ? level : 0.0) * (barRight - x)), rowY + 7,
                 Palette.withAlpha(Palette.ACCENT, reverbOn ? 0xFF : 0x70));
-        c.right(Component.literal(pct(reverbOn ? level : 0.0)), right - 8, rowY, Palette.TEXT_DIM);
+        c.right(Txt.literal(pct(reverbOn ? level : 0.0)), right - 8, rowY, Palette.TEXT_DIM);
         rowY += 16;
 
         // Water
@@ -2082,7 +2085,7 @@ public abstract class SettingsScreen extends Screen {
         int loudW = Math.max(60, Math.min(120, (right - left) / 4));
         int loudLeft = loudRight - loudW;
         int distRight = loudLeft - 10;
-        int arrowW = c.width(Component.literal("↗")) + 3;
+        int arrowW = c.width(Txt.literal("↗")) + 3;
         int distW = Math.max(c.width(tr("monitor.col.distance")), c.width(tr("blocks", "000")) + arrowW);
         int nameLeft = left + 16;
         int nameW = distRight - distW - 10 - nameLeft;
@@ -2110,7 +2113,7 @@ public abstract class SettingsScreen extends Screen {
             // Distance and, after it, an arrow towards the player
             String arrow = Bearing.arrow(row.bearing());
             if (!arrow.isEmpty()) {
-                c.right(Component.literal(arrow), distRight, rowY, Palette.TEXT_DIM);
+                c.right(Txt.literal(arrow), distRight, rowY, Palette.TEXT_DIM);
             }
             int numRight = distRight - arrowW;
             if (row.isTalking()) {
@@ -2150,9 +2153,9 @@ public abstract class SettingsScreen extends Screen {
         if (parts.size() == 1 || (parts.size() == 2 && s.isWhispering() && lossDb < 1.5F)) {
             parts.add(tr("monitor.why.clear"));
         }
-        net.minecraft.network.chat.MutableComponent line = Component.empty();
+        net.minecraft.network.chat.MutableComponent line = Txt.empty();
         for (int i = 0; i < parts.size(); i++) {
-            line.append(i == 0 ? parts.get(i) : Component.literal("  ·  ").append(parts.get(i)));
+            line.append(i == 0 ? parts.get(i) : Txt.literal("  ·  ").append(parts.get(i)));
         }
         return line;
     }
@@ -2175,7 +2178,7 @@ public abstract class SettingsScreen extends Screen {
         c.right(tr("blocks", blocks(maxDist)), cx + radius, cy - radius, Palette.TEXT_MUTED);
         // You, facing up
         c.fill(cx - 2, cy - 2, cx + 3, cy + 3, Palette.TEXT);
-        c.centered(Component.literal("↑"), cx, cy - 12, Palette.TEXT_DIM);
+        c.centered(Txt.literal("↑"), cx, cy - 12, Palette.TEXT_DIM);
 
         NearbyPlayers.Row hovered = null;
         int hoverX = 0;
@@ -2218,7 +2221,7 @@ public abstract class SettingsScreen extends Screen {
                 c.frame(px - 2, py - 2, px + 3, py + 3, 0x00000000, color);
             }
             Component name = row.isTalking() ? speakerName(row.speaker())
-                    : Component.literal(row.name() != null ? row.name() : "?");
+                    : Txt.literal(row.name() != null ? row.name() : "?");
             c.text(fit(c, name, 70), px + 5, py - 4, row.isTalking() ? Palette.TEXT : Palette.TEXT_MUTED);
             if (Math.abs(mouseX - px) <= 4 && Math.abs(mouseY - py) <= 4) {
                 hovered = row;
@@ -2231,7 +2234,7 @@ public abstract class SettingsScreen extends Screen {
                     ? tr(hovered.speaker().isWhispering() ? "monitor.whisper" : "monitor.talking")
                     : tr("monitor.state." + (hovered.state() == null ? "silent" : hovered.state().getTranslationKey()));
             Component name = hovered.isTalking() ? speakerName(hovered.speaker())
-                    : Component.literal(hovered.name() != null ? hovered.name() : "?");
+                    : Txt.literal(hovered.name() != null ? hovered.name() : "?");
             badge(c, tr("monitor.radar.badge", name, blocks(hovered.distance()), state), hoverX, hoverY - 17);
         }
         if (rows.isEmpty()) {
@@ -2313,7 +2316,7 @@ public abstract class SettingsScreen extends Screen {
             c.text(fit(c, name, nameW), nameLeft, rowY, Palette.TEXT);
         }
 
-        c.right(s.getDistance() >= 0.0 ? tr("blocks", blocks(s.getDistance())) : Component.literal("—"),
+        c.right(s.getDistance() >= 0.0 ? tr("blocks", blocks(s.getDistance())) : Txt.literal("—"),
                 distRight, rowY, Palette.TEXT_DIM);
 
         float lossDb = wallsActive ? s.getFilter().getDisplayLossDb() : 0.0F;
@@ -2323,8 +2326,8 @@ public abstract class SettingsScreen extends Screen {
         double gain = s.getDistance() >= 0.0
                 ? AudioDistancePlugin.curveGain(heardAt, s.getMaxDistance(), s.isWhispering()) * OcclusionModel.dbToGain(-lossDb)
                 : 0.0;
-        Component pctText = Component.literal(pct(gain));
-        int barRight = loudRight - c.width(Component.literal("100%")) - 4;
+        Component pctText = Txt.literal(pct(gain));
+        int barRight = loudRight - c.width(Txt.literal("100%")) - 4;
         c.fill(loudLeft, rowY + 1, barRight, rowY + 7, 0x22FFFFFF);
         int fill = loudLeft + (int) Math.round(Math.min(1.0, gain) * (barRight - loudLeft));
         double muffle = wallsActive ? s.getFilter().getDisplayMuffle() : 0.0;
@@ -2334,7 +2337,7 @@ public abstract class SettingsScreen extends Screen {
         if (lossDb >= 1.5F) {
             c.right(fit(c, tr(wallLevel(lossDb)), wallsW), wallsRight, rowY, Palette.MUFFLED);
         } else {
-            c.right(Component.literal("—"), wallsRight, rowY, Palette.TEXT_MUTED);
+            c.right(Txt.literal("—"), wallsRight, rowY, Palette.TEXT_MUTED);
         }
     }
 
@@ -2346,7 +2349,7 @@ public abstract class SettingsScreen extends Screen {
         // Hollow marker: in range, not talking
         c.frame(left + 7, rowY + 2, left + 11, rowY + 6, 0x00000000, Palette.withAlpha(color, 0xC0));
         String name = row.name();
-        c.text(fit(c, Component.literal(name != null ? name : row.playerId().toString().substring(0, 8)), nameW),
+        c.text(fit(c, Txt.literal(name != null ? name : row.playerId().toString().substring(0, 8)), nameW),
                 nameLeft, rowY, Palette.TEXT_DIM);
         c.right(tr("blocks", blocks(row.distance())), distRight, rowY, Palette.TEXT_DIM);
         Component text = tr("monitor.state." + (state == null ? "silent" : state.getTranslationKey()));
@@ -2376,7 +2379,7 @@ public abstract class SettingsScreen extends Screen {
     }
 
     private Component modelLabel() {
-        return tr("model.label", Component.translatable(shown().getModel().getTranslationKey()));
+        return tr("model.label", Txt.translatable(shown().getModel().getTranslationKey()));
     }
 
     private Component wallsLabel() {
@@ -2386,31 +2389,31 @@ public abstract class SettingsScreen extends Screen {
     private static Component speakerName(SpeakerRegistry.Speaker s) {
         String name = s.getDisplayName();
         if (name != null && !name.isEmpty()) {
-            return Component.literal(name);
+            return Txt.literal(name);
         }
         if (s.getKind() == SpeakerRegistry.Kind.LOCATIONAL) {
             return tr("monitor.source");
         }
         String id = s.getEntityId() != null ? s.getEntityId().toString() : s.getChannelId().toString();
-        return Component.literal(id.substring(0, 8));
+        return Txt.literal(id.substring(0, 8));
     }
 
     /** Shortens a text with an ellipsis so it fits into {@code maxWidth} pixels. */
     private static Component fit(Canvas c, Component text, int maxWidth) {
         if (maxWidth <= 0) {
-            return Component.empty();
+            return Txt.empty();
         }
         if (c.width(text) <= maxWidth) {
             return text;
         }
         String s = text.getString();
         for (int len = s.length() - 1; len > 0; len--) {
-            Component candidate = Component.literal(s.substring(0, len).trim() + "…");
+            Component candidate = Txt.literal(s.substring(0, len).trim() + "…");
             if (c.width(candidate) <= maxWidth) {
                 return candidate;
             }
         }
-        return Component.literal("…");
+        return Txt.literal("…");
     }
 
     /**
@@ -2424,8 +2427,8 @@ public abstract class SettingsScreen extends Screen {
         int i = 0;
         while (i < words.length && lines.size() < maxLines - 1) {
             String next = line.length() == 0 ? words[i] : line + " " + words[i];
-            if (line.length() > 0 && width.applyAsInt(Component.literal(next)) > maxWidth) {
-                lines.add(Component.literal(line.toString()));
+            if (line.length() > 0 && width.applyAsInt(Txt.literal(next)) > maxWidth) {
+                lines.add(Txt.literal(line.toString()));
                 line.setLength(0);
             } else {
                 line.setLength(0);
@@ -2438,11 +2441,11 @@ public abstract class SettingsScreen extends Screen {
             rest.append(rest.length() == 0 ? "" : " ").append(words[i]);
         }
         if (rest.length() > 0) {
-            Component last = Component.literal(rest.toString());
+            Component last = Txt.literal(rest.toString());
             if (width.applyAsInt(last) > maxWidth) {
                 String t = rest.toString();
                 for (int len = t.length() - 1; len > 0; len--) {
-                    last = Component.literal(t.substring(0, len).trim() + "…");
+                    last = Txt.literal(t.substring(0, len).trim() + "…");
                     if (width.applyAsInt(last) <= maxWidth) {
                         break;
                     }
@@ -2467,16 +2470,16 @@ public abstract class SettingsScreen extends Screen {
     }
 
     private static <T extends AbstractWidget> T withTip(T widget, String key) {
-        widget.setTooltip(tip(key));
+        Tip.set(widget, tip(key));
         return widget;
     }
 
-    private static Tooltip tip(String key) {
-        return Tooltip.create(tr(key));
+    private static Tip tip(String key) {
+        return Tip.create(tr(key));
     }
 
     private static Component tr(String key, Object... args) {
-        return Component.translatable(K + key, args);
+        return Txt.translatable(K + key, args);
     }
 
     private static String pct(double v) {

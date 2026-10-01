@@ -1,5 +1,7 @@
 package com.kasper.vcdistance.server;
 
+import com.kasper.vcdistance.compat.Txt;
+
 import com.kasper.vcdistance.AdminCommands;
 import com.kasper.vcdistance.AudioDistancePlugin;
 import com.kasper.vcdistance.CommandReply;
@@ -68,7 +70,7 @@ public final class VcdCommand {
             if (s.tooltip() == null) {
                 word.suggest(s.text());
             } else {
-                word.suggest(s.text(), Component.literal(s.tooltip()));
+                word.suggest(s.text(), Txt.literal(s.tooltip()));
             }
         }
         return word.buildFuture();

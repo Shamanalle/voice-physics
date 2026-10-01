@@ -1,5 +1,7 @@
 package com.kasper.vcdistance.server;
 
+import com.kasper.vcdistance.compat.Txt;
+
 import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
@@ -35,22 +37,22 @@ public final class ChatLink {
     public static Component of(String text) {
         Matcher m = URL.matcher(text);
         if (failed || !m.find()) {
-            return Component.literal(text);
+            return Txt.literal(text);
         }
-        MutableComponent out = Component.literal("");
+        MutableComponent out = Txt.literal("");
         int last = 0;
         do {
-            out.append(Component.literal(text.substring(last, m.start())));
+            out.append(Txt.literal(text.substring(last, m.start())));
             String url = m.group();
             ClickEvent click = openUrl(url);
-            MutableComponent link = Component.literal(url);
+            MutableComponent link = Txt.literal(url);
             if (click != null) {
                 link = link.withStyle(Style.EMPTY.withClickEvent(click).withUnderlined(true));
             }
             out.append(link);
             last = m.end();
         } while (m.find());
-        out.append(Component.literal(text.substring(last)));
+        out.append(Txt.literal(text.substring(last)));
         return out;
     }
 
@@ -63,7 +65,7 @@ public final class ChatLink {
         if (click == null) {
             return text;
         }
-        return Component.empty().append(text).withStyle(Style.EMPTY.withClickEvent(click).withUnderlined(true));
+        return Txt.empty().append(text).withStyle(Style.EMPTY.withClickEvent(click).withUnderlined(true));
     }
 
     private static ClickEvent openUrl(String url) {

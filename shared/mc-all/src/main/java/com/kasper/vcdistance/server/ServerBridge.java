@@ -1,5 +1,7 @@
 package com.kasper.vcdistance.server;
 
+import com.kasper.vcdistance.compat.Txt;
+
 import com.kasper.vcdistance.AdminCommands;
 import com.kasper.vcdistance.AudioDistancePlugin;
 import com.kasper.vcdistance.EnvironmentEffects;
@@ -113,7 +115,7 @@ public final class ServerBridge {
             public void kick(UUID player, String text) {
                 ServerPlayer p = server.getPlayerList().getPlayer(player);
                 if (p != null) {
-                    p.connection.disconnect(Component.literal(text));
+                    p.connection.disconnect(Txt.literal(text));
                 }
             }
 
@@ -123,7 +125,7 @@ public final class ServerBridge {
                 if (p != null) {
                     // A system message shown as the overlay: the same line above the hotbar as
                     // displayClientMessage(text, true), and clients see it as a game message
-                    p.sendSystemMessage(Component.literal(text), true);
+                    p.sendSystemMessage(Txt.literal(text), true);
                 }
             }
         });

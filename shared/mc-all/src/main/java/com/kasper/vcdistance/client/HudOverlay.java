@@ -1,5 +1,7 @@
 package com.kasper.vcdistance.client;
 
+import com.kasper.vcdistance.compat.Txt;
+
 import com.kasper.vcdistance.AudioDistancePlugin;
 import com.kasper.vcdistance.Bearing;
 import com.kasper.vcdistance.DistanceConfig;
@@ -99,7 +101,7 @@ public final class HudOverlay {
             // One line: the closest voice, and how many more
             Line first = talkerLine(talkers.get(0), wallsActive);
             if (talkers.size() > 1) {
-                first = new Line(Component.empty().append(first.text()).append(Component.literal("  "))
+                first = new Line(Txt.empty().append(first.text()).append(Txt.literal("  "))
                         .append(hud("more", talkers.size() - 1)), first.dotColor(), first.textColor(), first.hollow());
             }
             lines.add(first);
@@ -172,7 +174,7 @@ public final class HudOverlay {
                 continue;
             }
             String name = s.getDisplayName() != null && !s.getDisplayName().isEmpty() ? s.getDisplayName() : "?";
-            Component label = Component.literal(Bearing.marker(name, bearing, s.getDistance()));
+            Component label = Txt.literal(Bearing.marker(name, bearing, s.getDistance()));
             int w = c.width(label) + 8;
             // Left of the middle for a voice on the left, right of it for the right, in the middle when ahead or behind
             double side = Math.sin(Math.toRadians(bearing));
@@ -259,26 +261,26 @@ public final class HudOverlay {
 
     private static Line talkerLine(SpeakerRegistry.Speaker s, boolean wallsActive) {
         Component name = s.getDisplayName() != null && !s.getDisplayName().isEmpty()
-                ? Component.literal(s.getDisplayName())
-                : Component.translatable("gui.vc-audio-distance.monitor.source");
-        Component text = Component.empty().append(name);
+                ? Txt.literal(s.getDisplayName())
+                : Txt.translatable("gui.vc-audio-distance.monitor.source");
+        Component text = Txt.empty().append(name);
         if (s.getDistance() >= 0.0) {
-            text = Component.empty().append(text).append(Component.literal(" "))
-                    .append(Component.translatable("gui.vc-audio-distance.blocks", Math.round(s.getDistance())));
+            text = Txt.empty().append(text).append(Txt.literal(" "))
+                    .append(Txt.translatable("gui.vc-audio-distance.blocks", Math.round(s.getDistance())));
         }
         String arrow = Bearing.arrow(s.getBearing());
         if (!arrow.isEmpty()) {
-            text = Component.empty().append(text).append(Component.literal(" " + arrow));
+            text = Txt.empty().append(text).append(Txt.literal(" " + arrow));
         }
         int color = Palette.TEXT;
         if (s.isWhispering()) {
-            text = Component.empty().append(text).append(Component.literal(" · ")).append(Component.translatable("gui.vc-audio-distance.monitor.whisper"));
+            text = Txt.empty().append(text).append(Txt.literal(" · ")).append(Txt.translatable("gui.vc-audio-distance.monitor.whisper"));
             color = Palette.WHISPER;
         } else if (wallsActive && s.isHeardRound()) {
-            text = Component.empty().append(text).append(Component.literal(" · ")).append(hud("round"));
+            text = Txt.empty().append(text).append(Txt.literal(" · ")).append(hud("round"));
             color = Palette.MUFFLED;
         } else if (wallsActive && s.getFilter().getDisplayLossDb() > 1.0F) {
-            text = Component.empty().append(text).append(Component.literal(" · ")).append(hud("walls"));
+            text = Txt.empty().append(text).append(Txt.literal(" · ")).append(hud("walls"));
             color = Palette.MUFFLED;
         }
         // A filled mark while the voice is loud, a hollow one between words
@@ -297,31 +299,31 @@ public final class HudOverlay {
             return new Line(hud("in_range" + suffix, e.inRange()), Palette.ACCENT, Palette.TEXT);
         }
         Component count = e.isExact()
-                ? Component.literal(String.valueOf(e.hear()))
+                ? Txt.literal(String.valueOf(e.hear()))
                 : hud("of", e.hear(), e.inRange());
         Component text = hud("hears" + suffix, count);
         if (e.group() > 0) {
-            text = Component.empty().append(text).append(Component.literal(" · ")).append(hud("in_group", e.group()));
+            text = Txt.empty().append(text).append(Txt.literal(" · ")).append(hud("in_group", e.group()));
         }
         if (e.deaf() > 0) {
-            text = Component.empty().append(text).append(Component.literal(" · ")).append(hud("deaf", e.deaf()));
+            text = Txt.empty().append(text).append(Txt.literal(" · ")).append(hud("deaf", e.deaf()));
         }
         int color = e.hear() == 0 ? Palette.WARN : Palette.TEXT;
         return new Line(text, e.hear() == 0 ? Palette.WARN : Palette.GOOD, color);
     }
 
     private static Component hud(String key, Object... args) {
-        return Component.translatable(K + key, args);
+        return Txt.translatable(K + key, args);
     }
 
     /** For the settings screen and the HUD key: the HUD mode label. */
     static Component modeLabel(HudMode mode) {
-        return Component.translatable(K + "mode", Component.translatable(mode.getTranslationKey()));
+        return Txt.translatable(K + "mode", Txt.translatable(mode.getTranslationKey()));
     }
 
     static Component cornerLabel(HudCorner corner) {
-        return Component.translatable(K + "corner", Component.empty().append(Component.literal(corner.getArrow() + " "))
-                .append(Component.translatable(corner.getTranslationKey())));
+        return Txt.translatable(K + "corner", Txt.empty().append(Txt.literal(corner.getArrow() + " "))
+                .append(Txt.translatable(corner.getTranslationKey())));
     }
 
     /**
@@ -332,20 +334,20 @@ public final class HudOverlay {
         DistanceConfig prefs = AudioDistancePlugin.CONFIG;
         Palette.useColorblind(prefs.isColorblind());
         List<Line> lines = new ArrayList<>();
-        Component alex = Component.literal("Alex ").append(Component.translatable("gui.vc-audio-distance.blocks", 6))
-                .append(Component.literal(" ↗"));
+        Component alex = Txt.literal("Alex ").append(Txt.translatable("gui.vc-audio-distance.blocks", 6))
+                .append(Txt.literal(" ↗"));
         if (prefs.isHudCompact()) {
-            lines.add(new Line(Component.empty().append(alex).append(Component.literal("  ")).append(hud("more", 2)),
+            lines.add(new Line(Txt.empty().append(alex).append(Txt.literal("  ")).append(hud("more", 2)),
                     Palette.GOOD, Palette.TEXT));
         } else {
             lines.add(new Line(alex, Palette.GOOD, Palette.TEXT));
-            lines.add(new Line(Component.literal("Steve ").append(Component.translatable("gui.vc-audio-distance.blocks", 14))
-                    .append(Component.literal(" ← · ")).append(hud("walls")), Palette.GOOD, Palette.MUFFLED));
-            lines.add(new Line(Component.literal("Sam ").append(Component.translatable("gui.vc-audio-distance.blocks", 3))
-                    .append(Component.literal(" ↓ · ")).append(Component.translatable("gui.vc-audio-distance.monitor.whisper")),
+            lines.add(new Line(Txt.literal("Steve ").append(Txt.translatable("gui.vc-audio-distance.blocks", 14))
+                    .append(Txt.literal(" ← · ")).append(hud("walls")), Palette.GOOD, Palette.MUFFLED));
+            lines.add(new Line(Txt.literal("Sam ").append(Txt.translatable("gui.vc-audio-distance.blocks", 3))
+                    .append(Txt.literal(" ↓ · ")).append(Txt.translatable("gui.vc-audio-distance.monitor.whisper")),
                     Palette.withAlpha(Palette.TEXT_MUTED, 0xC0), Palette.WHISPER, true));
         }
-        lines.add(new Line(hud("hears", Component.literal("2")), Palette.GOOD, Palette.TEXT));
+        lines.add(new Line(hud("hears", Txt.literal("2")), Palette.GOOD, Palette.TEXT));
         drawIn(c, lines, x1, y1, x2 - x1, y2 - y1, false, prefs);
     }
 }
