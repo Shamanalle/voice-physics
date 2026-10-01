@@ -2,7 +2,7 @@
 
 **English** · [Русский](README.ru.md)
 
-An addon for [Simple Voice Chat](https://modrinth.com/plugin/simple-voice-chat) that makes voices behave like sound: they fade with distance, get muffled behind walls, come round corners through doorways and echo in caves. Servers get sound zones, game rules and wall muffling even for players without the addon.
+An addon for [Simple Voice Chat](https://modrinth.com/plugin/simple-voice-chat) that makes proximity voice chat sound real: voices fade with distance, get muffled behind walls (occlusion), come round corners through doorways and echo in caves. Servers get sound zones, game rules and wall muffling even for players without the addon.
 
 [![Modrinth](https://img.shields.io/badge/Modrinth-download-00AF5C?logo=modrinth&logoColor=white)](https://modrinth.com/project/u8mD6TL9)
 [![CurseForge](https://img.shields.io/badge/CurseForge-download-F16436?logo=curseforge&logoColor=white)](https://www.curseforge.com/projects/1712556)
