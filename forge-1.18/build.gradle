@@ -24,7 +24,7 @@ repositories {
     }
 }
 
-// The build against the oldest Forge it supports (1.18.2-40.0.0, .github/workflows/build.yml) passes -PloaderOverride.forge-1.20.1=<version>
+// The build against the oldest Forge it is tested on (1.18.2-40.0.1, .github/workflows/build.yml) passes -PloaderOverride.forge-1.20.1=<version>
 legacyForge {
     version = project.findProperty("loaderOverride.${project.name}") ?: project.forge118_version
 }
