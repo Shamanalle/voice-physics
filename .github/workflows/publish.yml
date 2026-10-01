@@ -270,9 +270,9 @@ jobs:
             file: bukkit-{v}.jar
             target: bukkit
             loaders: paper purpur folia spigot bukkit
-            # Every release since 1.20. compat-bukkit.yml checks them against Paper's API, except 1.20.5
+            # Every release since 1.18.2. compat-bukkit.yml checks them against Paper's API, except 1.20.5
             # (its API can no longer be resolved) and 1.21.2 and 26.1 (Spigot only: Paper skipped them)
-            game-versions: 1.20 1.20.1 1.20.2 1.20.3 1.20.4 1.20.5 1.20.6 1.21 1.21.1 1.21.2 1.21.3 1.21.4 1.21.5 1.21.6 1.21.7 1.21.8 1.21.9 1.21.10 1.21.11 26.1 26.1.1 26.1.2 26.2 26.3
+            game-versions: 1.18.2 1.19 1.19.1 1.19.2 1.19.3 1.19.4 1.20 1.20.1 1.20.2 1.20.3 1.20.4 1.20.5 1.20.6 1.21 1.21.1 1.21.2 1.21.3 1.21.4 1.21.5 1.21.6 1.21.7 1.21.8 1.21.9 1.21.10 1.21.11 26.1 26.1.1 26.1.2 26.2 26.3
             java: 17
             dependencies: simple-voice-chat(required)
             curseforge: false

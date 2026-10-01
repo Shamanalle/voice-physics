@@ -22,7 +22,7 @@ Players don't need to install anything. Those who also install the [Voice Physic
 1. Put `voice-physics-bukkit-*.jar` into `plugins/`. Simple Voice Chat must be installed.
 2. Restart the server. Settings are in `plugins/VoicePhysics/vc-audio-distance-server.properties` and can all be changed in game with `/vcd`.
 
-Minecraft 1.20 – 1.21.11 and 26.1 – 26.3, Java 17+. Each part of `/vcd` has its own permission (`vcd.status`, `vcd.settings`, `vcd.zone`, `vcd.debug`, `vcd.mute`, `vcd.speaker`, `vcd.admin`); operators have all of them.
+Minecraft 1.18.2 – 1.21.11 and 26.1 – 26.3, Java 17+. Each part of `/vcd` has its own permission (`vcd.status`, `vcd.settings`, `vcd.zone`, `vcd.debug`, `vcd.mute`, `vcd.speaker`, `vcd.admin`); operators have all of them.
 
 The plugin sends anonymous usage numbers to bStats (no names, addresses or chat); `metrics=false` in the settings file turns it off.
 

@@ -1,6 +1,6 @@
 name: Paper plugin compatibility
 
-# Checks the Paper / Purpur / Spigot plugin on every Minecraft release from 1.20 on. The plugin is
+# Checks the Paper / Purpur / Spigot plugin on every Minecraft release from 1.18.2 on. The plugin is
 # built against gradle.properties' bukkit_api_version; LinkCheck.java then checks that every class,
 # method, field and override it uses resolves on each later Paper API the same way. Reviewed, safe
 # differences are listed in .github/scripts/linkcheck-allowed-bukkit.txt. The versions come
@@ -34,8 +34,8 @@ jobs:
           meta=$(curl -fsSL https://repo.papermc.io/repository/maven-public/io/papermc/paper/paper-api/maven-metadata.xml)
           entries=()
           for mc in $(printf '%s\n' ${releases} | sort -V); do
-            # Only 1.20 and later
-            [ "$(printf '%s\n%s\n' 1.20 "${mc}" | sort -V | head -1)" = "1.20" ] || continue
+            # Only 1.18.2 and later
+            [ "$(printf '%s\n%s\n' 1.18.2 "${mc}" | sort -V | head -1)" = "1.18.2" ] || continue
             esc="${mc//./\\.}"
             api=$(grep -oP "<version>\K${esc}-R0\.1-SNAPSHOT(?=</version>)" <<< "${meta}" | tail -1 || true)
             if [ -z "${api}" ]; then

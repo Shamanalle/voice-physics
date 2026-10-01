@@ -6,6 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 *Все заметные изменения проекта описываются в этом файле. Каждая версия описана сначала на английском, затем на русском.*
 
+## [2.11.0] - 2026-10-01
+
+### English
+
+#### Added
+- **The Paper/Purpur/Folia/Spigot plugin now also runs on Minecraft 1.18.2 – 1.19.4** (it needed 1.20 before). The same jar; Java 17 is enough. `api-version` in `plugin.yml` is lowered to 1.18 so older servers load it.
+- The plugin is checked against every Paper API from 1.18.2 on (`compat-bukkit.yml`) and started on real Paper 1.18.2 and 1.19.4 servers in the in-game tests.
+- Fabric, Forge and NeoForge files are unchanged: they stay 1.20 and newer.
+
+### Русский
+
+#### Добавлено
+- **Плагин Paper/Purpur/Folia/Spigot теперь работает и на Minecraft 1.18.2 – 1.19.4** (раньше нужна была 1.20). Тот же jar, достаточно Java 17. `api-version` в `plugin.yml` снижен до 1.18, чтобы старые серверы его загружали.
+- Плагин проверяется на каждом Paper API начиная с 1.18.2 (`compat-bukkit.yml`) и запускается на настоящих серверах Paper 1.18.2 и 1.19.4 в игровых тестах.
+- Файлы Fabric, Forge и NeoForge не изменились: по-прежнему 1.20 и новее.
+
 ## [2.10.1] - 2026-10-01
 
 ### English
