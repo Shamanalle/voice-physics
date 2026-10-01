@@ -241,12 +241,25 @@ final class BlockAcoustics {
 
     private static boolean isWood(Sound sound) {
         try {
-            return sound != null && (Objects.equals(sound, Sound.BLOCK_WOOD_BREAK)
-                    || Objects.equals(sound, Sound.BLOCK_NETHER_WOOD_BREAK)
-                    || Objects.equals(sound, Sound.BLOCK_BAMBOO_WOOD_BREAK)
-                    || Objects.equals(sound, Sound.BLOCK_CHERRY_WOOD_BREAK));
+            return sound != null && (Objects.equals(sound, Sound.BLOCK_WOOD_BREAK) || OTHER_WOOD_BREAKS.contains(sound));
         } catch (Throwable t) {
             return false;
         }
+    }
+
+    /** Wood break sounds that older servers lack (Sound constants of 1.19.3 and 1.20), looked up by name. */
+    private static final java.util.List<Object> OTHER_WOOD_BREAKS = lookup(
+            "BLOCK_NETHER_WOOD_BREAK", "BLOCK_BAMBOO_WOOD_BREAK", "BLOCK_CHERRY_WOOD_BREAK");
+
+    private static java.util.List<Object> lookup(String... names) {
+        java.util.List<Object> found = new java.util.ArrayList<>();
+        for (String name : names) {
+            try {
+                found.add(Sound.class.getField(name).get(null));
+            } catch (ReflectiveOperationException | RuntimeException e) {
+                // not on this server version
+            }
+        }
+        return found;
     }
 }
