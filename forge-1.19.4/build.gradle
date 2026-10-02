@@ -24,7 +24,7 @@ repositories {
     }
 }
 
-// The build against the oldest Forge it supports (1.19.4-45.0.0, .github/workflows/build.yml) passes -PloaderOverride.forge-1.19.4=<version>
+// The build against the oldest Forge it supports (1.19.4-45.0.1, the oldest Forge Simple Voice Chat 2.5.12 accepts, .github/workflows/build.yml) passes -PloaderOverride.forge-1.19.4=<version>
 legacyForge {
     version = project.findProperty("loaderOverride.${project.name}") ?: project.forge1194_version
 }
