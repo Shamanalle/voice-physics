@@ -69,6 +69,14 @@ apply from: "${rootDir}/gradle/jabel.gradle"
 
 // Forge 1.17.1's own libraries are Java 16 builds; the bytecode stays Java 8 (--release 8), but dependency
 // resolution has to ask for Java 16 or it finds no matching variant of them
+// Forge 1.17.1's API uses records (ConfigGuiFactory), so java.lang.Record has to be visible: compile against Java 16
+tasks.withType(JavaCompile).configureEach {
+    options.release = 16
+}
+java {
+    sourceCompatibility = JavaVersion.VERSION_16
+    targetCompatibility = JavaVersion.VERSION_16
+}
 configurations.configureEach {
     if (canBeResolved && !canBeConsumed) {
         attributes.attribute(TargetJvmVersion.TARGET_JVM_VERSION_ATTRIBUTE, 16)
