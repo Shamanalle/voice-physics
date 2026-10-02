@@ -1,0 +1,79 @@
+plugins {
+    id 'net.neoforged.moddev.legacyforge' version '2.0.147'
+    id 'java'
+}
+
+// Its jar carries the classes of ':common', so that module is configured first (configure-on-demand)
+evaluationDependsOn(':common-j8')
+
+// Forge 1.17.1: the full addon. The code shared with the Fabric builds is compiled here against
+// Minecraft's own names and turned into Forge's runtime names by reobfJar; only the hooks into Forge
+// (package com.kasper.vcdistance.forge) and a few small version adapters are Forge's own. It runs on Java 16,
+// so it is built as Java 8 bytecode (gradle/jabel.gradle) from ':common-j8', as the Fabric 1.17.1 build is.
+def target = "mc1.17.1"
+version = "${project.mod_version}+${target}"
+
+base {
+    archivesName = "voice-physics-forge"
+}
+
+repositories {
+    mavenCentral()
+    maven {
+        name = "henkelmax.public"
+        url = 'https://maven.maxhenkel.de/repository/public'
+    }
+}
+
+// The build against the oldest Forge it is tested on (1.17.1-37.0.0, .github/workflows/build.yml) passes -PloaderOverride.forge-1.17=<version>
+legacyForge {
+    version = project.findProperty("loaderOverride.${project.name}") ?: project.forge117_version
+}
+
+// Shared files that need Fabric, or that Forge replaces with its own version (same path in this module)
+def sharedRoots = ["${rootDir}/shared/mc-all/src/main/java".toString(), "${rootDir}/shared/mc-1.20-1.21/src/main/java".toString()]
+def replaced = [
+        'com/kasper/vcdistance/AudioDistanceClient.java',
+        'com/kasper/vcdistance/AudioDistanceMod.java',
+        'com/kasper/vcdistance/ModMenuIntegration.java',
+        'com/kasper/vcdistance/client/HudHook.java',
+        'com/kasper/vcdistance/client/PoseScaler.java',
+        'com/kasper/vcdistance/server/AdminPermission.java',
+]
+// Minecraft 1.17 draws with PoseStack, has no button builder and no Component.literal: shared/mc-1.19,
+// shared/mc-1.18 and shared/mc-1.17 replace the files that differ (later roots replace earlier ones)
+def roots = sharedRoots + ["${rootDir}/shared/mc-1.19/src/main/java".toString(), "${rootDir}/shared/mc-1.18/src/main/java".toString(), "${rootDir}/shared/mc-1.17/src/main/java".toString()]
+def relative = { String root -> fileTree(root).files.collect { it.path.substring(new File(root).path.length() + 1).replace('\\', '/') } as Set }
+def provided = roots.collect { relative(it) }
+
+sourceSets {
+    main {
+        java {
+            roots.each { srcDir it }
+            exclude { FileTreeElement e ->
+                int i = roots.findIndexOf { e.file.path.startsWith(new File(it).path + File.separator) }
+                String path = e.relativePath.pathString
+                // the Fabric-only files of the shared roots and of the older bands, and what a later root replaces
+                (i >= 0 && (replaced.contains(path) || (i + 1 ..< roots.size()).any { provided[it].contains(path) }))
+            }
+        }
+    }
+}
+
+dependencies {
+    implementation project(':common-j8')
+    compileOnly "de.maxhenkel.voicechat:voicechat-api:${project.voicechat_api_version}"
+}
+
+apply from: "${rootDir}/gradle/jabel.gradle"
+
+processResources {
+    inputs.property "version", project.version
+    filesMatching("META-INF/mods.toml") {
+        expand "version": project.version
+    }
+}
+
+jar {
+    from project(':common-j8').sourceSets.main.output
+}

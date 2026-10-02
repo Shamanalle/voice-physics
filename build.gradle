@@ -19,11 +19,13 @@ def releaseTargets = [
         [project: ':fabric-26', target: 'mc26.x', aliases: ['neoforge', 'forge']],
 ]
 
-// Full builds of their own: Forge 1.18.2, 1.19.2 and 1.20.1 (remapped to Forge's names by reobfJar), Forge 1.20.6 - 26.x
+// Full builds of their own: Forge 1.17.1, 1.18.2, 1.19.2, 1.19.4 and 1.20.1 (remapped to Forge's names by reobfJar), Forge 1.20.6 - 26.x
 // and NeoForge 1.20.5 - 1.21.11
 def loaderTargets = [
+        [project: ':forge-1.17', task: 'reobfJar', file: 'voice-physics-forge-%s+mc1.17.1.jar'],
         [project: ':forge-1.18', task: 'reobfJar', file: 'voice-physics-forge-%s+mc1.18.2.jar'],
         [project: ':forge-1.19', task: 'reobfJar', file: 'voice-physics-forge-%s+mc1.19.2.jar'],
+        [project: ':forge-1.19.4', task: 'reobfJar', file: 'voice-physics-forge-%s+mc1.19.4.jar'],
         [project: ':forge-1.20.1', task: 'reobfJar', file: 'voice-physics-forge-%s+mc1.20.1.jar'],
         [project: ':forge-1.20.6', task: 'jar', file: 'voice-physics-forge-%s+mc1.20.6.jar'],
         [project: ':forge-1.21', task: 'jar', file: 'voice-physics-forge-%s+mc1.21-1.21.1.jar'],
