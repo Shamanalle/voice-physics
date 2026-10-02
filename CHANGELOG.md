@@ -6,6 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 *Все заметные изменения проекта описываются в этом файле. Каждая версия описана сначала на английском, затем на русском.*
 
+## [2.10.3] - 2026-10-02
+
+### English
+
+#### Added
+- **Forge for 1.17.1 and 1.19.4**, the two Forge builds that 2.10.2 left out. Same features as the other Forge files; Simple Voice Chat 2.5.12 is the newest one on those versions. Forge 1.17.1 runs on Java 16 or newer (built as Java 8 bytecode, like Fabric 1.17.1).
+- Both are compiled against their oldest Forge in CI (`build.yml`) and start on a real server in the in-game tests (`ingame.yml`, oldest and newest loader).
+- Not built: Minecraft 1.19.3 and 1.12.2.
+
+### Русский
+
+#### Добавлено
+- **Forge для 1.17.1 и 1.19.4**: две сборки Forge, которые не вошли в 2.10.2. Те же возможности, что и в остальных файлах Forge; на этих версиях новейшая Simple Voice Chat — 2.5.12. Forge 1.17.1 работает на Java 16 и новее (собран как байткод Java 8, как и Fabric 1.17.1).
+- Обе собираются в CI на самом старом Forge (`build.yml`) и запускаются на настоящем сервере в игровых тестах (`ingame.yml`, самый старый и самый новый загрузчик).
+- Не собираются: Minecraft 1.19.3 и 1.12.2.
+
 ## [2.10.2] - 2026-10-01
 
 ### English

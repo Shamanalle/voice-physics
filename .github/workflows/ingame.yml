@@ -80,10 +80,15 @@ jobs:
           # Forge 1.16.5 runs on Java 8: this is where the Java 8 bytecode of the shared code is loaded for real
           - { loader: forge, mc: '1.16.5', jar: 'voice-physics-forge-*+mc1.16.5.jar', java: '8', version: 'forge1165_version_oldest', label: 'oldest' }
           - { loader: forge, mc: '1.16.5', jar: 'voice-physics-forge-*+mc1.16.5.jar', java: '8', version: 'forge1165_version' }
+          # Forge 1.17.1 runs on Java 16 (the launcher of its early 37.0.x builds does not start on 17)
+          - { loader: forge, mc: '1.17.1', jar: 'voice-physics-forge-*+mc1.17.1.jar', java: '16', version: 'forge117_version_oldest', label: 'oldest' }
+          - { loader: forge, mc: '1.17.1', jar: 'voice-physics-forge-*+mc1.17.1.jar', java: '16', version: 'forge117_version' }
           - { loader: forge, mc: '1.18.2', jar: 'voice-physics-forge-*+mc1.18.2.jar', java: '17', version: 'forge118_version_oldest', label: 'oldest' }
           - { loader: forge, mc: '1.18.2', jar: 'voice-physics-forge-*+mc1.18.2.jar', java: '17', version: 'forge118_version' }
           - { loader: forge, mc: '1.19.2', jar: 'voice-physics-forge-*+mc1.19.2.jar', java: '17', version: 'forge119_version_oldest', label: 'oldest' }
           - { loader: forge, mc: '1.19.2', jar: 'voice-physics-forge-*+mc1.19.2.jar', java: '17', version: 'forge119_version' }
+          - { loader: forge, mc: '1.19.4', jar: 'voice-physics-forge-*+mc1.19.4.jar', java: '17', version: 'forge1194_version_oldest', label: 'oldest' }
+          - { loader: forge, mc: '1.19.4', jar: 'voice-physics-forge-*+mc1.19.4.jar', java: '17', version: 'forge1194_version' }
           - { loader: forge, mc: '1.20', jar: 'voice-physics-forge-*+mc1.20.1.jar', java: '17', version: 'forge120_version_oldest' }
           - { loader: forge, mc: '1.20.1', jar: 'voice-physics-forge-*+mc1.20.1.jar', java: '17', version: 'forge120_version' }
           - { loader: neoforge, mc: '1.20.1', jar: 'voice-physics-forge-*+mc1.20.1.jar', java: '17', version: 'nf1201_forge' }
