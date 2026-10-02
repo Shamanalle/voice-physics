@@ -53,10 +53,10 @@ Players **without the addon** also hear voices muffled through walls.
 | You play on | File |
 |---|---|
 | Fabric, Quilt (1.16.5, 1.17.1, 1.18.2, 1.19.2, 1.19.4 and 1.20+) | full, needs [Fabric API](https://modrinth.com/mod/fabric-api) |
-| Forge 1.16.5, 1.18.2, 1.19.2, 1.20 – 1.20.4, 1.20.6, 1.21 – 1.21.11, 26.x | full |
+| Forge 1.16.5, 1.17.1, 1.18.2, 1.19.2, 1.19.4, 1.20 – 1.20.4, 1.20.6, 1.21 – 1.21.11, 26.x | full |
 | NeoForge 1.20.1, 1.20.2 – 1.21.11, 26.x | full |
 | Paper, Purpur, Folia, Spigot | the [plugin](https://www.curseforge.com/projects/1715914), a separate project |
 
-Minecraft 1.16.5, 1.17.1 (Fabric only), 1.18.2, 1.19.2, 1.19.4 (Fabric only), 1.20 – 1.20.6, 1.21 – 1.21.11 and 26.1 – 26.3.
+Minecraft 1.16.5, 1.17.1, 1.18.2, 1.19.2, 1.19.4, 1.20 – 1.20.6, 1.21 – 1.21.11 and 26.1 – 26.3.
 
 **[All settings, commands and what works where →](https://github.com/Shamanalle/voice-physics#readme)** · [Changelog](https://github.com/Shamanalle/voice-physics/blob/main/CHANGELOG.md) · [Questions and problems](https://github.com/Shamanalle/voice-physics#questions-and-problems) · [Report a bug](https://github.com/Shamanalle/voice-physics/issues)

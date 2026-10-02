@@ -1,0 +1,84 @@
+plugins {
+    id 'net.neoforged.moddev.legacyforge' version '2.0.147'
+    id 'java'
+}
+
+// Its jar carries the classes of ':common', so that module is configured first (configure-on-demand)
+evaluationDependsOn(':common')
+
+// Forge 1.19.4: the full addon. The code shared with the Fabric builds is compiled here against
+// Minecraft's own names and turned into Forge's runtime names by reobfJar; only the hooks into Forge
+// (package com.kasper.vcdistance.forge) and a few small version adapters are Forge's own.
+def target = "mc1.19.4"
+version = "${project.mod_version}+${target}"
+
+base {
+    archivesName = "voice-physics-forge"
+}
+
+repositories {
+    mavenCentral()
+    maven {
+        name = "henkelmax.public"
+        url = 'https://maven.maxhenkel.de/repository/public'
+    }
+}
+
+// The build against the oldest Forge it supports (1.19.4-45.0.1, the oldest Forge Simple Voice Chat 2.5.12 accepts, .github/workflows/build.yml) passes -PloaderOverride.forge-1.19.4=<version>
+legacyForge {
+    version = project.findProperty("loaderOverride.${project.name}") ?: project.forge1194_version
+}
+
+// Minecraft 1.19.4 draws with PoseStack (GuiGraphics came in 1.20) but has the 1.19.3+ widgets and registries:
+// shared/mc-1.19 is taken and the files that differ again come from shared/mc-1.19.4. Later roots replace
+// files of the same path in earlier ones: mc-all < mc-1.20-1.21 < mc-1.19 < mc-1.19.4
+def roots = ["shared/mc-all", "shared/mc-1.20-1.21", "shared/mc-1.19", "shared/mc-1.19.4"].collect { "${rootDir}/${it}/src/main/java".toString() }
+// Files that need Fabric, or that Forge replaces with its own version (same path in this module)
+def replaced = [
+        'com/kasper/vcdistance/AudioDistanceClient.java',
+        'com/kasper/vcdistance/AudioDistanceMod.java',
+        'com/kasper/vcdistance/ModMenuIntegration.java',
+        'com/kasper/vcdistance/client/HudHook.java',
+        'com/kasper/vcdistance/client/PoseScaler.java',
+        'com/kasper/vcdistance/server/AdminPermission.java',
+]
+def pathsOf = { String root -> fileTree(root).files.collect { it.path.substring(new File(root).path.length() + 1).replace('\\', '/') } as Set }
+def laterPaths = roots.indexed().collectEntries { i, root -> [(root): roots.drop(i + 1).collectMany { pathsOf(it) } as Set] }
+
+sourceSets {
+    main {
+        java {
+            roots.each { srcDir it }
+            exclude { FileTreeElement e ->
+                String path = e.relativePath.pathString
+                roots.any { root -> e.file.path.startsWith(new File(root).path + File.separator) && (replaced.contains(path) || laterPaths[root].contains(path)) }
+            }
+        }
+    }
+}
+
+dependencies {
+    implementation project(':common')
+    compileOnly "de.maxhenkel.voicechat:voicechat-api:${project.voicechat_api_version}"
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.release = 17
+    options.encoding = 'UTF-8'
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
+processResources {
+    inputs.property "version", project.version
+    filesMatching("META-INF/mods.toml") {
+        expand "version": project.version
+    }
+}
+
+jar {
+    from project(':common').sourceSets.main.output
+}

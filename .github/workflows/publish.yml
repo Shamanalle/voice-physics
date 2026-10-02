@@ -121,6 +121,14 @@ jobs:
             java: 16
             dependencies: simple-voice-chat(required) fabric-api(required) modmenu(optional)
             curseforge: true
+          - name: Forge for 1.17.1
+            file: forge-{v}+mc1.17.1.jar
+            target: mc1.17.1-forge
+            loaders: forge
+            game-versions: 1.17.1
+            java: 16
+            dependencies: simple-voice-chat(required)
+            curseforge: true
           - name: Fabric for 1.18.2
             file: fabric-{v}+mc1.18.2.jar
             target: mc1.18.2
@@ -160,6 +168,14 @@ jobs:
             game-versions: 1.19.4
             java: 17
             dependencies: simple-voice-chat(required) fabric-api(required) modmenu(optional)
+            curseforge: true
+          - name: Forge for 1.19.4
+            file: forge-{v}+mc1.19.4.jar
+            target: mc1.19.4-forge
+            loaders: forge
+            game-versions: 1.19.4
+            java: 17
+            dependencies: simple-voice-chat(required)
             curseforge: true
           - name: Fabric for 1.20 – 1.20.1
             file: fabric-{v}+mc1.20.1.jar
