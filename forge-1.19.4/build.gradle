@@ -51,7 +51,7 @@ sourceSets {
             roots.each { srcDir it }
             exclude { FileTreeElement e ->
                 String path = e.relativePath.pathString
-                replaced.contains(path) || roots.any { root -> e.file.path.startsWith(new File(root).path + File.separator) && laterPaths[root].contains(path) }
+                roots.any { root -> e.file.path.startsWith(new File(root).path + File.separator) && (replaced.contains(path) || laterPaths[root].contains(path)) }
             }
         }
     }
