@@ -25,6 +25,10 @@ public class SettingsScreenGameTest implements FabricClientGameTest {
 
     private static final int[][] WINDOWS = {{854, 480}, {1280, 960}};
     private static final String[] LANGUAGES = {"en_us", "ru_ru"};
+    /** The store pictures: 4K at GUI scale 8 is the 1080p layout (480 x 270 units) with twice the pixels. */
+    private static final int STORE_WIDTH = 3840;
+    private static final int STORE_HEIGHT = 2160;
+    private static final int STORE_GUI_SCALE = 8;
 
     @Override
     public void runTest(ClientGameTestContext context) {
@@ -150,12 +154,14 @@ public class SettingsScreenGameTest implements FabricClientGameTest {
     }
 
     /**
-     * The pictures for the store pages and the README: one look (1920 x 1080, English, empty chat),
+     * The pictures for the store pages and the README: one look (3840 x 2160, English, empty chat),
      * named {@code store-<name>}. The folded parts are still open from the shots above.
      */
     private static void shootStore(ClientGameTestContext context) {
-        context.getInput().resizeWindow(1920, 1080);
+        context.getInput().resizeWindow(STORE_WIDTH, STORE_HEIGHT);
         context.waitTicks(4);
+        context.runOnClient(client -> TestScreens.guiScale(client, STORE_GUI_SCALE));
+        context.waitTicks(2);
         context.runOnClient(client -> {
             TestScreens.clearChat(client);
             pretendAdmin();
@@ -194,6 +200,8 @@ public class SettingsScreenGameTest implements FabricClientGameTest {
         context.runOnClient(client -> {
             TestScreens.open(client, null);
             AudioDistancePlugin.LINK.reset();
+            // Automatic again for the shots that follow
+            TestScreens.guiScale(client, 0);
         });
         context.waitTicks(1);
     }
@@ -201,7 +209,7 @@ public class SettingsScreenGameTest implements FabricClientGameTest {
     /** Moves the pointer to an empty corner, so no tooltip or hover highlight is in the picture. */
     private static void parkCursor(ClientGameTestContext context) {
         context.waitTicks(3);
-        context.getInput().setCursorPos(1880, 1060);
+        context.getInput().setCursorPos(STORE_WIDTH - 40, STORE_HEIGHT - 20);
         context.waitTicks(3);
     }
 }

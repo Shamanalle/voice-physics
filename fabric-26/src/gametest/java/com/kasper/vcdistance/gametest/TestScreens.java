@@ -46,6 +46,12 @@ final class TestScreens {
      * Empties the chat, so each screenshot shows one group of replies. The chat moved out of Gui in
      * 26.x, so it is looked up by its clearMessages(boolean); without it the older lines stay.
      */
+    /** Sets the GUI scale (0 is automatic) and lays the open screen out again. */
+    static void guiScale(Minecraft client, int scale) {
+        client.options.guiScale().set(scale);
+        client.resizeDisplay();
+    }
+
     static void clearChat(Minecraft client) {
         for (Object owner : new Object[]{client.gui, client}) {
             for (java.lang.reflect.Method getter : owner.getClass().getMethods()) {
