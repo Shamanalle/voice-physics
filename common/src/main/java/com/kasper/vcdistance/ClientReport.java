@@ -23,7 +23,9 @@ public final class ClientReport {
         List<String> out = new ArrayList<>();
         out.add("Voice Physics " + BuildInfo.version() + (game == null || game.isEmpty() ? "" : " on Minecraft " + game));
         out.add("Java " + System.getProperty("java.version") + ", " + System.getProperty("os.name") + " " + System.getProperty("os.arch")
-                + (ModEnvironment.isSoundPhysicsPresent() ? ", Sound Physics Remastered installed" : ""));
+                + (ModEnvironment.isSoundPhysicsPresent()
+                        ? ", Sound Physics Remastered installed (voices: " + (own.isOverSoundPhysics() ? "Voice Physics" : "Sound Physics") + ")"
+                        : ""));
         LinkProtocol.ServerProfile p = link.profile();
         if (p == null) {
             out.add("Server: no Voice Physics on the server (or not connected)");

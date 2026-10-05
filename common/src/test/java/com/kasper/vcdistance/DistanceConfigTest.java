@@ -27,6 +27,31 @@ public class DistanceConfigTest {
     }
 
     @Test
+    @DisplayName("Voice Physics over Sound Physics Remastered: off by default, saved, kept by the interface copy, not by profiles")
+    void overSoundPhysics() throws IOException {
+        Path file = dir.resolve("spr.properties");
+        DistanceConfig a = new DistanceConfig(file);
+        a.load();
+        assertFalse(a.isOverSoundPhysics());
+        assertTrue(Files.readString(file).contains("over_sound_physics=false"));
+        a.setOverSoundPhysics(true);
+        a.save();
+        DistanceConfig b = new DistanceConfig(file);
+        b.load();
+        assertTrue(b.isOverSoundPhysics());
+
+        DistanceConfig restored = new DistanceConfig(dir.resolve("other.properties"));
+        restored.copyInterfaceFrom(b);
+        assertTrue(restored.isOverSoundPhysics(), "cancel on the settings screen restores it");
+        DistanceConfig profile = new DistanceConfig(dir.resolve("profile.properties"));
+        profile.copyFrom(b);
+        assertFalse(profile.isOverSoundPhysics(), "a server profile never carries it");
+        java.util.Properties props = new java.util.Properties();
+        b.writeTo(props, "profile.");
+        assertFalse(props.containsKey("profile.over_sound_physics"));
+    }
+
+    @Test
     @DisplayName("Save and load round-trips every value")
     void roundTrip() {
         Path file = dir.resolve("vc.properties");
@@ -88,7 +113,7 @@ public class DistanceConfigTest {
         c.load();
         assertEquals(AttenuationModel.REALISTIC_INVERSE, c.getModel());
         String text = Files.readString(file);
-        assertTrue(text.contains("config_version=9"));
+        assertTrue(text.contains("config_version=10"));
         assertTrue(text.contains("reverb_enabled=true"));
         assertTrue(text.contains("material.stone"));
         assertTrue(text.contains("hud_mode=talking"));
@@ -146,7 +171,7 @@ public class DistanceConfigTest {
             assertEquals(m.getDefaultWeight(), c.getMaterialWeight(m), 1e-9, m.getId());
         }
         String text = Files.readString(file);
-        assertTrue(text.contains("config_version=9"));
+        assertTrue(text.contains("config_version=10"));
         assertTrue(text.contains("material.other="));
     }
 
