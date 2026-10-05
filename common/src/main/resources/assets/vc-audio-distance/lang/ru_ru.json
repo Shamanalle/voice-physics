@@ -471,8 +471,6 @@
   "gui.vc-audio-distance.materials.reset": "Сбросить материалы",
   "gui.vc-audio-distance.materials.reset.tooltip": "Вернуть все материалы к значениям по умолчанию.",
   "gui.vc-audio-distance.materials.section": "Материалы: насколько глушит каждый блок",
-  "gui.vc-audio-distance.distance.more": "Ещё настройки кривой",
-  "gui.vc-audio-distance.distance.more.tooltip": "Форма кривой, громкость на краю и зона полной громкости. Большинству хватает двух ползунков выше.",
   "gui.vc-audio-distance.blocks.section": "Свои блоки",
   "gui.vc-audio-distance.blocks.hint": "Блоки из других модов или те, что определились неверно, можно посчитать выбранным вами материалом.",
   "gui.vc-audio-distance.blocks.look": "Блок, на который смотрю",

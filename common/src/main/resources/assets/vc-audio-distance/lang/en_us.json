@@ -471,8 +471,6 @@
   "gui.vc-audio-distance.materials.reset": "Reset materials",
   "gui.vc-audio-distance.materials.reset.tooltip": "Every material back to its default.",
   "gui.vc-audio-distance.materials.section": "Materials: how much each block muffles",
-  "gui.vc-audio-distance.distance.more": "More curve settings",
-  "gui.vc-audio-distance.distance.more.tooltip": "Curve shape, volume at the edge and the range of full volume. The two sliders above are enough for most players.",
   "gui.vc-audio-distance.blocks.section": "Custom blocks",
   "gui.vc-audio-distance.blocks.hint": "Blocks from other mods, or ones the guess gets wrong, can count as a material you choose.",
   "gui.vc-audio-distance.blocks.look": "Block I look at",

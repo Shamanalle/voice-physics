@@ -65,7 +65,6 @@ public abstract class SettingsScreen extends com.kasper.vcdistance.compat.BaseSc
     /** The materials section of the Walls tab is open; kept while the game runs. */
     private static boolean materialsOpen;
     /** The tuning part of the Distance tab (model, edge volume, full-volume range) is open; kept while the game runs. */
-    private static boolean distanceMoreOpen;
 
     /** Walk-away preview: where the voice is at each step, as a share of the range. */
     private static final double[] PREVIEW_STEPS = {0.03, 0.12, 0.21, 0.3, 0.39, 0.48, 0.57, 0.66, 0.75, 0.84, 0.92, 0.97};
@@ -192,7 +191,6 @@ public abstract class SettingsScreen extends com.kasper.vcdistance.compat.BaseSc
 
     /** Unfolds every section (the in-game tests shoot the tabs with everything open). */
     public static void unfoldAll() {
-        distanceMoreOpen = true;
         materialsOpen = true;
         closedSections.clear();
     }
@@ -526,7 +524,7 @@ public abstract class SettingsScreen extends com.kasper.vcdistance.compat.BaseSc
 
         // The graph keeps a readable shape; on short windows it shrinks down to a minimum and the tab scrolls
         int preferred = Math.max(120, w * 2 / 5);
-        int room = viewBottom - graphTop - 6 - (ROW * 2 - GAP) - 3;
+        int room = viewBottom - graphTop - 6 - (ROW * 3 - GAP) - 3;
         graphBottom = graphTop + Math.max(100, Math.min(room, preferred));
         int rows = graphBottom + 6;
 
@@ -541,16 +539,8 @@ public abstract class SettingsScreen extends com.kasper.vcdistance.compat.BaseSc
                 () -> shown().getWhisperMultiplier(), config::setWhisperMultiplier,
                 v -> tr("whisper", pct(v))), "whisper.tooltip"), DistanceConfig.Part.CURVE);
 
-        // The rest of the curve is for tuning: a section that opens, like the materials
-        content(Btn.builder(Txt.literal(distanceMoreOpen ? "▾ " : "▸ ").append(tr("distance.more")), b -> {
-            distanceMoreOpen = !distanceMoreOpen;
-            rebuild();
-        }).bounds(left, rows + ROW, w, 20).tooltip(tip("distance.more.tooltip")).build());
-        contentEnd = rows + ROW + 20;
-        if (!distanceMoreOpen) {
-            return;
-        }
-        int more = rows + ROW * 2;
+        // The rest of the curve, for tuning; only three controls, so always shown
+        int more = rows + ROW;
         edit(Btn.builder(modelLabel(), b -> {
             config.setModel(config.getModel().next());
             b.setMessage(modelLabel());

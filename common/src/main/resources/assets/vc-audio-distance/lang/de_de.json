@@ -471,8 +471,6 @@
   "gui.vc-audio-distance.materials.reset": "Materialien zurücksetzen",
   "gui.vc-audio-distance.materials.reset.tooltip": "Alle Materialien auf Standard zurücksetzen.",
   "gui.vc-audio-distance.materials.section": "Materialien: wie stark jeder Block dämpft",
-  "gui.vc-audio-distance.distance.more": "Weitere Kurveneinstellungen",
-  "gui.vc-audio-distance.distance.more.tooltip": "Kurvenform, Lautstärke am Rand und Bereich voller Lautstärke. Den meisten genügen die zwei Regler oben.",
   "gui.vc-audio-distance.blocks.section": "Eigene Blöcke",
   "gui.vc-audio-distance.blocks.hint": "Blöcke aus anderen Mods oder falsch erkannte Blöcke können als Material deiner Wahl zählen.",
   "gui.vc-audio-distance.blocks.look": "Anvisierter Block",

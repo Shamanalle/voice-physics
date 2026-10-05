@@ -471,8 +471,6 @@
   "gui.vc-audio-distance.materials.reset": "Restablecer materiales",
   "gui.vc-audio-distance.materials.reset.tooltip": "Todos los materiales a sus valores por defecto.",
   "gui.vc-audio-distance.materials.section": "Materiales: cuánto amortigua cada bloque",
-  "gui.vc-audio-distance.distance.more": "Más ajustes de la curva",
-  "gui.vc-audio-distance.distance.more.tooltip": "Forma de la curva, volumen en el borde y zona de volumen completo. A la mayoría le bastan los dos controles de arriba.",
   "gui.vc-audio-distance.blocks.section": "Bloques propios",
   "gui.vc-audio-distance.blocks.hint": "Los bloques de otros mods, o los que se detectan mal, pueden contar como el material que elijas.",
   "gui.vc-audio-distance.blocks.look": "Bloque que miro",

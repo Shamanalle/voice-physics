@@ -18,6 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 #### Changed
 - README: the *What works where* table now separates the mod on the server from the plugin and lists the newer features (OPAC, WorldGuard, Towny and Lands zones, the change log, the Paper extras).
+- *Distance* tab: the curve shape, edge volume and full-volume range are always shown; the *More curve settings* fold is gone, three controls do not need one.
 
 ### Русский
 
@@ -29,6 +30,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 #### Изменено
 - README: таблица «Что где работает» теперь разделяет мод на сервере и плагин и включает новые возможности (зоны OPAC, WorldGuard, Towny и Lands, журнал изменений, дополнения Paper).
+- Вкладка «Дистанция»: форма кривой, громкость на краю и зона полной громкости показаны всегда; сворачивания «Ещё настройки кривой» больше нет, для трёх элементов оно не нужно.
 
 ## [2.10.3] - 2026-10-02
 

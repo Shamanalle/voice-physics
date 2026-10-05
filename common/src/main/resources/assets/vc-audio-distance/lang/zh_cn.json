@@ -471,8 +471,6 @@
   "gui.vc-audio-distance.materials.reset": "重置材料",
   "gui.vc-audio-distance.materials.reset.tooltip": "所有材料恢复默认值。",
   "gui.vc-audio-distance.materials.section": "材料：每种方块的消音程度",
-  "gui.vc-audio-distance.distance.more": "更多曲线设置",
-  "gui.vc-audio-distance.distance.more.tooltip": "曲线形状、边缘音量和满音量范围。大多数玩家只需上面两个滑块。",
   "gui.vc-audio-distance.blocks.section": "自定义方块",
   "gui.vc-audio-distance.blocks.hint": "来自其他模组的方块，或识别有误的方块，可以按你选择的材质计算。",
   "gui.vc-audio-distance.blocks.look": "我看着的方块",
