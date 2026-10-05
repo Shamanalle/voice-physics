@@ -17,6 +17,7 @@ import com.kasper.vcdistance.EnvironmentEffects;
 import com.kasper.vcdistance.HudMode;
 import com.kasper.vcdistance.LinkProtocol;
 import com.kasper.vcdistance.ListenerEnvironment;
+import com.kasper.vcdistance.ModEnvironment;
 import com.kasper.vcdistance.NearbyPlayers;
 import com.kasper.vcdistance.OcclusionModel;
 import com.kasper.vcdistance.Preset;
@@ -595,6 +596,7 @@ public abstract class SettingsScreen extends com.kasper.vcdistance.compat.BaseSc
 
         statusY = y;
         if (hasStatusBanner()) {
+            addSoundPhysicsToggle();
             y += 30;
         }
         panelTop = y;
@@ -756,7 +758,30 @@ public abstract class SettingsScreen extends com.kasper.vcdistance.compat.BaseSc
 
     private static boolean hasStatusBanner() {
         AudioDistancePlugin.OcclusionStatus status = AudioDistancePlugin.occlusionStatus();
-        return status == AudioDistancePlugin.OcclusionStatus.SOUND_PHYSICS || status == AudioDistancePlugin.OcclusionStatus.UNAVAILABLE;
+        return status == AudioDistancePlugin.OcclusionStatus.SOUND_PHYSICS || status == AudioDistancePlugin.OcclusionStatus.UNAVAILABLE
+                || AudioDistancePlugin.overSoundPhysics() && status != AudioDistancePlugin.OcclusionStatus.UNAVAILABLE;
+    }
+
+    /** With Sound Physics Remastered: whose walls, echo and water voices get. This computer's choice, never locked. */
+    private boolean soundPhysicsToggleShown() {
+        return ModEnvironment.isSoundPhysicsPresent()
+                && AudioDistancePlugin.occlusionStatus() != AudioDistancePlugin.OcclusionStatus.UNAVAILABLE;
+    }
+
+    private int soundPhysicsToggleWidth() {
+        return Math.min(150, (right - left) / 3);
+    }
+
+    /** The switch sits at the right end of the banner. */
+    private void addSoundPhysicsToggle() {
+        if (!soundPhysicsToggleShown()) {
+            return;
+        }
+        int bw = soundPhysicsToggleWidth();
+        content(Btn.builder(onOff("sound_physics.override", config.isOverSoundPhysics()), b -> {
+            config.setOverSoundPhysics(!config.isOverSoundPhysics());
+            rebuild();
+        }).bounds(right - bw - 3, statusY + 3, bw, 20).tooltip(tip("sound_physics.override.tooltip")).build());
     }
 
     // ---- Effects ------------------------------------------------------------
@@ -818,6 +843,9 @@ public abstract class SettingsScreen extends com.kasper.vcdistance.compat.BaseSc
         }).bounds(right - colW, y + ROW * 3, colW, 20).tooltip(tip("effects.place.tooltip")).build(), DistanceConfig.Part.EFFECTS);
 
         statusY = y + ROW * 4 + 2;
+        if (hasStatusBanner()) {
+            addSoundPhysicsToggle();
+        }
         panelTop = statusY + (hasStatusBanner() ? 30 : 0);
         panelBottom = stretch(panelTop, 140);
         contentEnd = panelBottom;
@@ -1842,17 +1870,25 @@ public abstract class SettingsScreen extends com.kasper.vcdistance.compat.BaseSc
 
     // ---- Walls --------------------------------------------------------------
 
-    /** A warning above a panel when Sound Physics Remastered does the job, or this build cannot. */
+    /**
+     * A note above a panel when Sound Physics Remastered does the job (or the player chose ours over
+     * it), or this build cannot.
+     */
     private void paintStatusBanner(Canvas c, String soundPhysicsKey) {
-        AudioDistancePlugin.OcclusionStatus status = AudioDistancePlugin.occlusionStatus();
-        if (status != AudioDistancePlugin.OcclusionStatus.SOUND_PHYSICS && status != AudioDistancePlugin.OcclusionStatus.UNAVAILABLE) {
+        if (!hasStatusBanner()) {
             return;
         }
-        String key = status == AudioDistancePlugin.OcclusionStatus.SOUND_PHYSICS ? soundPhysicsKey : "status.unavailable";
+        AudioDistancePlugin.OcclusionStatus status = AudioDistancePlugin.occlusionStatus();
+        String key = status == AudioDistancePlugin.OcclusionStatus.SOUND_PHYSICS ? soundPhysicsKey
+                : status == AudioDistancePlugin.OcclusionStatus.UNAVAILABLE ? "status.unavailable"
+                : "status.sound_physics_override";
+        // Ours over Sound Physics is a choice, not a warning
+        int tone = key.equals("status.sound_physics_override") ? Palette.ACCENT : Palette.WARN;
         int y = statusY;
-        c.frame(left, y, right, y + 26, 0x30F6C453, Palette.withAlpha(Palette.WARN, 0x90));
-        c.text(fit(c, tr(key), right - left - 12), left + 6, y + 4, Palette.WARN);
-        c.text(fit(c, tr(key + ".detail"), right - left - 12), left + 6, y + 14, Palette.TEXT_DIM);
+        int textW = right - left - 12 - (soundPhysicsToggleShown() ? soundPhysicsToggleWidth() + 6 : 0);
+        c.frame(left, y, right, y + 26, Palette.withAlpha(tone, 0x30), Palette.withAlpha(tone, 0x90));
+        c.text(fit(c, tr(key), textW), left + 6, y + 4, tone);
+        c.text(fit(c, tr(key + ".detail"), textW), left + 6, y + 14, Palette.TEXT_DIM);
     }
 
     private void paintWalls(Canvas c) {

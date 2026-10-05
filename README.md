@@ -128,21 +128,24 @@ Available in the full Fabric, Forge and NeoForge mods and as a plugin for Paper,
 
 ## What works where
 
-| | Client only | Server only | Both |
-|---|:---:|:---:|:---:|
-| Distance curve, presets | ✅ | — | ✅ + server profile |
-| Walls | ✅ for you | ✅ for players without the addon | ✅ |
-| Round corners, echo, water, rain | ✅ | ✅ water, rain, air (echo: Paper), if turned on | ✅ |
-| Echo by place (caves, Nether, End) | ✅ | — | ✅ |
-| HUD, monitor, radar | ✅ | — | ✅ + voice chat state of every player |
-| Zones: range, walls, isolation | — | ✅ | ✅ |
-| Zones: names above the hotbar | — | ✅ | ✅ |
-| Zones: echo | — | — | ✅ |
-| Game rules, addon requirement, `/vcd` | — | ✅ | ✅ |
-| Mute, `/vcd report` | — | ✅ | ✅ |
-| `/voice`, PlaceholderAPI, extras (radio, loudspeakers, eavesdrop, sculk, doorway, integrations) | — | Paper | Paper |
-| Server tab, locked settings, monitor off | — | — | ✅ |
-| Exact whisper range on the graph | approximate | — | ✅ |
+Server columns: *mod* is the Fabric, Forge or NeoForge addon on the server, *plugin* is the Paper, Purpur, Folia or Spigot plugin. *Both* is the addon on the client and either of them on the server.
+
+| | Client only | Server only: mod | Server only: plugin | Both |
+|---|:---:|:---:|:---:|:---:|
+| Distance curve, presets | ✅ | — | — | ✅ + server profile |
+| Walls | ✅ for you | ✅ for players without the addon | ✅ for players without the addon | ✅ |
+| Round corners | ✅ | — | doorway sound (Paper extra) | ✅ |
+| Echo of the room | ✅ | — | Paper, if turned on | ✅ |
+| Water, rain | ✅ | if turned on | if turned on | ✅ |
+| Echo by place (caves, Nether, End) | ✅ | — | — | ✅ |
+| HUD, monitor, radar | ✅ | — | — | ✅ + voice chat state of every player |
+| Zones: range, walls, isolation, names above the hotbar | — | ✅ + Open Parties and Claims | ✅ + WorldGuard, Towny, Lands | ✅ |
+| Zones: echo | — | if effects are on | if effects are on | ✅ |
+| Game rules, addon requirement, mute, `/vcd`, change log, `/vcd report` | — | ✅ | ✅ | ✅ |
+| `/voice`, PlaceholderAPI | — | — | Paper, Folia | Paper, Folia |
+| Extras: radio, loudspeakers, eavesdrop, sculk, LuckPerms | — | — | Paper | Paper |
+| Server tab, locked settings, monitor off | — | — | — | ✅ |
+| Exact whisper range on the graph | approximate | — | — | ✅ |
 
 With the addon on both sides the client muffles walls itself and the server skips those players, so nothing is muffled twice.
 
@@ -150,41 +153,41 @@ With the addon on both sides the client muffles walls itself and the server skip
 
 | Loader | Minecraft | File | Java | Simple Voice Chat |
 |---|---|---|---|---|
-| **Fabric / Quilt** | 1.16.5 | `voice-physics-fabric-2.10.3+mc1.16.5.jar` | 8+ | 2.4.0+ |
-| **Fabric / Quilt** | 1.17.1 | `voice-physics-fabric-2.10.3+mc1.17.1.jar` | 16+ | 2.4.0+ |
-| **Fabric / Quilt** | 1.18.2 | `voice-physics-fabric-2.10.3+mc1.18.2.jar` | 17+ | 2.4.0+ |
-| **Fabric / Quilt** | 1.19.2 | `voice-physics-fabric-2.10.3+mc1.19.2.jar` | 17+ | 2.4.0+ |
-| **Fabric / Quilt** | 1.19.4 | `voice-physics-fabric-2.10.3+mc1.19.4.jar` | 17+ | 2.4.0+ |
-| **Fabric / Quilt** | 1.20 – 1.20.1 | `voice-physics-fabric-2.10.3+mc1.20.1.jar` | 17+ | 2.4.0+ |
-| **Fabric / Quilt** | 1.20.2 – 1.20.4 | `voice-physics-fabric-2.10.3+mc1.20.2-1.20.4.jar` | 17+ | 2.4.0+ |
-| **Fabric / Quilt** | 1.20.5 – 1.20.6 | `voice-physics-fabric-2.10.3+mc1.20.5-1.20.6.jar` | 21+ | 2.5.0+ |
-| **Fabric / Quilt** | 1.21 – 1.21.11 | `voice-physics-fabric-2.10.3+mc1.21.x.jar` | 21+ | 2.5.0+ |
-| **Fabric / Quilt** | 26.1 – 26.3 | `voice-physics-fabric-2.10.3+mc26.x.jar` | 25+ | 2.6.0+ |
-| **Forge** | 1.16.5 | `voice-physics-forge-2.10.3+mc1.16.5.jar` | 8 – 16 | 2.4.0+ |
-| **Forge** | 1.17.1 | `voice-physics-forge-2.10.3+mc1.17.1.jar` | 16+ | 2.4.0+ |
-| **Forge** | 1.18.2 | `voice-physics-forge-2.10.3+mc1.18.2.jar` | 17+ | 2.4.0+ |
-| **Forge** | 1.19.2 | `voice-physics-forge-2.10.3+mc1.19.2.jar` | 17+ | 2.4.0+ |
-| **Forge** | 1.19.4 | `voice-physics-forge-2.10.3+mc1.19.4.jar` | 17+ | 2.4.0+ |
-| **Forge** | 1.20 – 1.20.1 | `voice-physics-forge-2.10.3+mc1.20.1.jar` | 17+ | 2.4.0+ |
-| **Forge** | 1.20.2 – 1.20.4 | `voice-physics-forge-2.10.3+mc1.20.2-1.20.4.jar` | 17+ | 2.4.0+ |
-| **Forge** | 1.20.6 | `voice-physics-forge-2.10.3+mc1.20.6.jar` | 21+ | 2.5.0+ |
-| **Forge** | 1.21 – 1.21.1 | `voice-physics-forge-2.10.3+mc1.21-1.21.1.jar` | 21+ | 2.5.0+ |
-| **Forge** | 1.21.3 – 1.21.5 | `voice-physics-forge-2.10.3+mc1.21.3-1.21.5.jar` | 21+ | 2.5.0+ |
-| **Forge** | 1.21.6 – 1.21.8 | `voice-physics-forge-2.10.3+mc1.21.6-1.21.8.jar` | 21+ | 2.5.0+ |
-| **Forge** | 1.21.9 – 1.21.10 | `voice-physics-forge-2.10.3+mc1.21.9-1.21.10.jar` | 21+ | 2.5.0+ |
-| **Forge** | 1.21.11 | `voice-physics-forge-2.10.3+mc1.21.11.jar` | 21+ | 2.5.0+ |
-| **Forge** | 26.1 – 26.3 | `voice-physics-forge-2.10.3+mc26.x.jar` | 25+ | 2.6.0+ |
-| **NeoForge** | 1.20.1 | `voice-physics-forge-2.10.3+mc1.20.1.jar` | 17+ | 2.4.0+ |
-| **NeoForge** | 1.20.2 – 1.20.3 | `voice-physics-neoforge-2.10.3+mc1.20.2-1.20.3.jar` | 17+ | 2.4.0+ |
-| **NeoForge** | 1.20.4 | `voice-physics-neoforge-2.10.3+mc1.20.4.jar` | 17+ | 2.4.0+ |
-| **NeoForge** | 1.20.5 – 1.20.6 | `voice-physics-neoforge-2.10.3+mc1.20.5-1.20.6.jar` | 21+ | 2.5.0+ |
-| **NeoForge** | 1.21 – 1.21.1 | `voice-physics-neoforge-2.10.3+mc1.21-1.21.1.jar` | 21+ | 2.5.0+ |
-| **NeoForge** | 1.21.2 – 1.21.5 | `voice-physics-neoforge-2.10.3+mc1.21.2-1.21.5.jar` | 21+ | 2.5.0+ |
-| **NeoForge** | 1.21.6 – 1.21.8 | `voice-physics-neoforge-2.10.3+mc1.21.6-1.21.8.jar` | 21+ | 2.5.0+ |
-| **NeoForge** | 1.21.9 – 1.21.10 | `voice-physics-neoforge-2.10.3+mc1.21.9-1.21.10.jar` | 21+ | 2.5.0+ |
-| **NeoForge** | 1.21.11 | `voice-physics-neoforge-2.10.3+mc1.21.11.jar` | 21+ | 2.5.0+ |
-| **NeoForge** | 26.1 – 26.3 | `voice-physics-neoforge-2.10.3+mc26.x.jar` | 25+ | 2.6.0+ |
-| **Paper / Purpur / Folia / Spigot / Bukkit** | 1.16.5 – 26.3 | `voice-physics-bukkit-2.10.3.jar` | 8+ (17+ on 1.18+) | Bukkit version |
+| **Fabric / Quilt** | 1.16.5 | `voice-physics-fabric-2.11.0+mc1.16.5.jar` | 8+ | 2.4.0+ |
+| **Fabric / Quilt** | 1.17.1 | `voice-physics-fabric-2.11.0+mc1.17.1.jar` | 16+ | 2.4.0+ |
+| **Fabric / Quilt** | 1.18.2 | `voice-physics-fabric-2.11.0+mc1.18.2.jar` | 17+ | 2.4.0+ |
+| **Fabric / Quilt** | 1.19.2 | `voice-physics-fabric-2.11.0+mc1.19.2.jar` | 17+ | 2.4.0+ |
+| **Fabric / Quilt** | 1.19.4 | `voice-physics-fabric-2.11.0+mc1.19.4.jar` | 17+ | 2.4.0+ |
+| **Fabric / Quilt** | 1.20 – 1.20.1 | `voice-physics-fabric-2.11.0+mc1.20.1.jar` | 17+ | 2.4.0+ |
+| **Fabric / Quilt** | 1.20.2 – 1.20.4 | `voice-physics-fabric-2.11.0+mc1.20.2-1.20.4.jar` | 17+ | 2.4.0+ |
+| **Fabric / Quilt** | 1.20.5 – 1.20.6 | `voice-physics-fabric-2.11.0+mc1.20.5-1.20.6.jar` | 21+ | 2.5.0+ |
+| **Fabric / Quilt** | 1.21 – 1.21.11 | `voice-physics-fabric-2.11.0+mc1.21.x.jar` | 21+ | 2.5.0+ |
+| **Fabric / Quilt** | 26.1 – 26.3 | `voice-physics-fabric-2.11.0+mc26.x.jar` | 25+ | 2.6.0+ |
+| **Forge** | 1.16.5 | `voice-physics-forge-2.11.0+mc1.16.5.jar` | 8 – 16 | 2.4.0+ |
+| **Forge** | 1.17.1 | `voice-physics-forge-2.11.0+mc1.17.1.jar` | 16+ | 2.4.0+ |
+| **Forge** | 1.18.2 | `voice-physics-forge-2.11.0+mc1.18.2.jar` | 17+ | 2.4.0+ |
+| **Forge** | 1.19.2 | `voice-physics-forge-2.11.0+mc1.19.2.jar` | 17+ | 2.4.0+ |
+| **Forge** | 1.19.4 | `voice-physics-forge-2.11.0+mc1.19.4.jar` | 17+ | 2.4.0+ |
+| **Forge** | 1.20 – 1.20.1 | `voice-physics-forge-2.11.0+mc1.20.1.jar` | 17+ | 2.4.0+ |
+| **Forge** | 1.20.2 – 1.20.4 | `voice-physics-forge-2.11.0+mc1.20.2-1.20.4.jar` | 17+ | 2.4.0+ |
+| **Forge** | 1.20.6 | `voice-physics-forge-2.11.0+mc1.20.6.jar` | 21+ | 2.5.0+ |
+| **Forge** | 1.21 – 1.21.1 | `voice-physics-forge-2.11.0+mc1.21-1.21.1.jar` | 21+ | 2.5.0+ |
+| **Forge** | 1.21.3 – 1.21.5 | `voice-physics-forge-2.11.0+mc1.21.3-1.21.5.jar` | 21+ | 2.5.0+ |
+| **Forge** | 1.21.6 – 1.21.8 | `voice-physics-forge-2.11.0+mc1.21.6-1.21.8.jar` | 21+ | 2.5.0+ |
+| **Forge** | 1.21.9 – 1.21.10 | `voice-physics-forge-2.11.0+mc1.21.9-1.21.10.jar` | 21+ | 2.5.0+ |
+| **Forge** | 1.21.11 | `voice-physics-forge-2.11.0+mc1.21.11.jar` | 21+ | 2.5.0+ |
+| **Forge** | 26.1 – 26.3 | `voice-physics-forge-2.11.0+mc26.x.jar` | 25+ | 2.6.0+ |
+| **NeoForge** | 1.20.1 | `voice-physics-forge-2.11.0+mc1.20.1.jar` | 17+ | 2.4.0+ |
+| **NeoForge** | 1.20.2 – 1.20.3 | `voice-physics-neoforge-2.11.0+mc1.20.2-1.20.3.jar` | 17+ | 2.4.0+ |
+| **NeoForge** | 1.20.4 | `voice-physics-neoforge-2.11.0+mc1.20.4.jar` | 17+ | 2.4.0+ |
+| **NeoForge** | 1.20.5 – 1.20.6 | `voice-physics-neoforge-2.11.0+mc1.20.5-1.20.6.jar` | 21+ | 2.5.0+ |
+| **NeoForge** | 1.21 – 1.21.1 | `voice-physics-neoforge-2.11.0+mc1.21-1.21.1.jar` | 21+ | 2.5.0+ |
+| **NeoForge** | 1.21.2 – 1.21.5 | `voice-physics-neoforge-2.11.0+mc1.21.2-1.21.5.jar` | 21+ | 2.5.0+ |
+| **NeoForge** | 1.21.6 – 1.21.8 | `voice-physics-neoforge-2.11.0+mc1.21.6-1.21.8.jar` | 21+ | 2.5.0+ |
+| **NeoForge** | 1.21.9 – 1.21.10 | `voice-physics-neoforge-2.11.0+mc1.21.9-1.21.10.jar` | 21+ | 2.5.0+ |
+| **NeoForge** | 1.21.11 | `voice-physics-neoforge-2.11.0+mc1.21.11.jar` | 21+ | 2.5.0+ |
+| **NeoForge** | 26.1 – 26.3 | `voice-physics-neoforge-2.11.0+mc26.x.jar` | 25+ | 2.6.0+ |
+| **Paper / Purpur / Folia / Spigot / Bukkit** | 1.16.5 – 26.3 | `voice-physics-bukkit-2.11.0.jar` | 8+ (17+ on 1.18+) | Bukkit version |
 
 - **Fabric**, **Forge** and **NeoForge** are the full addon, for the client and the server. Fabric needs [Fabric API](https://modrinth.com/mod/fabric-api); [Mod Menu](https://modrinth.com/mod/modmenu) is optional. On Forge for 1.21.6 – 1.21.7 the voice HUD is off: that Forge cannot add it. NeoForge 1.20.1 is a fork of Forge 1.20.1 and takes the Forge file. The NeoForge 1.20.4 file needs NeoForge 20.4.80 or newer.
 - **Older Minecraft** (1.16.5 – 1.19.4) has the same features as the newer files. Simple Voice Chat itself is still updated for 1.16.5, 1.18.2 and 1.19.2, while 1.17.1 and 1.19.4 stopped at its 2.5.12, which the addon works with. Forge 1.16.5 runs on Java 8 – 16, Fabric 1.16.5 on 8 and newer, Fabric 1.17.1 and Forge 1.17.1 on 16 and newer. Minecraft 1.19.3 is not built.
@@ -192,7 +195,7 @@ With the addon on both sides the client muffles walls itself and the server skip
 
 ## Compatibility
 
-- **Sound Physics Remastered:** when it is installed, the addon leaves walls, echo and water to it, so nothing is applied twice. Rain still works.
+- **Sound Physics Remastered:** when it is installed, the addon leaves walls, echo and water to it by default, so nothing is applied twice; rain still works. To hear voices through the addon instead, press *Use ours* in the note on the *Walls* or *Effects* tab (or set `over_sound_physics=true` in the [client file](#client-file)). Then the addon takes Sound Physics Remastered's filters off voices and applies its own walls, echo and water; all other game sounds stay with Sound Physics Remastered. The choice is yours and is never locked by a server.
 - **Simple Voice Chat groups:** a group hears its members anywhere, so walls and range do not apply inside it. Game rules apply only where the server turns them on.
 - **Vanish plugins** (Paper): hidden players stay hidden in the monitor too.
 
@@ -345,6 +348,7 @@ Everything here can also be set in game. Every key in the files has a comment in
 | `weather_strength` | 0 – 1.5 | 1 | How much rain and thunder cover them |
 | `diffraction_enabled` | true / false | true | Voices come round corners |
 | `place_tuning` | true / false | true | The dimension, biome and depth tune echo and air a little |
+| `over_sound_physics` | true / false | false | With Sound Physics Remastered installed: voices get this addon's walls, echo and water instead of its |
 | `hud_mode` | `off` / `talking` / `always` | `talking` | When the HUD is shown |
 | `hud_corner` | `top_left` / `top_right` / `bottom_left` / `bottom_right` | `top_right` | HUD corner |
 | `hud_scale` | 0.5 – 2 | 1.0 | HUD size |
@@ -508,7 +512,7 @@ Who wins when several say something about one block: the server's own rules (`/v
 **I hear no walls muffling.**
 - Check that *Walls* is on and above 0% on the *Walls* tab. `/voicephysics status` says when the server locks walls for everyone or turns them off.
 - Voices inside one Simple Voice Chat group ignore walls and range on purpose.
-- With [Sound Physics Remastered](https://modrinth.com/mod/sound-physics-remastered) installed, the addon leaves walls, echo and water to it.
+- With [Sound Physics Remastered](https://modrinth.com/mod/sound-physics-remastered) installed, the addon leaves walls, echo and water to it, unless you press *Use ours* on the *Walls* tab.
 - Without the addon, the server muffles walls only with `server_walls` on, and only up to 24 voices at once (`server_walls_max_streams`); `/voice walls` may be off for that player.
 
 **A setting is greyed out or changes back.** The server has enforced its profile and locked that part. `/voicephysics status` lists what is locked; it is fixed on the server with `/vcd lock`.

@@ -2,7 +2,7 @@ package com.kasper.vcdistance;
 
 /**
  * The distance curves. The same function draws the graph and sets the volume of every voice
- * (see {@code AudioDistancePlugin.onOpenALSound}), so what the screen shows is what you hear.
+ * (see {@code AudioDistancePlugin.onOpenALSoundPost}), so what the screen shows is what you hear.
  * <p>
  * Distances are fractions of the hearing range: 0 is the listener, 1 is where Simple Voice Chat
  * stops sending the voice. Up to {@code refRatio} the voice is at full volume; beyond it

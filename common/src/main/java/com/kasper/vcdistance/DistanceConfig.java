@@ -18,8 +18,9 @@ public final class DistanceConfig {
 
     /** 3: the file is written with a comment for every key; 4: interface section; 5: echo, water, weather; 6: sound around corners;
      * 7: the HUD moves from the top left (under Simple Voice Chat's group list) to the top right;
-     * 8: more materials (metal, earth, soft, ice, other); 9: HUD size, background, compact, colorblind colors. */
-    private static final int CONFIG_VERSION = 9;
+     * 8: more materials (metal, earth, soft, ice, other); 9: HUD size, background, compact, colorblind colors;
+     * 10: over_sound_physics. */
+    private static final int CONFIG_VERSION = 10;
     private static final String FILE_NAME = "vc-audio-distance.properties";
 
     // -------------------------------------------------------------------------
@@ -93,6 +94,7 @@ public final class DistanceConfig {
     private volatile boolean hudContrast;
     private volatile boolean hudMarkers;
     private volatile boolean colorblind;
+    private volatile boolean overSoundPhysics;
     /** The preset last picked ("" = own values) and the voice range it was fitted to. */
     private volatile String presetId = "";
     private volatile double presetRange;
@@ -136,7 +138,7 @@ public final class DistanceConfig {
         changed();
     }
 
-    /** Volume floor at the edge of hearing range, relative to the speaker's volume (AL_MIN_GAIN). */
+    /** Volume floor at the edge of hearing range, relative to the speaker's volume. */
     public double getMinVolumeFraction() {
         return minVolumeFraction;
     }
@@ -391,6 +393,20 @@ public final class DistanceConfig {
         changed();
     }
 
+    /**
+     * With Sound Physics Remastered installed: our walls, echo and water handle voices anyway, and
+     * its effects are taken off voices (it keeps the world's sounds). Off by default. A choice of
+     * this computer, never part of a server profile.
+     */
+    public boolean isOverSoundPhysics() {
+        return overSoundPhysics;
+    }
+
+    public void setOverSoundPhysics(boolean on) {
+        overSoundPhysics = on;
+        changed();
+    }
+
     /** The preset last picked, or {@code null} for own values. */
     public Preset getChosenPreset() {
         return Preset.byId(presetId);
@@ -421,6 +437,7 @@ public final class DistanceConfig {
         hudContrast = other.hudContrast;
         hudMarkers = other.hudMarkers;
         colorblind = other.colorblind;
+        overSoundPhysics = other.overSoundPhysics;
         changed();
     }
 
@@ -694,6 +711,7 @@ public final class DistanceConfig {
         hudContrast = parseBoolean(props, "hud_contrast", false);
         hudMarkers = parseBoolean(props, "hud_markers", false);
         colorblind = parseBoolean(props, "colorblind", false);
+        overSoundPhysics = parseBoolean(props, "over_sound_physics", false);
         presetId = props.getProperty("preset", "").trim().toLowerCase(java.util.Locale.ROOT);
         presetRange = clamp(parseDouble(props, "preset_range", 0.0), 0.0, 10000.0);
         if (parseDouble(props, "config_version", 1) < 7 && hudCorner == HudCorner.TOP_LEFT) {
@@ -760,6 +778,11 @@ public final class DistanceConfig {
         writeMaterials(w, "");
         w.section("Echo, water, weather, corners", "Эхо, вода, погода, углы");
         writeEffects(w, "");
+        w.comment("With Sound Physics Remastered installed, use the walls, echo and water of Voice Physics for voices anyway;",
+                        "its effects are taken off voices, and it keeps handling the world's sounds. Default false (it handles voices).",
+                        "Если установлен Sound Physics Remastered, всё равно использовать стены, эхо и воду Voice Physics для голосов;",
+                        "его эффекты снимаются с голосов, а звуки мира он обрабатывает как раньше. По умолчанию false (голоса обрабатывает он).")
+                .value("over_sound_physics", overSoundPhysics);
         w.section("Interface", "Интерфейс");
         w.comment("Voice HUD on screen: off, talking (while someone nearby or you talk), always. Default talking.",
                         "HUD голоса на экране: off (выкл.), talking (пока кто-то рядом или вы говорите), always (всегда). По умолчанию talking.")

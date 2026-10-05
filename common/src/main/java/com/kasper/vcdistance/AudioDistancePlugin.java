@@ -98,7 +98,7 @@ public class AudioDistancePlugin implements VoicechatPlugin {
         ACTIVE,
         /** Turned off by the user. */
         OFF,
-        /** Sound Physics Remastered handles voice occlusion instead. */
+        /** Sound Physics Remastered handles voice occlusion instead (unless {@code over_sound_physics}). */
         SOUND_PHYSICS,
         /** This build has no world access (Forge/NeoForge lite builds). */
         UNAVAILABLE
@@ -122,8 +122,10 @@ public class AudioDistancePlugin implements VoicechatPlugin {
 
     @Override
     public void registerEvents(EventRegistration registration) {
-        // The base event fires after SVC has positioned the source and set its own linear curve.
+        // The base event fires after SVC has positioned the source and set its own linear curve;
+        // SVC then writes the volume, so the curve goes on in Post, after it.
         registration.registerEvent(OpenALSoundEvent.class, AudioDistancePlugin::onOpenALSound);
+        registration.registerEvent(OpenALSoundEvent.Post.class, AudioDistancePlugin::onOpenALSoundPost);
         registration.registerEvent(ClientReceiveSoundEvent.EntitySound.class, AudioDistancePlugin::onEntitySound);
         registration.registerEvent(ClientReceiveSoundEvent.LocationalSound.class, AudioDistancePlugin::onLocationalSound);
         registration.registerEvent(ClientSoundEvent.class, AudioDistancePlugin::onOwnVoice);
@@ -463,10 +465,20 @@ public class AudioDistancePlugin implements VoicechatPlugin {
         if (!occlusionProviderAvailable) {
             return OcclusionStatus.UNAVAILABLE;
         }
-        if (ModEnvironment.isSoundPhysicsPresent()) {
+        if (soundPhysicsHandlesVoices()) {
             return OcclusionStatus.SOUND_PHYSICS;
         }
         return config().isOcclusionEnabled() ? OcclusionStatus.ACTIVE : OcclusionStatus.OFF;
+    }
+
+    /** Sound Physics Remastered is installed and does the voices' walls, echo and water, as by default. */
+    public static boolean soundPhysicsHandlesVoices() {
+        return ModEnvironment.isSoundPhysicsPresent() && !CONFIG.isOverSoundPhysics();
+    }
+
+    /** Sound Physics Remastered is installed, but the player chose our effects for voices. */
+    public static boolean overSoundPhysics() {
+        return ModEnvironment.isSoundPhysicsPresent() && CONFIG.isOverSoundPhysics();
     }
 
     /**
@@ -541,18 +553,36 @@ public class AudioDistancePlugin implements VoicechatPlugin {
     // -------------------------------------------------------------------------
 
     /**
-     * Sets the voice's volume from {@link AudioPhysics}, the same curve the graph draws.
-     * <p>
-     * OpenAL's own distance models cannot draw these curves (its "exponent" model is a power law
-     * that never reaches silence), so the source's distance attenuation is turned off (rolloff 0)
-     * and the curve is applied through AL_MAX_GAIN, which OpenAL applies after attenuation.
-     * AL_GAIN, which Simple Voice Chat sets every frame to the speaker's volume, is only read:
-     * per-player volume and muting keep working, and nothing compounds from frame to frame.
-     * Only this source is touched; the context-wide distance model is left alone.
+     * Places the voice: round a wall it is heard from the doorway. Runs after Simple Voice Chat
+     * has set the source's position and before it writes the volume.
      */
     private static void onOpenALSound(OpenALSoundEvent event) {
         if (event.getPosition() == null) {
             return; // group / static audio has no distance
+        }
+        CONFIG.ensureLoaded();
+        int source = event.getSource();
+        try {
+            placeVoice(event, source, config());
+        } catch (Throwable t) {
+            DistanceConfig.LOGGER.debug("Failed to place source {}: {}", source, t.toString());
+        }
+    }
+
+    /**
+     * Sets the voice's volume from {@link AudioPhysics}, the same curve the graph draws.
+     * <p>
+     * OpenAL's own distance models cannot draw these curves (its "exponent" model is a power law
+     * that never reaches silence), so the source's distance attenuation is turned off (rolloff 0)
+     * and the curve multiplies AL_GAIN. This runs in Post: Simple Voice Chat writes AL_GAIN (the
+     * speaker's volume) and AL_MAX_GAIN after the base event every frame, so anything set there is
+     * overwritten, and reading AL_GAIN here gets this frame's volume. Per-player volume, boosts above
+     * 100% and muting keep working, and nothing compounds from frame to frame. Only this source is
+     * touched; the context-wide distance model is left alone.
+     */
+    private static void onOpenALSoundPost(OpenALSoundEvent event) {
+        if (event.getPosition() == null) {
+            return;
         }
         CONFIG.ensureLoaded();
         int source = event.getSource();
@@ -561,21 +591,50 @@ public class AudioDistancePlugin implements VoicechatPlugin {
             float maxDist = AL11.alGetSourcef(source, AL11.AL_MAX_DISTANCE);
             boolean whispering = isWhispering(event, maxDist);
             double range = maxDist > 0F ? maxDist : getServerMaxDistance();
-
-            // A voice coming round a wall is heard from the doorway, as far away as the way round
-            double distance = placeVoice(event, source, c);
+            // After placeVoice the source sits as far away as the way round a wall
+            double distance = sourceDistance(source);
             double curve = AudioPhysics.calculateGain(distance / range, c.getModel(),
                     effectiveRolloff(c, whispering), c.getMinVolumeFraction(), c.getOpenalReferenceRatio());
 
-            float sourceGain = Math.max(0.0F, AL11.alGetSourcef(source, AL11.AL_GAIN));
+            float volume = AL11.alGetSourcef(source, AL11.AL_GAIN);
             AL11.alSourcef(source, AL11.AL_ROLLOFF_FACTOR, 0.0F);
-            // OpenAL takes 0 - 1 for both; a volume boost above 100% would be refused and the old value kept
-            AL11.alSourcef(source, AL11.AL_MAX_GAIN, (float) Math.min(1.0, curve * sourceGain));
-            // The edge-volume floor scales with the speaker's own volume: muted players stay muted
-            AL11.alSourcef(source, AL11.AL_MIN_GAIN, (float) Math.min(1.0, c.getMinVolumeFraction() * sourceGain));
+            AL11.alSourcef(source, AL11.AL_GAIN, voiceGain(volume, curve));
+            if (overSoundPhysics() && SPEAKERS.get(event.getChannelId()) != null) {
+                clearSoundPhysics(source);
+            }
         } catch (Throwable t) {
             DistanceConfig.LOGGER.debug("Failed to apply OpenAL parameters to source {}: {}", source, t.toString());
         }
+        try {
+            // Simple Voice Chat logs any OpenAL error it finds on its next call; ours are not its errors
+            AL11.alGetError();
+        } catch (Throwable ignored) {
+        }
+    }
+
+    private static final int AL_DIRECT_FILTER = 0x20005;
+    private static final int AL_AUXILIARY_SEND_FILTER = 0x20006;
+    private static final int MAX_AUX_SENDS = 4;
+
+    /**
+     * Takes Sound Physics Remastered's muffling and echo off a voice our own effects handle: it
+     * attaches them in the base event, before Post. Simple Voice Chat itself attaches no filters, and
+     * the source belongs to this voice alone, so the world's sounds keep its effects. Sources with
+     * fewer sends refuse the higher ones, which is harmless.
+     */
+    private static void clearSoundPhysics(int source) {
+        AL11.alSourcei(source, AL_DIRECT_FILTER, 0);
+        for (int send = 0; send < MAX_AUX_SENDS; send++) {
+            AL11.alSource3i(source, AL_AUXILIARY_SEND_FILTER, 0, send, 0);
+        }
+    }
+
+    /** The source's gain: the speaker's volume as Simple Voice Chat set it, times the curve. */
+    static float voiceGain(float volume, double curve) {
+        if (!(volume > 0.0F) || !(curve > 0.0)) {
+            return 0.0F; // muted, or past the edge (also NaN)
+        }
+        return (float) (volume * Math.min(1.0, curve));
     }
 
     /**
@@ -715,7 +774,7 @@ public class AudioDistancePlugin implements VoicechatPlugin {
             } else {
                 speaker.setBlend(null);
             }
-            // Sound Physics Remastered does its own water and echo; weather is ours either way
+            // Sound Physics Remastered does its own water and echo unless the player chose ours; weather is ours either way
             boolean ownPhysics = status != OcclusionStatus.SOUND_PHYSICS && status != OcclusionStatus.UNAVAILABLE;
             ListenerEnvironment env = ENVIRONMENT;
             if (ownPhysics && c.isUnderwaterEnabled()) {
