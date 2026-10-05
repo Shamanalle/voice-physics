@@ -41,6 +41,12 @@ final class TestScreens {
         client.options.broadcastOptions();
     }
 
+    /** Sets the GUI scale (0 is automatic) and lays the open screen out again. */
+    static void guiScale(Minecraft client, int scale) {
+        client.options.guiScale().set(scale);
+        client.resizeDisplay();
+    }
+
     static void clearChat(Minecraft client) {
         client.gui.getChat().clearMessages(false);
     }
