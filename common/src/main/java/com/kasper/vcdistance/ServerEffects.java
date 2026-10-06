@@ -54,6 +54,46 @@ public final class ServerEffects {
         return new EnvironmentEffects.Effect(AIR_MUFFLE_MAX * smooth, 0.0);
     }
 
+    /** The most the curve takes off a voice, in dB: about silence. */
+    static final double CURVE_LOSS_MAX_DB = 60.0;
+
+    /**
+     * How loud Simple Voice Chat itself plays a voice {@code distance} blocks away on a client without the addon
+     * (OpenAL's linear model, full volume at half the range, silent at its edge), capped at full volume.
+     */
+    static double svcGain(double distance, double range) {
+        if (range <= 0.0) {
+            return 1.0;
+        }
+        double half = range / 2.0;
+        return Math.max(0.0, Math.min(1.0, 1.0 - (distance - half) / half));
+    }
+
+    /**
+     * The loss in dB that turns Simple Voice Chat's straight fade into the profile's curve
+     * ({@code server_curve}) for a listener without the addon. The client still applies its own fade
+     * afterwards, so the server takes off only the difference; it cannot make a voice louder, so where
+     * the curve is above that line nothing changes.
+     *
+     * @param distance  how far the listener hears the voice from, in blocks
+     * @param range     the range the packet carries (what the client fades over)
+     * @param whispering a whisper fades with the profile's whisper multiplier, as with the addon
+     */
+    public static double curveLossDb(ServerSettings s, double distance, double range, boolean whispering) {
+        if (!s.isServerCurve() || range <= 0.0 || !(distance >= 0.0)) {
+            return 0.0;
+        }
+        DistanceConfig p = s.profile();
+        double want = AudioPhysics.calculateGain(distance / range, p.getModel(),
+                AudioDistancePlugin.effectiveRolloff(p, whispering), p.getMinVolumeFraction(), p.getOpenalReferenceRatio());
+        double svc = svcGain(distance, range);
+        if (svc <= 0.0 || want >= svc) {
+            return 0.0;
+        }
+        double ratio = want / svc;
+        return ratio <= 0.0 ? CURVE_LOSS_MAX_DB : Math.min(CURVE_LOSS_MAX_DB, -20.0 * Math.log10(ratio));
+    }
+
     /**
      * The space a voice echoes in for one listener: the listener's own and the speaker's together (a
      * friend shouting in a cave echoes for someone outside it). {@code null} when the echo is off.

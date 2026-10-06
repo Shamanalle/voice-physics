@@ -509,6 +509,11 @@ public class CommandsTest {
         assertTrue(shown.plain().contains("Air off") || String.join("\n", shown.plain()).contains("[Air off]"), shown.plain().toString());
         button(shown, "/vcd effects off");
         button(shown, "/vcd effects air off");
+        AdminCommands.run("effects curve on", s, ctx);
+        assertTrue(s.isServerCurve());
+        button(AdminCommands.execute("effects", s, ctx), "/vcd effects curve off");
+        AdminCommands.run("effects curve off", s, ctx);
+        assertFalse(s.isServerCurve());
 
         AdminCommands.run("effects water 150", s, ctx);
         assertEquals(1.5, s.profile().getUnderwaterStrength(), 1e-9);
@@ -551,6 +556,10 @@ public class CommandsTest {
         AdminCommands.run("undo", s, ctx);
         assertEquals(1.0, s.profile().getUnderwaterStrength(), 1e-9);
         AdminCommands.run("undo", s, ctx);
+        assertTrue(s.isServerCurve(), "curve off undone");
+        AdminCommands.run("undo", s, ctx);
+        assertFalse(s.isServerCurve());
+        AdminCommands.run("undo", s, ctx);
         assertFalse(s.isServerAir());
         AdminCommands.run("undo", s, ctx);
         assertFalse(s.isServerEffects());
@@ -578,7 +587,7 @@ public class CommandsTest {
         assertEquals(List.of("effects"), subs);
         assertTrue(AdminCommands.suggestions("eff", s, viewer).get(0).tooltip().contains("water, weather, echo and air"));
 
-        assertEquals(List.of("on", "off", "air", "water", "weather", "echo", "status"), AdminCommands.suggest("effects "));
+        assertEquals(List.of("on", "off", "air", "curve", "water", "weather", "echo", "status"), AdminCommands.suggest("effects "));
         assertEquals(List.of("on", "off"), AdminCommands.suggest("effects air "));
         assertEquals(List.of("off", "25", "50", "75", "100", "125", "150"), AdminCommands.suggest("effects water "));
         assertEquals(List.of("off", "25", "50", "75", "100"), AdminCommands.suggest("effects echo "));

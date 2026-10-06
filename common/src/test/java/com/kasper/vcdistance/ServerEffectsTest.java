@@ -229,4 +229,57 @@ public class ServerEffectsTest {
         // Unknown distance and range still give something sane
         assertTrue(ServerEffects.echoLevels(cave(), -1, 0, 1.0)[0] > 0.0);
     }
+
+    // ---- the profile's curve (server_curve) ------------------------------------------------
+
+    @Test
+    @DisplayName("Simple Voice Chat's own fade: full to half the range, silent at the edge")
+    void svcGain() {
+        assertEquals(1.0, ServerEffects.svcGain(0, 48), 1e-9);
+        assertEquals(1.0, ServerEffects.svcGain(24, 48), 1e-9);
+        assertEquals(0.5, ServerEffects.svcGain(36, 48), 1e-9);
+        assertEquals(0.0, ServerEffects.svcGain(48, 48), 1e-9);
+        assertEquals(0.0, ServerEffects.svcGain(60, 48), 1e-9);
+    }
+
+    @Test
+    @DisplayName("Curve: off by default, then only the difference to Simple Voice Chat's line, never louder")
+    void curveLoss() {
+        assertFalse(settings.isServerCurve());
+        assertEquals(0.0, ServerEffects.curveLossDb(settings, 36, 48, false));
+        settings.setServerCurve(true);
+        assertTrue(settings.hasServerRealism());
+        DistanceConfig p = settings.profile();
+        // The same line as Simple Voice Chat's: nothing to change
+        p.setModel(AttenuationModel.LINEAR);
+        p.setAttenuationFactor(1.0);
+        p.setMinVolumeFraction(0.0);
+        p.setOpenalReferenceRatio(0.5);
+        for (double d = 0; d <= 48; d += 3) {
+            assertEquals(0.0, ServerEffects.curveLossDb(settings, d, 48, false), 0.05, "at " + d);
+        }
+        // A steeper curve takes the difference off past the full-volume part, and nothing inside it
+        p.setModel(AttenuationModel.EXPONENTIAL);
+        assertEquals(0.0, ServerEffects.curveLossDb(settings, 10, 48, false), 1e-9);
+        double want = AudioPhysics.calculateGain(36.0 / 48, AttenuationModel.EXPONENTIAL, 1.0, 0.0, 0.5);
+        assertEquals(-20 * Math.log10(want / 0.5), ServerEffects.curveLossDb(settings, 36, 48, false), 1e-6);
+        // A whisper falls off faster
+        assertTrue(ServerEffects.curveLossDb(settings, 36, 48, true) >= ServerEffects.curveLossDb(settings, 36, 48, false));
+        // Louder than the line (a flat curve): the server cannot add volume
+        p.setAttenuationFactor(0.0);
+        assertEquals(0.0, ServerEffects.curveLossDb(settings, 40, 48, false), 1e-9);
+        // Unknown range or distance: untouched
+        assertEquals(0.0, ServerEffects.curveLossDb(settings, 40, 0, false));
+        assertEquals(0.0, ServerEffects.curveLossDb(settings, Double.NaN, 48, false));
+    }
+
+    @Test
+    @DisplayName("Curve: saved and read back")
+    void curveSaved() {
+        settings.setServerCurve(true);
+        settings.save();
+        ServerSettings again = new ServerSettings(dir.resolve("server.properties"));
+        again.load();
+        assertTrue(again.isServerCurve());
+    }
 }

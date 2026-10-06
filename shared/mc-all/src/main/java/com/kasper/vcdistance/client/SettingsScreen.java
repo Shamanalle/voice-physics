@@ -1125,6 +1125,7 @@ public abstract class SettingsScreen extends com.kasper.vcdistance.compat.BaseSc
             strengthRow("server.effects.weather", st, "weather_strength", 150, x2, y, half, "effects weather");
             y += ROW;
             strengthRow("server.effects.echo", st, "echo_strength", 100, left, y, half, "effects echo");
+            serverToggle("server.effects.curve", st, "server_curve", "false", x2, y, half, "effects curve");
             y += ROW;
         }
         y += 4;
