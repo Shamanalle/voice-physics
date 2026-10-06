@@ -29,7 +29,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - **Voice Physics over Sound Physics Remastered (optional).** With Sound Physics Remastered installed, the note on the *Walls* and *Effects* tabs has a *Use ours* switch (`over_sound_physics` in the client file, off by default). When it is on, the addon takes Sound Physics Remastered's filters off voice chat and applies its own walls, round corners, echo and water to voices. All other game sounds stay with Sound Physics Remastered. The switch is a choice for your computer only; a server profile never sets or locks it. `/voicephysics report` shows which of the two handles voices.
 
 #### Changed
-- README: the *What works where* table now separates the mod on the server from the plugin and lists the newer features (OPAC, WorldGuard, Towny and Lands zones, the change log, the Paper extras).
 - *Distance* tab: the curve shape, edge volume and full-volume range are always shown; the *More curve settings* fold is gone, three controls do not need one.
 
 ### Русский
@@ -41,7 +40,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - **Voice Physics вместо Sound Physics Remastered (по желанию).** Если установлен Sound Physics Remastered, в заметке на вкладках «Стены» и «Эффекты» есть переключатель «Использовать наш» (`over_sound_physics` в файле клиента, по умолчанию выключен). Когда он включён, аддон снимает фильтры Sound Physics Remastered с голосового чата и применяет к голосам свои стены, звук из-за угла, эхо и воду. Все остальные звуки игры остаются за Sound Physics Remastered. Это выбор только для вашего компьютера; профиль сервера его не задаёт и не закрепляет. `/voicephysics report` показывает, кто из двух обрабатывает голоса.
 
 #### Изменено
-- README: таблица «Что где работает» теперь разделяет мод на сервере и плагин и включает новые возможности (зоны OPAC, WorldGuard, Towny и Lands, журнал изменений, дополнения Paper).
 - Вкладка «Дистанция»: форма кривой, громкость на краю и зона полной громкости показаны всегда; сворачивания «Ещё настройки кривой» больше нет, для трёх элементов оно не нужно.
 
 ## [2.10.3] - 2026-10-02
