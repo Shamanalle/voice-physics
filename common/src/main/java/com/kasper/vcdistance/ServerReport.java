@@ -33,6 +33,7 @@ public final class ServerReport {
                 + ", server_walls " + onOff(s.isServerWalls()) + ", streams " + AudioDistancePlugin.SERVER_WALLS.activeStreams()
                 + "/" + s.getMaxStreams() + ", block rules " + s.getBlockRules().rules().size());
         out.add("Effects: server_effects " + onOff(s.isServerEffects()) + ", server_air " + onOff(s.isServerAir())
+                + ", server_curve " + onOff(s.isServerCurve())
                 + ", water " + strength(p.isUnderwaterEnabled(), p.getUnderwaterStrength())
                 + ", weather " + strength(p.isWeatherEnabled(), p.getWeatherStrength())
                 + ", echo " + strength(p.isReverbEnabled(), p.getReverbStrength()));

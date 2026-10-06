@@ -211,7 +211,7 @@ public final class ServerWalls {
         }
         double[] opening = new double[3];
         byte[] processed = process(event, p.getChannelId(), p.getSequenceNumber(), p.getOpusEncodedData(),
-                p.getEntityUuid(), null, opening);
+                p.getEntityUuid(), null, opening, distance, p.isWhispering());
         perf.add(System.nanoTime() - start);
         if (processed == null && !retarget) {
             return;
@@ -527,7 +527,7 @@ public final class ServerWalls {
         }
         long start = System.nanoTime();
         byte[] processed = process(event, p.getChannelId(), p.getSequenceNumber(), p.getOpusEncodedData(),
-                null, p.getPosition(), null);
+                null, p.getPosition(), null, rangeOf(p), false);
         perf.add(System.nanoTime() - start);
         if (processed == null) {
             return;
@@ -538,11 +538,22 @@ public final class ServerWalls {
                         .build()));
     }
 
+    /** The range a located sound fades over on the client, or NaN on Simple Voice Chat versions without it. */
+    private static float rangeOf(LocationalSoundPacket p) {
+        try {
+            return p.getDistance();
+        } catch (Throwable t) {
+            return Float.NaN;
+        }
+    }
+
     /**
+     * @param fadeRange  the range the client fades the voice over, in blocks (NaN: unknown, no curve)
+     * @param whispering the voice is a whisper
      * @return the re-encoded frame, or {@code null} to let the original packet through
      */
     private byte[] process(SoundPacketEvent<?> event, UUID channel, long sequence, byte[] opus,
-                           UUID speakerEntity, Position position, double[] opening) {
+                           UUID speakerEntity, Position position, double[] opening, float fadeRange, boolean whispering) {
         if (opening != null) {
             opening[0] = Double.NaN;
         }
@@ -569,6 +580,7 @@ public final class ServerWalls {
         UUID speakerId = speakerEntity != null ? speakerEntity : channel;
         double volumeLoss = prefs.lossDb(listener, speakerId);
         boolean realism = settings.hasServerRealism();
+        boolean curve = settings.isServerCurve() && fadeRange > 0.0F;
         if (!walls && volumeLoss <= 0.0 && !realism) {
             return null;
         }
@@ -586,6 +598,22 @@ public final class ServerWalls {
                 air = ServerEffects.atmosphere(settings, from, to, range);
                 room = ServerEffects.room(settings, AudioDistancePlugin.SERVER_ROOMS, from, to, now);
                 roomDistance = from.distanceTo(to);
+            }
+        }
+        // The profile's curve instead of Simple Voice Chat's straight fade: how far the client hears the voice from
+        double curveDistance = -1.0;
+        if (curve) {
+            ServerPlayers.Info to = players.get(listener);
+            if (to != null && position != null) {
+                double dx = position.getX() - to.x();
+                double dy = position.getY() - to.y();
+                double dz = position.getZ() - to.z();
+                curveDistance = Math.sqrt(dx * dx + dy * dy + dz * dz);
+            } else if (to != null) {
+                ServerPlayers.Info from = players.get(speakerId);
+                if (from != null && Zone.sameWorld(from.world(), to.world())) {
+                    curveDistance = from.distanceTo(to);
+                }
             }
         }
 
@@ -621,6 +649,11 @@ public final class ServerWalls {
             // Water, rain and distance on top of the walls: filters in a row
             muffle = 1.0 - (1.0 - muffle) * (1.0 - air.muffle());
             loss += air.lossDb();
+            if (curveDistance >= 0.0) {
+                // Round a wall the voice comes from the doorway, as far away as the way round
+                loss += ServerEffects.curveLossDb(settings, doorway != null && opening != null && !Double.isNaN(opening[0])
+                        ? doorway.length() : curveDistance, fadeRange, whispering);
+            }
             double[] levels = ServerEffects.echoLevels(room, roomDistance, voiceRange(), profile.getReverbStrength());
             boolean echoing = levels[0] > 0.002 || levels[1] > 0.002;
             boolean wanted = muffle > 0.002 || loss > 0.05 || echoing;

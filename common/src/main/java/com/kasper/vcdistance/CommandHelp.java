@@ -23,7 +23,7 @@ final class CommandHelp {
             Jv.entry("preset", new String[]{"preset realistic", "preset stealth", "preset export", "preset import VP1:"}),
             Jv.entry("walls", new String[]{"walls 60", "walls 85", "walls off"}),
             Jv.entry("serverwalls", new String[]{"serverwalls on", "serverwalls off"}),
-            Jv.entry("effects", new String[]{"effects", "effects on", "effects off", "effects air on", "effects water 100",
+            Jv.entry("effects", new String[]{"effects", "effects on", "effects off", "effects air on", "effects curve on", "effects water 100",
                     "effects weather 50", "effects echo 70"}),
             Jv.entry("extras", new String[]{"extras", "extras radio on", "extras speakers on", "extras eavesdrop on",
                     "extras sculk on", "extras doorway on", "extras radio off"}),

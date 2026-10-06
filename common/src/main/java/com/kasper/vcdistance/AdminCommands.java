@@ -92,7 +92,7 @@ public final class AdminCommands {
     static final String[] REQUIRE = {"off", "suggest", "warn", "kick"};
     static final String[] ON_OFF = {"on", "off"};
     /** {@code /vcd effects <part> ...}: the server's own air and the strengths the profile has. */
-    static final String[] EFFECT_PARTS = {"on", "off", "air", "water", "weather", "echo", "status"};
+    static final String[] EFFECT_PARTS = {"on", "off", "air", "curve", "water", "weather", "echo", "status"};
     static final String[] EFFECT_STEPS = {"off", "25", "50", "75", "100", "125", "150"};
     static final String[] ECHO_STEPS = {"off", "25", "50", "75", "100"};
     /** {@code /vcd extras <name> on|off}: the Paper plugin's extras, each off until it has been played. */
@@ -448,6 +448,15 @@ public final class AdminCommands {
                 settings.setServerAir(on);
                 r.saved(on ? "effects.air_on" : "effects.air_off");
             }
+            case "curve" -> {
+                Boolean on = r.args.length > 2 ? parseOnOff(r.args[2]) : null;
+                if (on == null) {
+                    r.badValue("effects curve", r.arg(2), "on|off", "effects");
+                    return;
+                }
+                settings.setServerCurve(on);
+                r.saved(on ? "effects.curve_on" : "effects.curve_off");
+            }
             case "water", "weather", "echo" -> {
                 boolean echo = part.equals("echo");
                 double max = echo ? DistanceConfig.REVERB_MAX : DistanceConfig.EFFECT_STRENGTH_MAX;
@@ -761,6 +770,8 @@ public final class AdminCommands {
                 r.change(effectText(m, p.isReverbEnabled(), p.getReverbStrength()), "effects echo"))));
         r.reply.add(CommandReply.line().addAll(m.spans("effects.air", Style.PLAIN,
                 r.change(onOff(m, settings.isServerAir()), "effects air"))));
+        r.reply.add(CommandReply.line().addAll(m.spans("effects.curve", Style.PLAIN,
+                r.change(onOff(m, settings.isServerCurve()), "effects curve"))));
         if (settings.hasServerRealism()) {
             r.reply.add(CommandReply.line().addAll(m.spans("effects.perf", Style.MUTED,
                     String.format(Locale.ROOT, "%.2f", AudioDistancePlugin.SERVER_WALLS.perf().averageMs()))));
@@ -771,6 +782,8 @@ public final class AdminCommands {
         r.button(buttons, effects ? "btn.effects_off" : "btn.effects_on", Click.RUN, "/vcd effects " + (effects ? "off" : "on"), PERM_SETTINGS);
         boolean air = settings.isServerAir();
         r.button(buttons, air ? "btn.air_off" : "btn.air_on", Click.RUN, "/vcd effects air " + (air ? "off" : "on"), PERM_SETTINGS);
+        boolean curve = settings.isServerCurve();
+        r.button(buttons, curve ? "btn.curve_off" : "btn.curve_on", Click.RUN, "/vcd effects curve " + (curve ? "off" : "on"), PERM_SETTINGS);
         r.button(buttons, "btn.help", Click.RUN, "/vcd help effects", PERM_STATUS);
         if (undoable(settings) > 0) {
             r.button(buttons, "btn.undo", Click.RUN, "/vcd undo", null);

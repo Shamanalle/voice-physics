@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 *Все заметные изменения проекта описываются в этом файле. Каждая версия описана сначала на английском, затем на русском.*
 
+## [2.10.5] - 2026-10-06
+
+### English
+
+#### Added
+- **The distance curve for players without the addon (optional).** `/vcd effects curve on` (`server_curve` in the server file, a *Curve* switch in the *Effects* section of the *Server* tab, off by default) makes the server fade voices for players who only have Simple Voice Chat with the server profile's curve, the same curve players with the addon hear. Simple Voice Chat still fades those voices along its own straight line on the player's computer, so the server takes off only the difference. The server can only make a voice quieter: where the profile's curve is louder than that line, the voice stays as Simple Voice Chat plays it. Works with the plugin and with the mod on the server. It shares the re-encoding limit with the walls (`server_walls_max_streams`).
+
+### Русский
+
+#### Добавлено
+- **Кривая громкости для игроков без аддона (по желанию).** `/vcd effects curve on` (`server_curve` в файле сервера, переключатель «Кривая» в разделе «Эффекты» вкладки «Сервер», по умолчанию выключено) заставляет сервер приглушать голоса игрокам, у которых есть только Simple Voice Chat, по кривой профиля сервера, той же, что слышат игроки с аддоном. Simple Voice Chat всё равно приглушает эти голоса по своей прямой на компьютере игрока, поэтому сервер убирает только разницу. Сервер может только убавить голос: там, где кривая профиля громче этой прямой, голос звучит так же, как в Simple Voice Chat. Работает и с плагином, и с модом на сервере. Лимит перекодирования общий со стенами (`server_walls_max_streams`).
+
 ## [2.10.4] - 2026-10-05
 
 ### English
