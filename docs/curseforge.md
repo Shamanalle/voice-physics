@@ -42,7 +42,7 @@ Players **without the addon** also hear voices muffled through walls.
 - **One sound for everyone:** offer or enforce the server's settings for fair PvP and events.
 - **No seeing through walls:** turn off the monitor and radar.
 - **Require the addon:** send a download link, remind on every join, or kick.
-- **Realism without the addon** (off by default): water, rain and echo for players who only have voice chat.
+- **Realism without the addon** (off by default): water, rain, echo and the server profile's distance curve for players who only have voice chat.
 - **Mute** a player's voice for a time or for good, with `/vcd mute`.
 - **Paper extras** (off by default, not yet tried in a live game): a radio, loudspeakers, an eavesdrop item, a sculk reaction to shouts, doorway sound, and Towny, Lands, WorldGuard and LuckPerms integrations. `/vcd extras` lists the switches.
 - **Paper:** `/voice` for every player (talk quietly or shout, walls off for yourself, per-player volume) and PlaceholderAPI placeholders for scoreboards and tab lists.

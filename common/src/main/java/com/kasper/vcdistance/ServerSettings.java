@@ -137,6 +137,7 @@ public final class ServerSettings {
     private volatile int maxStreams = DEFAULT_MAX_STREAMS;
     private volatile boolean serverEffects;
     private volatile boolean serverAir;
+    private volatile boolean serverCurve;
     private volatile boolean metrics = true;
     private volatile boolean serverRadio;
     private volatile String radioItem = "";
@@ -245,6 +246,15 @@ public final class ServerSettings {
         serverAir = on;
     }
 
+    /** Voices fade with the profile's distance curve for players without the addon, not Simple Voice Chat's linear one. */
+    public boolean isServerCurve() {
+        return serverCurve;
+    }
+
+    public void setServerCurve(boolean on) {
+        serverCurve = on;
+    }
+
     /** Radio items: holders on one frequency hear each other at any distance (Paper). Off until play-tested. */
     public boolean isServerRadio() {
         return serverRadio;
@@ -328,7 +338,7 @@ public final class ServerSettings {
 
     /** Whether voices for players without the addon may change for another reason than walls. */
     public boolean hasServerRealism() {
-        return serverEffects || serverAir;
+        return serverEffects || serverAir || serverCurve;
     }
 
     public synchronized void load() {
@@ -378,6 +388,7 @@ public final class ServerSettings {
         maxStreams = (int) DistanceConfig.clamp(DistanceConfig.parseDouble(props, "server_walls_max_streams", DEFAULT_MAX_STREAMS), 0, MAX_STREAMS_LIMIT);
         serverEffects = DistanceConfig.parseBoolean(props, "server_effects", false);
         serverAir = DistanceConfig.parseBoolean(props, "server_air", false);
+        serverCurve = DistanceConfig.parseBoolean(props, "server_curve", false);
         mutes = readMutes(props, file);
         metrics = DistanceConfig.parseBoolean(props, "metrics", true);
         serverRadio = DistanceConfig.parseBoolean(props, "server_radio", false);
@@ -464,7 +475,14 @@ public final class ServerSettings {
                 .value("server_effects", serverEffects)
                 .comment("true: far voices get duller with distance, as in air, also for them. Same cost as above. Default false.",
                         "true: далёкие голоса и для них глохнут с расстоянием, как в воздухе. Та же нагрузка. По умолчанию false.")
-                .value("server_air", serverAir);
+                .value("server_air", serverAir)
+                .comment("true: voices fade with the profile's curve (profile.model, profile.attenuation_factor, ...) also for them,",
+                        "instead of Simple Voice Chat's straight line. The server can only make a voice quieter, so where the curve",
+                        "is louder than that line the voice stays as it was. Same cost as above. Default false.",
+                        "true: голоса и для них затихают по кривой профиля (profile.model, profile.attenuation_factor, ...),",
+                        "а не по прямой Simple Voice Chat. Сервер может только убавить голос, поэтому там, где кривая громче",
+                        "прямой, голос остаётся как был. Та же нагрузка. По умолчанию false.")
+                .value("server_curve", serverCurve);
 
         w.section("3. Players with the addon", "3. Игроки с аддоном")
                 .comment("What they get from the server:",
@@ -966,6 +984,7 @@ public final class ServerSettings {
         // Realism for players without the addon (0 when an effect is off, like walls_strength)
         p.setProperty(prefix + "server_effects", String.valueOf(serverEffects));
         p.setProperty(prefix + "server_air", String.valueOf(serverAir));
+        p.setProperty(prefix + "server_curve", String.valueOf(serverCurve));
         p.setProperty(prefix + "water_strength", DistanceConfig.format(profile.isUnderwaterEnabled() ? profile.getUnderwaterStrength() : 0.0));
         p.setProperty(prefix + "weather_strength", DistanceConfig.format(profile.isWeatherEnabled() ? profile.getWeatherStrength() : 0.0));
         p.setProperty(prefix + "echo_strength", DistanceConfig.format(profile.isReverbEnabled() ? profile.getReverbStrength() : 0.0));
