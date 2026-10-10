@@ -89,6 +89,9 @@ public final class ServerWalls {
     static final class Pair {
         final UUID listener;
         final VoiceFilter filter = new VoiceFilter();
+        /** The Doppler effect: how fast the speaker comes closer, and the voice's pitch. */
+        final Doppler.Closing closing = new Doppler.Closing();
+        final PitchShifter shifter = new PitchShifter();
         volatile Object listenerPlayer;
         volatile Object listenerLevel;
         volatile UUID speakerEntity;
@@ -656,7 +659,12 @@ public final class ServerWalls {
             }
             double[] levels = ServerEffects.echoLevels(room, roomDistance, voiceRange(), profile.getReverbStrength());
             boolean echoing = levels[0] > 0.002 || levels[1] > 0.002;
-            boolean wanted = muffle > 0.002 || loss > 0.05 || echoing;
+            double pitch = 1.0;
+            if (settings.isServerEffects() && profile.isDopplerEnabled()) {
+                pair.closing.speed(closingSpeed(speakerId, listener, position), now);
+                pitch = Doppler.pitch(pair.closing.get(), profile.getDopplerStrength());
+            }
+            boolean wanted = muffle > 0.002 || loss > 0.05 || echoing || pitch != 1.0 || pair.shifter.isEngaged();
 
             if (pair.encoder == null) {
                 if (!wanted || encoding.get() >= settings.getMaxStreams()) {
@@ -672,7 +680,10 @@ public final class ServerWalls {
                     stop(pair);
                     return null;
                 }
-                short[] frame = pair.filter.process(pcm.clone(), muffle, loss);
+                short[] frame = pcm.clone();
+                // The pitch first, so walls and echo work on the shifted voice
+                pair.shifter.process(frame, pitch, now);
+                frame = pair.filter.process(frame, muffle, loss);
                 if (pair.reverb != null && now - pair.lastFrameNanos > REVERB_STALE_NANOS) {
                     // The voice paused: the old tail would come back as a ghost
                     pair.reverb = null;
@@ -685,8 +696,8 @@ public final class ServerWalls {
                     pair.reverb.process(frame, room != null ? room : RoomEstimate.OPEN, levels[0], levels[1]);
                 }
                 byte[] encoded = pair.encoder.encode(frame);
-                if (!pair.filter.isEngaged() && (pair.reverb == null || !pair.reverb.isActive())) {
-                    // The filter has glided back open and no echo is left: this frame is the crossfade to dry,
+                if (!pair.filter.isEngaged() && !pair.shifter.isEngaged() && (pair.reverb == null || !pair.reverb.isActive())) {
+                    // The filter has glided back open, the pitch is back and no echo is left: this frame is the crossfade to dry,
                     // then the voice passes through again
                     stop(pair);
                 }
@@ -697,6 +708,39 @@ public final class ServerWalls {
                 return null;
             }
         }
+    }
+
+    /**
+     * Blocks per second the speaker comes closer to the listener, from their velocities over the last
+     * refreshes; a speaker that is not a player (a located sound) stands still where the sound is.
+     */
+    private double closingSpeed(UUID speakerId, UUID listener, Position position) {
+        ServerPlayers.Info to = players.get(listener);
+        double[] lv = players.velocity(listener);
+        if (to == null || lv == null) {
+            return 0.0;
+        }
+        ServerPlayers.Info from = players.get(speakerId);
+        double[] sv = from != null ? players.velocity(speakerId) : null;
+        double sx;
+        double sy;
+        double sz;
+        if (from != null && sv != null) {
+            if (!Zone.sameWorld(from.world(), to.world())) {
+                return 0.0;
+            }
+            sx = from.x();
+            sy = from.y();
+            sz = from.z();
+        } else if (position != null) {
+            sx = position.getX();
+            sy = position.getY();
+            sz = position.getZ();
+            sv = new double[]{0.0, 0.0, 0.0};
+        } else {
+            return 0.0;
+        }
+        return Doppler.closing(sx - to.x(), sy - to.y(), sz - to.z(), sv[0], sv[1], sv[2], lv[0], lv[1], lv[2]);
     }
 
     private short[] decode(VoicechatServerApi api, UUID channel, long sequence, byte[] opus, long now) {
@@ -734,6 +778,7 @@ public final class ServerWalls {
 
     private void stop(Pair pair) {
         pair.reverb = null;
+        pair.shifter.reset();
         if (pair.encoder != null) {
             try {
                 pair.encoder.close();

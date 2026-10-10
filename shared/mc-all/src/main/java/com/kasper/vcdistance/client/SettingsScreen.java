@@ -13,6 +13,7 @@ import com.kasper.vcdistance.AudioPhysics;
 import com.kasper.vcdistance.Bearing;
 import com.kasper.vcdistance.BlockRules;
 import com.kasper.vcdistance.DistanceConfig;
+import com.kasper.vcdistance.Doppler;
 import com.kasper.vcdistance.EnvironmentEffects;
 import com.kasper.vcdistance.HudMode;
 import com.kasper.vcdistance.LinkProtocol;
@@ -158,6 +159,7 @@ public abstract class SettingsScreen extends com.kasper.vcdistance.compat.BaseSc
     private RangeSlider reverbSlider;
     private RangeSlider waterSlider;
     private RangeSlider weatherSlider;
+    private RangeSlider dopplerSlider;
     private boolean serverChip;
     /** Current walk-away preview step, or -1 when it is not playing. */
     private int previewStep = -1;
@@ -241,6 +243,7 @@ public abstract class SettingsScreen extends com.kasper.vcdistance.compat.BaseSc
         reverbSlider = null;
         waterSlider = null;
         weatherSlider = null;
+        dopplerSlider = null;
         listenButton = null;
         copyButton = null;
         pasteButton = null;
@@ -832,13 +835,41 @@ public abstract class SettingsScreen extends com.kasper.vcdistance.compat.BaseSc
             b.setMessage(onOff("effects.place", config.isPlaceTuning()));
         }).bounds(right - colW, y + ROW * 3, colW, 20).tooltip(tip("effects.place.tooltip")).build(), DistanceConfig.Part.EFFECTS);
 
-        statusY = y + ROW * 4 + 2;
+        edit(Btn.builder(onOff("effects.doppler", shown().isDopplerEnabled()), b -> {
+            config.setDopplerEnabled(!config.isDopplerEnabled());
+            b.setMessage(onOff("effects.doppler", config.isDopplerEnabled()));
+            if (dopplerSlider != null) {
+                dopplerSlider.active = config.isDopplerEnabled();
+            }
+        }).bounds(left, y + ROW * 4, colW, 20).tooltip(tip("effects.doppler.tooltip")).build(), DistanceConfig.Part.EFFECTS);
+        dopplerSlider = new RangeSlider(right - colW, y + ROW * 4, colW, 20,
+                Doppler.STRENGTH_MIN, Doppler.STRENGTH_MAX, 0.05,
+                () -> shown().getDopplerStrength(), config::setDopplerStrength,
+                v -> tr("effects.doppler.strength", pct(v)));
+        dopplerSlider.active = shown().isDopplerEnabled();
+        edit(withTip(dopplerSlider, "effects.doppler.strength.tooltip"), DistanceConfig.Part.EFFECTS);
+        int rows = 5;
+        // With the Doppler mod: whose effect voices get. This computer's choice, never locked
+        if (ModEnvironment.isDopplerModPresent()) {
+            content(Btn.builder(dopplerModLabel(), b -> {
+                DistanceConfig.DopplerMod[] all = DistanceConfig.DopplerMod.values();
+                config.setDopplerMod(all[(config.getDopplerMod().ordinal() + 1) % all.length]);
+                b.setMessage(dopplerModLabel());
+            }).bounds(left, y + ROW * rows, w, 20).tooltip(tip("effects.doppler.mod.tooltip")).build());
+            rows++;
+        }
+
+        statusY = y + ROW * rows + 2;
         if (hasStatusBanner()) {
             addSoundPhysicsToggle();
         }
         panelTop = statusY + (hasStatusBanner() ? 30 : 0);
         panelBottom = stretch(panelTop, 140);
         contentEnd = panelBottom;
+    }
+
+    private Component dopplerModLabel() {
+        return tr("effects.doppler.mod", tr("effects.doppler.mod." + config.getDopplerMod().getId()));
     }
 
     private static Component onOff(String key, boolean on) {
@@ -1126,6 +1157,8 @@ public abstract class SettingsScreen extends com.kasper.vcdistance.compat.BaseSc
             y += ROW;
             strengthRow("server.effects.echo", st, "echo_strength", 100, left, y, half, "effects echo");
             serverToggle("server.effects.curve", st, "server_curve", "false", x2, y, half, "effects curve");
+            y += ROW;
+            strengthRow("server.effects.doppler", st, "doppler_strength", 300, left, y, half, "effects doppler");
             y += ROW;
         }
         y += 4;

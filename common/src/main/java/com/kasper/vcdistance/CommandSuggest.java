@@ -97,6 +97,7 @@ final class CommandSuggest {
                 case "air", "curve" -> AdminCommands.ON_OFF;
                 case "water", "weather" -> AdminCommands.EFFECT_STEPS;
                 case "echo" -> AdminCommands.ECHO_STEPS;
+                case "doppler" -> AdminCommands.DOPPLER_STEPS;
                 default -> new String[0];
             }, typed);
         } else if (sub.equals("radio") && args.length == 3 && action.equals("item")) {

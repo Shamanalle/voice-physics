@@ -89,7 +89,7 @@ public final class SpeakerTicker {
             AudioDistancePlugin.NEARBY.clear();
             AudioDistancePlugin.ENVIRONMENT.reset();
             for (SpeakerRegistry.Speaker s : active) {
-                s.setDistance(-1.0);
+                s.setDistance(-1.0, now);
                 s.clearOcclusion();
             }
             return;
@@ -128,11 +128,11 @@ public final class SpeakerTicker {
                         ? access.entitySpeakerPosition(s, now)
                         : new Vec3(s.getSoundX(), s.getSoundY(), s.getSoundZ());
                 if (source == null || listener == null) {
-                    s.setDistance(-1.0);
+                    s.setDistance(-1.0, now);
                     s.clearOcclusion();
                     continue;
                 }
-                s.setDistance(listener.distanceTo(source));
+                s.setDistance(listener.distanceTo(source), now);
                 s.setBearing(Bearing.relative(source.x - listener.x, source.z - listener.z, yaw));
                 s.setSurroundings(access.isUnderWater(source), access.weatherAt(source));
 

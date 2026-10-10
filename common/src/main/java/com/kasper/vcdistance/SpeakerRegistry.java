@@ -34,6 +34,9 @@ public final class SpeakerRegistry {
         private final UUID channelId;
         private final VoiceFilter filter = new VoiceFilter();
         private final Reverb reverb = new Reverb();
+        private final PitchShifter shifter = new PitchShifter();
+        /** How fast the speaker comes closer (client tick). */
+        private final Doppler.Closing closing = new Doppler.Closing();
 
         volatile Kind kind;
         volatile UUID entityId;
@@ -292,6 +295,21 @@ public final class SpeakerRegistry {
 
         public void setDistance(double distance) {
             this.distance = distance;
+        }
+
+        /** The distance measured this tick, which also tells how fast the speaker comes closer. */
+        public void setDistance(double distance, long nowNanos) {
+            this.distance = distance;
+            closing.distance(distance, nowNanos);
+        }
+
+        /** Blocks per second the speaker comes closer (negative: moves away), smoothed. */
+        public double getClosingSpeed() {
+            return closing.get();
+        }
+
+        public PitchShifter getShifter() {
+            return shifter;
         }
 
         /** Degrees from where the listener looks, positive to the right; NaN when unknown ({@link Bearing}). */

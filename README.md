@@ -81,7 +81,8 @@ These need the addon on your client and work on any server with Simple Voice Cha
 - *By place* (on by default): the dimension, biome and depth tune the sound a little. Deep caves and the deep dark ring longer, the Nether's smoke dulls far voices, the End's open void has no echo, snow and dense jungle swallow sound. It is mild and comes on top of what is measured; a switch on the *Effects* tab turns it off.
 - Under water voices are dull and quieter.
 - Rain and thunder cover far voices under the open sky.
-- The *Effects* tab has a switch for each, sliders for how strong the echo, water and rain are, and shows what kind of place you are in.
+- *Doppler* (off by default): a voice coming closer sounds higher, one moving away lower, as with elytra, boats on ice, horses and minecarts. Only how fast the distance changes counts, so walking about or flying side by side changes nothing, and the voice keeps its timing. At 100% it is as in real air, where only fast movement is heard; up to 300% makes slower movement heard too.
+- The *Effects* tab has a switch for each, sliders for how strong the echo, water, rain and Doppler are, and shows what kind of place you are in.
 
 ### HUD
 - A small panel in a screen corner: who is talking, how far away, from which side, and whether they whisper, are behind a wall or round a corner.
@@ -119,7 +120,7 @@ Available in the full Fabric, Forge and NeoForge mods and as a plugin for Paper,
 - **No seeing through walls.** Turn off the monitor, the radar and nearby players in the HUD.
 - **Require the addon.** Players with Simple Voice Chat but without the addon can get a download link once, on every join, or be kicked. Players without voice chat are never affected.
 - **Controls for players without the mod (Paper, Folia).** `/voice` lets anyone choose how loud they talk (quiet, normal, shout), turn wall muffling off for themselves, set how loud each player is to them or ignore one, and show who is talking nearby above the hotbar. The choices are kept per player; shouting needs the `vcd.shout` permission (operators by default).
-- **Realism for players without the addon (off by default).** `/vcd effects on` makes the server dull voices under water, cover far ones in rain and thunder, and echo the room a speaker or listener is in, the same physics the addon does at home. `/vcd effects air on` also dulls voices a little as they near the edge of their range, and `/vcd effects curve on` makes their voices fade with the profile's distance curve instead of Simple Voice Chat's straight line (the server can only make a voice quieter, so a curve louder than that line stays as Simple Voice Chat plays it). Water, rain and air work on every platform; measuring a room for the echo needs block access and is Paper only, while a zone with its own echo works everywhere. The strengths are the profile's (`/vcd effects water|weather|echo <0-150>`). It costs some load, so it is off until you turn it on.
+- **Realism for players without the addon (off by default).** `/vcd effects on` makes the server dull voices under water, cover far ones in rain and thunder, and echo the room a speaker or listener is in, the same physics the addon does at home. `/vcd effects air on` also dulls voices a little as they near the edge of their range, and `/vcd effects curve on` makes their voices fade with the profile's distance curve instead of Simple Voice Chat's straight line (the server can only make a voice quieter, so a curve louder than that line stays as Simple Voice Chat plays it). Water, rain and air work on every platform; measuring a room for the echo needs block access and is Paper only, while a zone with its own echo works everywhere. `/vcd effects doppler 100` adds the Doppler effect: voices rise and fall in pitch as players fly or ride towards or away from each other (0 – 300%, off by default even when the effects are on). The strengths are the profile's (`/vcd effects water|weather|echo <0-150>`, `doppler <0-300>`). It costs some load, so it is off until you turn it on.
 - **Mute.** `/vcd mute <player> [time] [reason]` silences a player's voice for everyone, for a time (`10m`, `2h`, `1d`, `perm`) or until `/vcd unmute`. `/vcd mutes` lists who is muted and why, with an *Unmute* button. Mutes survive restarts and appear in the change log.
 - **Extras (Paper, off by default, not yet tried in a live game).** `/vcd extras` lists them with a switch each, and the *Server* tab of the settings screen shows the same switches (plus the eavesdrop factor) when the server runs the plugin; turn one on on a test server first, `/vcd undo` takes it back. A **radio** (`/voice radio <1-9999>`: players on one frequency hear each other at any distance, optionally only while holding an item), **loudspeakers** (`/vcd speaker add`: whoever talks at one is heard from it around it), an **eavesdrop item** (a spyglass makes walls sound thinner), the **sculk reaction** (a shout is a game event wardens and sculk sensors react to), **doorway sound** (behind a wall, the voice comes through the open door instead of the wall) and **integrations** (Towny towns and Lands lands as zones, a WorldGuard `vcd-zone` flag, LuckPerms contexts `vcd:mode`, `vcd:walls`, `vcd:zone`).
 - **PlaceholderAPI (Paper).** With [PlaceholderAPI](https://modrinth.com/plugin/placeholderapi) installed, scoreboards, tab lists, holograms and chat formats can show [`%vcd_...%` placeholders](#placeholders): who talks, the mode, the range, whether someone is muted.
@@ -137,6 +138,7 @@ Server columns: *mod* is the Fabric, Forge or NeoForge addon on the server, *plu
 | Round corners | ✅ | — | doorway sound (Paper extra) | ✅ |
 | Echo of the room | ✅ | — | Paper, if turned on | ✅ |
 | Water, rain | ✅ | if turned on | if turned on | ✅ |
+| Doppler | if turned on | if turned on | if turned on | if turned on |
 | Echo by place (caves, Nether, End) | ✅ | — | — | ✅ |
 | HUD, monitor, radar | ✅ | — | — | ✅ + voice chat state of every player |
 | Zones: range, walls, isolation, names above the hotbar | — | ✅ + Open Parties and Claims | ✅ + WorldGuard, Towny, Lands | ✅ |
@@ -153,41 +155,41 @@ With the addon on both sides the client muffles walls itself and the server skip
 
 | Loader | Minecraft | File | Java | Simple Voice Chat |
 |---|---|---|---|---|
-| **Fabric / Quilt** | 1.16.5 | `voice-physics-fabric-2.10.5+mc1.16.5.jar` | 8+ | 2.4.0+ |
-| **Fabric / Quilt** | 1.17.1 | `voice-physics-fabric-2.10.5+mc1.17.1.jar` | 16+ | 2.4.0+ |
-| **Fabric / Quilt** | 1.18.2 | `voice-physics-fabric-2.10.5+mc1.18.2.jar` | 17+ | 2.4.0+ |
-| **Fabric / Quilt** | 1.19.2 | `voice-physics-fabric-2.10.5+mc1.19.2.jar` | 17+ | 2.4.0+ |
-| **Fabric / Quilt** | 1.19.4 | `voice-physics-fabric-2.10.5+mc1.19.4.jar` | 17+ | 2.4.0+ |
-| **Fabric / Quilt** | 1.20 – 1.20.1 | `voice-physics-fabric-2.10.5+mc1.20.1.jar` | 17+ | 2.4.0+ |
-| **Fabric / Quilt** | 1.20.2 – 1.20.4 | `voice-physics-fabric-2.10.5+mc1.20.2-1.20.4.jar` | 17+ | 2.4.0+ |
-| **Fabric / Quilt** | 1.20.5 – 1.20.6 | `voice-physics-fabric-2.10.5+mc1.20.5-1.20.6.jar` | 21+ | 2.5.0+ |
-| **Fabric / Quilt** | 1.21 – 1.21.11 | `voice-physics-fabric-2.10.5+mc1.21.x.jar` | 21+ | 2.5.0+ |
-| **Fabric / Quilt** | 26.1 – 26.3 | `voice-physics-fabric-2.10.5+mc26.x.jar` | 25+ | 2.6.0+ |
-| **Forge** | 1.16.5 | `voice-physics-forge-2.10.5+mc1.16.5.jar` | 8 – 16 | 2.4.0+ |
-| **Forge** | 1.17.1 | `voice-physics-forge-2.10.5+mc1.17.1.jar` | 16+ | 2.4.0+ |
-| **Forge** | 1.18.2 | `voice-physics-forge-2.10.5+mc1.18.2.jar` | 17+ | 2.4.0+ |
-| **Forge** | 1.19.2 | `voice-physics-forge-2.10.5+mc1.19.2.jar` | 17+ | 2.4.0+ |
-| **Forge** | 1.19.4 | `voice-physics-forge-2.10.5+mc1.19.4.jar` | 17+ | 2.4.0+ |
-| **Forge** | 1.20 – 1.20.1 | `voice-physics-forge-2.10.5+mc1.20.1.jar` | 17+ | 2.4.0+ |
-| **Forge** | 1.20.2 – 1.20.4 | `voice-physics-forge-2.10.5+mc1.20.2-1.20.4.jar` | 17+ | 2.4.0+ |
-| **Forge** | 1.20.6 | `voice-physics-forge-2.10.5+mc1.20.6.jar` | 21+ | 2.5.0+ |
-| **Forge** | 1.21 – 1.21.1 | `voice-physics-forge-2.10.5+mc1.21-1.21.1.jar` | 21+ | 2.5.0+ |
-| **Forge** | 1.21.3 – 1.21.5 | `voice-physics-forge-2.10.5+mc1.21.3-1.21.5.jar` | 21+ | 2.5.0+ |
-| **Forge** | 1.21.6 – 1.21.8 | `voice-physics-forge-2.10.5+mc1.21.6-1.21.8.jar` | 21+ | 2.5.0+ |
-| **Forge** | 1.21.9 – 1.21.10 | `voice-physics-forge-2.10.5+mc1.21.9-1.21.10.jar` | 21+ | 2.5.0+ |
-| **Forge** | 1.21.11 | `voice-physics-forge-2.10.5+mc1.21.11.jar` | 21+ | 2.5.0+ |
-| **Forge** | 26.1 – 26.3 | `voice-physics-forge-2.10.5+mc26.x.jar` | 25+ | 2.6.0+ |
-| **NeoForge** | 1.20.1 | `voice-physics-forge-2.10.5+mc1.20.1.jar` | 17+ | 2.4.0+ |
-| **NeoForge** | 1.20.2 – 1.20.3 | `voice-physics-neoforge-2.10.5+mc1.20.2-1.20.3.jar` | 17+ | 2.4.0+ |
-| **NeoForge** | 1.20.4 | `voice-physics-neoforge-2.10.5+mc1.20.4.jar` | 17+ | 2.4.0+ |
-| **NeoForge** | 1.20.5 – 1.20.6 | `voice-physics-neoforge-2.10.5+mc1.20.5-1.20.6.jar` | 21+ | 2.5.0+ |
-| **NeoForge** | 1.21 – 1.21.1 | `voice-physics-neoforge-2.10.5+mc1.21-1.21.1.jar` | 21+ | 2.5.0+ |
-| **NeoForge** | 1.21.2 – 1.21.5 | `voice-physics-neoforge-2.10.5+mc1.21.2-1.21.5.jar` | 21+ | 2.5.0+ |
-| **NeoForge** | 1.21.6 – 1.21.8 | `voice-physics-neoforge-2.10.5+mc1.21.6-1.21.8.jar` | 21+ | 2.5.0+ |
-| **NeoForge** | 1.21.9 – 1.21.10 | `voice-physics-neoforge-2.10.5+mc1.21.9-1.21.10.jar` | 21+ | 2.5.0+ |
-| **NeoForge** | 1.21.11 | `voice-physics-neoforge-2.10.5+mc1.21.11.jar` | 21+ | 2.5.0+ |
-| **NeoForge** | 26.1 – 26.3 | `voice-physics-neoforge-2.10.5+mc26.x.jar` | 25+ | 2.6.0+ |
-| **Paper / Purpur / Folia / Spigot / Bukkit** | 1.16.5 – 26.3 | `voice-physics-bukkit-2.10.5.jar` | 8+ (17+ on 1.18+) | Bukkit version |
+| **Fabric / Quilt** | 1.16.5 | `voice-physics-fabric-2.11.0+mc1.16.5.jar` | 8+ | 2.4.0+ |
+| **Fabric / Quilt** | 1.17.1 | `voice-physics-fabric-2.11.0+mc1.17.1.jar` | 16+ | 2.4.0+ |
+| **Fabric / Quilt** | 1.18.2 | `voice-physics-fabric-2.11.0+mc1.18.2.jar` | 17+ | 2.4.0+ |
+| **Fabric / Quilt** | 1.19.2 | `voice-physics-fabric-2.11.0+mc1.19.2.jar` | 17+ | 2.4.0+ |
+| **Fabric / Quilt** | 1.19.4 | `voice-physics-fabric-2.11.0+mc1.19.4.jar` | 17+ | 2.4.0+ |
+| **Fabric / Quilt** | 1.20 – 1.20.1 | `voice-physics-fabric-2.11.0+mc1.20.1.jar` | 17+ | 2.4.0+ |
+| **Fabric / Quilt** | 1.20.2 – 1.20.4 | `voice-physics-fabric-2.11.0+mc1.20.2-1.20.4.jar` | 17+ | 2.4.0+ |
+| **Fabric / Quilt** | 1.20.5 – 1.20.6 | `voice-physics-fabric-2.11.0+mc1.20.5-1.20.6.jar` | 21+ | 2.5.0+ |
+| **Fabric / Quilt** | 1.21 – 1.21.11 | `voice-physics-fabric-2.11.0+mc1.21.x.jar` | 21+ | 2.5.0+ |
+| **Fabric / Quilt** | 26.1 – 26.3 | `voice-physics-fabric-2.11.0+mc26.x.jar` | 25+ | 2.6.0+ |
+| **Forge** | 1.16.5 | `voice-physics-forge-2.11.0+mc1.16.5.jar` | 8 – 16 | 2.4.0+ |
+| **Forge** | 1.17.1 | `voice-physics-forge-2.11.0+mc1.17.1.jar` | 16+ | 2.4.0+ |
+| **Forge** | 1.18.2 | `voice-physics-forge-2.11.0+mc1.18.2.jar` | 17+ | 2.4.0+ |
+| **Forge** | 1.19.2 | `voice-physics-forge-2.11.0+mc1.19.2.jar` | 17+ | 2.4.0+ |
+| **Forge** | 1.19.4 | `voice-physics-forge-2.11.0+mc1.19.4.jar` | 17+ | 2.4.0+ |
+| **Forge** | 1.20 – 1.20.1 | `voice-physics-forge-2.11.0+mc1.20.1.jar` | 17+ | 2.4.0+ |
+| **Forge** | 1.20.2 – 1.20.4 | `voice-physics-forge-2.11.0+mc1.20.2-1.20.4.jar` | 17+ | 2.4.0+ |
+| **Forge** | 1.20.6 | `voice-physics-forge-2.11.0+mc1.20.6.jar` | 21+ | 2.5.0+ |
+| **Forge** | 1.21 – 1.21.1 | `voice-physics-forge-2.11.0+mc1.21-1.21.1.jar` | 21+ | 2.5.0+ |
+| **Forge** | 1.21.3 – 1.21.5 | `voice-physics-forge-2.11.0+mc1.21.3-1.21.5.jar` | 21+ | 2.5.0+ |
+| **Forge** | 1.21.6 – 1.21.8 | `voice-physics-forge-2.11.0+mc1.21.6-1.21.8.jar` | 21+ | 2.5.0+ |
+| **Forge** | 1.21.9 – 1.21.10 | `voice-physics-forge-2.11.0+mc1.21.9-1.21.10.jar` | 21+ | 2.5.0+ |
+| **Forge** | 1.21.11 | `voice-physics-forge-2.11.0+mc1.21.11.jar` | 21+ | 2.5.0+ |
+| **Forge** | 26.1 – 26.3 | `voice-physics-forge-2.11.0+mc26.x.jar` | 25+ | 2.6.0+ |
+| **NeoForge** | 1.20.1 | `voice-physics-forge-2.11.0+mc1.20.1.jar` | 17+ | 2.4.0+ |
+| **NeoForge** | 1.20.2 – 1.20.3 | `voice-physics-neoforge-2.11.0+mc1.20.2-1.20.3.jar` | 17+ | 2.4.0+ |
+| **NeoForge** | 1.20.4 | `voice-physics-neoforge-2.11.0+mc1.20.4.jar` | 17+ | 2.4.0+ |
+| **NeoForge** | 1.20.5 – 1.20.6 | `voice-physics-neoforge-2.11.0+mc1.20.5-1.20.6.jar` | 21+ | 2.5.0+ |
+| **NeoForge** | 1.21 – 1.21.1 | `voice-physics-neoforge-2.11.0+mc1.21-1.21.1.jar` | 21+ | 2.5.0+ |
+| **NeoForge** | 1.21.2 – 1.21.5 | `voice-physics-neoforge-2.11.0+mc1.21.2-1.21.5.jar` | 21+ | 2.5.0+ |
+| **NeoForge** | 1.21.6 – 1.21.8 | `voice-physics-neoforge-2.11.0+mc1.21.6-1.21.8.jar` | 21+ | 2.5.0+ |
+| **NeoForge** | 1.21.9 – 1.21.10 | `voice-physics-neoforge-2.11.0+mc1.21.9-1.21.10.jar` | 21+ | 2.5.0+ |
+| **NeoForge** | 1.21.11 | `voice-physics-neoforge-2.11.0+mc1.21.11.jar` | 21+ | 2.5.0+ |
+| **NeoForge** | 26.1 – 26.3 | `voice-physics-neoforge-2.11.0+mc26.x.jar` | 25+ | 2.6.0+ |
+| **Paper / Purpur / Folia / Spigot / Bukkit** | 1.16.5 – 26.3 | `voice-physics-bukkit-2.11.0.jar` | 8+ (17+ on 1.18+) | Bukkit version |
 
 - **Fabric**, **Forge** and **NeoForge** are the full addon, for the client and the server. Fabric needs [Fabric API](https://modrinth.com/mod/fabric-api); [Mod Menu](https://modrinth.com/mod/modmenu) is optional. On Forge for 1.21.6 – 1.21.7 the voice HUD is off: that Forge cannot add it. NeoForge 1.20.1 is a fork of Forge 1.20.1 and takes the Forge file. The NeoForge 1.20.4 file needs NeoForge 20.4.80 or newer.
 - **Older Minecraft** (1.16.5 – 1.19.4) has the same features as the newer files. Simple Voice Chat itself is still updated for 1.16.5, 1.18.2 and 1.19.2, while 1.17.1 and 1.19.4 stopped at its 2.5.12, which the addon works with. Forge 1.16.5 runs on Java 8 – 16, Fabric 1.16.5 on 8 and newer, Fabric 1.17.1 and Forge 1.17.1 on 16 and newer. Minecraft 1.19.3 is not built.
@@ -196,6 +198,7 @@ With the addon on both sides the client muffles walls itself and the server skip
 ## Compatibility
 
 - **Sound Physics Remastered:** when it is installed, the addon leaves walls, echo and water to it by default, so nothing is applied twice; rain still works. To hear voices through the addon instead, press *Use ours* in the note on the *Walls* or *Effects* tab (or set `over_sound_physics=true` in the [client file](#client-file)). Then the addon takes Sound Physics Remastered's filters off voices and applies its own walls, echo and water; all other game sounds stay with Sound Physics Remastered. The choice is yours and is never locked by a server.
+- **[Doppler](https://github.com/imAETHER/Doppler) mod:** it also changes the pitch of voices. When it is installed, the *Effects* tab has a button that chooses whose effect voices get: *The mod's* (the default, as before), *Ours* (the mod keeps handling all other sounds) or *Both* (`doppler_mod` in the [client file](#client-file)). The choice is yours and is never locked by a server.
 - **Simple Voice Chat groups:** a group hears its members anywhere, so walls and range do not apply inside it. Game rules apply only where the server turns them on.
 - **Vanish plugins** (Paper): hidden players stay hidden in the monitor too.
 
@@ -281,6 +284,7 @@ Replies are coloured and clickable: values in `/vcd status` put the command that
 | `/vcd effects air on\|off` | Voices dull a little as they near the edge of their range (players without the addon) |
 | `/vcd effects curve on\|off` | Voices fade with the profile's distance curve, not Simple Voice Chat's straight line (players without the addon) |
 | `/vcd effects water\|weather\|echo <0-150>\|off` | How strong each is; these are the server profile's values, so players with the addon get them too |
+| `/vcd effects doppler <0-300>\|off` | The Doppler effect, from the server profile too (off by default) |
 | `/vcd lock all\|none\|curve,walls,materials,effects` | What players cannot change while the profile is enforced |
 | `/vcd monitor on\|off` | Monitor, radar and nearby players in the HUD |
 | `/vcd notices on\|off` | A zone's name above the hotbar when players enter or leave it |
@@ -347,9 +351,12 @@ Everything here can also be set in game. Every key in the files has a comment in
 | `underwater_strength` | 0 – 1.5 | 1 | How dull and quiet voices get under water |
 | `weather_enabled` | true / false | true | Rain and thunder cover far voices |
 | `weather_strength` | 0 – 1.5 | 1 | How much rain and thunder cover them |
+| `doppler_enabled` | true / false | false | Voices coming closer sound higher, moving away lower |
+| `doppler_strength` | 0 – 3 | 1 | 1 = as in air |
 | `diffraction_enabled` | true / false | true | Voices come round corners |
 | `place_tuning` | true / false | true | The dimension, biome and depth tune echo and air a little |
 | `over_sound_physics` | true / false | false | With Sound Physics Remastered installed: voices get this addon's walls, echo and water instead of its |
+| `doppler_mod` | `mod` / `ours` / `both` | `mod` | With the Doppler mod installed: whose Doppler effect voices get |
 | `hud_mode` | `off` / `talking` / `always` | `talking` | When the HUD is shown |
 | `hud_corner` | `top_left` / `top_right` / `bottom_left` / `bottom_right` | `top_right` | HUD corner |
 | `hud_scale` | 0.5 – 2 | 1.0 | HUD size |
@@ -386,7 +393,7 @@ Everything here can also be set in game. Every key in the files has a comment in
 | `profile_locked` | `all`, `none`, or any of `curve,walls,materials,effects` | `all` | With `enforce`: what players cannot change; `walls` brings `materials` along |
 | `profile_preset` | `vanilla` / `realistic` / `clear` / `stealth` / `custom` | `custom` | The server's sound; `custom` uses the `profile.*` keys |
 | `profile.distance_model`, `.attenuation_factor`, `.openal_reference_ratio`, `.min_volume_fraction`, `.whisper_multiplier` | as in the client file | client defaults | The custom curve |
-| `profile.reverb_enabled`, `.reverb_strength`, `.underwater_enabled`, `.underwater_strength`, `.weather_enabled`, `.weather_strength`, `.diffraction_enabled`, `.place_tuning` | as in the client file | client defaults | Effects; always part of the profile, whatever the preset |
+| `profile.reverb_enabled`, `.reverb_strength`, `.underwater_enabled`, `.underwater_strength`, `.weather_enabled`, `.weather_strength`, `.doppler_enabled`, `.doppler_strength`, `.diffraction_enabled`, `.place_tuning` | as in the client file | client defaults | Effects; always part of the profile, whatever the preset |
 | `allow_monitor` | true / false | true | `false`: no monitor, radar or nearby players in the HUD |
 | `zone_notices` | true / false | true | A zone's name above the hotbar on entering and leaving, for every player |
 
@@ -429,7 +436,7 @@ zone.box.booth.isolated=true
 
 | Key | Values | Default | What it does |
 |---|---|---|---|
-| `server_effects` | true / false | false | The server dulls voices under water, covers far ones in rain and thunder and echoes the room (echo: Paper); strengths come from `profile.underwater_*`, `profile.weather_*` and `profile.reverb_*` |
+| `server_effects` | true / false | false | The server dulls voices under water, covers far ones in rain and thunder and echoes the room (echo: Paper); strengths come from `profile.underwater_*`, `profile.weather_*` and `profile.reverb_*`; with `profile.doppler_enabled` also the Doppler effect |
 | `server_air` | true / false | false | Voices dull a little as they near the edge of their range |
 | `server_curve` | true / false | false | Voices fade with the profile's distance curve for players without the addon; the server can only make them quieter |
 | `mute.<uuid>` | `end\|name\|muted by\|reason` | none | A muted player; `end` is the time in milliseconds since 1970, 0 until unmuted. `/vcd mute` writes these; expired ones are dropped |

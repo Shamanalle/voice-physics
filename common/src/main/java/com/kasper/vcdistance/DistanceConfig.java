@@ -19,8 +19,8 @@ public final class DistanceConfig {
     /** 3: the file is written with a comment for every key; 4: interface section; 5: echo, water, weather; 6: sound around corners;
      * 7: the HUD moves from the top left (under Simple Voice Chat's group list) to the top right;
      * 8: more materials (metal, earth, soft, ice, other); 9: HUD size, background, compact, colorblind colors;
-     * 10: over_sound_physics. */
-    private static final int CONFIG_VERSION = 10;
+     * 10: over_sound_physics; 11: Doppler effect. */
+    private static final int CONFIG_VERSION = 11;
     private static final String FILE_NAME = "vc-audio-distance.properties";
 
     // -------------------------------------------------------------------------
@@ -61,6 +61,9 @@ public final class DistanceConfig {
     public static final double EFFECT_STRENGTH_MAX = 1.5;
     public static final boolean DEFAULT_DIFFRACTION_ENABLED = true;
     public static final boolean DEFAULT_PLACE_TUNING = true;
+    /** The Doppler effect is off unless switched on: a moving voice changing pitch surprises people. */
+    public static final boolean DEFAULT_DOPPLER_ENABLED = false;
+    public static final double DEFAULT_DOPPLER_STRENGTH = 1.0;
 
     private volatile AttenuationModel model = DEFAULT_MODEL;
     private volatile double attenuationFactor = DEFAULT_ATTENUATION_FACTOR;
@@ -77,6 +80,8 @@ public final class DistanceConfig {
     private volatile double weatherStrength = DEFAULT_WEATHER_STRENGTH;
     private volatile boolean diffractionEnabled = DEFAULT_DIFFRACTION_ENABLED;
     private volatile boolean placeTuning = DEFAULT_PLACE_TUNING;
+    private volatile boolean dopplerEnabled = DEFAULT_DOPPLER_ENABLED;
+    private volatile double dopplerStrength = DEFAULT_DOPPLER_STRENGTH;
     private final double[] materialWeights = new double[AcousticMaterial.values().length];
     /** Blocks and block tags with a material of their own; replaced as a whole, never changed in place. */
     private volatile BlockRules blockRules = BlockRules.EMPTY;
@@ -95,6 +100,7 @@ public final class DistanceConfig {
     private volatile boolean hudMarkers;
     private volatile boolean colorblind;
     private volatile boolean overSoundPhysics;
+    private volatile DopplerMod dopplerMod = DopplerMod.MOD;
     /** The preset last picked ("" = own values) and the voice range it was fitted to. */
     private volatile String presetId = "";
     private volatile double presetRange;
@@ -242,6 +248,26 @@ public final class DistanceConfig {
 
     public void setWeatherStrength(double value) {
         weatherStrength = clamp(value, EFFECT_STRENGTH_MIN, EFFECT_STRENGTH_MAX);
+        changed();
+    }
+
+    /** A voice coming closer sounds higher, one moving away lower. */
+    public boolean isDopplerEnabled() {
+        return dopplerEnabled;
+    }
+
+    public void setDopplerEnabled(boolean value) {
+        dopplerEnabled = value;
+        changed();
+    }
+
+    /** How strong the Doppler effect is, 0 - 3 (1 = as in air). */
+    public double getDopplerStrength() {
+        return dopplerStrength;
+    }
+
+    public void setDopplerStrength(double value) {
+        dopplerStrength = clamp(value, Doppler.STRENGTH_MIN, Doppler.STRENGTH_MAX);
         changed();
     }
 
@@ -407,6 +433,50 @@ public final class DistanceConfig {
         changed();
     }
 
+    /**
+     * With the Doppler mod installed: whose Doppler effect voices get. A choice of this computer,
+     * never part of a server profile.
+     */
+    public DopplerMod getDopplerMod() {
+        return dopplerMod;
+    }
+
+    public void setDopplerMod(DopplerMod mode) {
+        dopplerMod = mode == null ? DopplerMod.MOD : mode;
+        changed();
+    }
+
+    /** Whose Doppler effect voices get when the Doppler mod is installed too. */
+    public enum DopplerMod {
+        /** Ours only; the mod's is taken off voices (it keeps the world's sounds). */
+        OURS("ours"),
+        /** The mod's only; ours is off. */
+        MOD("mod"),
+        /** Both at once. */
+        BOTH("both");
+
+        private final String id;
+
+        DopplerMod(String id) {
+            this.id = id;
+        }
+
+        public String getId() {
+            return id;
+        }
+
+        public static DopplerMod fromId(String id, DopplerMod fallback) {
+            if (id != null) {
+                for (DopplerMod m : values()) {
+                    if (m.id.equalsIgnoreCase(id.trim())) {
+                        return m;
+                    }
+                }
+            }
+            return fallback;
+        }
+    }
+
     /** The preset last picked, or {@code null} for own values. */
     public Preset getChosenPreset() {
         return Preset.byId(presetId);
@@ -438,6 +508,7 @@ public final class DistanceConfig {
         hudMarkers = other.hudMarkers;
         colorblind = other.colorblind;
         overSoundPhysics = other.overSoundPhysics;
+        dopplerMod = other.dopplerMod;
         changed();
     }
 
@@ -467,6 +538,8 @@ public final class DistanceConfig {
         weatherStrength = DEFAULT_WEATHER_STRENGTH;
         diffractionEnabled = DEFAULT_DIFFRACTION_ENABLED;
         placeTuning = DEFAULT_PLACE_TUNING;
+        dopplerEnabled = DEFAULT_DOPPLER_ENABLED;
+        dopplerStrength = DEFAULT_DOPPLER_STRENGTH;
         resetMaterials();
     }
 
@@ -496,6 +569,8 @@ public final class DistanceConfig {
                 weatherStrength = DEFAULT_WEATHER_STRENGTH;
                 diffractionEnabled = DEFAULT_DIFFRACTION_ENABLED;
                 placeTuning = DEFAULT_PLACE_TUNING;
+                dopplerEnabled = DEFAULT_DOPPLER_ENABLED;
+                dopplerStrength = DEFAULT_DOPPLER_STRENGTH;
             }
         }
         changed();
@@ -538,6 +613,8 @@ public final class DistanceConfig {
         weatherStrength = other.weatherStrength;
         diffractionEnabled = other.diffractionEnabled;
         placeTuning = other.placeTuning;
+        dopplerEnabled = other.dopplerEnabled;
+        dopplerStrength = other.dopplerStrength;
         for (AcousticMaterial m : AcousticMaterial.values()) {
             double w = other.getMaterialWeight(m);
             synchronized (materialWeights) {
@@ -556,7 +633,7 @@ public final class DistanceConfig {
         WALLS("walls"),
         /** How much each material muffles (the walls' own percentages, so locked with them). */
         MATERIALS("materials"),
-        /** Echo, water, weather and voices round corners. */
+        /** Echo, water, weather, voices round corners and the Doppler effect. */
         EFFECTS("effects");
 
         private final String id;
@@ -662,6 +739,8 @@ public final class DistanceConfig {
                 weatherStrength = other.weatherStrength;
                 diffractionEnabled = other.diffractionEnabled;
                 placeTuning = other.placeTuning;
+                dopplerEnabled = other.dopplerEnabled;
+                dopplerStrength = other.dopplerStrength;
             }
         }
         changed();
@@ -712,6 +791,7 @@ public final class DistanceConfig {
         hudMarkers = parseBoolean(props, "hud_markers", false);
         colorblind = parseBoolean(props, "colorblind", false);
         overSoundPhysics = parseBoolean(props, "over_sound_physics", false);
+        dopplerMod = DopplerMod.fromId(props.getProperty("doppler_mod"), DopplerMod.MOD);
         presetId = props.getProperty("preset", "").trim().toLowerCase(java.util.Locale.ROOT);
         presetRange = clamp(parseDouble(props, "preset_range", 0.0), 0.0, 10000.0);
         if (parseDouble(props, "config_version", 1) < 7 && hudCorner == HudCorner.TOP_LEFT) {
@@ -782,7 +862,12 @@ public final class DistanceConfig {
                         "its effects are taken off voices, and it keeps handling the world's sounds. Default false (it handles voices).",
                         "Если установлен Sound Physics Remastered, всё равно использовать стены, эхо и воду Voice Physics для голосов;",
                         "его эффекты снимаются с голосов, а звуки мира он обрабатывает как раньше. По умолчанию false (голоса обрабатывает он).")
-                .value("over_sound_physics", overSoundPhysics);
+                .value("over_sound_physics", overSoundPhysics)
+                .comment("With the Doppler mod installed, whose Doppler effect voices get: ours, mod (default), both.",
+                        "\"ours\" takes the mod's effect off voices (it keeps the world's sounds), \"mod\" turns ours off.",
+                        "Если установлен мод Doppler, чей эффект Доплера у голосов: ours (наш), mod (мода, по умолчанию), both (оба).",
+                        "\"ours\" снимает эффект мода с голосов (звуки мира он обрабатывает как раньше), \"mod\" выключает наш.")
+                .value("doppler_mod", dopplerMod.getId());
         w.section("Interface", "Интерфейс");
         w.comment("Voice HUD on screen: off, talking (while someone nearby or you talk), always. Default talking.",
                         "HUD голоса на экране: off (выкл.), talking (пока кто-то рядом или вы говорите), always (всегда). По умолчанию talking.")
@@ -876,7 +961,13 @@ public final class DistanceConfig {
                 .value(prefix + "diffraction_enabled", diffractionEnabled)
                 .comment("Echo and far voices follow the place: deep caves ring more, the Nether is smoky, jungles and snow swallow sound. Default true.",
                         "Эхо и дальние голоса зависят от места: глубокие пещеры звучат гулче, в Незере дымно, джунгли и снег глушат звук. По умолчанию true.")
-                .value(prefix + "place_tuning", placeTuning);
+                .value(prefix + "place_tuning", placeTuning)
+                .comment("Doppler effect: a voice coming closer sounds higher, one moving away lower (elytra, boats, minecarts): true / false. Default false.",
+                        "Эффект Доплера: приближающийся голос звучит выше, удаляющийся ниже (элитры, лодки, вагонетки): true / false. По умолчанию false.")
+                .value(prefix + "doppler_enabled", dopplerEnabled)
+                .comment("How strong it is, 0 - 3 (1 = as in air, where running barely changes a voice). Default 1.",
+                        "Насколько сильно, 0 - 3 (1 - как в воздухе, где бег почти не меняет голос). По умолчанию 1.")
+                .value(prefix + "doppler_strength", dopplerStrength);
     }
 
     /** Per-material weights with their explanations (shared by the client and server files). */
@@ -919,6 +1010,8 @@ public final class DistanceConfig {
         props.setProperty(prefix + "weather_strength", format(weatherStrength));
         props.setProperty(prefix + "diffraction_enabled", String.valueOf(diffractionEnabled));
         props.setProperty(prefix + "place_tuning", String.valueOf(placeTuning));
+        props.setProperty(prefix + "doppler_enabled", String.valueOf(dopplerEnabled));
+        props.setProperty(prefix + "doppler_strength", format(dopplerStrength));
         for (AcousticMaterial m : AcousticMaterial.values()) {
             props.setProperty(prefix + "material." + m.getId(), format(getMaterialWeight(m)));
         }
@@ -944,6 +1037,9 @@ public final class DistanceConfig {
                 EFFECT_STRENGTH_MIN, EFFECT_STRENGTH_MAX);
         diffractionEnabled = parseBoolean(props, prefix + "diffraction_enabled", DEFAULT_DIFFRACTION_ENABLED);
         placeTuning = parseBoolean(props, prefix + "place_tuning", DEFAULT_PLACE_TUNING);
+        dopplerEnabled = parseBoolean(props, prefix + "doppler_enabled", DEFAULT_DOPPLER_ENABLED);
+        dopplerStrength = clamp(parseDouble(props, prefix + "doppler_strength", DEFAULT_DOPPLER_STRENGTH),
+                Doppler.STRENGTH_MIN, Doppler.STRENGTH_MAX);
         synchronized (materialWeights) {
             for (AcousticMaterial m : AcousticMaterial.values()) {
                 materialWeights[m.ordinal()] = clamp(parseDouble(props, prefix + "material." + m.getId(), m.getDefaultWeight()), 0.0, AcousticMaterial.MAX_WEIGHT);

@@ -22,6 +22,7 @@ Install it on your client, on the server, or on both. Each works on its own.
 - The echo changes smoothly as you walk between places.
 - Caves, the Nether and the End sound different: echo and air follow the place.
 - Dull voices under water; rain and thunder cover far voices. You choose how strong each is.
+- The Doppler effect (off by default): a voice flying or riding towards you sounds higher, one moving away lower.
 
 **👀 HUD and monitor**
 - See who is talking, how far, from where, and whether they are behind a wall.
@@ -40,7 +41,7 @@ Players **without the addon** also hear voices muffled through walls.
 - **One sound for everyone:** offer or enforce the server's settings for fair PvP and events.
 - **No seeing through walls:** turn off the monitor and radar.
 - **Require the addon:** send a download link, remind on every join, or kick.
-- **Realism without the addon** (off by default): water, rain, echo and the server profile's distance curve for players who only have voice chat.
+- **Realism without the addon** (off by default): water, rain, echo, the Doppler effect and the server profile's distance curve for players who only have voice chat.
 - **Mute** a player's voice for a time or for good, with `/vcd mute`.
 - **Paper extras** (off by default, not yet tried in a live game): a radio, loudspeakers, an eavesdrop item, a sculk reaction to shouts, doorway sound, and Towny, Lands, WorldGuard and LuckPerms integrations. `/vcd extras` lists the switches.
 - **Paper:** `/voice` for every player (talk quietly or shout, walls off for yourself, per-player volume) and PlaceholderAPI placeholders for scoreboards and tab lists.

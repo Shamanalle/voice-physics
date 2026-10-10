@@ -113,7 +113,7 @@ public class DistanceConfigTest {
         c.load();
         assertEquals(AttenuationModel.REALISTIC_INVERSE, c.getModel());
         String text = Files.readString(file);
-        assertTrue(text.contains("config_version=10"));
+        assertTrue(text.contains("config_version=11"));
         assertTrue(text.contains("reverb_enabled=true"));
         assertTrue(text.contains("material.stone"));
         assertTrue(text.contains("hud_mode=talking"));
@@ -171,7 +171,7 @@ public class DistanceConfigTest {
             assertEquals(m.getDefaultWeight(), c.getMaterialWeight(m), 1e-9, m.getId());
         }
         String text = Files.readString(file);
-        assertTrue(text.contains("config_version=10"));
+        assertTrue(text.contains("config_version=11"));
         assertTrue(text.contains("material.other="));
     }
 
