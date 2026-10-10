@@ -128,6 +128,26 @@ public class DopplerTest {
     }
 
     @Test
+    @DisplayName("Started without a past, the first frame plays as it came and the next ones never fade in silence")
+    void freshStart() {
+        PitchShifter s = new PitchShifter();
+        short[] first = sine(500, 0, 10000);
+        short[] copy = first.clone();
+        assertFalse(s.process(first, 1.2, 0));
+        assertArrayEquals(copy, first);
+        short[] second = sine(500, FRAME, 10000);
+        assertTrue(s.process(second, 1.2, FRAME_NANOS));
+        // Every 2 ms window still carries the sine (a 500 Hz period is 96 samples)
+        for (int i = 0; i + 96 <= FRAME; i += 96) {
+            int peak = 0;
+            for (int k = i; k < i + 96; k++) {
+                peak = Math.max(peak, Math.abs(second[k]));
+            }
+            assertTrue(peak > 7000, "window at " + i + ": peak " + peak);
+        }
+    }
+
+    @Test
     @DisplayName("A pause in speech resets the shifter")
     void pauseResets() {
         PitchShifter s = new PitchShifter();

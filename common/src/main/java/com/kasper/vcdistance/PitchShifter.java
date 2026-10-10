@@ -72,7 +72,9 @@ public final class PitchShifter {
         target = Double.isNaN(target) ? 1.0 : Math.max(Doppler.MIN_PITCH, Math.min(Doppler.MAX_PITCH, target));
         boolean wanted = Math.abs(target - 1.0) > EPSILON;
 
-        if (!engaged && !wanted) {
+        // Without a past to read from (a fresh start on the server) the first frame plays as it came,
+        // otherwise the start would fade in silence
+        if (!engaged && (!wanted || history < MIN_DELAY + MATCH + 4)) {
             for (short s : pcm) {
                 write(s);
             }
