@@ -107,7 +107,9 @@ def main():
             continue
         listed = found.get("versions", [])
         problems = []
-        missing = [v for v in game_versions if v not in listed]
+        # The plugin section lacks most patch versions: curseforge-bukkit.sh falls back to major.minor
+        missing = [v for v in game_versions if v not in listed
+                   and not (key == "curseforge_plugin" and ".".join(v.split(".")[:2]) in listed)]
         if missing:
             problems.append("versions " + " ".join(missing))
         if key == "curseforge":
