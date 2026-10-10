@@ -988,6 +988,7 @@ public final class ServerSettings {
         p.setProperty(prefix + "water_strength", DistanceConfig.format(profile.isUnderwaterEnabled() ? profile.getUnderwaterStrength() : 0.0));
         p.setProperty(prefix + "weather_strength", DistanceConfig.format(profile.isWeatherEnabled() ? profile.getWeatherStrength() : 0.0));
         p.setProperty(prefix + "echo_strength", DistanceConfig.format(profile.isReverbEnabled() ? profile.getReverbStrength() : 0.0));
+        p.setProperty(prefix + "doppler_strength", DistanceConfig.format(profile.isDopplerEnabled() ? profile.getDopplerStrength() : 0.0));
         // The plugin's extras
         p.setProperty(prefix + "server_radio", String.valueOf(serverRadio));
         p.setProperty(prefix + "server_speakers", String.valueOf(serverSpeakers));

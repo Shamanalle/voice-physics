@@ -481,6 +481,17 @@ public class AudioDistancePlugin implements VoicechatPlugin {
         return ModEnvironment.isSoundPhysicsPresent() && CONFIG.isOverSoundPhysics();
     }
 
+    /** Whether our Doppler effect is on: switched on, and not left to the Doppler mod. */
+    static boolean ownDoppler(DistanceConfig c) {
+        return c.isDopplerEnabled() && c.getDopplerStrength() > 0.0
+                && !(ModEnvironment.isDopplerModPresent() && CONFIG.getDopplerMod() == DistanceConfig.DopplerMod.MOD);
+    }
+
+    /** The Doppler mod is installed and the player chose ours: the mod's effect is taken off voices. */
+    static boolean dopplerModOffVoices() {
+        return ModEnvironment.isDopplerModPresent() && CONFIG.getDopplerMod() == DistanceConfig.DopplerMod.OURS;
+    }
+
     /**
      * Client tick: when the voice range differs from the one the chosen preset was fitted to (another
      * server), fits the preset again, as long as the values are still the preset's own.
@@ -602,6 +613,9 @@ public class AudioDistancePlugin implements VoicechatPlugin {
             if (overSoundPhysics() && SPEAKERS.get(event.getChannelId()) != null) {
                 clearSoundPhysics(source);
             }
+            if (dopplerModOffVoices()) {
+                stillToListener(source);
+            }
         } catch (Throwable t) {
             DistanceConfig.LOGGER.debug("Failed to apply OpenAL parameters to source {}: {}", source, t.toString());
         }
@@ -627,6 +641,24 @@ public class AudioDistancePlugin implements VoicechatPlugin {
         for (int send = 0; send < MAX_AUX_SENDS; send++) {
             AL11.alSource3i(source, AL_AUXILIARY_SEND_FILTER, 0, send, 0);
         }
+    }
+
+    /**
+     * Takes OpenAL's Doppler effect (the Doppler mod's) off a voice: the mod gives the source its
+     * velocity in the base event, and a source moving with the listener has no Doppler shift. The
+     * world's sounds keep it.
+     */
+    private static void stillToListener(int source) {
+        float[] x = new float[1];
+        float[] y = new float[1];
+        float[] z = new float[1];
+        AL11.alGetListener3f(AL11.AL_VELOCITY, x, y, z);
+        if (AL11.alGetSourcei(source, AL11.AL_SOURCE_RELATIVE) != AL11.AL_FALSE) {
+            x[0] = 0.0F; // relative to the listener already
+            y[0] = 0.0F;
+            z[0] = 0.0F;
+        }
+        AL11.alSource3f(source, AL11.AL_VELOCITY, x[0], y[0], z[0]);
     }
 
     /** The source's gain: the speaker's volume as Simple Voice Chat set it, times the curve. */
@@ -753,8 +785,8 @@ public class AudioDistancePlugin implements VoicechatPlugin {
     }
 
     /**
-     * Everything done to a voice's audio on the client: walls, water and weather as one filter,
-     * then the echo of the room the listener is in. Never throws; on a failure the voice plays as it came.
+     * Everything done to a voice's audio on the client: the Doppler shift, walls, water and weather
+     * as one filter, then the echo of the room the listener is in. Never throws; on a failure the voice plays as it came.
      */
     private static void muffle(ClientReceiveSoundEvent event, SpeakerRegistry.Speaker speaker, short[] raw) {
         try {
@@ -794,8 +826,13 @@ public class AudioDistancePlugin implements VoicechatPlugin {
                         ServerEffects.air(speaker.getDistance() / range).muffle() * place.air(), 0.0));
             }
 
-            // Both stages work on the frame in place
+            // All stages work on the frame in place; the pitch first, so the echo is of the shifted voice
             boolean changed = false;
+            PitchShifter shifter = speaker.getShifter();
+            double pitch = ownDoppler(c) && speaker.getDistance() >= 0.0
+                    ? Doppler.pitch(speaker.getClosingSpeed(), c.getDopplerStrength()) : 1.0;
+            // At pitch 1 it only keeps the voice's recent past, for a smooth start
+            changed |= shifter.process(raw, pitch, System.nanoTime());
             VoiceFilter filter = speaker.getFilter();
             // Zero targets let an engaged filter glide back open instead of cutting off
             if (effect.muffle() > 0.0 || effect.lossDb() > 0.0 || filter.isEngaged()) {

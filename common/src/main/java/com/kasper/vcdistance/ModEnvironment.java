@@ -11,6 +11,9 @@ public final class ModEnvironment {
     public static final String SOUND_PHYSICS_MOD_ID = "sound_physics_remastered";
 
     private static volatile Boolean soundPhysicsPresent;
+    /** imAETHER's Doppler mod: OpenAL's own Doppler effect for every sound, voices included. */
+    public static final String DOPPLER_MOD_ID = "doppler";
+    private static volatile Boolean dopplerModPresent;
     private static volatile Path configDirOverride;
 
     private ModEnvironment() {
@@ -78,6 +81,16 @@ public final class ModEnvironment {
         if (cached == null) {
             cached = isModLoaded(SOUND_PHYSICS_MOD_ID);
             soundPhysicsPresent = cached;
+        }
+        return cached;
+    }
+
+    /** Whether the Doppler mod is installed; then the player picks whose Doppler effect voices get. */
+    public static boolean isDopplerModPresent() {
+        Boolean cached = dopplerModPresent;
+        if (cached == null) {
+            cached = isModLoaded(DOPPLER_MOD_ID);
+            dopplerModPresent = cached;
         }
         return cached;
     }

@@ -54,17 +54,50 @@ public final class ServerPlayers {
     }
 
     private final Map<UUID, Info> players = new ConcurrentHashMap<>();
+    /** Each player's velocity in blocks per second, from the last two refreshes: {vx, vy, vz}. */
+    private final Map<UUID, double[]> velocities = new ConcurrentHashMap<>();
+    private final Map<UUID, Long> refreshedAt = new ConcurrentHashMap<>();
 
     public void update(Info info) {
-        players.put(info.id(), info);
+        update(info, System.nanoTime());
+    }
+
+    void update(Info info, long nanos) {
+        Info old = players.put(info.id(), info);
+        if (old == info) {
+            return; // the same snapshot again (Folia keeps entries until the player's thread refreshes them)
+        }
+        Long then = refreshedAt.put(info.id(), nanos);
+        double[] v = {0.0, 0.0, 0.0};
+        if (old != null && then != null && java.util.Objects.equals(old.world(), info.world())) {
+            double dt = (nanos - then) / 1.0e9;
+            if (dt > 0.01 && dt < 2.0) {
+                v[0] = (info.x() - old.x()) / dt;
+                v[1] = (info.y() - old.y()) / dt;
+                v[2] = (info.z() - old.z()) / dt;
+                if (v[0] * v[0] + v[1] * v[1] + v[2] * v[2] > Doppler.TELEPORT_SPEED * Doppler.TELEPORT_SPEED) {
+                    v = new double[]{0.0, 0.0, 0.0}; // a teleport
+                }
+            }
+        }
+        velocities.put(info.id(), v);
+    }
+
+    /** The player's velocity in blocks per second {vx, vy, vz}, or {@code null} when not known. */
+    public double[] velocity(UUID id) {
+        return id == null ? null : velocities.get(id);
     }
 
     public void remove(UUID id) {
         players.remove(id);
+        velocities.remove(id);
+        refreshedAt.remove(id);
     }
 
     public void clear() {
         players.clear();
+        velocities.clear();
+        refreshedAt.clear();
     }
 
     /** @return the player, or {@code null} when not online (or not refreshed yet) */

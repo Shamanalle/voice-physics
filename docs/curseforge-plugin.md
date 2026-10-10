@@ -11,7 +11,7 @@ Players don't need to install anything. Those who also install the [Voice Physic
 - **No seeing through walls:** turn off the monitor and radar of players with the mod.
 - **Require the mod:** send a download link, remind on every join, or kick.
 - **Player controls:** `/voice` lets anyone talk quietly or shout (with permission), turn wall muffling off for themselves, set or ignore other players' volume, and show who is talking nearby above the hotbar. Clickable, with an inventory menu and undo.
-- **Realism for players without the mod** (off by default, `/vcd effects on`): voices dull under water, far voices are covered in rain and thunder, and a speaker in a cave echoes.
+- **Realism for players without the mod** (off by default, `/vcd effects on`): voices dull under water, far voices are covered in rain and thunder, a speaker in a cave echoes, and with `/vcd effects doppler` voices rise and fall in pitch as players fly or ride towards or away from each other.
 - **Mute:** `/vcd mute <player> [time] [reason]` silences a voice for a time or until `/vcd unmute`; `/vcd mutes` lists them.
 - **Extras** (off by default, not yet tried in a live game; `/vcd extras` lists the switches, and so does the mod's Server tab): a radio (`/voice radio`), loudspeakers (`/vcd speaker`), an eavesdrop item, a sculk reaction to shouts, doorway sound, and Towny, Lands, WorldGuard and LuckPerms integrations.
 - **PlaceholderAPI:** `%vcd_mode%`, `%vcd_talking%`, `%vcd_range%`, `%vcd_muted%`, `%vcd_zone%` and more for scoreboards, tab lists and chat formats.

@@ -25,7 +25,8 @@ public final class ClientReport {
         out.add("Java " + System.getProperty("java.version") + ", " + System.getProperty("os.name") + " " + System.getProperty("os.arch")
                 + (ModEnvironment.isSoundPhysicsPresent()
                         ? ", Sound Physics Remastered installed (voices: " + (own.isOverSoundPhysics() ? "Voice Physics" : "Sound Physics") + ")"
-                        : ""));
+                        : "")
+                + (ModEnvironment.isDopplerModPresent() ? ", Doppler mod installed (voices: " + own.getDopplerMod().getId() + ")" : ""));
         LinkProtocol.ServerProfile p = link.profile();
         if (p == null) {
             out.add("Server: no Voice Physics on the server (or not connected)");
@@ -83,6 +84,7 @@ public final class ClientReport {
                 + ", water " + (c.isUnderwaterEnabled() ? AdminCommands.pct(c.getUnderwaterStrength()) : "off")
                 + ", weather " + (c.isWeatherEnabled() ? AdminCommands.pct(c.getWeatherStrength()) : "off")
                 + ", place " + onOff(c.isPlaceTuning())
+                + ", doppler " + (c.isDopplerEnabled() ? AdminCommands.pct(c.getDopplerStrength()) : "off")
                 + ", block rules " + c.getBlockRules().rules().size();
     }
 

@@ -6,6 +6,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 *Все заметные изменения проекта описываются в этом файле. Каждая версия описана сначала на английском, затем на русском.*
 
+## [2.11.0] - 2026-10-10
+
+### English
+
+#### Added
+- **The Doppler effect (optional, off by default).** A voice coming closer sounds higher, one moving away lower: on elytra, in boats on ice, on horses and in minecarts. Only how fast the distance between the two players changes counts, so walking about, turning round or flying side by side changes nothing. The pitch is changed without changing the timing, so the voice never runs ahead or falls behind. Strength 0 – 300%: 100% is as in real air, where only fast movement is heard; higher makes slower movement heard too.
+  - **With the addon:** a *Doppler* switch and a strength slider on the *Effects* tab (`doppler_enabled`, `doppler_strength` in the client file). They belong to the *effects* part of a server profile, so a server can offer or lock them.
+  - **For players without the addon:** `/vcd effects doppler <0-300>|off` (a *Doppler* row in the *Effects* section of the *Server* tab, `profile.doppler_enabled` and `profile.doppler_strength` in the server file). It works when the server effects are on (`/vcd effects on`), with the plugin and with the mod on the server, and shares the re-encoding limit with the walls.
+  - **With the [Doppler](https://github.com/imAETHER/Doppler) mod:** that mod changes the pitch of voices too. When it is installed, the *Effects* tab has a button that chooses whose effect voices get: *The mod's* (the default, as before), *Ours* (the mod keeps handling all other sounds) or *Both*. It is set only on your computer (`doppler_mod` in the client file), and `/voicephysics report` shows it.
+
+### Русский
+
+#### Добавлено
+- **Эффект Доплера (по желанию, по умолчанию выключен).** Голос приближающегося звучит выше, удаляющегося — ниже: на элитрах, в лодках на льду, на лошадях и в вагонетках. Важна только скорость, с которой меняется расстояние между двумя игроками, поэтому ходьба рядом, повороты или полёт бок о бок ничего не меняют. Высота меняется без изменения темпа, так что голос не убегает вперёд и не отстаёт. Сила 0 – 300%: 100% — как в настоящем воздухе, где слышно только быстрое движение; выше — слышно и более медленное.
+  - **С аддоном:** переключатель «Эффект Доплера» и ползунок силы на вкладке «Эффекты» (`doppler_enabled`, `doppler_strength` в файле клиента). Они входят в часть «эффекты» профиля сервера, так что сервер может их предложить или закрепить.
+  - **Для игроков без аддона:** `/vcd effects doppler <0-300>|off` (строка «Доплер» в разделе «Эффекты» вкладки «Сервер», `profile.doppler_enabled` и `profile.doppler_strength` в файле сервера). Работает, когда включены эффекты сервера (`/vcd effects on`), и с плагином, и с модом на сервере; лимит перекодирования общий со стенами.
+  - **С модом [Doppler](https://github.com/imAETHER/Doppler):** этот мод тоже меняет высоту голосов. Если он установлен, на вкладке «Эффекты» есть кнопка, которая выбирает, чей эффект получают голоса: «Мода» (по умолчанию, как раньше), «Наш» (остальные звуки мод обрабатывает как раньше) или «Оба». Это настройка только вашего компьютера (`doppler_mod` в файле клиента), её показывает `/voicephysics report`.
+
 ## [2.10.5] - 2026-10-06
 
 ### English
