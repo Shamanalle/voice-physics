@@ -107,7 +107,10 @@ def main():
             continue
         listed = found.get("versions", [])
         problems = []
-        missing = [v for v in game_versions if v not in listed]
+        # The plugin section lacks most patch versions: curseforge-bukkit.sh falls back to major.minor.
+        # Its 1.16 entry is broken ("game version id: 0 does not exist"), so 1.16.5 cannot be listed.
+        missing = [v for v in game_versions if v not in listed
+                   and not (key == "curseforge_plugin" and (".".join(v.split(".")[:2]) in listed or v.startswith("1.16")))]
         if missing:
             problems.append("versions " + " ".join(missing))
         if key == "curseforge":
