@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -114,8 +115,10 @@ final class BandTable {
     static String version(String fml, String modId) {
         try {
             Class<?> listClass = Class.forName(fml + ".ModList");
-            Object list = listClass.getMethod("get").invoke(null);
-            Optional<?> container = (Optional<?>) listClass.getMethod("getModContainerById", String.class).invoke(list, modId);
+            Method byId = listClass.getMethod("getModContainerById", String.class);
+            // ModList.get().getModContainerById(..) before Forge 26, a static ModList.getModContainerById(..) since
+            Object list = Modifier.isStatic(byId.getModifiers()) ? null : listClass.getMethod("get").invoke(null);
+            Optional<?> container = (Optional<?>) byId.invoke(list, modId);
             if (!container.isPresent()) {
                 return null;
             }
@@ -176,21 +179,46 @@ final class BandTable {
     }
 
     /**
-     * Compares versions part by part ("1.21.11-2.5.0" against "1.21.9-2.5.0"): numbers as numbers,
-     * a missing part is less than a number ("1.21" &lt; "1.21.1") but more than a word ("21.11.0" &gt; "21.11.0-beta").
+     * Compares versions the way Maven does for the versions the loaders report: the part before the first
+     * '-' first, number by number with missing numbers as 0 ("1.21" = "1.21.0" &lt; "1.21.1"), then the part
+     * after it ("1.21-2.6.24" &gt; "1.21-2.5.0"). No part after '-' is less than a number there ("1.21" &lt;
+     * "1.21-2.5.0") but more than a word ("21.11.0" &gt; "21.11.0-beta"). Build data after '+' is ignored.
      */
     static int compare(String a, String b) {
-        String[] x = a.split("[.\\-+]");
-        String[] y = b.split("[.\\-+]");
+        a = a.trim();
+        b = b.trim();
+        int plusA = a.indexOf('+');
+        int plusB = b.indexOf('+');
+        a = plusA < 0 ? a : a.substring(0, plusA);
+        b = plusB < 0 ? b : b.substring(0, plusB);
+        int dashA = a.indexOf('-');
+        int dashB = b.indexOf('-');
+        int c = compareParts(dashA < 0 ? a : a.substring(0, dashA), dashB < 0 ? b : b.substring(0, dashB));
+        if (c != 0) {
+            return c;
+        }
+        String restA = dashA < 0 ? null : a.substring(dashA + 1);
+        String restB = dashB < 0 ? null : b.substring(dashB + 1);
+        if (restA == null || restB == null) {
+            if (restA == restB) {
+                return 0;
+            }
+            String rest = restA == null ? restB : restA;
+            int sign = startsWithDigit(rest) ? -1 : 1;
+            return restA == null ? sign : -sign;
+        }
+        return compareParts(restA, restB);
+    }
+
+    /** Dot- or dash-separated parts: numbers as numbers, a missing number is 0, a number beats a word. */
+    private static int compareParts(String a, String b) {
+        String[] x = a.split("[.\\-]");
+        String[] y = b.split("[.\\-]");
         for (int i = 0; i < Math.max(x.length, y.length); i++) {
-            String p = i < x.length ? x[i] : null;
-            String q = i < y.length ? y[i] : null;
+            String p = i < x.length ? x[i] : "0";
+            String q = i < y.length ? y[i] : "0";
             int c;
-            if (p == null) {
-                c = isNumber(q) ? -1 : 1;
-            } else if (q == null) {
-                c = isNumber(p) ? 1 : -1;
-            } else if (isNumber(p) && isNumber(q)) {
+            if (isNumber(p) && isNumber(q)) {
                 c = Long.compare(Long.parseLong(p), Long.parseLong(q));
             } else if (isNumber(p) != isNumber(q)) {
                 c = isNumber(p) ? 1 : -1;
@@ -202,6 +230,10 @@ final class BandTable {
             }
         }
         return 0;
+    }
+
+    private static boolean startsWithDigit(String s) {
+        return !s.isEmpty() && Character.isDigit(s.charAt(0));
     }
 
     private static boolean isNumber(String s) {
