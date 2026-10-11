@@ -335,12 +335,14 @@ side = "BOTH"
         new File(dir, 'META-INF/neoforge.mods.toml').setText(neoToml, 'UTF-8')
 
         // Forge 1.16.5 - 1.20.4 and NeoForge 1.20.2 - 1.20.4 refuse a mod without it. pack_format for the oldest,
-        // supported_formats for 1.20.2 and later, min_format / max_format for 1.21.9 and later.
+        // supported_formats for 1.20.2 and later, min_format / max_format for 1.21.9 and later. 1.21.9 refuses a range
+        // that starts below 15; the older versions only need the file, since the loader puts every mod's resources
+        // into one pack with its own format.
         new File(dir, 'pack.mcmeta').text = groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson([pack: [
                 description      : 'Voice Physics',
-                pack_format      : 6,
-                supported_formats: [6, 1000],
-                min_format       : 6,
+                pack_format      : 15,
+                supported_formats: [15, 1000],
+                min_format       : 15,
                 max_format       : 1000,
         ]])) + '\n'
 
