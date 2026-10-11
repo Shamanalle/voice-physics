@@ -67,6 +67,8 @@ tasks.withType(JavaCompile).configureEach {
 java {
     sourceCompatibility = JavaVersion.VERSION_21
     targetCompatibility = JavaVersion.VERSION_21
+    // The loader and Minecraft are published for Java 25 only; compiling against them for 21 is fine
+    disableAutoTargetJvm()
 }
 
 processResources {
