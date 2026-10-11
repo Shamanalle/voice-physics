@@ -11,12 +11,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### English
 
 #### Changed
-- **Fewer files: 12 instead of 34.** One file now covers Fabric and Quilt on every Minecraft version from 1.16.5 to 26.3 (`voice-physics-fabric-2.11.1+mc1.16.5-26.x.jar`), and one covers Forge and NeoForge from 1.20.5 to 26.3 (`voice-physics-forge-neoforge-2.11.1+mc1.20.5-26.x.jar`). Each holds the same builds as before, one per Minecraft version, and picks the one of the running game at start, so nothing changes in game. Each build needs the same Java as before. Forge 1.16.5 – 1.20.4, NeoForge 1.20.2 – 1.20.4 and the Bukkit plugin keep their own files.
+- **Fewer files: 3 instead of 34.** One file now covers Fabric and Quilt on every Minecraft version from 1.16.5 to 26.3 (`voice-physics-fabric-2.11.1+mc1.16.5-26.x.jar`), one covers every Forge version from 1.16.5 and every NeoForge version from 1.20.1 to 26.3 (`voice-physics-forge-neoforge-2.11.1+mc1.16.5-26.x.jar`), and the Bukkit plugin keeps its file. Each holds the same builds as before, one per Minecraft version, and picks the one of the running game at start, so nothing changes in game. Each build needs the same Java as before: Forge 1.16.5 still runs on Java 8.
 
 ### Русский
 
 #### Изменено
-- **Меньше файлов: 12 вместо 34.** Теперь один файл подходит для Fabric и Quilt на всех версиях Minecraft от 1.16.5 до 26.3 (`voice-physics-fabric-2.11.1+mc1.16.5-26.x.jar`), и один — для Forge и NeoForge от 1.20.5 до 26.3 (`voice-physics-forge-neoforge-2.11.1+mc1.20.5-26.x.jar`). Внутри те же сборки, что и раньше, по одной на версию Minecraft, и при запуске выбирается сборка запущенной игры, так что в игре ничего не меняется. Java нужна та же, что и раньше. У Forge 1.16.5 – 1.20.4, NeoForge 1.20.2 – 1.20.4 и плагина для Bukkit остаются свои файлы.
+- **Меньше файлов: 3 вместо 34.** Теперь один файл подходит для Fabric и Quilt на всех версиях Minecraft от 1.16.5 до 26.3 (`voice-physics-fabric-2.11.1+mc1.16.5-26.x.jar`), один — для всех версий Forge с 1.16.5 и NeoForge с 1.20.1 до 26.3 (`voice-physics-forge-neoforge-2.11.1+mc1.16.5-26.x.jar`), а у плагина для Bukkit остаётся свой файл. Внутри те же сборки, что и раньше, по одной на версию Minecraft, и при запуске выбирается сборка запущенной игры, так что в игре ничего не меняется. Java нужна та же, что и раньше: Forge 1.16.5 по-прежнему работает на Java 8.
 
 ## [2.11.0] - 2026-10-10
 

@@ -215,6 +215,13 @@ if grep -q 'at com\.kasper\.vcdistance' "${log}"; then
   grep -n -B8 -A4 'at com\.kasper\.vcdistance' "${log}" | head -80
   failed=true
 fi
+# The universal Forge / NeoForge jar has one pack.mcmeta for every Minecraft from 1.16.5 to 26.x
+if grep -Ei 'vc_audio_distance|vc-audio-distance|voice-physics' "${log}" | grep -Ei 'pack|mcmeta|metadata|resources' \
+    | grep -Eiq 'fail|error|invalid|missing|couldn|unable|broken'; then
+  echo "::error::The addon's resources or pack.mcmeta were refused"
+  grep -Ei 'vc_audio_distance|vc-audio-distance|voice-physics' "${log}" | grep -Ei 'pack|mcmeta|metadata|resources' | head -20
+  failed=true
+fi
 if [ ! -f "${settings}" ]; then
   echo "::error::No settings file at ${settings}"
   failed=true

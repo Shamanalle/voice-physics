@@ -19,40 +19,46 @@ def fabricBands = [
 ]
 def fabricUniversalName = "voice-physics-fabric-${project.mod_version}+mc1.16.5-26.x.jar"
 
-// The Forge 1.20.6 - 26.x and NeoForge 1.20.5 - 26.x bands (full builds of their own, Minecraft's own names): they
-// go into one universal jar (mergeForge below). Forge and NeoForge read every class of a jar at startup, and the
-// oldest of them stop at Java 21, so every band is Java 21 bytecode (forge-26 and neoforge-26 too)
+// The Forge and NeoForge bands, each a full build against its own Minecraft: they go into one universal jar
+// (mergeForge below). Forge and NeoForge read every class of a jar at startup and skip the ones their ASM cannot
+// read, so the jar holds nothing newer than Java 21 (forge-26 and neoforge-26 are built for 21 too); a band's
+// classes are only loaded on its own Minecraft, which runs on a Java that reads them. "java" as in fabricBands.
+// A band is built by its project's jar task, by another task of it (reobfJar: Forge 1.17.1 - 1.20.1 run with
+// Forge's names) or by its own Gradle (legacy: see legacyTargets). "toml" is the metadata the band's loader reads.
 def forgeBands = [
-        [id: 'forge_1_20_6', project: ':forge-1.20.6', loader: 'forge'],
-        [id: 'forge_1_21', project: ':forge-1.21', loader: 'forge'],
-        [id: 'forge_1_21_5', project: ':forge-1.21.5', loader: 'forge'],
-        [id: 'forge_1_21_8', project: ':forge-1.21.8', loader: 'forge'],
-        [id: 'forge_1_21_10', project: ':forge-1.21.10', loader: 'forge'],
-        [id: 'forge_1_21_11', project: ':forge-1.21.11', loader: 'forge'],
-        [id: 'forge_26', project: ':forge-26', loader: 'forge'],
-        [id: 'neoforge_1_20_6', project: ':neoforge-1.20.6', loader: 'neoforge'],
-        [id: 'neoforge_1_21', project: ':neoforge-1.21', loader: 'neoforge'],
-        [id: 'neoforge_1_21_5', project: ':neoforge-1.21.5', loader: 'neoforge'],
-        [id: 'neoforge_1_21_8', project: ':neoforge-1.21.8', loader: 'neoforge'],
-        [id: 'neoforge_1_21_10', project: ':neoforge-1.21.10', loader: 'neoforge'],
-        [id: 'neoforge_1_21_11', project: ':neoforge-1.21.11', loader: 'neoforge'],
-        [id: 'neoforge_26', project: ':neoforge-26', loader: 'neoforge'],
-]
-def forgeUniversalName = "voice-physics-forge-neoforge-${project.mod_version}+mc1.20.5-26.x.jar"
-
-// Full builds of their own: Forge 1.17.1, 1.18.2, 1.19.2, 1.19.4 and 1.20.1 (remapped to Forge's names by reobfJar)
-def loaderTargets = [
-        [project: ':forge-1.17', task: 'reobfJar', file: 'voice-physics-forge-%s+mc1.17.1.jar'],
-        [project: ':forge-1.18', task: 'reobfJar', file: 'voice-physics-forge-%s+mc1.18.2.jar'],
-        [project: ':forge-1.19', task: 'reobfJar', file: 'voice-physics-forge-%s+mc1.19.2.jar'],
-        [project: ':forge-1.19.4', task: 'reobfJar', file: 'voice-physics-forge-%s+mc1.19.4.jar'],
-        [project: ':forge-1.20.1', task: 'reobfJar', file: 'voice-physics-forge-%s+mc1.20.1.jar'],
-]
+        [id: 'forge_1_16_5', legacy: 'legacy/forge-1.16.5', loader: 'forge', java: 52],
+        [id: 'forge_1_17', project: ':forge-1.17', task: 'reobfJar', loader: 'forge', java: 60],
+        [id: 'forge_1_18', project: ':forge-1.18', task: 'reobfJar', loader: 'forge', java: 61],
+        [id: 'forge_1_19', project: ':forge-1.19', task: 'reobfJar', loader: 'forge', java: 61],
+        [id: 'forge_1_19_4', project: ':forge-1.19.4', task: 'reobfJar', loader: 'forge', java: 61],
+        [id: 'forge_1_20_1', project: ':forge-1.20.1', task: 'reobfJar', loader: 'forge', java: 61],
+        [id: 'forge_1_20_4', legacy: 'legacy/forge-1.20.4', loader: 'forge', java: 61],
+        [id: 'forge_1_20_6', project: ':forge-1.20.6', loader: 'forge', java: 65],
+        [id: 'forge_1_21', project: ':forge-1.21', loader: 'forge', java: 65],
+        [id: 'forge_1_21_5', project: ':forge-1.21.5', loader: 'forge', java: 65],
+        [id: 'forge_1_21_8', project: ':forge-1.21.8', loader: 'forge', java: 65],
+        [id: 'forge_1_21_10', project: ':forge-1.21.10', loader: 'forge', java: 65],
+        [id: 'forge_1_21_11', project: ':forge-1.21.11', loader: 'forge', java: 65],
+        [id: 'forge_26', project: ':forge-26', loader: 'forge', java: 65],
+        // NeoForge 1.20.2 - 1.20.4 still read META-INF/mods.toml, like Forge
+        [id: 'neoforge_1_20_2', legacy: 'legacy/neoforge-1.20.2', loader: 'neoforge', toml: 'META-INF/mods.toml', java: 61],
+        [id: 'neoforge_1_20_4', legacy: 'legacy/neoforge-1.20.4', loader: 'neoforge', toml: 'META-INF/mods.toml', java: 61],
+        [id: 'neoforge_1_20_6', project: ':neoforge-1.20.6', loader: 'neoforge', java: 65],
+        [id: 'neoforge_1_21', project: ':neoforge-1.21', loader: 'neoforge', java: 65],
+        [id: 'neoforge_1_21_5', project: ':neoforge-1.21.5', loader: 'neoforge', java: 65],
+        [id: 'neoforge_1_21_8', project: ':neoforge-1.21.8', loader: 'neoforge', java: 65],
+        [id: 'neoforge_1_21_10', project: ':neoforge-1.21.10', loader: 'neoforge', java: 65],
+        [id: 'neoforge_1_21_11', project: ':neoforge-1.21.11', loader: 'neoforge', java: 65],
+        [id: 'neoforge_26', project: ':neoforge-26', loader: 'neoforge', java: 65],
+].each { band ->
+    band.toml = band.toml ?: (band.loader == 'forge' ? 'META-INF/mods.toml' : 'META-INF/neoforge.mods.toml')
+}
+def forgeUniversalName = "voice-physics-forge-neoforge-${project.mod_version}+mc1.16.5-26.x.jar"
 
 // Builds of their own, with Gradle 8 (legacy/*): Forge 1.16.5 (Architectury Loom, Java 8) and Forge 1.20.2 - 1.20.4 run with SRG names, which only
 // ForgeGradle 6 remaps to, and ForgeGradle 6 cannot share this build with ForgeGradle 7. NeoForge 1.20.2 -
 // 1.20.4 need NeoGradle 7, which cannot share it either. A legacy/ project without a Gradle wrapper of its
-// own runs the wrapper of legacy/neoforge-1.20.4. They need a
+// own runs the wrapper of legacy/neoforge-1.20.4. Their jars are bands of the universal jar. They need a
 // JDK 17 or 21 for their Gradle: LEGACY_JAVA_HOME, or the JAVA_HOME_21_X64 / JAVA_HOME_17_X64 that
 // GitHub's runners set.
 def legacyTargets = [
@@ -194,8 +200,22 @@ tasks.register('mergeFabric', JavaExec) {
     }
 }
 
+def legacyTarget = { Map band -> legacyTargets.find { it.dir == band.legacy } }
+
 def forgeBandJar = { Map band ->
-    project(band.project).tasks.named('jar').get().archiveFile.get().asFile
+    if (band.legacy) {
+        return file("${band.legacy}/build/libs/${String.format(legacyTarget(band).file, project.mod_version)}")
+    }
+    def built = project(band.project).tasks.named(band.task ?: 'jar').get().outputs.files.files.find { it.name.endsWith('.jar') }
+    if (built == null) {
+        throw new GradleException("${band.project}: ${band.task ?: 'jar'} makes no jar")
+    }
+    built
+}
+
+/** The task that builds a band's jar. */
+def forgeBandTask = { Map band ->
+    band.legacy ? 'buildLegacy_' + band.legacy.replaceAll('[^A-Za-z0-9]', '_') : "${band.project}:${band.task ?: 'build'}"
 }
 
 /** The [[dependencies.vc_audio_distance]] of a mods.toml / neoforge.mods.toml that are required: modId -> versionRange. */
@@ -211,72 +231,129 @@ def tomlDepends = { String text ->
     depends
 }
 
-/** Joins ranges that touch: "[1.21,1.21.2)" and "[1.21.2,1.21.6)" become "[1.21,1.21.6)". */
+/** Joins ranges that touch: "[1.21,1.21.2)" and "[1.21.2,1.21.6)" become "[1.21,1.21.6)"; "[1.16.5]" stays as it is. */
 def joinRanges = { List<String> ranges ->
     def out = []
     ranges.each { String r ->
+        def single = r =~ /^\[([^,\]]+)\]$/
+        if (single.matches()) {
+            // One version: "[1.16.5]"
+            out << [single: single.group(1)]
+            return
+        }
         def m = r =~ /^([\[(])([^,]*),([^\])]*)([\])])$/
         if (!m.matches()) {
             throw new GradleException("Unexpected version range ${r}")
         }
         def last = out ? out.last() : null
-        if (last != null && last.high == m.group(2) && last.close == ')' && m.group(1) == '[') {
+        if (last != null && !last.single && last.high == m.group(2) && last.close == ')' && m.group(1) == '[') {
             last.high = m.group(3)
             last.close = m.group(4)
         } else {
             out << [open: m.group(1), low: m.group(2), high: m.group(3), close: m.group(4)]
         }
     }
-    out.collect { "${it.open}${it.low},${it.high}${it.close}" }.join(',')
+    out.collect { it.single ? "[${it.single}]" : "${it.open}${it.low},${it.high}${it.close}" }.join(',')
 }
 
-// mods.toml and neoforge.mods.toml of the universal jar and the table its dispatchers read, from the bands' own
+// mods.toml, neoforge.mods.toml and pack.mcmeta of the universal jar and the table its dispatchers read, from the
+// bands' own files. META-INF/mods.toml is read by every Forge and by NeoForge 1.20.2 - 1.20.4,
+// META-INF/neoforge.mods.toml by NeoForge 1.20.5 and later.
 tasks.register('forgeUniversalMetadata') {
     description = 'Writes the metadata of the universal Forge / NeoForge jar'
-    dependsOn forgeBands.collect { "${it.project}:build" }
+    dependsOn forgeBands.collect { forgeBandTask(it) }
     def outDir = layout.buildDirectory.dir('universal/forge-meta')
     outputs.dir outDir
     outputs.upToDateWhen { false }
     doLast {
-        def table = new StringBuilder('# Written by the build: the band of each Minecraft version and what it needs\n')
+        def field = { String text, String key -> (text =~ /(?m)^\s*${key}\s*=\s*"([^"]*)"/).with { it.find() ? it.group(1) : null } }
+        def tomls = forgeBands.collect { band ->
+            def text = zipTree(forgeBandJar(band)).matching { include band.toml }.singleFile.getText('UTF-8')
+            def depends = tomlDepends(text)
+            if (!depends.minecraft || !depends[band.loader] || !depends.voicechat) {
+                throw new GradleException("${band.id}: ${band.toml} lacks minecraft, ${band.loader} or voicechat")
+            }
+            [band: band, text: text, depends: depends, loaderVersion: field(text, 'loaderVersion')]
+        }
         def dir = outDir.get().asFile
         project.delete(dir)
         new File(dir, 'META-INF').mkdirs()
-        ['forge': 'META-INF/mods.toml', 'neoforge': 'META-INF/neoforge.mods.toml'].each { loader, path ->
-            def bands = forgeBands.findAll { it.loader == loader }
-            def tomls = bands.collect { band ->
-                def text = zipTree(forgeBandJar(band)).matching { include path }.singleFile.getText('UTF-8')
-                def depends = tomlDepends(text)
-                if (!depends.minecraft || !depends[loader] || !depends.voicechat) {
-                    throw new GradleException("${band.project}: ${path} lacks minecraft, ${loader} or voicechat")
-                }
-                [band: band, text: text, depends: depends,
-                 loaderVersion: (text =~ /(?m)^loaderVersion\s*=\s*"([^"]*)"/).with { it.find() ? it.group(1) : null }]
+        def withoutDepends = { String text ->
+            text.split(/(?m)^(?=\[\[)/).findAll { !it.startsWith('[[dependencies.vc_audio_distance]]') }.join('').trim() + '\n'
+        }
+        def dependency = { String mod, String range, boolean required, String ordering = 'NONE' ->
+            // "mandatory" for Forge and NeoForge 20.2, "type" for NeoForge 20.3 and later: each ignores the other
+            """
+[[dependencies.vc_audio_distance]]
+modId = "${mod}"
+mandatory = ${required}
+type = "${required ? 'required' : 'optional'}"
+versionRange = "${range}"
+ordering = "${ordering}"
+side = "BOTH"
+"""
+        }
+        def lowest = { String range ->
+            def m = range =~ /^\[([^,\]]+)[,\]]/
+            if (!m.find()) {
+                throw new GradleException("Unexpected version range ${range}")
             }
-            def oldest = tomls.first()
-            // The newest band's file with what every band needs: the oldest loader and Simple Voice Chat, any band's Minecraft
-            def wanted = [(loader): oldest.depends[loader], minecraft: joinRanges(tomls.collect { it.depends.minecraft }),
-                          voicechat: oldest.depends.voicechat]
-            def text = tomls.last().text
-                    .replaceFirst(/(?m)^loaderVersion\s*=\s*"[^"]*"/, "loaderVersion = \"${oldest.loaderVersion}\"")
-                    .replaceFirst(/(?m)^version\s*=\s*"[^"]*"/, "version = \"${project.mod_version}\"")
-            text = text.split(/(?m)^(?=\[\[)/).collect { String block ->
-                def mod = (block =~ /(?m)^\s*modId\s*=\s*"([^"]*)"/).with { it.find() ? it.group(1) : null }
-                if (!block.startsWith('[[dependencies.vc_audio_distance]]') || !wanted.containsKey(mod)) {
-                    return block
-                }
-                block.replaceFirst(/(?m)^(\s*versionRange\s*=\s*)"[^"]*"/, "\$1\"${wanted[mod]}\"")
-            }.join('')
-            new File(dir, path).setText(text, 'UTF-8')
+            "[${m.group(1)},)"
+        }
 
-            table << "${loader}.bands=" << bands.collect { it.id }.join(',') << '\n'
-            tomls.each { t ->
-                def id = t.band.id
-                def depends = t.depends.findAll { it.key != 'minecraft' }
-                table << "${id}.minecraft=" << t.depends.minecraft << '\n'
-                table << "${id}.depends=" << depends.keySet().join(',') << '\n'
-                depends.each { k, v -> table << "${id}.depends.${k}=" << v << '\n' }
+        // mods.toml: what every band that reads it needs. Minecraft is any Forge band's (the NeoForge 1.20.2 - 1.20.4
+        // bands lie within the Forge 1.20.2 - 1.20.4 one); the loader is optional, as the file is read by both;
+        // the band's own loader and Simple Voice Chat versions are checked by BandTable.
+        def old = tomls.findAll { it.band.toml == 'META-INF/mods.toml' }
+        def forgeOnes = old.findAll { it.band.loader == 'forge' }
+        def neoOnes = old.findAll { it.band.loader == 'neoforge' }
+        def modsToml = withoutDepends(forgeOnes.last().text)
+                .replaceFirst(/(?m)^loaderVersion\s*=\s*"[^"]*"/, 'loaderVersion = "[1,)"')
+                .replaceFirst(/(?m)^version\s*=\s*"[^"]*"/, "version = \"${project.mod_version}\"")
+        modsToml += dependency('forge', lowest(forgeOnes.first().depends.forge), false)
+        modsToml += dependency('neoforge', lowest(neoOnes.first().depends.neoforge), false)
+        modsToml += dependency('minecraft', joinRanges(forgeOnes.collect { it.depends.minecraft }), true)
+        modsToml += dependency('voicechat', old.first().depends.voicechat, true, 'AFTER')
+        new File(dir, 'META-INF/mods.toml').setText(modsToml, 'UTF-8')
+
+        // neoforge.mods.toml: the newest band's file with what every band needs: the oldest loader and Simple Voice
+        // Chat, any band's Minecraft
+        def neo = tomls.findAll { it.band.toml == 'META-INF/neoforge.mods.toml' }
+        def oldest = neo.first()
+        def wanted = [neoforge: oldest.depends.neoforge, minecraft: joinRanges(neo.collect { it.depends.minecraft }),
+                      voicechat: oldest.depends.voicechat]
+        def neoToml = neo.last().text
+                .replaceFirst(/(?m)^loaderVersion\s*=\s*"[^"]*"/, "loaderVersion = \"${oldest.loaderVersion}\"")
+                .replaceFirst(/(?m)^version\s*=\s*"[^"]*"/, "version = \"${project.mod_version}\"")
+        neoToml = neoToml.split(/(?m)^(?=\[\[)/).collect { String block ->
+            def mod = field(block, 'modId')
+            if (!block.startsWith('[[dependencies.vc_audio_distance]]') || !wanted.containsKey(mod)) {
+                return block
             }
+            block.replaceFirst(/(?m)^(\s*versionRange\s*=\s*)"[^"]*"/, "\$1\"${wanted[mod]}\"")
+        }.join('')
+        new File(dir, 'META-INF/neoforge.mods.toml').setText(neoToml, 'UTF-8')
+
+        // Forge 1.16.5 - 1.20.4 and NeoForge 1.20.2 - 1.20.4 refuse a mod without it. pack_format for the oldest,
+        // supported_formats for 1.20.2 and later, min_format / max_format for 1.21.9 and later.
+        new File(dir, 'pack.mcmeta').text = groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson([pack: [
+                description      : 'Voice Physics',
+                pack_format      : 6,
+                supported_formats: [6, 1000],
+                min_format       : 6,
+                max_format       : 1000,
+        ]])) + '\n'
+
+        def table = new StringBuilder('# Written by the build: the band of each Minecraft version and what it needs\n')
+        ['forge', 'neoforge'].each { loader ->
+            table << "${loader}.bands=" << forgeBands.findAll { it.loader == loader }.collect { it.id }.join(',') << '\n'
+        }
+        tomls.each { t ->
+            def id = t.band.id
+            def depends = t.depends.findAll { it.key != 'minecraft' }
+            table << "${id}.minecraft=" << t.depends.minecraft << '\n'
+            table << "${id}.depends=" << depends.keySet().join(',') << '\n'
+            depends.each { k, v -> table << "${id}.depends.${k}=" << v << '\n' }
         }
         new File(dir, 'vcd-bands.properties').text = table.toString()
     }
@@ -284,9 +361,9 @@ tasks.register('forgeUniversalMetadata') {
 
 tasks.register('mergeForge', JavaExec) {
     group = 'build'
-    description = 'Builds the universal Forge / NeoForge jar (Minecraft 1.20.5 - 26.x)'
-    dependsOn 'forgeUniversalMetadata', ':universal:forgeClasses', ':common:classes', ':packaging:classes'
-    def common = project(':common').sourceSets.main.output
+    description = 'Builds the universal Forge / NeoForge jar (Minecraft 1.16.5 - 26.x)'
+    dependsOn 'forgeUniversalMetadata', ':universal:forgeClasses', ':common-j8:classes', ':packaging:classes'
+    def common = project(':common-j8').sourceSets.main.output
     def dispatchers = project(':universal').sourceSets.forge.output
     def outJar = layout.buildDirectory.file("universal/${forgeUniversalName}")
     outputs.file outJar
@@ -300,10 +377,12 @@ tasks.register('mergeForge', JavaExec) {
         dispatchers.classesDirs.files.each { a += ['--base', it.path] }
         a += ['--base', layout.buildDirectory.dir('universal/forge-meta').get().asFile.path]
         a += ['--mod-table', 'vcd-bands.properties']
-        // What the oldest Forge / NeoForge can read: Java 21
+        // Common and the dispatchers run on every version: Java 8. Nothing newer than Java 21 at all, which is
+        // what the ASM of the newest Forge / NeoForge reads; each band no newer than its own Minecraft's Java.
+        a += ['--base-max-major', '52']
         a += ['--max-major', '65']
         forgeBands.each { b ->
-            a += ['--band', "${b.id}=${forgeBandJar(b).path}"]
+            a += ['--band', "${b.id}=${forgeBandJar(b).path}", '--band-java', "${b.id}=${b.java}"]
         }
         args = a
     }
@@ -314,8 +393,6 @@ tasks.register('buildAll') {
     description = 'Builds and collects the release jars for every Minecraft version and loader into build/libs'
     dependsOn 'mergeFabric', 'mergeForge'
     dependsOn ':bukkit:build'
-    dependsOn loaderTargets.collect { "${it.project}:${it.task}" }
-    dependsOn 'buildLegacy'
 
     doLast {
         def outDir = layout.buildDirectory.dir("libs").get().asFile
@@ -324,28 +401,6 @@ tasks.register('buildAll') {
             from layout.buildDirectory.file("universal/${fabricUniversalName}")
             from layout.buildDirectory.file("universal/${forgeUniversalName}")
             into outDir
-        }
-        loaderTargets.each { t ->
-            def built = project(t.project).tasks.named(t.task).get().outputs.files.files.find { it.name.endsWith('.jar') }
-            if (built == null || !built.exists()) {
-                throw new GradleException("Expected release jar is missing: ${t.project} ${t.task}")
-            }
-            copy {
-                from built
-                into outDir
-                rename { String.format(t.file, project.mod_version) }
-            }
-        }
-        legacyTargets.each { t ->
-            def name = String.format(t.file, project.mod_version)
-            def built = file("${t.dir}/build/libs/${name}")
-            if (!built.exists()) {
-                throw new GradleException("Expected release jar is missing: ${built}")
-            }
-            copy {
-                from built
-                into outDir
-            }
         }
         // Bukkit / Spigot / Paper / Purpur plugin (server side, every supported Minecraft version)
         def plugin = file("${project(':bukkit').layout.buildDirectory.get().asFile}/libs/voice-physics-bukkit-${project.mod_version}.jar")
