@@ -3,9 +3,15 @@ plugins {
     id 'java'
 }
 
-// Forge hooks for the 26.x jar. Minecraft 26.x is not obfuscated, so this module only compiles the
-// classes in com.kasper.vcdistance.forge against Forge; fabric-26 packs them into the same jar as the
-// Fabric build and the NeoForge hooks, next to the shared code they call.
+// The Forge band of Minecraft 26.x: the code shared with fabric-26 compiled against Forge, with Forge's
+// networking from shared/forge. Minecraft 26.x is not obfuscated, so nothing is remapped. Its jar is an
+// input of the universal Forge / NeoForge jar (see the root build.gradle), not a release file itself.
+
+version = "${project.mod_version}+mc26.x"
+
+base {
+    archivesName = "voice-physics-forge"
+}
 
 // The build against the oldest Forge 26.x (.github/workflows/build.yml) passes -PloaderOverride.forge-26=<version>
 def forge = project.findProperty("loaderOverride.${project.name}") ?: project.forge26_version
@@ -42,8 +48,6 @@ sourceSets {
             exclude 'com/kasper/vcdistance/ModMenuIntegration.java'
             exclude 'com/kasper/vcdistance/client/HudHook.java'
         }
-        // The resources ship with the fabric-26 jar
-        resources.srcDirs = []
     }
 }
 
@@ -53,12 +57,21 @@ dependencies {
     compileOnly "de.maxhenkel.voicechat:voicechat-api:${project.voicechat_api_version}"
 }
 
+// Java 21 bytecode, though 26.x runs on Java 25: these classes go into the universal Forge / NeoForge jar,
+// and the oldest Forge and NeoForge it supports read every class of the jar with an ASM that stops at Java 21
 tasks.withType(JavaCompile).configureEach {
-    options.release = 25
+    options.release = 21
     options.encoding = 'UTF-8'
 }
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_25
-    targetCompatibility = JavaVersion.VERSION_25
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+}
+
+processResources {
+    inputs.property "version", project.version
+    filesMatching("META-INF/*.toml") {
+        expand "version": project.version
+    }
 }

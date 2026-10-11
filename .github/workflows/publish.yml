@@ -92,16 +92,15 @@ jobs:
       fail-fast: false
       max-parallel: 1
       matrix:
-        # Where a loader has no build of its own, its file is the Fabric jar ("lite"), so one upload
-        # carries several loaders: Modrinth refuses a file it already has. A lite file that needs its
-        # own upload is repacked with a marker so it differs. Fabric API is optional wherever the file
-        # also serves Forge or NeoForge: a required one would be pulled into those installs too.
+        # A lite file that needs its own upload (Modrinth refuses a file it already has) is repacked
+        # with a marker so it differs.
         include:
-          - name: Fabric for 1.16.5
-            file: fabric-{v}+mc1.16.5.jar
-            target: mc1.16.5
+          # One file for every Fabric version: it picks the build for the running Minecraft at startup
+          - name: Fabric/Quilt for 1.16.5 – 26.3
+            file: fabric-{v}+mc1.16.5-26.x.jar
+            target: mc1.16.5-26.x
             loaders: fabric quilt
-            game-versions: 1.16.5
+            game-versions: 1.16.5 1.17.1 1.18.2 1.19.2 1.19.4 1.20 1.20.1 1.20.2 1.20.3 1.20.4 1.20.5 1.20.6 1.21 1.21.1 1.21.2 1.21.3 1.21.4 1.21.5 1.21.6 1.21.7 1.21.8 1.21.9 1.21.10 1.21.11 26.1 26.1.1 26.1.2 26.2 26.3
             java: 8
             dependencies: simple-voice-chat(required) fabric-api(required) modmenu(optional)
             curseforge: true
@@ -113,14 +112,6 @@ jobs:
             java: 8
             dependencies: simple-voice-chat(required)
             curseforge: true
-          - name: Fabric for 1.17.1
-            file: fabric-{v}+mc1.17.1.jar
-            target: mc1.17.1
-            loaders: fabric quilt
-            game-versions: 1.17.1
-            java: 16
-            dependencies: simple-voice-chat(required) fabric-api(required) modmenu(optional)
-            curseforge: true
           - name: Forge for 1.17.1
             file: forge-{v}+mc1.17.1.jar
             target: mc1.17.1-forge
@@ -128,14 +119,6 @@ jobs:
             game-versions: 1.17.1
             java: 16
             dependencies: simple-voice-chat(required)
-            curseforge: true
-          - name: Fabric for 1.18.2
-            file: fabric-{v}+mc1.18.2.jar
-            target: mc1.18.2
-            loaders: fabric quilt
-            game-versions: 1.18.2
-            java: 17
-            dependencies: simple-voice-chat(required) fabric-api(required) modmenu(optional)
             curseforge: true
           - name: Forge for 1.18.2
             file: forge-{v}+mc1.18.2.jar
@@ -145,14 +128,6 @@ jobs:
             java: 17
             dependencies: simple-voice-chat(required)
             curseforge: true
-          - name: Fabric for 1.19.2
-            file: fabric-{v}+mc1.19.2.jar
-            target: mc1.19.2
-            loaders: fabric quilt
-            game-versions: 1.19.2
-            java: 17
-            dependencies: simple-voice-chat(required) fabric-api(required) modmenu(optional)
-            curseforge: true
           - name: Forge for 1.19.2
             file: forge-{v}+mc1.19.2.jar
             target: mc1.19.2-forge
@@ -160,14 +135,6 @@ jobs:
             game-versions: 1.19.2
             java: 17
             dependencies: simple-voice-chat(required)
-            curseforge: true
-          - name: Fabric for 1.19.4
-            file: fabric-{v}+mc1.19.4.jar
-            target: mc1.19.4
-            loaders: fabric quilt
-            game-versions: 1.19.4
-            java: 17
-            dependencies: simple-voice-chat(required) fabric-api(required) modmenu(optional)
             curseforge: true
           - name: Forge for 1.19.4
             file: forge-{v}+mc1.19.4.jar
@@ -177,14 +144,6 @@ jobs:
             java: 17
             dependencies: simple-voice-chat(required)
             curseforge: true
-          - name: Fabric for 1.20 – 1.20.1
-            file: fabric-{v}+mc1.20.1.jar
-            target: mc1.20.1
-            loaders: fabric quilt
-            game-versions: 1.20 1.20.1
-            java: 17
-            dependencies: simple-voice-chat(required) fabric-api(required) modmenu(optional)
-            curseforge: true
           # NeoForge for 1.20.1 is a fork of Forge 1.20.1 and loads its jar
           - name: Forge for 1.20 – 1.20.1, NeoForge for 1.20.1
             file: forge-{v}+mc1.20.1.jar
@@ -193,14 +152,6 @@ jobs:
             game-versions: 1.20 1.20.1
             java: 17
             dependencies: simple-voice-chat(required)
-            curseforge: true
-          - name: Fabric for 1.20.2 – 1.20.4
-            file: fabric-{v}+mc1.20.2-1.20.4.jar
-            target: mc1.20.2-1.20.4
-            loaders: fabric quilt
-            game-versions: 1.20.2 1.20.3 1.20.4
-            java: 17
-            dependencies: simple-voice-chat(required) fabric-api(required) modmenu(optional)
             curseforge: true
           - name: NeoForge for 1.20.2 – 1.20.3
             file: neoforge-{v}+mc1.20.2-1.20.3.jar
@@ -226,125 +177,14 @@ jobs:
             java: 17
             dependencies: simple-voice-chat(required)
             curseforge: true
-          - name: Fabric for 1.20.5 – 1.20.6
-            file: fabric-{v}+mc1.20.5-1.20.6.jar
-            target: mc1.20.5-1.20.6
-            loaders: fabric quilt
-            game-versions: 1.20.5 1.20.6
-            java: 21
-            dependencies: simple-voice-chat(required) fabric-api(required) modmenu(optional)
-            curseforge: true
-          - name: NeoForge for 1.20.5 – 1.20.6
-            file: neoforge-{v}+mc1.20.5-1.20.6.jar
-            target: mc1.20.5-1.20.6-neoforge
-            loaders: neoforge
-            game-versions: 1.20.5 1.20.6
+          # One file for Forge 1.20.6 – 26.x and NeoForge 1.20.5 – 26.x, the same way
+          - name: Forge/NeoForge for 1.20.5 – 26.3
+            file: forge-neoforge-{v}+mc1.20.5-26.x.jar
+            target: mc1.20.5-26.x-forge
+            loaders: forge neoforge
+            game-versions: 1.20.5 1.20.6 1.21 1.21.1 1.21.2 1.21.3 1.21.4 1.21.5 1.21.6 1.21.7 1.21.8 1.21.9 1.21.10 1.21.11 26.1 26.1.1 26.1.2 26.2 26.3
             java: 21
             dependencies: simple-voice-chat(required)
-            curseforge: true
-          - name: Forge for 1.20.6
-            file: forge-{v}+mc1.20.6.jar
-            target: mc1.20.6-forge
-            loaders: forge
-            game-versions: 1.20.6
-            java: 21
-            dependencies: simple-voice-chat(required)
-            curseforge: true
-          - name: Fabric for 1.21 – 1.21.11
-            file: fabric-{v}+mc1.21.x.jar
-            target: mc1.21.x
-            loaders: fabric quilt
-            game-versions: 1.21 1.21.1 1.21.2 1.21.3 1.21.4 1.21.5 1.21.6 1.21.7 1.21.8 1.21.9 1.21.10 1.21.11
-            java: 21
-            dependencies: simple-voice-chat(required) fabric-api(required) modmenu(optional)
-            curseforge: true
-          - name: NeoForge for 1.21 – 1.21.1
-            file: neoforge-{v}+mc1.21-1.21.1.jar
-            target: mc1.21-1.21.1-neoforge
-            loaders: neoforge
-            game-versions: 1.21 1.21.1
-            java: 21
-            dependencies: simple-voice-chat(required)
-            curseforge: true
-          - name: NeoForge for 1.21.2 – 1.21.5
-            file: neoforge-{v}+mc1.21.2-1.21.5.jar
-            target: mc1.21.2-1.21.5-neoforge
-            loaders: neoforge
-            game-versions: 1.21.2 1.21.3 1.21.4 1.21.5
-            java: 21
-            dependencies: simple-voice-chat(required)
-            curseforge: true
-          - name: NeoForge for 1.21.6 – 1.21.8
-            file: neoforge-{v}+mc1.21.6-1.21.8.jar
-            target: mc1.21.6-1.21.8-neoforge
-            loaders: neoforge
-            game-versions: 1.21.6 1.21.7 1.21.8
-            java: 21
-            dependencies: simple-voice-chat(required)
-            curseforge: true
-          - name: NeoForge for 1.21.9 – 1.21.10
-            file: neoforge-{v}+mc1.21.9-1.21.10.jar
-            target: mc1.21.9-1.21.10-neoforge
-            loaders: neoforge
-            game-versions: 1.21.9 1.21.10
-            java: 21
-            dependencies: simple-voice-chat(required)
-            curseforge: true
-          - name: NeoForge for 1.21.11
-            file: neoforge-{v}+mc1.21.11.jar
-            target: mc1.21.11-neoforge
-            loaders: neoforge
-            game-versions: 1.21.11
-            java: 21
-            dependencies: simple-voice-chat(required)
-            curseforge: true
-          - name: Forge for 1.21 – 1.21.1
-            file: forge-{v}+mc1.21-1.21.1.jar
-            target: mc1.21-1.21.1-forge
-            loaders: forge
-            game-versions: 1.21 1.21.1
-            java: 21
-            dependencies: simple-voice-chat(required)
-            curseforge: true
-          - name: Forge for 1.21.3 – 1.21.5
-            file: forge-{v}+mc1.21.3-1.21.5.jar
-            target: mc1.21.3-1.21.5-forge
-            loaders: forge
-            game-versions: 1.21.3 1.21.4 1.21.5
-            java: 21
-            dependencies: simple-voice-chat(required)
-            curseforge: true
-          - name: Forge for 1.21.6 – 1.21.8
-            file: forge-{v}+mc1.21.6-1.21.8.jar
-            target: mc1.21.6-1.21.8-forge
-            loaders: forge
-            game-versions: 1.21.6 1.21.7 1.21.8
-            java: 21
-            dependencies: simple-voice-chat(required)
-            curseforge: true
-          - name: Forge for 1.21.9 – 1.21.10
-            file: forge-{v}+mc1.21.9-1.21.10.jar
-            target: mc1.21.9-1.21.10-forge
-            loaders: forge
-            game-versions: 1.21.9 1.21.10
-            java: 21
-            dependencies: simple-voice-chat(required)
-            curseforge: true
-          - name: Forge for 1.21.11
-            file: forge-{v}+mc1.21.11.jar
-            target: mc1.21.11-forge
-            loaders: forge
-            game-versions: 1.21.11
-            java: 21
-            dependencies: simple-voice-chat(required)
-            curseforge: true
-          - name: Fabric/Quilt/Forge/NeoForge for 26.1 – 26.3
-            file: fabric-{v}+mc26.x.jar
-            target: mc26.x
-            loaders: fabric quilt neoforge forge
-            game-versions: 26.1 26.1.1 26.1.2 26.2 26.3
-            java: 25
-            dependencies: simple-voice-chat(required) fabric-api(optional) modmenu(optional)
             curseforge: true
           - name: Paper/Purpur/Folia/Spigot plugin
             file: bukkit-{v}.jar

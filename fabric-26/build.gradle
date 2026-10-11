@@ -6,10 +6,6 @@ plugins {
 // Its jar carries the classes of ':common', so that module is configured first (configure-on-demand)
 evaluationDependsOn(':common')
 
-// The NeoForge and Forge hooks are packed into this jar, so their modules are configured first
-evaluationDependsOn(':neoforge-26')
-evaluationDependsOn(':forge-26')
-
 // Minecraft 26.3 (unobfuscated, no remapping)
 def target = "mc26.x"
 version = "${project.mod_version}+${target}"
@@ -62,23 +58,13 @@ java {
 processResources {
     inputs.property "version", project.version
 
-    filesMatching(["fabric.mod.json", "META-INF/*.toml"]) {
+    filesMatching("fabric.mod.json") {
         expand "version": project.version
     }
 }
 
 jar {
     from project(':common').sourceSets.main.output
-    // NeoForge entrypoint: loaded only by NeoForge, which finds it through @Mod
-    dependsOn ':neoforge-26:classes'
-    from(project(':neoforge-26').sourceSets.main.output) {
-        include 'com/kasper/vcdistance/neoforge/**'
-    }
-    // Forge entrypoint: loaded only by Forge, which finds it through its own @Mod
-    dependsOn ':forge-26:classes'
-    from(project(':forge-26').sourceSets.main.output) {
-        include 'com/kasper/vcdistance/forge/**'
-    }
 }
 
 // The classpath the mod compiles against, one entry per line. The 26.x compatibility check
