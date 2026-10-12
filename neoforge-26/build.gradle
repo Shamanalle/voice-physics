@@ -3,9 +3,15 @@ plugins {
     id 'java'
 }
 
-// NeoForge hooks for the 26.x jar. Minecraft 26.x is not obfuscated, so this module only compiles
-// the classes in com.kasper.vcdistance.neoforge against NeoForge; fabric-26 packs them into the
-// same jar as the Fabric build, next to the shared code they call.
+// The NeoForge band of Minecraft 26.x: the code shared with fabric-26 compiled against NeoForge.
+// Minecraft 26.x is not obfuscated, so nothing is remapped. Its jar is an input of the universal
+// Forge / NeoForge jar (see the root build.gradle), not a release file itself.
+
+version = "${project.mod_version}+mc26.x"
+
+base {
+    archivesName = "voice-physics-neoforge"
+}
 
 repositories {
     mavenCentral()
@@ -32,8 +38,6 @@ sourceSets {
             exclude 'com/kasper/vcdistance/ModMenuIntegration.java'
             exclude 'com/kasper/vcdistance/client/HudHook.java'
         }
-        // The resources ship with the fabric-26 jar
-        resources.srcDirs = []
     }
 }
 
@@ -42,12 +46,23 @@ dependencies {
     compileOnly "de.maxhenkel.voicechat:voicechat-api:${project.voicechat_api_version}"
 }
 
+// Java 21 bytecode, though 26.x runs on Java 25: these classes go into the universal Forge / NeoForge jar,
+// and the oldest Forge and NeoForge it supports read every class of the jar with an ASM that stops at Java 21
 tasks.withType(JavaCompile).configureEach {
-    options.release = 25
+    options.release = 21
     options.encoding = 'UTF-8'
 }
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_25
-    targetCompatibility = JavaVersion.VERSION_25
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+    // The loader and Minecraft are published for Java 25 only; compiling against them for 21 is fine
+    disableAutoTargetJvm()
+}
+
+processResources {
+    inputs.property "version", project.version
+    filesMatching("META-INF/*.toml") {
+        expand "version": project.version
+    }
 }
