@@ -46,7 +46,7 @@ public final class ServerReport {
         out.add("Rules: sneak " + AdminCommands.pct(s.getSneakMultiplier()) + ", dead_silent " + onOff(s.isDeadSilent())
                 + ", spectators_apart " + onOff(s.isSpectatorsOnly()) + ", megaphone "
                 + (s.getMegaphoneItem().isEmpty() ? "off" : s.getMegaphoneItem() + " x" + AdminCommands.fmt(s.getMegaphoneMultiplier())
-                        + ", horn " + onOff(s.isMegaphoneSound())));
+                        + ", by facing " + onOff(s.isMegaphoneDirection()) + ", horn " + onOff(s.isMegaphoneSound())));
         out.add("Groups: dead " + onOff(s.isGroupDeadSilent()) + ", spectators " + onOff(s.isGroupSpectatorsApart())
                 + ", zones " + onOff(s.isGroupIsolatedZones()) + ", open_range " + onOff(s.isOpenGroupRange()));
         Map<String, Integer> kinds = new TreeMap<>();

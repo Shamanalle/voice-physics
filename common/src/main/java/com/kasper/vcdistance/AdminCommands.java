@@ -38,7 +38,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * /vcd notices on|off                          zone names above the hotbar when players enter or leave
  * /vcd zones [page]                            every zone
  * /vcd zone ...                                see {@link ZoneCommands}
- * /vcd rule sneak|dead|spectators|megaphone|megaphone_range|megaphone_sound &lt;value&gt;
+ * /vcd rule sneak|dead|spectators|megaphone|megaphone_range|megaphone_direction|megaphone_sound &lt;value&gt;
  * /vcd require off|suggest|warn|kick [min version]
  * /vcd debug [player]                          what a player hears, and why not
  * </pre>
@@ -87,12 +87,12 @@ public final class AdminCommands {
     static final String[] MODES = {"off", "suggest", "enforce"};
     static final String[] PRESETS = {"vanilla", "realistic", "clear", "stealth", "custom", "export", "import"};
     static final String[] LOCK_PARTS = {"all", "none", "curve", "walls", "materials", "effects"};
-    static final String[] RULES = {"sneak", "dead", "spectators", "megaphone", "megaphone_range", "megaphone_sound"};
+    static final String[] RULES = {"sneak", "dead", "spectators", "megaphone", "megaphone_range", "megaphone_direction", "megaphone_sound"};
     static final String[] GROUP_RULES = {"dead", "spectators", "zones", "open_range"};
     static final String[] REQUIRE = {"off", "suggest", "warn", "kick"};
     static final String[] ON_OFF = {"on", "off"};
     /** {@code /vcd effects <part> ...}: the server's own air and the strengths the profile has. */
-    static final String[] EFFECT_PARTS = {"on", "off", "air", "curve", "water", "weather", "echo", "doppler", "facing", "wind", "status"};
+    static final String[] EFFECT_PARTS = {"on", "off", "air", "curve", "water", "weather", "echo", "doppler", "wind", "facing", "status"};
     static final String[] EFFECT_STEPS = {"off", "25", "50", "75", "100", "125", "150"};
     static final String[] ECHO_STEPS = {"off", "25", "50", "75", "100"};
     static final String[] DOPPLER_STEPS = {"off", "50", "100", "150", "200", "300"};
@@ -405,6 +405,7 @@ public final class AdminCommands {
                 r.change(onOff(m, settings.isSpectatorsOnly()), "rule spectators"),
                 r.change(settings.getMegaphoneItem().isEmpty() ? m.get("off")
                         : settings.getMegaphoneItem() + " ×" + fmt(settings.getMegaphoneMultiplier()), "rule megaphone"),
+                r.change(onOff(m, settings.isMegaphoneDirection()), "rule megaphone_direction"),
                 r.change(onOff(m, settings.isMegaphoneSound()), "rule megaphone_sound"))));
         r.reply.add(CommandReply.line().addAll(m.spans("status.require", Style.PLAIN,
                 r.change(settings.getRequireAddon().getId(), "require"),
@@ -1207,7 +1208,17 @@ public final class AdminCommands {
                     return;
                 }
                 settings.setMegaphoneMultiplier(v);
-                r.saved("rule.megaphone_range", fmt(settings.getMegaphoneMultiplier()));
+                r.saved(settings.isMegaphoneDirection() ? "rule.megaphone_range" : "rule.megaphone_range.all",
+                        fmt(settings.getMegaphoneMultiplier()));
+            }
+            case "megaphone_direction" -> {
+                Boolean on = parseOnOff(value);
+                if (on == null) {
+                    r.badValue("rule megaphone_direction", value, "on|off", "rule");
+                    return;
+                }
+                settings.setMegaphoneDirection(on);
+                r.saved(on ? "rule.megaphone_direction.on" : "rule.megaphone_direction.off");
             }
             case "megaphone_sound" -> {
                 Boolean on = parseOnOff(value);

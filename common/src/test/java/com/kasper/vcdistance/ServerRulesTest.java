@@ -167,7 +167,7 @@ public class ServerRulesTest {
     }
 
     @Test
-    @DisplayName("Megaphone: carries furthest straight ahead, half of the extra behind, smoothly in between")
+    @DisplayName("Megaphone: carries furthest straight ahead, half of the extra behind, smoothly in between; or the same all round when turned off")
     void megaphoneDirection() throws IOException {
         ServerSettings s = settings("megaphone_item=goat_horn\nmegaphone_multiplier=2.5\n");
         ServerPlayers.Info speaker = new ServerPlayers.Info(UUID.randomUUID(), "Herald", "world", 0, 64, 0,
@@ -195,6 +195,12 @@ public class ServerRulesTest {
         ServerPlayers.Info plain = new ServerPlayers.Info(speaker.id(), "Herald", "world", 0, 64, 0,
                 false, true, false, "", "", List.of(), "", false, EnvironmentEffects.Weather.CLEAR, 1, 0, 0);
         assertEquals(48.0, ServerRange.decide(s, plain, player("b", "world", -40, 0), false, 48, 24).distance(), 1e-9);
+
+        // The server can turn the direction off: the full range all round
+        s.setMegaphoneDirection(false);
+        assertEquals(120.0, ServerRange.decide(s, speaker, player("b", "world", -100, 0), false, 48, 24).distance(), 1e-9);
+        assertEquals(120.0, ServerRange.decide(s, speaker, player("c", "world", 0, 100), false, 48, 24).distance(), 1e-9);
+        assertEquals(ServerRange.Reason.RANGE, ServerRange.decide(s, speaker, player("b", "world", -125, 0), false, 48, 24).reason());
     }
 
     @Test
@@ -314,6 +320,18 @@ public class ServerRulesTest {
         AdminCommands.run("rule megaphone_sound on", s, ctx);
         saved.load();
         assertTrue(saved.isMegaphoneSound());
+        assertTrue(saved.isMegaphoneDirection(), "the range by facing is on by default");
+        assertTrue(AdminCommands.run("rule megaphone_direction off", s, ctx).get(0).contains("in alle Richtungen gleich weit"));
+        assertTrue(AdminCommands.run("rule megaphone_range 3", s, ctx).get(0).contains("in alle Richtungen gleich."));
+        saved.load();
+        assertFalse(saved.isMegaphoneDirection());
+        AdminCommands.run("rule megaphone_direction sideways", s, ctx);
+        saved.load();
+        assertFalse(saved.isMegaphoneDirection(), "a wrong value changes nothing");
+        AdminCommands.run("rule megaphone_direction on", s, ctx);
+        assertTrue(AdminCommands.run("rule megaphone_range 2.5", s, ctx).get(0).contains("geradeaus"));
+        saved.load();
+        assertTrue(saved.isMegaphoneDirection());
         assertEquals(ServerSettings.RequireAddon.WARN, saved.getRequireAddon());
         assertEquals("1.8", saved.getMinAddonVersion());
         assertEquals(s.zones(), saved.zones());

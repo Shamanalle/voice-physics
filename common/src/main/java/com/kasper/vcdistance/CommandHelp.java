@@ -41,7 +41,7 @@ final class CommandHelp {
                     "zone set world_nether voice_range 16", "zone show stage", "zone tp stage", "zone rename stage arena",
                     "zone delete stage"}),
             Jv.entry("rule", new String[]{"rule sneak 0.5", "rule dead on", "rule spectators on", "rule megaphone minecraft:goat_horn",
-                    "rule megaphone_range 3", "rule megaphone_sound off"}),
+                    "rule megaphone_range 3", "rule megaphone_direction off", "rule megaphone_sound off"}),
             Jv.entry("group", new String[]{"group dead on", "group spectators on", "group zones on", "group open_range off"}),
             Jv.entry("require", new String[]{"require suggest", "require warn", "require kick " + BuildInfo.version()}),
             Jv.entry("mute", new String[]{"mute Steve", "mute Steve 10m", "mute Steve 1h spam in voice", "mute Steve perm"}),

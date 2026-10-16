@@ -273,7 +273,7 @@
 | `/vcd zone tp <имя>` | Переместиться в центр бокса |
 | `/vcd zone rename <имя> <новое имя>` | Переименовать бокс; настройки остаются |
 | `/vcd zone delete <имя>` | Удалить зону (сначала спросит; `/vcd undo` вернёт её) |
-| `/vcd rule sneak 0.1-1\|dead on\|off\|spectators on\|off\|megaphone <предмет>\|megaphone_range 1-10\|megaphone_sound on\|off` | Правила игры |
+| `/vcd rule sneak 0.1-1\|dead on\|off\|spectators on\|off\|megaphone <предмет>\|megaphone_range 1-10\|megaphone_direction on\|off\|megaphone_sound on\|off` | Правила игры |
 | `/vcd group dead\|spectators\|zones\|open_range on\|off` | Правила внутри групп Simple Voice Chat |
 | `/vcd require off\|suggest\|warn\|kick [версия]` | Обязательный аддон |
 | `/vcd mute <игрок> [время] [причина]` | Игрока никто не слышит `30s`, `10m`, `2h`, `1d`, `1w` или `perm` (без времени — пока не снимут); повторное заглушение меняет время и причину |
@@ -456,6 +456,7 @@ zone.box.booth.isolated=true
 | `spectators_hear_only_spectators` | true / false | false | Наблюдателей слышат только наблюдатели |
 | `megaphone_item` | id предмета или пусто | пусто | Предмет-мегафон, например `minecraft:goat_horn` |
 | `megaphone_multiplier` | 1 – 10 | 2.5 | Дальность голоса с мегафоном умножается на это, прямо по взгляду; за спиной игрока — половина прибавки (x1.75 при 2.5) |
+| `megaphone_direction` | true / false | true | Мегафон дальше всего слышно туда, куда смотрит игрок; false: одинаковая дальность во все стороны |
 | `megaphone_sound` | true / false | true | Голос с мегафоном для всех звучит как из рупора (тонко, чуть с перегрузом); нужен Simple Voice Chat 2.5.27 или новее, лимит перекодирования общий со стенами (`server_walls_max_streams`) |
 | `group_dead_silent` | true / false | false | Мёртвых не слышит и их группа |
 | `group_spectators_apart` | true / false | false | Наблюдателей в группе слышат только её наблюдатели |

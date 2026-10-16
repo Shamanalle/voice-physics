@@ -1263,7 +1263,10 @@ public abstract class SettingsScreen extends com.kasper.vcdistance.compat.BaseSc
                 String range = st.getProperty("megaphone_multiplier", "2.5");
                 serverButton(tr("server.megaphone_range", range), "server.megaphone_range.tooltip", left, y, half,
                         "rule megaphone_range " + next(SERVER_MEGAPHONE_RANGE, range));
-                serverToggle("server.megaphone_sound", st, "megaphone_sound", "true", x2, y, half, "rule megaphone_sound");
+                serverToggle("server.megaphone_direction", st, "megaphone_direction", "true", x2, y, half,
+                        "rule megaphone_direction");
+                y += ROW;
+                serverToggle("server.megaphone_sound", st, "megaphone_sound", "true", left, y, half, "rule megaphone_sound");
                 y += ROW;
             }
             serverToggle("server.dead", st, "dead_players_silent", "false", left, y, half, "rule dead");

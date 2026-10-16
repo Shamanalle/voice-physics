@@ -34,9 +34,10 @@ public final class ServerSettings {
      * 2: sections with comments, walls_strength and material.* at the top level, profile_preset;
      * 3: echo, water and weather; 4: zones and messages_language; 5: more materials;
      * 6: boxes and zone rules, game rules, the addon requirement, messages in every language;
-     * 10: wall_loudness, so older files get it with its comment; 11: megaphone_sound.
+     * 10: wall_loudness, so older files get it with its comment; 11: megaphone_sound;
+     * 12: megaphone_direction.
      */
-    private static final int SETTINGS_VERSION = 11;
+    private static final int SETTINGS_VERSION = 12;
     private static final String ZONE_PREFIX = "zone.";
     private static final String MUTE_PREFIX = "mute.";
     private static final String SPEAKER_PREFIX = "speaker.";
@@ -123,6 +124,7 @@ public final class ServerSettings {
     private volatile String megaphoneItem = "";
     private volatile double megaphoneMultiplier = DEFAULT_MEGAPHONE_MULTIPLIER;
     private volatile boolean megaphoneSound = true;
+    private volatile boolean megaphoneDirection = true;
     private volatile RequireAddon requireAddon = RequireAddon.OFF;
     private volatile String minAddonVersion = "";
     private volatile String addonUrl = DEFAULT_ADDON_URL;
@@ -379,6 +381,7 @@ public final class ServerSettings {
         megaphoneItem = itemId(props.getProperty("megaphone_item", ""));
         megaphoneMultiplier = DistanceConfig.clamp(DistanceConfig.parseDouble(props, "megaphone_multiplier", DEFAULT_MEGAPHONE_MULTIPLIER), 1.0, 10.0);
         megaphoneSound = DistanceConfig.parseBoolean(props, "megaphone_sound", true);
+        megaphoneDirection = DistanceConfig.parseBoolean(props, "megaphone_direction", true);
         groupDeadSilent = DistanceConfig.parseBoolean(props, "group_dead_silent", false);
         groupSpectatorsApart = DistanceConfig.parseBoolean(props, "group_spectators_apart", false);
         groupIsolatedZones = DistanceConfig.parseBoolean(props, "group_isolated_zones", false);
@@ -635,6 +638,11 @@ public final class ServerSettings {
                         "Дальность голоса с мегафоном умножается на это: 1 - 10. По умолчанию 2.5. Это дальность прямо",
                         "перед говорящим; в стороны меньше, прямо за спиной 1 + половина прибавки (x1.75 при 2.5).")
                 .value("megaphone_multiplier", megaphoneMultiplier)
+                .comment("true: the megaphone carries furthest the way the speaker looks, less to the sides and behind.",
+                        "false: the same range all round. Default true.",
+                        "true: мегафон дальше всего слышно туда, куда смотрит говорящий, в стороны и назад меньше.",
+                        "false: одинаковая дальность во все стороны. По умолчанию true.")
+                .value("megaphone_direction", megaphoneDirection)
                 .comment("true: the voice through the megaphone sounds like a horn (thin, a little overdriven), for every player.",
                         "Needs Simple Voice Chat 2.5.27 or newer on the server. Default true.",
                         "true: голос через мегафон звучит как из рупора (тонко, с лёгким перегрузом), для всех игроков.",
@@ -926,6 +934,15 @@ public final class ServerSettings {
         megaphoneSound = on;
     }
 
+    /** The megaphone carries furthest the way the speaker looks; off, the same range all round. */
+    public boolean isMegaphoneDirection() {
+        return megaphoneDirection;
+    }
+
+    public void setMegaphoneDirection(boolean on) {
+        megaphoneDirection = on;
+    }
+
     public RequireAddon getRequireAddon() {
         return requireAddon;
     }
@@ -1001,6 +1018,7 @@ public final class ServerSettings {
         p.setProperty(prefix + "megaphone_item", megaphoneItem);
         p.setProperty(prefix + "megaphone_multiplier", DistanceConfig.format(megaphoneMultiplier));
         p.setProperty(prefix + "megaphone_sound", String.valueOf(megaphoneSound));
+        p.setProperty(prefix + "megaphone_direction", String.valueOf(megaphoneDirection));
         p.setProperty(prefix + "group_dead_silent", String.valueOf(groupDeadSilent));
         p.setProperty(prefix + "group_spectators_apart", String.valueOf(groupSpectatorsApart));
         p.setProperty(prefix + "group_isolated_zones", String.valueOf(groupIsolatedZones));

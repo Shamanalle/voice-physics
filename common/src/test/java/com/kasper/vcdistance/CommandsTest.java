@@ -585,9 +585,9 @@ public class CommandsTest {
         assertEquals(1.0, s.profile().getUnderwaterStrength(), 1e-9);
         List<String> subs = AdminCommands.suggestions("eff", s, viewer).stream().map(AdminCommands.Suggestion::text).toList();
         assertEquals(List.of("effects"), subs);
-        assertTrue(AdminCommands.suggestions("eff", s, viewer).get(0).tooltip().contains("water, weather, echo, air, Doppler, facing and wind"));
+        assertTrue(AdminCommands.suggestions("eff", s, viewer).get(0).tooltip().contains("water, weather, echo, air, Doppler, wind and facing"));
 
-        assertEquals(List.of("on", "off", "air", "curve", "water", "weather", "echo", "doppler", "facing", "wind", "status"), AdminCommands.suggest("effects "));
+        assertEquals(List.of("on", "off", "air", "curve", "water", "weather", "echo", "doppler", "wind", "facing", "status"), AdminCommands.suggest("effects "));
         assertEquals(List.of("off", "25", "50", "75", "100", "125", "150"), AdminCommands.suggest("effects facing "));
         assertEquals(List.of("off", "25", "50", "75", "100", "125", "150"), AdminCommands.suggest("effects wind "));
         assertEquals(List.of("on", "off"), AdminCommands.suggest("effects air "));

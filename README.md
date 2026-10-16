@@ -274,7 +274,7 @@ Replies are coloured and clickable: values in `/vcd status` put the command that
 | `/vcd zone tp <name>` | Go to the middle of a box |
 | `/vcd zone rename <name> <new name>` | Rename a box; its settings stay |
 | `/vcd zone delete <name>` | Remove a zone (asks first; `/vcd undo` brings it back) |
-| `/vcd rule sneak 0.1-1\|dead on\|off\|spectators on\|off\|megaphone <item>\|megaphone_range 1-10\|megaphone_sound on\|off` | Game rules |
+| `/vcd rule sneak 0.1-1\|dead on\|off\|spectators on\|off\|megaphone <item>\|megaphone_range 1-10\|megaphone_direction on\|off\|megaphone_sound on\|off` | Game rules |
 | `/vcd group dead\|spectators\|zones\|open_range on\|off` | Rules inside Simple Voice Chat groups |
 | `/vcd require off\|suggest\|warn\|kick [version]` | Addon requirement |
 | `/vcd mute <player> [time] [reason]` | Nobody hears the player for `30s`, `10m`, `2h`, `1d`, `1w` or `perm` (no time: until unmuted); muting again changes the time and reason |
@@ -457,6 +457,7 @@ All of these are new and have not been tried in a live game yet: turn one on on 
 | `spectators_hear_only_spectators` | true / false | false | Spectators are heard only by spectators |
 | `megaphone_item` | item id or empty | empty | Item that works as a megaphone, e.g. `minecraft:goat_horn` |
 | `megaphone_multiplier` | 1 – 10 | 2.5 | Voice range with the megaphone, times this, straight ahead; behind the player half of the extra range (x1.75 at 2.5) |
+| `megaphone_direction` | true / false | true | The megaphone carries furthest the way the player looks; false: the same range all round |
 | `megaphone_sound` | true / false | true | The megaphone voice sounds like a horn (thin, a little overdriven) to everyone; needs Simple Voice Chat 2.5.27 or newer and shares the re-encoding limit with the walls (`server_walls_max_streams`) |
 | `group_dead_silent` | true / false | false | Dead players are silent in their group too |
 | `group_spectators_apart` | true / false | false | Spectators in a group are heard only by its spectators |
