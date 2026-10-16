@@ -19,6 +19,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.Vec3;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -45,11 +46,12 @@ public final class ServerBridge {
         Claims.seen(p.getUUID(), name);
         // Water and weather are only looked at when the server's effects are on: a couple of cheap reads per player
         boolean effects = AudioDistancePlugin.SERVER_SETTINGS.isServerEffects();
+        Vec3 look = p.getViewVector(1.0F);
         return new ServerPlayers.Info(p.getUUID(), name, world,
                 p.getX(), p.getY(), p.getZ(),
                 p.isShiftKeyDown(), p.isAlive(), p.isSpectator(),
                 item(p.getMainHandItem()), item(p.getOffhandItem()), Claims.at(p, world), PlayerLanguage.of(p),
-                effects && underwater(p), effects ? weather(p) : null);
+                effects && underwater(p), effects ? weather(p) : null, look.x, look.y, look.z);
     }
 
     private static boolean underwater(ServerPlayer p) {

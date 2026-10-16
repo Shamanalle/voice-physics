@@ -22,15 +22,26 @@ public final class ServerPlayers {
      * @param language  the player's client language ("ru_ru"), or "" when unknown
      * @param underwater the player's head is under water; {@code false} where it is not known
      * @param weather   rain or thunder where the player stands under the open sky
+     * @param lookX     where the player looks (any length), NaN when not known
      */
     @com.github.bsideup.jabel.Desugar
     public record Info(UUID id, String name, String world, double x, double y, double z,
                        boolean sneaking, boolean alive, boolean spectator,
                        String mainHand, String offHand, List<String> regions, String language,
-                       boolean underwater, EnvironmentEffects.Weather weather) {
+                       boolean underwater, EnvironmentEffects.Weather weather,
+                       double lookX, double lookY, double lookZ) {
 
         public Info {
             weather = weather == null ? EnvironmentEffects.Weather.CLEAR : weather;
+        }
+
+        /** A player whose facing is not known. */
+        public Info(UUID id, String name, String world, double x, double y, double z,
+                    boolean sneaking, boolean alive, boolean spectator,
+                    String mainHand, String offHand, List<String> regions, String language,
+                    boolean underwater, EnvironmentEffects.Weather weather) {
+            this(id, name, world, x, y, z, sneaking, alive, spectator, mainHand, offHand, regions, language,
+                    underwater, weather, Double.NaN, Double.NaN, Double.NaN);
         }
 
         /** A player whose surroundings (water, weather) are not known. */
@@ -39,6 +50,11 @@ public final class ServerPlayers {
                     String mainHand, String offHand, List<String> regions, String language) {
             this(id, name, world, x, y, z, sneaking, alive, spectator, mainHand, offHand, regions, language,
                     false, EnvironmentEffects.Weather.CLEAR);
+        }
+
+        /** {@link Directivity#cos} from where this player looks towards {@code listener}; NaN when not known. */
+        public double facing(Info listener) {
+            return Directivity.cos(lookX, lookY, lookZ, listener.x - x, listener.y - y, listener.z - z);
         }
 
         public double distanceTo(Info other) {

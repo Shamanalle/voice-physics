@@ -64,6 +64,8 @@ public class DistanceConfigTest {
         a.setOcclusionEnabled(false);
         a.setOcclusionStrength(0.81);
         a.setMaterialWeight(AcousticMaterial.GLASS, 1.25);
+        a.setDirectivityEnabled(false);
+        a.setDirectivityStrength(1.35);
         a.save();
 
         DistanceConfig b = new DistanceConfig(file);
@@ -76,6 +78,8 @@ public class DistanceConfigTest {
         assertFalse(b.isOcclusionEnabled());
         assertEquals(0.81, b.getOcclusionStrength(), 1e-4);
         assertEquals(1.25, b.getMaterialWeight(AcousticMaterial.GLASS), 1e-4);
+        assertFalse(b.isDirectivityEnabled());
+        assertEquals(1.35, b.getDirectivityStrength(), 1e-4);
         assertEquals(AcousticMaterial.STONE.getDefaultWeight(), b.getMaterialWeight(AcousticMaterial.STONE), 1e-4);
     }
 
@@ -113,7 +117,7 @@ public class DistanceConfigTest {
         c.load();
         assertEquals(AttenuationModel.REALISTIC_INVERSE, c.getModel());
         String text = Files.readString(file);
-        assertTrue(text.contains("config_version=11"));
+        assertTrue(text.contains("config_version=12"));
         assertTrue(text.contains("reverb_enabled=true"));
         assertTrue(text.contains("material.stone"));
         assertTrue(text.contains("hud_mode=talking"));
@@ -171,7 +175,7 @@ public class DistanceConfigTest {
             assertEquals(m.getDefaultWeight(), c.getMaterialWeight(m), 1e-9, m.getId());
         }
         String text = Files.readString(file);
-        assertTrue(text.contains("config_version=11"));
+        assertTrue(text.contains("config_version=12"));
         assertTrue(text.contains("material.other="));
     }
 
@@ -271,6 +275,10 @@ public class DistanceConfigTest {
         c.setAttenuationFactor(5);
         c.setWhisperMultiplier(0);
         c.setOcclusionStrength(-1);
+        c.setDirectivityStrength(9);
+        assertEquals(Directivity.STRENGTH_MAX, c.getDirectivityStrength());
+        c.setDirectivityStrength(-1);
+        assertEquals(Directivity.STRENGTH_MIN, c.getDirectivityStrength());
         assertEquals(DistanceConfig.ROLLOFF_MAX, c.getAttenuationFactor());
         assertEquals(DistanceConfig.WHISPER_MIN, c.getWhisperMultiplier());
         assertEquals(DistanceConfig.STRENGTH_MIN, c.getOcclusionStrength());
@@ -283,6 +291,8 @@ public class DistanceConfigTest {
         c.setOcclusionStrength(0.9);
         c.setMaterialWeight(AcousticMaterial.WOOL, 2.5);
         c.setReverbStrength(0.2);
+        c.setDirectivityEnabled(false);
+        c.setDirectivityStrength(0.5);
         c.setHudScale(1.4);
 
         c.resetPart(DistanceConfig.Part.WALLS);
@@ -297,8 +307,12 @@ public class DistanceConfigTest {
         c.resetPart(DistanceConfig.Part.MATERIALS);
         assertEquals(AcousticMaterial.WOOL.getDefaultWeight(), c.getMaterialWeight(AcousticMaterial.WOOL), 1e-9);
 
+        assertEquals(0.5, c.getDirectivityStrength(), 1e-9);
+
         c.resetPart(DistanceConfig.Part.EFFECTS);
         assertEquals(DistanceConfig.DEFAULT_REVERB_STRENGTH, c.getReverbStrength(), 1e-9);
+        assertEquals(DistanceConfig.DEFAULT_DIRECTIVITY_ENABLED, c.isDirectivityEnabled());
+        assertEquals(DistanceConfig.DEFAULT_DIRECTIVITY_STRENGTH, c.getDirectivityStrength(), 1e-9);
         assertEquals(1.4, c.getHudScale(), 1e-9);
 
         c.setHudCompact(true);

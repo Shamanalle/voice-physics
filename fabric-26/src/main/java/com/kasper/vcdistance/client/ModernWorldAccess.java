@@ -73,6 +73,8 @@ public final class ModernWorldAccess implements WorldAccess {
         if (speaker.getDisplayName() == null) {
             speaker.setDisplayName(entity.getName().getString());
         }
+        Vec3 look = entity.getViewVector(1.0F);
+        speaker.setLook(look.x, look.y, look.z);
         return entity.getEyePosition();
     }
 

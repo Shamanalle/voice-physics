@@ -19,8 +19,8 @@ public final class DistanceConfig {
     /** 3: the file is written with a comment for every key; 4: interface section; 5: echo, water, weather; 6: sound around corners;
      * 7: the HUD moves from the top left (under Simple Voice Chat's group list) to the top right;
      * 8: more materials (metal, earth, soft, ice, other); 9: HUD size, background, compact, colorblind colors;
-     * 10: over_sound_physics; 11: Doppler effect. */
-    private static final int CONFIG_VERSION = 11;
+     * 10: over_sound_physics; 11: Doppler effect; 12: voice direction. */
+    private static final int CONFIG_VERSION = 12;
     private static final String FILE_NAME = "vc-audio-distance.properties";
 
     // -------------------------------------------------------------------------
@@ -64,6 +64,9 @@ public final class DistanceConfig {
     /** The Doppler effect is off unless switched on: a moving voice changing pitch surprises people. */
     public static final boolean DEFAULT_DOPPLER_ENABLED = false;
     public static final double DEFAULT_DOPPLER_STRENGTH = 1.0;
+    /** A voice is quieter and duller behind the speaker's head, as in life: on by default. */
+    public static final boolean DEFAULT_DIRECTIVITY_ENABLED = true;
+    public static final double DEFAULT_DIRECTIVITY_STRENGTH = 1.0;
 
     private volatile AttenuationModel model = DEFAULT_MODEL;
     private volatile double attenuationFactor = DEFAULT_ATTENUATION_FACTOR;
@@ -82,6 +85,8 @@ public final class DistanceConfig {
     private volatile boolean placeTuning = DEFAULT_PLACE_TUNING;
     private volatile boolean dopplerEnabled = DEFAULT_DOPPLER_ENABLED;
     private volatile double dopplerStrength = DEFAULT_DOPPLER_STRENGTH;
+    private volatile boolean directivityEnabled = DEFAULT_DIRECTIVITY_ENABLED;
+    private volatile double directivityStrength = DEFAULT_DIRECTIVITY_STRENGTH;
     private final double[] materialWeights = new double[AcousticMaterial.values().length];
     /** Blocks and block tags with a material of their own; replaced as a whole, never changed in place. */
     private volatile BlockRules blockRules = BlockRules.EMPTY;
@@ -268,6 +273,26 @@ public final class DistanceConfig {
 
     public void setDopplerStrength(double value) {
         dopplerStrength = clamp(value, Doppler.STRENGTH_MIN, Doppler.STRENGTH_MAX);
+        changed();
+    }
+
+    /** A speaker turned away sounds quieter and duller. */
+    public boolean isDirectivityEnabled() {
+        return directivityEnabled;
+    }
+
+    public void setDirectivityEnabled(boolean value) {
+        directivityEnabled = value;
+        changed();
+    }
+
+    /** How strong the voice direction is, 0 - 1.5 (1 = as measured on real speakers). */
+    public double getDirectivityStrength() {
+        return directivityStrength;
+    }
+
+    public void setDirectivityStrength(double value) {
+        directivityStrength = clamp(value, Directivity.STRENGTH_MIN, Directivity.STRENGTH_MAX);
         changed();
     }
 
@@ -540,6 +565,8 @@ public final class DistanceConfig {
         placeTuning = DEFAULT_PLACE_TUNING;
         dopplerEnabled = DEFAULT_DOPPLER_ENABLED;
         dopplerStrength = DEFAULT_DOPPLER_STRENGTH;
+        directivityEnabled = DEFAULT_DIRECTIVITY_ENABLED;
+        directivityStrength = DEFAULT_DIRECTIVITY_STRENGTH;
         resetMaterials();
     }
 
@@ -571,6 +598,8 @@ public final class DistanceConfig {
                 placeTuning = DEFAULT_PLACE_TUNING;
                 dopplerEnabled = DEFAULT_DOPPLER_ENABLED;
                 dopplerStrength = DEFAULT_DOPPLER_STRENGTH;
+                directivityEnabled = DEFAULT_DIRECTIVITY_ENABLED;
+                directivityStrength = DEFAULT_DIRECTIVITY_STRENGTH;
             }
         }
         changed();
@@ -615,6 +644,8 @@ public final class DistanceConfig {
         placeTuning = other.placeTuning;
         dopplerEnabled = other.dopplerEnabled;
         dopplerStrength = other.dopplerStrength;
+        directivityEnabled = other.directivityEnabled;
+        directivityStrength = other.directivityStrength;
         for (AcousticMaterial m : AcousticMaterial.values()) {
             double w = other.getMaterialWeight(m);
             synchronized (materialWeights) {
@@ -633,7 +664,7 @@ public final class DistanceConfig {
         WALLS("walls"),
         /** How much each material muffles (the walls' own percentages, so locked with them). */
         MATERIALS("materials"),
-        /** Echo, water, weather, voices round corners and the Doppler effect. */
+        /** Echo, water, weather, voices round corners, the Doppler effect and the voice direction. */
         EFFECTS("effects");
 
         private final String id;
@@ -741,6 +772,8 @@ public final class DistanceConfig {
                 placeTuning = other.placeTuning;
                 dopplerEnabled = other.dopplerEnabled;
                 dopplerStrength = other.dopplerStrength;
+                directivityEnabled = other.directivityEnabled;
+                directivityStrength = other.directivityStrength;
             }
         }
         changed();
@@ -967,7 +1000,13 @@ public final class DistanceConfig {
                 .value(prefix + "doppler_enabled", dopplerEnabled)
                 .comment("How strong it is, 0 - 3 (1 = as in air, where running barely changes a voice). Default 1.",
                         "Насколько сильно, 0 - 3 (1 - как в воздухе, где бег почти не меняет голос). По умолчанию 1.")
-                .value(prefix + "doppler_strength", dopplerStrength);
+                .value(prefix + "doppler_strength", dopplerStrength)
+                .comment("Voice direction: a speaker turned away from you sounds quieter and duller, as in life: true / false. Default true.",
+                        "Направленность голоса: говорящий, отвернувшийся от вас, звучит тише и глуше, как в жизни: true / false. По умолчанию true.")
+                .value(prefix + "directivity_enabled", directivityEnabled)
+                .comment("How strong it is, 0 - 1.5 (1 = as measured: about 5 dB quieter right behind, the highs lose more). Default 1.",
+                        "Насколько сильно, 0 - 1.5 (1 - как в измерениях: прямо сзади примерно на 5 дБ тише, высокие теряются сильнее). По умолчанию 1.")
+                .value(prefix + "directivity_strength", directivityStrength);
     }
 
     /** Per-material weights with their explanations (shared by the client and server files). */
@@ -1012,6 +1051,8 @@ public final class DistanceConfig {
         props.setProperty(prefix + "place_tuning", String.valueOf(placeTuning));
         props.setProperty(prefix + "doppler_enabled", String.valueOf(dopplerEnabled));
         props.setProperty(prefix + "doppler_strength", format(dopplerStrength));
+        props.setProperty(prefix + "directivity_enabled", String.valueOf(directivityEnabled));
+        props.setProperty(prefix + "directivity_strength", format(directivityStrength));
         for (AcousticMaterial m : AcousticMaterial.values()) {
             props.setProperty(prefix + "material." + m.getId(), format(getMaterialWeight(m)));
         }
@@ -1040,6 +1081,9 @@ public final class DistanceConfig {
         dopplerEnabled = parseBoolean(props, prefix + "doppler_enabled", DEFAULT_DOPPLER_ENABLED);
         dopplerStrength = clamp(parseDouble(props, prefix + "doppler_strength", DEFAULT_DOPPLER_STRENGTH),
                 Doppler.STRENGTH_MIN, Doppler.STRENGTH_MAX);
+        directivityEnabled = parseBoolean(props, prefix + "directivity_enabled", DEFAULT_DIRECTIVITY_ENABLED);
+        directivityStrength = clamp(parseDouble(props, prefix + "directivity_strength", DEFAULT_DIRECTIVITY_STRENGTH),
+                Directivity.STRENGTH_MIN, Directivity.STRENGTH_MAX);
         synchronized (materialWeights) {
             for (AcousticMaterial m : AcousticMaterial.values()) {
                 materialWeights[m.ordinal()] = clamp(parseDouble(props, prefix + "material." + m.getId(), m.getDefaultWeight()), 0.0, AcousticMaterial.MAX_WEIGHT);

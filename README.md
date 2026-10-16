@@ -82,7 +82,8 @@ These need the addon on your client and work on any server with Simple Voice Cha
 - Under water voices are dull and quieter.
 - Rain and thunder cover far voices under the open sky.
 - *Doppler* (off by default): a voice coming closer sounds higher, one moving away lower, as with elytra, boats on ice, horses and minecarts. Only how fast the distance changes counts, so walking about or flying side by side changes nothing, and the voice keeps its timing. At 100% it is as in real air, where only fast movement is heard; up to 300% makes slower movement heard too.
-- The *Effects* tab has a switch for each, sliders for how strong the echo, water, rain and Doppler are, and shows what kind of place you are in.
+- *Facing* (on by default): a voice is clearest in front of the speaker. Behind their back it is about 5 dB quieter and duller, the high tones most, as measured for real speech; to the side it is a little quieter. Only the sound that comes straight counts, so round a corner and in an echoing room the difference is smaller. A sound played from a place (a loudspeaker, a radio) has no facing. Strength 0 – 150%.
+- The *Effects* tab has a switch for each, sliders for how strong the echo, water, rain, Doppler and facing are, and shows what kind of place you are in.
 
 ### HUD
 - A small panel in a screen corner: who is talking, how far away, from which side, and whether they whisper, are behind a wall or round a corner.
@@ -120,7 +121,7 @@ Available in the full Fabric, Forge and NeoForge mods and as a plugin for Paper,
 - **No seeing through walls.** Turn off the monitor, the radar and nearby players in the HUD.
 - **Require the addon.** Players with Simple Voice Chat but without the addon can get a download link once, on every join, or be kicked. Players without voice chat are never affected.
 - **Controls for players without the mod (Paper, Folia).** `/voice` lets anyone choose how loud they talk (quiet, normal, shout), turn wall muffling off for themselves, set how loud each player is to them or ignore one, and show who is talking nearby above the hotbar. The choices are kept per player; shouting needs the `vcd.shout` permission (operators by default).
-- **Realism for players without the addon (off by default).** `/vcd effects on` makes the server dull voices under water, cover far ones in rain and thunder, and echo the room a speaker or listener is in, the same physics the addon does at home. `/vcd effects air on` also dulls voices a little as they near the edge of their range, and `/vcd effects curve on` makes their voices fade with the profile's distance curve instead of Simple Voice Chat's straight line (the server can only make a voice quieter, so a curve louder than that line stays as Simple Voice Chat plays it). Water, rain and air work on every platform; measuring a room for the echo needs block access and is Paper only, while a zone with its own echo works everywhere. `/vcd effects doppler 100` adds the Doppler effect: voices rise and fall in pitch as players fly or ride towards or away from each other (0 – 300%, off by default even when the effects are on). The strengths are the profile's (`/vcd effects water|weather|echo <0-150>`, `doppler <0-300>`). It costs some load, so it is off until you turn it on.
+- **Realism for players without the addon (off by default).** `/vcd effects on` makes the server dull voices under water, cover far ones in rain and thunder, and echo the room a speaker or listener is in, the same physics the addon does at home. `/vcd effects air on` also dulls voices a little as they near the edge of their range, and `/vcd effects curve on` makes their voices fade with the profile's distance curve instead of Simple Voice Chat's straight line (the server can only make a voice quieter, so a curve louder than that line stays as Simple Voice Chat plays it). Water, rain and air work on every platform; measuring a room for the echo needs block access and is Paper only, while a zone with its own echo works everywhere. `/vcd effects doppler 100` adds the Doppler effect: voices rise and fall in pitch as players fly or ride towards or away from each other (0 – 300%, off by default even when the effects are on). With the effects on, a voice is also quieter and duller behind the speaker's back (`/vcd effects facing <0-150>|off`, 100% by default); the server re-encodes a voice for that only when the speaker is turned more than about 80 degrees away, where it takes at least 1 dB off, and never for a voice heard through a doorway. The strengths are the profile's (`/vcd effects water|weather|facing|echo <0-150>`, `doppler <0-300>`). It costs some load, so it is off until you turn it on.
 - **Mute.** `/vcd mute <player> [time] [reason]` silences a player's voice for everyone, for a time (`10m`, `2h`, `1d`, `perm`) or until `/vcd unmute`. `/vcd mutes` lists who is muted and why, with an *Unmute* button. Mutes survive restarts and appear in the change log.
 - **Extras (Paper, off by default, not yet tried in a live game).** `/vcd extras` lists them with a switch each, and the *Server* tab of the settings screen shows the same switches (plus the eavesdrop factor) when the server runs the plugin; turn one on on a test server first, `/vcd undo` takes it back. A **radio** (`/voice radio <1-9999>`: players on one frequency hear each other at any distance, optionally only while holding an item), **loudspeakers** (`/vcd speaker add`: whoever talks at one is heard from it around it), an **eavesdrop item** (a spyglass makes walls sound thinner), the **sculk reaction** (a shout is a game event wardens and sculk sensors react to), **doorway sound** (behind a wall, the voice comes through the open door instead of the wall) and **integrations** (Towny towns and Lands lands as zones, a WorldGuard `vcd-zone` flag, LuckPerms contexts `vcd:mode`, `vcd:walls`, `vcd:zone`).
 - **PlaceholderAPI (Paper).** With [PlaceholderAPI](https://modrinth.com/plugin/placeholderapi) installed, scoreboards, tab lists, holograms and chat formats can show [`%vcd_...%` placeholders](#placeholders): who talks, the mode, the range, whether someone is muted.
@@ -139,6 +140,7 @@ Server columns: *mod* is the Fabric, Forge or NeoForge addon on the server, *plu
 | Echo of the room | ✅ | — | Paper, if turned on | ✅ |
 | Water, rain | ✅ | if turned on | if turned on | ✅ |
 | Doppler | if turned on | if turned on | if turned on | if turned on |
+| Facing (behind the speaker's back) | ✅ | if effects are on | if effects are on | ✅ |
 | Echo by place (caves, Nether, End) | ✅ | — | — | ✅ |
 | HUD, monitor, radar | ✅ | — | — | ✅ + voice chat state of every player |
 | Zones: range, walls, isolation, names above the hotbar | — | ✅ + Open Parties and Claims | ✅ + WorldGuard, Towny, Lands | ✅ |
@@ -155,9 +157,9 @@ With the addon on both sides the client muffles walls itself and the server skip
 
 | Loader | Minecraft | File | Java | Simple Voice Chat |
 |---|---|---|---|---|
-| **Fabric / Quilt** | 1.16.5 – 26.3 | `voice-physics-fabric-2.11.1+mc1.16.5-26.x.jar` | 8+ (what that Minecraft needs) | 2.4.0+ (2.5.0+ on 1.20.5+, 2.6.0+ on 26.x) |
-| **Forge / NeoForge** | Forge 1.16.5 – 26.3, NeoForge 1.20.1 – 26.3 | `voice-physics-forge-neoforge-2.11.1+mc1.16.5-26.x.jar` | 8+ (what that Minecraft needs) | 2.4.0+ (2.5.0+ on 1.20.5+, 2.6.0+ on 26.x) |
-| **Paper / Purpur / Folia / Spigot / Bukkit** | 1.16.5 – 26.3 | `voice-physics-bukkit-2.11.1.jar` | 8+ (17+ on 1.18+) | Bukkit version |
+| **Fabric / Quilt** | 1.16.5 – 26.3 | `voice-physics-fabric-2.12.0+mc1.16.5-26.x.jar` | 8+ (what that Minecraft needs) | 2.4.0+ (2.5.0+ on 1.20.5+, 2.6.0+ on 26.x) |
+| **Forge / NeoForge** | Forge 1.16.5 – 26.3, NeoForge 1.20.1 – 26.3 | `voice-physics-forge-neoforge-2.12.0+mc1.16.5-26.x.jar` | 8+ (what that Minecraft needs) | 2.4.0+ (2.5.0+ on 1.20.5+, 2.6.0+ on 26.x) |
+| **Paper / Purpur / Folia / Spigot / Bukkit** | 1.16.5 – 26.3 | `voice-physics-bukkit-2.12.0.jar` | 8+ (17+ on 1.18+) | Bukkit version |
 
 - **Fabric**, **Forge** and **NeoForge** are the full addon, for the client and the server. Fabric needs [Fabric API](https://modrinth.com/mod/fabric-api); [Mod Menu](https://modrinth.com/mod/modmenu) is optional. On Forge for 1.21.6 – 1.21.7 the voice HUD is off: that Forge cannot add it. NeoForge 1.20.1 is a fork of Forge 1.20.1 and loads the file as Forge. On NeoForge 1.20.4 it needs NeoForge 20.4.80 or newer. Forge versions: 1.16.5, 1.17.1, 1.18.2, 1.19.2, 1.19.4 and 1.20 – 26.3 (Forge skipped 1.20.5 and 1.21.2).
 - **One file covers many versions.** So there are three files in all. The Fabric file holds a build for every Minecraft version from 1.16.5 to 26.3, and the Forge / NeoForge file one for every Forge and NeoForge version; at start the addon picks the one of the running game. Each build needs the Java its Minecraft needs, nothing newer.
@@ -254,6 +256,7 @@ Replies are coloured and clickable: values in `/vcd status` put the command that
 | `/vcd effects curve on\|off` | Voices fade with the profile's distance curve, not Simple Voice Chat's straight line (players without the addon) |
 | `/vcd effects water\|weather\|echo <0-150>\|off` | How strong each is; these are the server profile's values, so players with the addon get them too |
 | `/vcd effects doppler <0-300>\|off` | The Doppler effect, from the server profile too (off by default) |
+| `/vcd effects facing <0-150>\|off` | How much quieter and duller a voice is behind the speaker's back, from the server profile too (100% by default) |
 | `/vcd lock all\|none\|curve,walls,materials,effects` | What players cannot change while the profile is enforced |
 | `/vcd monitor on\|off` | Monitor, radar and nearby players in the HUD |
 | `/vcd notices on\|off` | A zone's name above the hotbar when players enter or leave it |
@@ -322,6 +325,8 @@ Everything here can also be set in game. Every key in the files has a comment in
 | `weather_strength` | 0 – 1.5 | 1 | How much rain and thunder cover them |
 | `doppler_enabled` | true / false | false | Voices coming closer sound higher, moving away lower |
 | `doppler_strength` | 0 – 3 | 1 | 1 = as in air |
+| `directivity_enabled` | true / false | true | A voice is quieter and duller behind the speaker's back |
+| `directivity_strength` | 0 – 1.5 | 1 | 1 = as measured for speech |
 | `diffraction_enabled` | true / false | true | Voices come round corners |
 | `place_tuning` | true / false | true | The dimension, biome and depth tune echo and air a little |
 | `over_sound_physics` | true / false | false | With Sound Physics Remastered installed: voices get this addon's walls, echo and water instead of its |
@@ -362,7 +367,7 @@ Everything here can also be set in game. Every key in the files has a comment in
 | `profile_locked` | `all`, `none`, or any of `curve,walls,materials,effects` | `all` | With `enforce`: what players cannot change; `walls` brings `materials` along |
 | `profile_preset` | `vanilla` / `realistic` / `clear` / `stealth` / `custom` | `custom` | The server's sound; `custom` uses the `profile.*` keys |
 | `profile.distance_model`, `.attenuation_factor`, `.openal_reference_ratio`, `.min_volume_fraction`, `.whisper_multiplier` | as in the client file | client defaults | The custom curve |
-| `profile.reverb_enabled`, `.reverb_strength`, `.underwater_enabled`, `.underwater_strength`, `.weather_enabled`, `.weather_strength`, `.doppler_enabled`, `.doppler_strength`, `.diffraction_enabled`, `.place_tuning` | as in the client file | client defaults | Effects; always part of the profile, whatever the preset |
+| `profile.reverb_enabled`, `.reverb_strength`, `.underwater_enabled`, `.underwater_strength`, `.weather_enabled`, `.weather_strength`, `.doppler_enabled`, `.doppler_strength`, `.directivity_enabled`, `.directivity_strength`, `.diffraction_enabled`, `.place_tuning` | as in the client file | client defaults | Effects; always part of the profile, whatever the preset |
 | `allow_monitor` | true / false | true | `false`: no monitor, radar or nearby players in the HUD |
 | `zone_notices` | true / false | true | A zone's name above the hotbar on entering and leaving, for every player |
 
@@ -405,7 +410,7 @@ zone.box.booth.isolated=true
 
 | Key | Values | Default | What it does |
 |---|---|---|---|
-| `server_effects` | true / false | false | The server dulls voices under water, covers far ones in rain and thunder and echoes the room (echo: Paper); strengths come from `profile.underwater_*`, `profile.weather_*` and `profile.reverb_*`; with `profile.doppler_enabled` also the Doppler effect |
+| `server_effects` | true / false | false | The server dulls voices under water, covers far ones in rain and thunder and echoes the room (echo: Paper); strengths come from `profile.underwater_*`, `profile.weather_*` and `profile.reverb_*`; with `profile.doppler_enabled` also the Doppler effect, with `profile.directivity_enabled` (on by default) the speaker's facing |
 | `server_air` | true / false | false | Voices dull a little as they near the edge of their range |
 | `server_curve` | true / false | false | Voices fade with the profile's distance curve for players without the addon; the server can only make them quieter |
 | `mute.<uuid>` | `end\|name\|muted by\|reason` | none | A muted player; `end` is the time in milliseconds since 1970, 0 until unmuted. `/vcd mute` writes these; expired ones are dropped |

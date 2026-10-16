@@ -785,20 +785,22 @@ public class AudioDistancePlugin implements VoicechatPlugin {
     }
 
     /**
-     * Everything done to a voice's audio on the client: the Doppler shift, walls, water and weather
-     * as one filter, then the echo of the room the listener is in. Never throws; on a failure the voice plays as it came.
+     * Everything done to a voice's audio on the client: the Doppler shift, walls, water, weather and
+     * the way the speaker faces as one filter, then the echo of the room the listener is in. Never
+     * throws; on a failure the voice plays as it came.
      */
     private static void muffle(ClientReceiveSoundEvent event, SpeakerRegistry.Speaker speaker, short[] raw) {
         try {
             DistanceConfig c = config();
             OcclusionStatus status = occlusionStatus();
             EnvironmentEffects.Effect effect = EnvironmentEffects.Effect.NONE;
+            SoundBlend blend = null;
             if (status == OcclusionStatus.ACTIVE && speaker.isOcclusionKnown()) {
                 // Through the wall and round it through a doorway, both at once
                 boolean round = speaker.hasOpening() && c.isDiffractionEnabled();
                 double range = speaker.getMaxDistance() > 0.0F ? speaker.getMaxDistance() : getServerMaxDistance();
                 boolean whispering = speaker.isWhispering();
-                SoundBlend blend = SoundBlend.of(Math.max(0.0, speaker.getDistance()), speaker.getThickness(),
+                blend = SoundBlend.of(Math.max(0.0, speaker.getDistance()), speaker.getThickness(),
                         round ? speaker.getPathLength() : Double.NaN, speaker.getPathThickness(),
                         c.getOcclusionStrength(), d -> curveGain(d, range, whispering));
                 speaker.setBlend(blend);
@@ -826,6 +828,26 @@ public class AudioDistancePlugin implements VoicechatPlugin {
                         ServerEffects.air(speaker.getDistance() / range).muffle() * place.air(), 0.0));
             }
 
+            // The echo is worked out first: the more of the voice is the room's, the less the speaker's facing shows
+            Reverb reverb = speaker.getReverb();
+            RoomEstimate room = RoomEstimate.combine(env.room(), speaker.getRoom());
+            double wet = 0.0;
+            double echo = 0.0;
+            if (ownPhysics && c.isReverbEnabled() && room.isAudible()) {
+                double[] level = echoLevels(room, speaker, c.getReverbStrength() * place.echo());
+                wet = level[0];
+                echo = level[1];
+            }
+            // Turned away: quieter and duller, but only the straight way; round a wall the voice left towards the doorway
+            EnvironmentEffects.Effect turned = EnvironmentEffects.Effect.NONE;
+            if (c.isDirectivityEnabled()) {
+                double round = blend != null ? blend.pathShare() : 0.0;
+                double indirect = 1.0 - (1.0 - round) * (1.0 - wet);
+                turned = Directivity.effect(speaker.getFacing(), c.getDirectivityStrength(), indirect);
+                effect = effect.plus(turned);
+            }
+            speaker.setFacingLossDb((float) turned.lossDb());
+
             // All stages work on the frame in place; the pitch first, so the echo is of the shifted voice
             boolean changed = false;
             PitchShifter shifter = speaker.getShifter();
@@ -838,15 +860,6 @@ public class AudioDistancePlugin implements VoicechatPlugin {
             if (effect.muffle() > 0.0 || effect.lossDb() > 0.0 || filter.isEngaged()) {
                 filter.process(raw, effect.muffle(), effect.lossDb());
                 changed = true;
-            }
-            Reverb reverb = speaker.getReverb();
-            RoomEstimate room = RoomEstimate.combine(env.room(), speaker.getRoom());
-            double wet = 0.0;
-            double echo = 0.0;
-            if (ownPhysics && c.isReverbEnabled() && room.isAudible()) {
-                double[] level = echoLevels(room, speaker, c.getReverbStrength() * place.echo());
-                wet = level[0];
-                echo = level[1];
             }
             if (wet > 0.0 || echo > 0.0 || reverb.isActive()) {
                 reverb.process(raw, room, wet, echo);

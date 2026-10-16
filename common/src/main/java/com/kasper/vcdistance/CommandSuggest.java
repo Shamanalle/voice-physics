@@ -95,7 +95,7 @@ final class CommandSuggest {
         } else if (sub.equals("effects") && args.length == 3) {
             addAll(out, switch (action) {
                 case "air", "curve" -> AdminCommands.ON_OFF;
-                case "water", "weather" -> AdminCommands.EFFECT_STEPS;
+                case "water", "weather", "facing" -> AdminCommands.EFFECT_STEPS;
                 case "echo" -> AdminCommands.ECHO_STEPS;
                 case "doppler" -> AdminCommands.DOPPLER_STEPS;
                 default -> new String[0];

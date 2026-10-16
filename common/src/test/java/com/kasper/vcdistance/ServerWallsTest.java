@@ -484,6 +484,74 @@ public class ServerWallsTest {
         assertTrue(heardLevel(0, 25) < 0.1);
     }
 
+    /** Speaker at the origin looking along ({@code lookX}, 0, {@code lookZ}), listener {@code distance} blocks along +x. */
+    private ServerPlayers facingPlayers(double distance, double lookX, double lookZ) {
+        ServerPlayers players = new ServerPlayers();
+        walls = new ServerWalls(settings, players);
+        walls.markWorldAvailable();
+        players.update(new ServerPlayers.Info(speaker, "Speaker", "world", 0, 64, 0, false, true, false, "", "",
+                List.of(), "", false, EnvironmentEffects.Weather.CLEAR, lookX, 0.0, lookZ));
+        players.update(new ServerPlayers.Info(listener, "Listener", "world", distance, 64, 0, false, true, false, "", "",
+                List.of(), "", false, EnvironmentEffects.Weather.CLEAR));
+        return players;
+    }
+
+    @Test
+    @DisplayName("Facing: behind the speaker's back the voice is quieter and duller; in front it is left alone")
+    void facingAway() {
+        settings.setServerEffects(true);
+        facingPlayers(5, 1.0, 0.0);
+        for (int i = 0; i < 5; i++) {
+            assertFalse(fireFrame(i), "the speaker faces the listener");
+        }
+        assertTrue(sent.isEmpty());
+
+        sent.clear();
+        facingPlayers(5, -1.0, 0.0);
+        heardLevel(0, 20); // the filter glides in
+        double behind = heardLevel(20, 40);
+        // 3 kHz behind the head: 5 dB less, and the cutoff near 4.2 kHz takes about 2 dB more
+        assertTrue(behind > 0.38 && behind < 0.52, "3 kHz behind the speaker: " + behind);
+        assertEquals(1, walls.activeStreams());
+    }
+
+    @Test
+    @DisplayName("Facing: turning back to the listener frees the stream; off in the profile it does nothing")
+    void facingTurnsBackAndSwitchesOff() {
+        settings.setServerEffects(true);
+        ServerPlayers players = facingPlayers(5, -1.0, 0.0);
+        heardLevel(0, 20);
+        players.update(new ServerPlayers.Info(speaker, "Speaker", "world", 0, 64, 0, false, true, false, "", "",
+                List.of(), "", false, EnvironmentEffects.Weather.CLEAR, 1.0, 0.0, 0.0));
+        int i = 20;
+        while (walls.activeStreams() > 0 && i < 300) {
+            fireFrame(i++);
+        }
+        assertEquals(0, walls.activeStreams(), "facing the listener again, the stream passes through");
+
+        settings.profile().setDirectivityEnabled(false);
+        facingPlayers(5, -1.0, 0.0);
+        for (int j = 0; j < 5; j++) {
+            assertFalse(fireFrame(j), "facing switched off in the profile");
+        }
+    }
+
+    @Test
+    @DisplayName("Facing: a small turn is not worth a re-encoded stream, and an unknown facing changes nothing")
+    void facingThreshold() {
+        settings.setServerEffects(true);
+        // 60 degrees off: a fraction of a decibel
+        facingPlayers(5, 0.5, Math.sqrt(0.75));
+        for (int i = 0; i < 5; i++) {
+            assertFalse(fireFrame(i), "60 degrees off");
+        }
+        realismPlayers(5, false);
+        for (int i = 0; i < 5; i++) {
+            assertFalse(fireFrame(i), "where the speaker looks is not known");
+        }
+        assertTrue(sent.isEmpty());
+    }
+
     @Test
     @DisplayName("The cave a player stands in adds an echo to the voice; leaving it takes the echo away")
     void echoInACave() throws InterruptedException {

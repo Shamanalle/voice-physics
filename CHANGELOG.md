@@ -6,6 +6,28 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 *Все заметные изменения проекта описываются в этом файле. Каждая версия описана сначала на английском, затем на русском.*
 
+## [2.12.0] - 2026-10-16
+
+### English
+
+#### Added
+- **Which way the speaker faces (on by default).** A voice is clearest in front of the speaker. Behind their back it is about 5 dB quieter and duller, the high tones most, as measured for real speech (Chu and Warnock 2002, Monson et al. 2012); within 40 degrees of the front nothing changes, and to the side it is a little quieter. Only the sound that comes straight counts: a voice heard round a corner left the speaker towards the doorway, and the echo of a room comes from every side, so there the difference is smaller. A sound played from a place (a loudspeaker, a radio) has no facing. Strength 0 – 150%.
+  - **With the addon:** a *Facing* switch and a strength slider on the *Effects* tab (`directivity_enabled`, `directivity_strength` in the client file). They belong to the *effects* part of a server profile, so a server can offer or lock them. The monitor's line for a voice says *turned away* when it takes a decibel or more.
+  - **For players without the addon:** `/vcd effects facing <0-150>|off` (a *Facing* row in the *Effects* section of the *Server* tab, `profile.directivity_enabled` and `profile.directivity_strength` in the server file). It works when the server effects are on (`/vcd effects on`), with the plugin and with the mod on the server. The server re-encodes a voice for it only when the speaker is turned more than about 80 degrees away, where it takes at least 1 dB off, never for a voice heard through a doorway, and it shares the re-encoding limit with the walls (`server_walls_max_streams`). `/vcd effects facing off` turns it off and saves that load.
+
+#### Fixed
+- A test of the client report no longer fails when it runs after the server's voice processing tests.
+
+### Русский
+
+#### Добавлено
+- **Куда смотрит говорящий (по умолчанию включено).** Голос чище всего слышен перед говорящим. За его спиной он примерно на 5 дБ тише и глуше, сильнее всего в высоких тонах, как по замерам настоящей речи (Chu и Warnock 2002, Monson и др. 2012); в пределах 40 градусов от направления взгляда ничего не меняется, а сбоку голос чуть тише. Считается только звук, идущий напрямую: голос из-за угла ушёл от говорящего к проёму, а эхо комнаты приходит со всех сторон, поэтому там разница меньше. У звука из места (громкоговоритель, радио) поворота нет. Сила 0 – 150%.
+  - **С аддоном:** переключатель «Поворот головы» и ползунок силы на вкладке «Эффекты» (`directivity_enabled`, `directivity_strength` в файле клиента). Они входят в часть «эффекты» профиля сервера, так что сервер может их предложить или закрепить. В строке монитора для голоса появляется «отвернулся», когда это убавляет децибел или больше.
+  - **Для игроков без аддона:** `/vcd effects facing <0-150>|off` (строка «Поворот головы» в разделе «Эффекты» вкладки «Сервер», `profile.directivity_enabled` и `profile.directivity_strength` в файле сервера). Работает, когда включены эффекты сервера (`/vcd effects on`), и с плагином, и с модом на сервере. Сервер перекодирует голос ради этого, только когда говорящий отвернулся больше чем примерно на 80 градусов и разница не меньше 1 дБ, и никогда — для голоса, который слышно через проём; лимит перекодирования общий со стенами (`server_walls_max_streams`). `/vcd effects facing off` выключает это и снимает нагрузку.
+
+#### Исправлено
+- Тест отчёта клиента больше не падает, если запускается после тестов обработки голоса на сервере.
+
 ## [2.11.1] - 2026-10-11
 
 ### English

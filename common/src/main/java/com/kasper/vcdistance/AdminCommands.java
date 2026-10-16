@@ -92,7 +92,7 @@ public final class AdminCommands {
     static final String[] REQUIRE = {"off", "suggest", "warn", "kick"};
     static final String[] ON_OFF = {"on", "off"};
     /** {@code /vcd effects <part> ...}: the server's own air and the strengths the profile has. */
-    static final String[] EFFECT_PARTS = {"on", "off", "air", "curve", "water", "weather", "echo", "doppler", "status"};
+    static final String[] EFFECT_PARTS = {"on", "off", "air", "curve", "water", "weather", "echo", "doppler", "facing", "status"};
     static final String[] EFFECT_STEPS = {"off", "25", "50", "75", "100", "125", "150"};
     static final String[] ECHO_STEPS = {"off", "25", "50", "75", "100"};
     static final String[] DOPPLER_STEPS = {"off", "50", "100", "150", "200", "300"};
@@ -421,7 +421,7 @@ public final class AdminCommands {
 
     /**
      * {@code /vcd effects}: water, weather and echo for players without the addon ({@code on|off}), the
-     * distance air ({@code air on|off}) and the strengths the profile has ({@code water|weather|echo|doppler}).
+     * distance air ({@code air on|off}) and the strengths the profile has ({@code water|weather|echo|doppler|facing}).
      */
     private static void effects(Run r) {
         ServerSettings settings = r.settings;
@@ -458,10 +458,11 @@ public final class AdminCommands {
                 settings.setServerCurve(on);
                 r.saved(on ? "effects.curve_on" : "effects.curve_off");
             }
-            case "water", "weather", "echo", "doppler" -> {
+            case "water", "weather", "echo", "doppler", "facing" -> {
                 boolean echo = part.equals("echo");
                 boolean doppler = part.equals("doppler");
-                double max = echo ? DistanceConfig.REVERB_MAX : doppler ? Doppler.STRENGTH_MAX : DistanceConfig.EFFECT_STRENGTH_MAX;
+                double max = echo ? DistanceConfig.REVERB_MAX : doppler ? Doppler.STRENGTH_MAX
+                        : part.equals("facing") ? Directivity.STRENGTH_MAX : DistanceConfig.EFFECT_STRENGTH_MAX;
                 Double value = r.args.length > 2 ? parseStrength(r.args[2], max) : null;
                 if (value == null) {
                     r.badValue("effects " + part, r.arg(2), (echo ? "0-100" : doppler ? "0-300" : "0-150") + "|off", "effects");
@@ -480,6 +481,10 @@ public final class AdminCommands {
                     case "doppler" -> {
                         p.setDopplerEnabled(on);
                         p.setDopplerStrength(on ? value : p.getDopplerStrength());
+                    }
+                    case "facing" -> {
+                        p.setDirectivityEnabled(on);
+                        p.setDirectivityStrength(on ? value : p.getDirectivityStrength());
                     }
                     default -> {
                         p.setReverbEnabled(on);
@@ -776,6 +781,8 @@ public final class AdminCommands {
                 r.change(effectText(m, p.isReverbEnabled(), p.getReverbStrength()), "effects echo"))));
         r.reply.add(CommandReply.line().addAll(m.spans("effects.doppler", Style.PLAIN,
                 r.change(effectText(m, p.isDopplerEnabled(), p.getDopplerStrength()), "effects doppler"))));
+        r.reply.add(CommandReply.line().addAll(m.spans("effects.facing", Style.PLAIN,
+                r.change(effectText(m, p.isDirectivityEnabled(), p.getDirectivityStrength()), "effects facing"))));
         r.reply.add(CommandReply.line().addAll(m.spans("effects.air", Style.PLAIN,
                 r.change(onOff(m, settings.isServerAir()), "effects air"))));
         r.reply.add(CommandReply.line().addAll(m.spans("effects.curve", Style.PLAIN,

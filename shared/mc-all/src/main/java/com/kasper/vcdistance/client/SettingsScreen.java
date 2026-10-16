@@ -13,6 +13,7 @@ import com.kasper.vcdistance.AudioPhysics;
 import com.kasper.vcdistance.Bearing;
 import com.kasper.vcdistance.BlockRules;
 import com.kasper.vcdistance.DistanceConfig;
+import com.kasper.vcdistance.Directivity;
 import com.kasper.vcdistance.Doppler;
 import com.kasper.vcdistance.EnvironmentEffects;
 import com.kasper.vcdistance.HudMode;
@@ -160,6 +161,7 @@ public abstract class SettingsScreen extends com.kasper.vcdistance.compat.BaseSc
     private RangeSlider waterSlider;
     private RangeSlider weatherSlider;
     private RangeSlider dopplerSlider;
+    private RangeSlider facingSlider;
     private boolean serverChip;
     /** Current walk-away preview step, or -1 when it is not playing. */
     private int previewStep = -1;
@@ -244,6 +246,7 @@ public abstract class SettingsScreen extends com.kasper.vcdistance.compat.BaseSc
         waterSlider = null;
         weatherSlider = null;
         dopplerSlider = null;
+        facingSlider = null;
         listenButton = null;
         copyButton = null;
         pasteButton = null;
@@ -848,7 +851,22 @@ public abstract class SettingsScreen extends com.kasper.vcdistance.compat.BaseSc
                 v -> tr("effects.doppler.strength", pct(v)));
         dopplerSlider.active = shown().isDopplerEnabled();
         edit(withTip(dopplerSlider, "effects.doppler.strength.tooltip"), DistanceConfig.Part.EFFECTS);
-        int rows = 5;
+
+        // Which way the speaker faces
+        edit(Btn.builder(onOff("effects.facing", shown().isDirectivityEnabled()), b -> {
+            config.setDirectivityEnabled(!config.isDirectivityEnabled());
+            b.setMessage(onOff("effects.facing", config.isDirectivityEnabled()));
+            if (facingSlider != null) {
+                facingSlider.active = config.isDirectivityEnabled();
+            }
+        }).bounds(left, y + ROW * 5, colW, 20).tooltip(tip("effects.facing.tooltip")).build(), DistanceConfig.Part.EFFECTS);
+        facingSlider = new RangeSlider(right - colW, y + ROW * 5, colW, 20,
+                Directivity.STRENGTH_MIN, Directivity.STRENGTH_MAX, 0.05,
+                () -> shown().getDirectivityStrength(), config::setDirectivityStrength,
+                v -> tr("effects.facing.strength", pct(v)));
+        facingSlider.active = shown().isDirectivityEnabled();
+        edit(withTip(facingSlider, "effects.facing.strength.tooltip"), DistanceConfig.Part.EFFECTS);
+        int rows = 6;
         // With the Doppler mod: whose effect voices get. This computer's choice, never locked
         if (ModEnvironment.isDopplerModPresent()) {
             content(Btn.builder(dopplerModLabel(), b -> {
@@ -1159,6 +1177,7 @@ public abstract class SettingsScreen extends com.kasper.vcdistance.compat.BaseSc
             serverToggle("server.effects.curve", st, "server_curve", "false", x2, y, half, "effects curve");
             y += ROW;
             strengthRow("server.effects.doppler", st, "doppler_strength", 300, left, y, half, "effects doppler");
+            strengthRow("server.effects.facing", st, "directivity_strength", 150, x2, y, half, "effects facing");
             y += ROW;
         }
         y += 4;
@@ -2214,7 +2233,11 @@ public abstract class SettingsScreen extends com.kasper.vcdistance.compat.BaseSc
         if (blend != null && blend.extraDistance() >= 1.0) {
             parts.add(tr("monitor.why.round", blocks(blend.extraDistance())));
         }
-        if (parts.size() == 1 || (parts.size() == 2 && s.isWhispering() && lossDb < 1.5F)) {
+        float facingDb = s.getFacingLossDb();
+        if (facingDb >= 1.0F) {
+            parts.add(tr("monitor.why.facing", String.format(Locale.ROOT, "%.0f", facingDb)));
+        }
+        if (parts.size() == 1 || (parts.size() == 2 && s.isWhispering() && lossDb < 1.5F && facingDb < 1.0F)) {
             parts.add(tr("monitor.why.clear"));
         }
         net.minecraft.network.chat.MutableComponent line = Txt.empty();

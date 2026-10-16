@@ -55,6 +55,13 @@ public final class SpeakerRegistry {
         private volatile double bearing = Double.NaN;
         private volatile boolean underWater;
         private volatile EnvironmentEffects.Weather weather = EnvironmentEffects.Weather.CLEAR;
+        // Where the speaker looks, set while its entity is found (zero: unknown), and the cosine towards the listener
+        private double lookX;
+        private double lookY;
+        private double lookZ;
+        private volatile double facing = Double.NaN;
+        // Written by the audio thread: what the facing took off the last frame, for the monitor
+        private volatile float facingLossDb;
         // The way around a wall (client tick), or no opening
         private volatile boolean hasOpening;
         private volatile double openingX;
@@ -319,6 +326,43 @@ public final class SpeakerRegistry {
 
         public void setBearing(double bearing) {
             this.bearing = bearing;
+        }
+
+        /** Where the speaker looks; any length. */
+        public void setLook(double x, double y, double z) {
+            this.lookX = x;
+            this.lookY = y;
+            this.lookZ = z;
+        }
+
+        public void clearLook() {
+            setLook(0.0, 0.0, 0.0);
+        }
+
+        /** Sets {@link #getFacing} from the way from the speaker to the listener. */
+        public void updateFacing(double toListenerX, double toListenerY, double toListenerZ) {
+            this.facing = Directivity.cos(lookX, lookY, lookZ, toListenerX, toListenerY, toListenerZ);
+        }
+
+        public void clearFacing() {
+            this.facing = Double.NaN;
+        }
+
+        /**
+         * Cosine of the angle between where the speaker looks and the way to the listener: 1 facing
+         * the listener, -1 turned away; NaN when unknown (a sound from a place, or not loaded).
+         */
+        public double getFacing() {
+            return facing;
+        }
+
+        /** Decibels the speaker's facing took off the last frame heard, 0 when none. */
+        public float getFacingLossDb() {
+            return facingLossDb;
+        }
+
+        public void setFacingLossDb(float lossDb) {
+            this.facingLossDb = lossDb;
         }
 
         public String getDisplayName() {

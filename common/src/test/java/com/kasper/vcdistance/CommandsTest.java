@@ -585,9 +585,10 @@ public class CommandsTest {
         assertEquals(1.0, s.profile().getUnderwaterStrength(), 1e-9);
         List<String> subs = AdminCommands.suggestions("eff", s, viewer).stream().map(AdminCommands.Suggestion::text).toList();
         assertEquals(List.of("effects"), subs);
-        assertTrue(AdminCommands.suggestions("eff", s, viewer).get(0).tooltip().contains("water, weather, echo, air and Doppler"));
+        assertTrue(AdminCommands.suggestions("eff", s, viewer).get(0).tooltip().contains("water, weather, echo, air, Doppler and facing"));
 
-        assertEquals(List.of("on", "off", "air", "curve", "water", "weather", "echo", "doppler", "status"), AdminCommands.suggest("effects "));
+        assertEquals(List.of("on", "off", "air", "curve", "water", "weather", "echo", "doppler", "facing", "status"), AdminCommands.suggest("effects "));
+        assertEquals(List.of("off", "25", "50", "75", "100", "125", "150"), AdminCommands.suggest("effects facing "));
         assertEquals(List.of("on", "off"), AdminCommands.suggest("effects air "));
         assertEquals(List.of("off", "25", "50", "75", "100", "125", "150"), AdminCommands.suggest("effects water "));
         assertEquals(List.of("off", "25", "50", "75", "100"), AdminCommands.suggest("effects echo "));
@@ -597,6 +598,35 @@ public class CommandsTest {
         CommandReply help = AdminCommands.execute("help effects", s, ctx());
         assertEquals("/vcd effects", help.plain().get(0));
         assertEquals(Click.SUGGEST, button(help, "/vcd effects air on").click());
+    }
+
+    @Test
+    @DisplayName("/vcd effects facing: on by default at 100%, set to 0-150%, off keeps the strength, undo")
+    void effectsFacing() throws IOException {
+        ServerSettings s = settings("");
+        AdminCommands.Context ctx = ctx();
+        String view = String.join("\n", AdminCommands.run("effects", s, ctx));
+        assertTrue(view.contains("Speaker's facing (from the profile): 100%"), view);
+        button(AdminCommands.execute("effects", s, ctx), "/vcd effects facing ");
+
+        assertTrue(AdminCommands.run("effects facing 130", s, ctx).get(0).contains("Speaker's facing: 130% for everyone"));
+        assertTrue(s.profile().isDirectivityEnabled());
+        assertEquals(1.3, s.profile().getDirectivityStrength(), 1e-9);
+        assertTrue(AdminCommands.run("effects facing 200", s, ctx).get(0).contains("0-150|off"));
+        assertEquals(1.3, s.profile().getDirectivityStrength(), 1e-9);
+
+        AdminCommands.run("effects facing off", s, ctx);
+        assertFalse(s.profile().isDirectivityEnabled());
+        assertEquals(1.3, s.profile().getDirectivityStrength(), 1e-9, "the strength is kept for when it is turned on again");
+        ServerSettings again = new ServerSettings(s.getPath());
+        again.load();
+        assertFalse(again.profile().isDirectivityEnabled(), "saved");
+        assertEquals(1.3, again.profile().getDirectivityStrength(), 1e-9);
+
+        AdminCommands.run("undo", s, ctx);
+        assertTrue(s.profile().isDirectivityEnabled());
+        AdminCommands.run("undo", s, ctx);
+        assertEquals(DistanceConfig.DEFAULT_DIRECTIVITY_STRENGTH, s.profile().getDirectivityStrength(), 1e-9);
     }
 
     @Test

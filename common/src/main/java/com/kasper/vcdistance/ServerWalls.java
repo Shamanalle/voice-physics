@@ -74,6 +74,13 @@ public final class ServerWalls {
     private static final long TRACE_INTERVAL_NANOS = TimeUnit.MILLISECONDS.toNanos(100);
     /** A pause this long in a voice drops its echo tail. */
     private static final long REVERB_STALE_NANOS = TimeUnit.MILLISECONDS.toNanos(400);
+    /**
+     * A speaker turned this far away (in dB, about 80 degrees at strength 1) is worth re-encoding the
+     * voice for; once it is re-encoded, down to {@link #FACING_KEEP_DB}. A barely turned head would
+     * otherwise keep a stream running for a change nobody hears.
+     */
+    static final double FACING_START_DB = 1.0;
+    static final double FACING_KEEP_DB = 0.5;
     private static final int MAX_TRACES_PER_TICK = 48;
     private static final int MAX_DOORWAY_SEARCHES = 6;
     /** Per listener and tick, when each player's walls are measured on their own thread (Folia). */
@@ -593,6 +600,8 @@ public final class ServerWalls {
         EnvironmentEffects.Effect air = EnvironmentEffects.Effect.NONE;
         RoomEstimate room = null;
         double roomDistance = -1.0;
+        // Where the speaker looks, towards the listener: only a player's own voice, not a sound from a place
+        double facing = Double.NaN;
         if (realism) {
             ServerPlayers.Info from = players.get(speakerId);
             ServerPlayers.Info to = players.get(listener);
@@ -601,6 +610,9 @@ public final class ServerWalls {
                 air = ServerEffects.atmosphere(settings, from, to, range);
                 room = ServerEffects.room(settings, AudioDistancePlugin.SERVER_ROOMS, from, to, now);
                 roomDistance = from.distanceTo(to);
+                if (position == null && settings.isServerEffects() && profile.isDirectivityEnabled()) {
+                    facing = from.facing(to);
+                }
             }
         }
         // The profile's curve instead of Simple Voice Chat's straight fade: how far the client hears the voice from
@@ -659,6 +671,15 @@ public final class ServerWalls {
             }
             double[] levels = ServerEffects.echoLevels(room, roomDistance, voiceRange(), profile.getReverbStrength());
             boolean echoing = levels[0] > 0.002 || levels[1] > 0.002;
+            // Turned away: only the straight way, so not through a doorway, and less of it the more the room echoes
+            boolean throughDoorway = opening != null && !Double.isNaN(opening[0]);
+            if (!Double.isNaN(facing) && !throughDoorway) {
+                EnvironmentEffects.Effect turned = Directivity.effect(facing, profile.getDirectivityStrength(), levels[0]);
+                if (turned.lossDb() >= (pair.encoder == null ? FACING_START_DB : FACING_KEEP_DB)) {
+                    muffle = 1.0 - (1.0 - muffle) * (1.0 - turned.muffle());
+                    loss += turned.lossDb();
+                }
+            }
             double pitch = 1.0;
             if (settings.isServerEffects() && profile.isDopplerEnabled()) {
                 pair.closing.speed(closingSpeed(speakerId, listener, position), now);

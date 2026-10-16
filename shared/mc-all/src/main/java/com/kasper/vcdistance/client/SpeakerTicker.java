@@ -91,6 +91,7 @@ public final class SpeakerTicker {
             for (SpeakerRegistry.Speaker s : active) {
                 s.setDistance(-1.0, now);
                 s.clearOcclusion();
+                s.clearFacing();
             }
             return;
         }
@@ -124,15 +125,19 @@ public final class SpeakerTicker {
 
         for (SpeakerRegistry.Speaker s : active) {
             try {
+                // Set again while the entity is found; a sound from a place has no facing
+                s.clearLook();
                 Vec3 source = s.getKind() == SpeakerRegistry.Kind.ENTITY
                         ? access.entitySpeakerPosition(s, now)
                         : new Vec3(s.getSoundX(), s.getSoundY(), s.getSoundZ());
                 if (source == null || listener == null) {
                     s.setDistance(-1.0, now);
                     s.clearOcclusion();
+                    s.clearFacing();
                     continue;
                 }
                 s.setDistance(listener.distanceTo(source), now);
+                s.updateFacing(listener.x - source.x, listener.y - source.y, listener.z - source.z);
                 s.setBearing(Bearing.relative(source.x - listener.x, source.z - listener.z, yaw));
                 s.setSurroundings(access.isUnderWater(source), access.weatherAt(source));
 
@@ -163,6 +168,7 @@ public final class SpeakerTicker {
             } catch (Throwable t) {
                 DistanceConfig.LOGGER.debug("Failed to update speaker {}: {}", s.getChannelId(), t.toString());
                 s.clearOcclusion();
+                s.clearFacing();
             }
         }
         if (roomSpeaker != null) {
