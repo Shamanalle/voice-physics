@@ -45,18 +45,26 @@ public class LangConsistencyTest {
             }
         }
         StringBuilder all = new StringBuilder();
-        for (String dir : new String[]{"common/src/main", "shared", "fabric-1.20/src", "fabric-1.21/src", "fabric-26/src"}) {
+        for (String dir : new String[]{"common/src/main", "shared", "versions"}) {
             Path p = ROOT.resolve(dir);
-            if (!Files.isDirectory(p)) {
-                continue;
-            }
+            assertTrue(Files.isDirectory(p), "missing " + p);
             try (Stream<Path> files = Files.walk(p)) {
-                for (Path f : files.filter(f -> f.toString().endsWith(".java")).toList()) {
+                for (Path f : files.filter(f -> f.toString().endsWith(".java") && !generated(p.relativize(f))).toList()) {
                     all.append(Files.readString(f, StandardCharsets.UTF_8)).append('\n');
                 }
             }
         }
         sources = all.toString();
+    }
+
+    /** Under a module's build folder (the Minecraft sources a loader unpacks, for one). */
+    private static boolean generated(Path relative) {
+        for (Path part : relative) {
+            if (part.toString().equals("build") || part.toString().equals(".gradle")) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Test

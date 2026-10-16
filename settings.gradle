@@ -17,35 +17,22 @@ rootProject.name = "voicechat-audio-distance-addon"
 
 include "common"
 include "common-j8"
-include "fabric-1.16"
-include "fabric-1.17"
-include "fabric-1.18"
-include "fabric-1.19"
-include "fabric-1.19.4"
-include "forge-1.17"
-include "forge-1.18"
-include "forge-1.19"
-include "forge-1.19.4"
-include "fabric-1.20"
-include "fabric-1.20.4"
-include "fabric-1.20.6"
-include "fabric-1.21"
-include "fabric-26"
-include "neoforge-26"
-include "neoforge-1.20.6"
-include "neoforge-1.21"
-include "neoforge-1.21.5"
-include "neoforge-1.21.8"
-include "neoforge-1.21.10"
-include "neoforge-1.21.11"
-include "forge-1.20.1"
-include "forge-1.20.6"
-include "forge-1.21"
-include "forge-1.21.5"
-include "forge-1.21.8"
-include "forge-1.21.10"
-include "forge-1.21.11"
-include "forge-26"
+
+// The Minecraft modules live in versions/<loader>/<band> and keep the project name <loader>-<band>
+// (:fabric-1.21 is versions/fabric/1.21). The Forge 1.16.5 / 1.20.4 and NeoForge 1.20.2 / 1.20.4
+// folders there are builds of their own, not part of this one (see legacyTargets in build.gradle).
+def bands = [
+        fabric  : ['1.16', '1.17', '1.18', '1.19', '1.19.4', '1.20', '1.20.4', '1.20.6', '1.21', '26'],
+        forge   : ['1.17', '1.18', '1.19', '1.19.4', '1.20.1', '1.20.6', '1.21', '1.21.5', '1.21.8', '1.21.10', '1.21.11', '26'],
+        neoforge: ['1.20.6', '1.21', '1.21.5', '1.21.8', '1.21.10', '1.21.11', '26'],
+]
+bands.each { loader, list ->
+    list.each { band ->
+        include "${loader}-${band}"
+        project(":${loader}-${band}").projectDir = file("versions/${loader}/${band}")
+    }
+}
+
 include "bukkit"
 include "universal"
 include "packaging"

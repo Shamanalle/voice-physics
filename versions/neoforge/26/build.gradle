@@ -29,7 +29,7 @@ sourceSets {
     main {
         java {
             srcDir "${rootDir}/shared/mc-all/src/main/java"
-            srcDir "${rootDir}/fabric-26/src/main/java"
+            srcDir "${rootDir}/versions/fabric/26/src/main/java"
             // The Fabric hooks are not needed (and cannot compile) here
             exclude 'com/kasper/vcdistance/AudioDistanceClient.java'
             exclude 'com/kasper/vcdistance/AudioDistanceMod.java'

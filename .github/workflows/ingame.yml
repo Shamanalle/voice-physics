@@ -158,12 +158,12 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { module: fabric-1.21, mc: '1.21.8' }
-          - { module: fabric-26, mc: '26.3' }
+          - { module: fabric-1.21, dir: versions/fabric/1.21, mc: '1.21.8' }
+          - { module: fabric-26, dir: versions/fabric/26, mc: '26.3' }
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      # Gradle runs on 25; the 1.21 test client runs on 21 (see fabric-1.21/build.gradle)
+      # Gradle runs on 25; the 1.21 test client runs on 21 (see versions/fabric/1.21/build.gradle)
       - name: Set up JDK 21 and 25
         uses: actions/setup-java@v4
         with:
@@ -181,7 +181,7 @@ jobs:
           sudo apt-get install -y -qq mesa-vulkan-drivers libvulkan1 libgl1-mesa-dri libglx-mesa0 libegl1 mesa-utils > /dev/null
       - name: Simple Voice Chat for the test client
         run: |
-          mods="${{ matrix.module }}/build/gametest-mods"
+          mods="${{ matrix.dir }}/build/gametest-mods"
           mkdir -p "${mods}"
           url=$(curl -fsSL --retry 4 -G "https://api.modrinth.com/v2/project/simple-voice-chat/version" \
               --data-urlencode 'loaders=["fabric"]' --data-urlencode 'game_versions=["${{ matrix.mc }}"]' \
@@ -202,6 +202,6 @@ jobs:
         with:
           name: client-${{ matrix.module }}
           path: |
-            ${{ matrix.module }}/build/run/clientGameTest/screenshots/
-            ${{ matrix.module }}/build/run/clientGameTest/logs/latest.log
+            ${{ matrix.dir }}/build/run/clientGameTest/screenshots/
+            ${{ matrix.dir }}/build/run/clientGameTest/logs/latest.log
           if-no-files-found: ignore

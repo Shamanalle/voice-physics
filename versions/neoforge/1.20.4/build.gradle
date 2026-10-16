@@ -5,7 +5,7 @@ plugins {
 
 // NeoForge 1.20.4: the full addon. NeoForge 1.20.4 runs with Minecraft's own names, so the jar needs no
 // remapping. The NeoForge hooks are this module's own: 1.20.4 has NeoForge's first payload API.
-def repoRoot = file('../..')
+def repoRoot = file('../../..')
 def props = new Properties()
 new File(repoRoot, 'gradle.properties').withInputStream { props.load(it) }
 
