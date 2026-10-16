@@ -785,8 +785,9 @@ public class AudioDistancePlugin implements VoicechatPlugin {
     }
 
     /**
-     * Everything done to a voice's audio on the client: the Doppler shift, walls, water, weather and
-     * the way the speaker faces as one filter, then the echo of the room the listener is in. Never
+     * Everything done to a voice's audio on the client: the Doppler shift, walls (with how loud the
+     * speaker talks), water, weather and the way the speaker faces as one filter, then the echo of
+     * the room the listener is in. Never
      * throws; on a failure the voice plays as it came.
      */
     private static void muffle(ClientReceiveSoundEvent event, SpeakerRegistry.Speaker speaker, short[] raw) {
@@ -795,6 +796,7 @@ public class AudioDistancePlugin implements VoicechatPlugin {
             OcclusionStatus status = occlusionStatus();
             EnvironmentEffects.Effect effect = EnvironmentEffects.Effect.NONE;
             SoundBlend blend = null;
+            double quiet = 0.0;
             if (status == OcclusionStatus.ACTIVE && speaker.isOcclusionKnown()) {
                 // Through the wall and round it through a doorway, both at once
                 boolean round = speaker.hasOpening() && c.isDiffractionEnabled();
@@ -805,9 +807,15 @@ public class AudioDistancePlugin implements VoicechatPlugin {
                         c.getOcclusionStrength(), d -> curveGain(d, range, whispering));
                 speaker.setBlend(blend);
                 effect = new EnvironmentEffects.Effect(blend.muffle(), blend.lossDb());
+                // A whisper is lost behind the wall, a shout carries: only a player's voice, a sound from a place has no usual level
+                if (c.isWallLoudnessEnabled() && speaker.getKind() == SpeakerRegistry.Kind.ENTITY) {
+                    quiet = VoiceLevel.extraLossDb(blend.lossDb(), speaker.getEffortDb());
+                    effect = effect.plus(new EnvironmentEffects.Effect(0.0, quiet));
+                }
             } else {
                 speaker.setBlend(null);
             }
+            speaker.setQuietLossDb((float) quiet);
             // Sound Physics Remastered does its own water and echo unless the player chose ours; weather is ours either way
             boolean ownPhysics = status != OcclusionStatus.SOUND_PHYSICS && status != OcclusionStatus.UNAVAILABLE;
             ListenerEnvironment env = ENVIRONMENT;

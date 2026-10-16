@@ -13,6 +13,7 @@ Install it on your client, on the server, or on both. Each works on its own. On 
 
 **🧱 Walls and corners**
 - Voices behind walls are quieter and duller. Wool and metal block more, glass and leaves less, open doors let sound through.
+- A whisper is lost behind a wall, a shout still carries.
 - A voice from the next room comes through the doorway, and it gets duller the sharper the turn.
 - Players side by side in a narrow tunnel hear each other clearly.
 

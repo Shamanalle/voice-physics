@@ -62,6 +62,9 @@ public final class SpeakerRegistry {
         private volatile double facing = Double.NaN;
         // Written by the audio thread: what the facing took off the last frame, for the monitor
         private volatile float facingLossDb;
+        // How loud the speaker talks against their usual voice (audio thread), and what a quiet voice lost behind the wall
+        private volatile VoiceLevel.Tracker level;
+        private volatile float quietLossDb;
         // The way around a wall (client tick), or no opening
         private volatile boolean hasOpening;
         private volatile double openingX;
@@ -365,6 +368,24 @@ public final class SpeakerRegistry {
             this.facingLossDb = lossDb;
         }
 
+        /**
+         * Decibels above (positive) or below the speaker's usual voice ({@link VoiceLevel.Tracker#effortDb});
+         * 0 for a sound from a place, which has no usual voice.
+         */
+        public double getEffortDb() {
+            VoiceLevel.Tracker t = level;
+            return t != null ? t.effortDb(whispering) : 0.0;
+        }
+
+        /** Decibels the wall took off the last frame on top of its usual loss because the voice was quiet. */
+        public float getQuietLossDb() {
+            return quietLossDb;
+        }
+
+        public void setQuietLossDb(float lossDb) {
+            this.quietLossDb = lossDb;
+        }
+
         public String getDisplayName() {
             return displayName;
         }
@@ -397,6 +418,8 @@ public final class SpeakerRegistry {
     private static final long PRUNE_INTERVAL_NANOS = TimeUnit.SECONDS.toNanos(2);
 
     private final Map<UUID, Speaker> speakers = new ConcurrentHashMap<>();
+    /** Each speaker's usual voice, kept across the pauses that make a speaker be forgotten. */
+    private final VoiceLevel.Book levels = new VoiceLevel.Book();
     private volatile long lastPruneNanos = System.nanoTime();
 
     public Speaker onEntityFrame(UUID channelId, UUID entityId, boolean whispering, float maxDistance, short[] pcm) {
@@ -405,7 +428,14 @@ public final class SpeakerRegistry {
         s.entityId = entityId;
         s.whispering = whispering;
         s.maxDistance = maxDistance;
-        touch(s, pcm);
+        long now = touch(s, pcm);
+        VoiceLevel.Tracker level = s.level;
+        if (level == null) {
+            level = levels.of(channelId, now);
+            s.level = level;
+        }
+        // The frame as it came, before any of the addon's own changes
+        level.update(s.levelDb, pcm == null ? 0.0 : pcm.length / VoiceLevel.SAMPLE_RATE, whispering, now);
         return s;
     }
 
@@ -418,6 +448,7 @@ public final class SpeakerRegistry {
         s.soundY = y;
         s.soundZ = z;
         s.maxDistance = maxDistance;
+        s.level = null;
         touch(s, pcm);
         return s;
     }
@@ -448,9 +479,10 @@ public final class SpeakerRegistry {
 
     public void clear() {
         speakers.clear();
+        levels.clear();
     }
 
-    private void touch(Speaker s, short[] pcm) {
+    private long touch(Speaker s, short[] pcm) {
         long now = System.nanoTime();
         s.lastHeardNanos = now;
         s.levelDb = rmsDb(pcm);
@@ -459,6 +491,7 @@ public final class SpeakerRegistry {
             lastPruneNanos = now;
             prune(now);
         }
+        return now;
     }
 
     static float rmsDb(short[] pcm) {

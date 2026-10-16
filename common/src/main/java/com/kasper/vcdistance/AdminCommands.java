@@ -236,9 +236,20 @@ public final class AdminCommands {
             }
             case "preset" -> preset(r);
             case "walls" -> {
+                if (r.args.length > 1 && r.args[1].equalsIgnoreCase("loudness")) {
+                    Boolean on = r.args.length > 2 ? parseOnOff(r.args[2]) : null;
+                    if (on == null) {
+                        r.badValue("walls loudness", r.arg(2), "on|off", "walls");
+                        break;
+                    }
+                    settings.setWallLoudness(on);
+                    r.saved(on ? "walls_loudness_on" : "walls_loudness_off");
+                    wallsNote(r);
+                    break;
+                }
                 Double strength = r.args.length > 1 ? parsePercent(r.args[1]) : null;
                 if (strength == null) {
-                    r.badValue("walls", r.arg(1), "0-100|off", "walls");
+                    r.badValue("walls", r.arg(1), "0-100|off|loudness on|off", "walls");
                     break;
                 }
                 settings.setWallsStrength(strength);
@@ -366,6 +377,7 @@ public final class AdminCommands {
         DistanceConfig p = settings.profile();
         r.reply.add(CommandReply.line().addAll(m.spans("status.walls", Style.PLAIN,
                 r.change(p.isOcclusionEnabled() ? pct(p.getOcclusionStrength()) : m.get("off"), "walls"),
+                r.change(onOff(m, p.isWallLoudnessEnabled()), "walls loudness"),
                 r.change(onOff(m, settings.isServerWalls()), "serverwalls"),
                 AudioDistancePlugin.SERVER_WALLS.activeStreams(), settings.getMaxStreams())));
         r.reply.add(CommandReply.line().addAll(m.spans("status.effects", Style.PLAIN,

@@ -21,7 +21,7 @@ final class CommandHelp {
             Jv.entry("log", new String[]{"log", "log 2", "log Steve"}),
             Jv.entry("profile", new String[]{"profile suggest", "profile enforce", "profile off"}),
             Jv.entry("preset", new String[]{"preset realistic", "preset stealth", "preset export", "preset import VP1:"}),
-            Jv.entry("walls", new String[]{"walls 60", "walls 85", "walls off"}),
+            Jv.entry("walls", new String[]{"walls 60", "walls 85", "walls off", "walls loudness off"}),
             Jv.entry("serverwalls", new String[]{"serverwalls on", "serverwalls off"}),
             Jv.entry("effects", new String[]{"effects", "effects on", "effects off", "effects air on", "effects curve on", "effects water 100",
                     "effects weather 50", "effects echo 70"}),

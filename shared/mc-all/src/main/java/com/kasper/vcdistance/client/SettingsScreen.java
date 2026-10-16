@@ -157,6 +157,7 @@ public abstract class SettingsScreen extends com.kasper.vcdistance.compat.BaseSc
     private final List<Preset> presetOrder = new ArrayList<>();
     private Button activeTabButton;
     private RangeSlider strengthSlider;
+    private Button loudnessButton;
     private RangeSlider reverbSlider;
     private RangeSlider waterSlider;
     private RangeSlider weatherSlider;
@@ -242,6 +243,7 @@ public abstract class SettingsScreen extends com.kasper.vcdistance.compat.BaseSc
         notes.clear();
         ruleLabels.clear();
         strengthSlider = null;
+        loudnessButton = null;
         reverbSlider = null;
         waterSlider = null;
         weatherSlider = null;
@@ -580,6 +582,9 @@ public abstract class SettingsScreen extends com.kasper.vcdistance.compat.BaseSc
             if (strengthSlider != null) {
                 strengthSlider.active = config.isOcclusionEnabled();
             }
+            if (loudnessButton != null) {
+                loudnessButton.active = config.isOcclusionEnabled();
+            }
         }).bounds(left, y, colW, 20).tooltip(tip("walls.toggle.tooltip")).build(), DistanceConfig.Part.WALLS);
 
         strengthSlider = new RangeSlider(right - colW, y, colW, 20,
@@ -588,6 +593,15 @@ public abstract class SettingsScreen extends com.kasper.vcdistance.compat.BaseSc
                 v -> tr("strength", pct(v)));
         strengthSlider.active = shown().isOcclusionEnabled();
         edit(withTip(strengthSlider, "strength.tooltip"), DistanceConfig.Part.WALLS);
+        y += ROW;
+
+        // A whisper is lost behind a wall, a shout carries
+        loudnessButton = Btn.builder(onOff("walls.loudness", shown().isWallLoudnessEnabled()), b -> {
+            config.setWallLoudnessEnabled(!config.isWallLoudnessEnabled());
+            b.setMessage(onOff("walls.loudness", config.isWallLoudnessEnabled()));
+        }).bounds(left, y, w, 20).tooltip(tip("walls.loudness.tooltip")).build();
+        loudnessButton.active = shown().isOcclusionEnabled();
+        edit(loudnessButton, DistanceConfig.Part.WALLS);
         y += ROW;
 
         statusY = y;
@@ -1156,6 +1170,9 @@ public abstract class SettingsScreen extends com.kasper.vcdistance.compat.BaseSc
             serverButton(Txt.literal("+"), "server.walls.tooltip", left + half - 20, y, 20, "walls " + up)
                     .active &= wallsPct < 100;
             serverToggle("server.server_walls", st, "server_walls", "false", x2, y, half, "serverwalls");
+            y += ROW;
+            serverToggle("server.wall_loudness", st, "wall_loudness", "true", left, y, w, "walls loudness")
+                    .active &= wallsPct > 0;
             y += ROW;
             serverToggle("server.monitor", st, "allow_monitor", "true", left, y, half, "monitor");
             serverToggle("server.notices", st, "zone_notices", "true", x2, y, half, "notices");
@@ -2214,7 +2231,8 @@ public abstract class SettingsScreen extends com.kasper.vcdistance.compat.BaseSc
 
     /**
      * Why a voice is as loud as it is, in a line: how far the voice is and what the curve makes of it,
-     * then what takes more away (the wall, the longer way round, the whisper).
+     * then what takes more away (the wall, the longer way round, the whisper, a voice too quiet for the
+     * wall, the speaker's facing).
      */
     private Component whyQuiet(SpeakerRegistry.Speaker s, boolean wallsActive) {
         List<Component> parts = new ArrayList<>();
@@ -2232,6 +2250,10 @@ public abstract class SettingsScreen extends com.kasper.vcdistance.compat.BaseSc
         SoundBlend blend = wallsActive ? s.getBlend() : null;
         if (blend != null && blend.extraDistance() >= 1.0) {
             parts.add(tr("monitor.why.round", blocks(blend.extraDistance())));
+        }
+        float quietDb = wallsActive ? s.getQuietLossDb() : 0.0F;
+        if (quietDb >= 1.0F) {
+            parts.add(tr("monitor.why.quiet", String.format(Locale.ROOT, "%.0f", quietDb)));
         }
         float facingDb = s.getFacingLossDb();
         if (facingDb >= 1.0F) {

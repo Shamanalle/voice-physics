@@ -63,6 +63,7 @@ public class DistanceConfigTest {
         a.setWhisperMultiplier(1.7);
         a.setOcclusionEnabled(false);
         a.setOcclusionStrength(0.81);
+        a.setWallLoudnessEnabled(false);
         a.setMaterialWeight(AcousticMaterial.GLASS, 1.25);
         a.setDirectivityEnabled(false);
         a.setDirectivityStrength(1.35);
@@ -77,6 +78,7 @@ public class DistanceConfigTest {
         assertEquals(1.7, b.getWhisperMultiplier(), 1e-4);
         assertFalse(b.isOcclusionEnabled());
         assertEquals(0.81, b.getOcclusionStrength(), 1e-4);
+        assertFalse(b.isWallLoudnessEnabled());
         assertEquals(1.25, b.getMaterialWeight(AcousticMaterial.GLASS), 1e-4);
         assertFalse(b.isDirectivityEnabled());
         assertEquals(1.35, b.getDirectivityStrength(), 1e-4);
@@ -117,7 +119,7 @@ public class DistanceConfigTest {
         c.load();
         assertEquals(AttenuationModel.REALISTIC_INVERSE, c.getModel());
         String text = Files.readString(file);
-        assertTrue(text.contains("config_version=12"));
+        assertTrue(text.contains("config_version=13"));
         assertTrue(text.contains("reverb_enabled=true"));
         assertTrue(text.contains("material.stone"));
         assertTrue(text.contains("hud_mode=talking"));
@@ -175,7 +177,7 @@ public class DistanceConfigTest {
             assertEquals(m.getDefaultWeight(), c.getMaterialWeight(m), 1e-9, m.getId());
         }
         String text = Files.readString(file);
-        assertTrue(text.contains("config_version=12"));
+        assertTrue(text.contains("config_version=13"));
         assertTrue(text.contains("material.other="));
     }
 
@@ -234,7 +236,7 @@ public class DistanceConfigTest {
         String text = Files.readString(file);
         String[] keys = {"config_version=", "distance_model=", "attenuation_factor=", "openal_reference_ratio=",
                 "min_volume_fraction=", "whisper_multiplier=", "occlusion_enabled=", "occlusion_strength=",
-                "material.stone=", "material.liquid=", "reverb_enabled=", "reverb_strength=", "underwater_enabled=",
+                "wall_loudness_enabled=", "material.stone=", "material.liquid=", "reverb_enabled=", "reverb_strength=", "underwater_enabled=",
                 "weather_enabled=", "diffraction_enabled=", "hud_mode=", "hud_corner=", "welcome_shown="};
         int last = -1;
         for (String key : keys) {
@@ -289,6 +291,7 @@ public class DistanceConfigTest {
         DistanceConfig c = new DistanceConfig(dir.resolve("vc.properties"));
         c.setAttenuationFactor(0.3);
         c.setOcclusionStrength(0.9);
+        c.setWallLoudnessEnabled(false);
         c.setMaterialWeight(AcousticMaterial.WOOL, 2.5);
         c.setReverbStrength(0.2);
         c.setDirectivityEnabled(false);
@@ -297,6 +300,7 @@ public class DistanceConfigTest {
 
         c.resetPart(DistanceConfig.Part.WALLS);
         assertEquals(DistanceConfig.DEFAULT_OCCLUSION_STRENGTH, c.getOcclusionStrength(), 1e-9);
+        assertTrue(c.isWallLoudnessEnabled());
         assertEquals(0.3, c.getAttenuationFactor(), 1e-9);
         assertEquals(2.5, c.getMaterialWeight(AcousticMaterial.WOOL), 1e-9);
 

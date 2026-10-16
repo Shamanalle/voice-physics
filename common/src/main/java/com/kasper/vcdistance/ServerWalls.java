@@ -131,6 +131,8 @@ public final class ServerWalls {
     private final Set<UUID> addonListeners = ConcurrentHashMap.newKeySet();
     private final Map<PairKey, Pair> pairs = new ConcurrentHashMap<>();
     private final Map<UUID, Stream> streams = new ConcurrentHashMap<>();
+    /** Each speaker's usual voice, measured on the frames decoded for them. */
+    private final VoiceLevel.Book voiceLevels = new VoiceLevel.Book();
     private final AtomicInteger encoding = new AtomicInteger();
     private final ThreadLocal<Boolean> resending = ThreadLocal.withInitial(() -> Boolean.FALSE);
     private volatile boolean worldAvailable;
@@ -169,6 +171,7 @@ public final class ServerWalls {
     /** The player left the game: forget everything about them. */
     public void forgetPlayer(UUID player) {
         addonListeners.remove(player);
+        voiceLevels.forget(player);
         releaseListener(player);
     }
 
@@ -660,7 +663,8 @@ public final class ServerWalls {
             double strength = settings.wallsStrengthIn(listenerZone) * ServerEavesdrop.factor(settings, players.get(listener));
             boolean measured = walls && !Double.isNaN(thickness);
             double muffle = measured ? OcclusionModel.muffle(thickness, strength) : 0.0;
-            double loss = (measured ? OcclusionModel.lossDb(thickness, strength) : 0.0) + volumeLoss;
+            double wallLoss = measured ? OcclusionModel.lossDb(thickness, strength) : 0.0;
+            double loss = wallLoss + volumeLoss;
             // Water, rain and distance on top of the walls: filters in a row
             muffle = 1.0 - (1.0 - muffle) * (1.0 - air.muffle());
             loss += air.lossDb();
@@ -696,10 +700,15 @@ public final class ServerWalls {
             }
 
             try {
-                short[] pcm = decode(event.getVoicechat(), channel, sequence, opus, now);
+                short[] pcm = decode(event.getVoicechat(), channel, sequence, opus, now, whispering);
                 if (pcm == null) {
                     stop(pair);
                     return null;
+                }
+                // A whisper is lost behind the wall, a shout carries: only a player's voice, a sound from a place has no usual level
+                if (wallLoss > 0.0 && position == null && profile.isWallLoudnessEnabled()) {
+                    VoiceLevel.Tracker level = voiceLevels.get(channel);
+                    loss += VoiceLevel.extraLossDb(wallLoss, level != null ? level.effortDb(whispering) : 0.0);
                 }
                 short[] frame = pcm.clone();
                 // The pitch first, so walls and echo work on the shifted voice
@@ -764,7 +773,8 @@ public final class ServerWalls {
         return Doppler.closing(sx - to.x(), sy - to.y(), sz - to.z(), sv[0], sv[1], sv[2], lv[0], lv[1], lv[2]);
     }
 
-    private short[] decode(VoicechatServerApi api, UUID channel, long sequence, byte[] opus, long now) {
+    /** The frame, decoded once for every listener; each new frame also tells how loud the speaker talks. */
+    private short[] decode(VoicechatServerApi api, UUID channel, long sequence, byte[] opus, long now, boolean whispering) {
         Stream stream = streams.computeIfAbsent(channel, c -> new Stream());
         synchronized (stream) {
             stream.lastSeenNanos = now;
@@ -779,6 +789,7 @@ public final class ServerWalls {
             }
             stream.pcm = stream.decoder.decode(opus);
             stream.lastSequence = sequence;
+            voiceLevels.of(channel, now).update(stream.pcm, whispering, now);
             return stream.pcm;
         }
     }
@@ -976,6 +987,7 @@ public final class ServerWalls {
             }
         }
         streams.clear();
+        voiceLevels.clear();
         addonListeners.clear();
     }
 

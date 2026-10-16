@@ -777,4 +777,37 @@ public class CommandsTest {
             }
         }
     }
+
+    @Test
+    @DisplayName("/vcd walls loudness turns whisper and shout behind walls on and off, and keeps the wall strength")
+    void wallLoudness() throws IOException {
+        ServerSettings s = settings("walls_strength=0.7\n");
+        AdminCommands.Context ctx = ctx();
+        assertTrue(s.profile().isWallLoudnessEnabled(), "on by default");
+        List<String> off = AdminCommands.run("walls loudness off", s, ctx);
+        assertTrue(off.get(0).startsWith("Behind walls a whisper and a shout now lose the same"), off.toString());
+        assertFalse(s.profile().isWallLoudnessEnabled());
+        assertEquals(0.7, s.profile().getOcclusionStrength(), 1e-9);
+        ServerSettings again = new ServerSettings(s.getPath());
+        again.load();
+        assertFalse(again.profile().isWallLoudnessEnabled(), "saved");
+        assertTrue(Files.readString(s.getPath()).contains("\nwall_loudness=false\n"));
+        assertTrue(String.join("\n", AdminCommands.run("status", s, ctx)).contains("whisper and shout: off"));
+
+        AdminCommands.run("undo", s, ctx);
+        assertTrue(s.profile().isWallLoudnessEnabled(), "undone");
+        AdminCommands.run("walls loudness off", s, ctx);
+        AdminCommands.run("walls loudness on", s, ctx);
+        assertTrue(s.profile().isWallLoudnessEnabled());
+        assertTrue(AdminCommands.run("walls loudness maybe", s, ctx).get(0).contains("on|off"));
+        assertTrue(AdminCommands.run("walls loudness", s, ctx).get(0).contains("on|off"));
+
+        assertTrue(AdminCommands.suggest("walls ").contains("loudness"));
+        assertEquals(List.of("loudness"), AdminCommands.suggest("walls lo"));
+        assertEquals(List.of("on", "off"), AdminCommands.suggest("walls loudness "));
+
+        java.util.Properties state = new java.util.Properties();
+        s.writeState(state, "");
+        assertEquals("true", state.getProperty("wall_loudness"));
+    }
 }

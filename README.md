@@ -64,6 +64,7 @@ These need the addon on your client and work on any server with Simple Voice Cha
 
 ### Walls
 - A voice behind a wall is quieter and duller; the thicker the wall, the more.
+- A whisper is lost behind a wall sooner than a shout. A wall takes the same off every voice, but a whisper starts quieter: through one stone wall it loses about 13 dB more than talking, through two it is barely there, while a shout still carries through three. The addon compares how loud each player talks now with how they usually talk, so the microphone's volume does not matter, and Simple Voice Chat's whisper always counts as quiet. Only players' voices, not sounds from a place. A switch on the *Walls* tab (`wall_loudness_enabled`), part of the walls a server profile can lock.
 - Materials differ: wool and metal block more than stone, glass and leaves less. Open doors and trapdoors count a tenth of a closed one; slabs, fences and carpets let sound past by their shape. Iron and copper doors count as metal. Every material's weight can be changed on the *Walls* tab, under *Materials*.
 - Players side by side in a narrow tunnel hear each other clearly.
 - Blocks from other mods: the addon guesses a material from the block's name and sound. When it is wrong, pick the block you look at or hold on the *Walls* tab, or let a resource pack or mod list it in a [data file](#block-materials-for-modders).
@@ -108,7 +109,7 @@ These need the addon on your client and work on any server with Simple Voice Cha
 
 Available in the full Fabric, Forge and NeoForge mods and as a plugin for Paper, Purpur, Folia, Spigot and Bukkit.
 
-- **Walls for everyone.** Players without the addon also hear voices muffled through walls. Load is capped: above 24 voices at once (adjustable) the rest pass unfiltered, and on any error the original audio is sent, so voice chat never goes silent.
+- **Walls for everyone.** Players without the addon also hear voices muffled through walls. Load is capped: above 24 voices at once (adjustable) the rest pass unfiltered, and on any error the original audio is sent, so voice chat never goes silent. A whisper is lost behind a wall sooner than a shout for them too (`/vcd walls loudness on|off`, on by default).
 - **Sound zones.** Draw a box in game with `/vcd zone`, use a whole world, a WorldGuard region on Paper, or the claims of a player or party with [Open Parties and Claims](https://modrinth.com/mod/open-parties-and-claims) on Fabric, Forge and NeoForge. A zone can:
   - change the voice range: a stage ×2, a library ×0.4, or a range in blocks;
   - be *isolated*: no voice gets in or out;
@@ -250,6 +251,7 @@ Replies are coloured and clickable: values in `/vcd status` put the command that
 | `/vcd preset vanilla\|realistic\|clear\|stealth\|custom` | The server's sound |
 | `/vcd preset export` / `import <code>` | The server's profile as a profile code |
 | `/vcd walls 0-100\|off` | Wall strength for everyone, in % |
+| `/vcd walls loudness on\|off` | A whisper is lost behind a wall, a shout carries, for everyone (on by default) |
 | `/vcd serverwalls on\|off` | Walls for players without the addon |
 | `/vcd effects [on\|off]` | The server's water, rain and echo for players without the addon (off by default); with no value: what is on, with buttons |
 | `/vcd effects air on\|off` | Voices dull a little as they near the edge of their range (players without the addon) |
@@ -316,6 +318,7 @@ Everything here can also be set in game. Every key in the files has a comment in
 | `whisper_multiplier` | 0.5 – 2 | 1.0 | How fast whispers fade, relative to voices |
 | `occlusion_enabled` | true / false | true | Walls muffle voices |
 | `occlusion_strength` | 0 – 1 | 0.6 | How strongly |
+| `wall_loudness_enabled` | true / false | true | A whisper is lost behind a wall, a shout carries |
 | `material.<id>` | 0 – 3 | see *Walls* → *Materials* | How much one block muffles; stone = 1 |
 | `reverb_enabled` | true / false | true | Echo |
 | `reverb_strength` | 0 – 1 | 0.6 | Echo strength |
@@ -352,6 +355,7 @@ Everything here can also be set in game. Every key in the files has a comment in
 | Key | Values | Default | What it does |
 |---|---|---|---|
 | `walls_strength` | 0 – 1 | 0.6 | How strongly walls muffle, for everyone; 0 turns walls off |
+| `wall_loudness` | true / false | true | A whisper is lost behind a wall, a shout carries, for everyone |
 | `material.<id>` | 0 – 3 | stone 1.0, metal 1.3, earth 0.9, wood 0.7, wool 1.4, soft 1.2, glass 0.4, ice 0.7, door 0.6, leaves 0.15, thin 0.2, liquid 0.35, other 1.0 | How much one block muffles |
 | `server_walls` | true / false | true | The server muffles walls for players without the addon |
 | `server_walls_max_streams` | 0 – 512 | 24 | Most voices muffled at once; the rest pass unfiltered |

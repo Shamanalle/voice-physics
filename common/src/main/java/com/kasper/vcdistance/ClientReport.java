@@ -79,6 +79,7 @@ public final class ClientReport {
     static String describe(DistanceConfig c) {
         return "model " + c.getModel().getId()
                 + ", walls " + (c.isOcclusionEnabled() ? AdminCommands.pct(c.getOcclusionStrength()) : "off")
+                + ", loudness " + onOff(c.isWallLoudnessEnabled())
                 + ", corners " + onOff(c.isDiffractionEnabled())
                 + ", echo " + (c.isReverbEnabled() ? AdminCommands.pct(c.getReverbStrength()) : "off")
                 + ", water " + (c.isUnderwaterEnabled() ? AdminCommands.pct(c.getUnderwaterStrength()) : "off")

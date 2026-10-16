@@ -33,9 +33,10 @@ public final class ServerSettings {
     /**
      * 2: sections with comments, walls_strength and material.* at the top level, profile_preset;
      * 3: echo, water and weather; 4: zones and messages_language; 5: more materials;
-     * 6: boxes and zone rules, game rules, the addon requirement, messages in every language.
+     * 6: boxes and zone rules, game rules, the addon requirement, messages in every language;
+     * 10: wall_loudness, so older files get it with its comment.
      */
-    private static final int SETTINGS_VERSION = 9;
+    private static final int SETTINGS_VERSION = 10;
     private static final String ZONE_PREFIX = "zone.";
     private static final String MUTE_PREFIX = "mute.";
     private static final String SPEAKER_PREFIX = "speaker.";
@@ -423,6 +424,7 @@ public final class ServerSettings {
                 DistanceConfig.STRENGTH_MIN, DistanceConfig.STRENGTH_MAX);
         profile.setOcclusionEnabled(strength > 0.0);
         profile.setOcclusionStrength(strength);
+        profile.setWallLoudnessEnabled(DistanceConfig.parseBoolean(props, "wall_loudness", profile.isWallLoudnessEnabled()));
         for (AcousticMaterial m : AcousticMaterial.values()) {
             profile.setMaterialWeight(m, DistanceConfig.parseDouble(props, "material." + m.getId(), profile.getMaterialWeight(m)));
         }
@@ -452,7 +454,12 @@ public final class ServerSettings {
         w.section("1. Walls, for every player", "1. Стены, для всех игроков")
                 .comment("How strongly walls muffle voices, 0 - 1. 0 = walls off. Default 0.6.",
                         "Насколько сильно стены глушат голоса, 0 - 1. 0 = стены выключены. По умолчанию 0.6.")
-                .value("walls_strength", profile.isOcclusionEnabled() ? profile.getOcclusionStrength() : 0.0);
+                .value("walls_strength", profile.isOcclusionEnabled() ? profile.getOcclusionStrength() : 0.0)
+                .comment("true: how loud the speaker talks counts behind a wall: a whisper is lost there, a shout carries through.",
+                        "Only players' voices, not sounds from a place. Default true.",
+                        "true: за стеной важно, как громко говорят: шёпот там теряется, крик проходит.",
+                        "Только голоса игроков, не звуки из места. По умолчанию true.")
+                .value("wall_loudness", profile.isWallLoudnessEnabled());
         profile.writeMaterials(w, "");
 
         w.section("2. Players without the addon", "2. Игроки без аддона")
@@ -968,6 +975,7 @@ public final class ServerSettings {
         p.setProperty(prefix + "allow_monitor", String.valueOf(allowMonitor));
         p.setProperty(prefix + "zone_notices", String.valueOf(zoneNotices));
         p.setProperty(prefix + "walls_strength", DistanceConfig.format(profile.isOcclusionEnabled() ? profile.getOcclusionStrength() : 0.0));
+        p.setProperty(prefix + "wall_loudness", String.valueOf(profile.isWallLoudnessEnabled()));
         p.setProperty(prefix + "server_walls", String.valueOf(serverWalls));
         p.setProperty(prefix + "sneak_range_multiplier", DistanceConfig.format(sneakMultiplier));
         p.setProperty(prefix + "dead_players_silent", String.valueOf(deadSilent));
@@ -1355,6 +1363,11 @@ public final class ServerSettings {
         double s = DistanceConfig.clamp(strength, DistanceConfig.STRENGTH_MIN, DistanceConfig.STRENGTH_MAX);
         profile.setOcclusionEnabled(s > 0.0);
         profile.setOcclusionStrength(s);
+    }
+
+    /** Whether a whisper is lost behind walls and a shout carries; call {@link #save()} to keep it. */
+    public void setWallLoudness(boolean on) {
+        profile.setWallLoudnessEnabled(on);
     }
 
     /** Changes the mode in memory; call {@link #save()} to keep it. */

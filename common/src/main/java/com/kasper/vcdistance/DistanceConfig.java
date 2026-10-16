@@ -19,8 +19,8 @@ public final class DistanceConfig {
     /** 3: the file is written with a comment for every key; 4: interface section; 5: echo, water, weather; 6: sound around corners;
      * 7: the HUD moves from the top left (under Simple Voice Chat's group list) to the top right;
      * 8: more materials (metal, earth, soft, ice, other); 9: HUD size, background, compact, colorblind colors;
-     * 10: over_sound_physics; 11: Doppler effect; 12: voice direction. */
-    private static final int CONFIG_VERSION = 12;
+     * 10: over_sound_physics; 11: Doppler effect; 12: voice direction; 13: quiet voices behind walls. */
+    private static final int CONFIG_VERSION = 13;
     private static final String FILE_NAME = "vc-audio-distance.properties";
 
     // -------------------------------------------------------------------------
@@ -50,6 +50,8 @@ public final class DistanceConfig {
     public static final double DEFAULT_WHISPER_MULTIPLIER = 1.0;
     public static final boolean DEFAULT_OCCLUSION_ENABLED = true;
     public static final double DEFAULT_OCCLUSION_STRENGTH = 0.60;
+    /** A whisper is lost behind a wall sooner than a shout, as in life: on by default. */
+    public static final boolean DEFAULT_WALL_LOUDNESS_ENABLED = true;
     public static final boolean DEFAULT_REVERB_ENABLED = true;
     public static final double DEFAULT_REVERB_STRENGTH = 0.60;
     public static final boolean DEFAULT_UNDERWATER_ENABLED = true;
@@ -75,6 +77,7 @@ public final class DistanceConfig {
     private volatile double whisperMultiplier = DEFAULT_WHISPER_MULTIPLIER;
     private volatile boolean occlusionEnabled = DEFAULT_OCCLUSION_ENABLED;
     private volatile double occlusionStrength = DEFAULT_OCCLUSION_STRENGTH;
+    private volatile boolean wallLoudnessEnabled = DEFAULT_WALL_LOUDNESS_ENABLED;
     private volatile boolean reverbEnabled = DEFAULT_REVERB_ENABLED;
     private volatile double reverbStrength = DEFAULT_REVERB_STRENGTH;
     private volatile boolean underwaterEnabled = DEFAULT_UNDERWATER_ENABLED;
@@ -194,6 +197,16 @@ public final class DistanceConfig {
 
     public void setOcclusionStrength(double value) {
         occlusionStrength = clamp(value, STRENGTH_MIN, STRENGTH_MAX);
+        changed();
+    }
+
+    /** How loud the speaker talks counts behind a wall: a whisper is lost, a shout carries ({@link VoiceLevel}). */
+    public boolean isWallLoudnessEnabled() {
+        return wallLoudnessEnabled;
+    }
+
+    public void setWallLoudnessEnabled(boolean value) {
+        wallLoudnessEnabled = value;
         changed();
     }
 
@@ -555,6 +568,7 @@ public final class DistanceConfig {
         whisperMultiplier = DEFAULT_WHISPER_MULTIPLIER;
         occlusionEnabled = DEFAULT_OCCLUSION_ENABLED;
         occlusionStrength = DEFAULT_OCCLUSION_STRENGTH;
+        wallLoudnessEnabled = DEFAULT_WALL_LOUDNESS_ENABLED;
         reverbEnabled = DEFAULT_REVERB_ENABLED;
         reverbStrength = DEFAULT_REVERB_STRENGTH;
         underwaterEnabled = DEFAULT_UNDERWATER_ENABLED;
@@ -585,6 +599,7 @@ public final class DistanceConfig {
             case WALLS -> {
                 occlusionEnabled = DEFAULT_OCCLUSION_ENABLED;
                 occlusionStrength = DEFAULT_OCCLUSION_STRENGTH;
+                wallLoudnessEnabled = DEFAULT_WALL_LOUDNESS_ENABLED;
             }
             case MATERIALS -> resetMaterials();
             case EFFECTS -> {
@@ -634,6 +649,7 @@ public final class DistanceConfig {
         whisperMultiplier = other.whisperMultiplier;
         occlusionEnabled = other.occlusionEnabled;
         occlusionStrength = other.occlusionStrength;
+        wallLoudnessEnabled = other.wallLoudnessEnabled;
         reverbEnabled = other.reverbEnabled;
         reverbStrength = other.reverbStrength;
         underwaterEnabled = other.underwaterEnabled;
@@ -660,7 +676,7 @@ public final class DistanceConfig {
     public enum Part {
         /** Curve: model, falloff, full-volume distance, edge volume, whisper falloff. */
         CURVE("curve"),
-        /** Walls on or off and their strength; locking them locks {@link #MATERIALS} too. */
+        /** Walls on or off, their strength and whether loudness counts; locking them locks {@link #MATERIALS} too. */
         WALLS("walls"),
         /** How much each material muffles (the walls' own percentages, so locked with them). */
         MATERIALS("materials"),
@@ -751,6 +767,7 @@ public final class DistanceConfig {
             case WALLS -> {
                 occlusionEnabled = other.occlusionEnabled;
                 occlusionStrength = other.occlusionStrength;
+                wallLoudnessEnabled = other.wallLoudnessEnabled;
             }
             case MATERIALS -> {
                 for (AcousticMaterial m : AcousticMaterial.values()) {
@@ -966,7 +983,10 @@ public final class DistanceConfig {
                 .value(prefix + "occlusion_enabled", occlusionEnabled)
                 .comment("How strongly walls muffle, 0 - 1. Default 0.6.",
                         "Насколько сильно глушат стены, 0 - 1. По умолчанию 0.6.")
-                .value(prefix + "occlusion_strength", occlusionStrength);
+                .value(prefix + "occlusion_strength", occlusionStrength)
+                .comment("How loud the speaker talks counts behind a wall: a whisper is lost there, a shout carries through: true / false. Default true.",
+                        "За стеной важно, как громко говорят: шёпот там теряется, крик проходит: true / false. По умолчанию true.")
+                .value(prefix + "wall_loudness_enabled", wallLoudnessEnabled);
     }
 
     /** Echo, water and weather keys with their explanations (shared by the client and server files). */
@@ -1041,6 +1061,7 @@ public final class DistanceConfig {
         props.setProperty(prefix + "whisper_multiplier", format(whisperMultiplier));
         props.setProperty(prefix + "occlusion_enabled", String.valueOf(occlusionEnabled));
         props.setProperty(prefix + "occlusion_strength", format(occlusionStrength));
+        props.setProperty(prefix + "wall_loudness_enabled", String.valueOf(wallLoudnessEnabled));
         props.setProperty(prefix + "reverb_enabled", String.valueOf(reverbEnabled));
         props.setProperty(prefix + "reverb_strength", format(reverbStrength));
         props.setProperty(prefix + "underwater_enabled", String.valueOf(underwaterEnabled));
@@ -1068,6 +1089,7 @@ public final class DistanceConfig {
         whisperMultiplier = clamp(parseDouble(props, prefix + "whisper_multiplier", DEFAULT_WHISPER_MULTIPLIER), WHISPER_MIN, WHISPER_MAX);
         occlusionEnabled = parseBoolean(props, prefix + "occlusion_enabled", DEFAULT_OCCLUSION_ENABLED);
         occlusionStrength = clamp(parseDouble(props, prefix + "occlusion_strength", DEFAULT_OCCLUSION_STRENGTH), STRENGTH_MIN, STRENGTH_MAX);
+        wallLoudnessEnabled = parseBoolean(props, prefix + "wall_loudness_enabled", DEFAULT_WALL_LOUDNESS_ENABLED);
         reverbEnabled = parseBoolean(props, prefix + "reverb_enabled", DEFAULT_REVERB_ENABLED);
         reverbStrength = clamp(parseDouble(props, prefix + "reverb_strength", DEFAULT_REVERB_STRENGTH), REVERB_MIN, REVERB_MAX);
         underwaterEnabled = parseBoolean(props, prefix + "underwater_enabled", DEFAULT_UNDERWATER_ENABLED);

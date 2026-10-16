@@ -46,7 +46,10 @@ final class CommandSuggest {
                 case "help", "?" -> addAll(out, AdminCommands.TOPICS, typed);
                 case "profile" -> addAll(out, AdminCommands.MODES, typed);
                 case "preset" -> addAll(out, AdminCommands.PRESETS, typed);
-                case "walls" -> addAll(out, AdminCommands.WALLS_STEPS, typed);
+                case "walls" -> {
+                    addAll(out, AdminCommands.WALLS_STEPS, typed);
+                    add(out, "loudness", typed, null);
+                }
                 case "serverwalls", "monitor", "notices" -> addAll(out, AdminCommands.ON_OFF, typed);
                 case "effects" -> addAll(out, AdminCommands.EFFECT_PARTS, typed);
                 case "extras" -> addAll(out, AdminCommands.EXTRAS, typed);
@@ -90,6 +93,8 @@ final class CommandSuggest {
                 case "megaphone_range" -> new String[]{"2", "2.5", "3", "4"};
                 default -> new String[0];
             }, typed);
+        } else if (sub.equals("walls") && args.length == 3 && action.equals("loudness")) {
+            addAll(out, AdminCommands.ON_OFF, typed);
         } else if (sub.equals("mute") && args.length == 3) {
             addAll(out, AdminCommands.MUTE_TIMES, typed);
         } else if (sub.equals("effects") && args.length == 3) {

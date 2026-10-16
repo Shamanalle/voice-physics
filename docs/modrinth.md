@@ -13,6 +13,7 @@ Install it on your client, on the server, or on both. Each works on its own.
 
 **🧱 Walls and corners**
 - Voices behind walls are quieter and duller. Wool and metal block more, glass and leaves less, open doors let sound through.
+- A whisper is lost behind a wall, a shout still carries.
 - A voice from the next room comes through the doorway, and it gets duller the sharper the turn.
 - Players side by side in a narrow tunnel hear each other clearly.
 
@@ -79,6 +80,7 @@ Minecraft 1.16.5, 1.17.1, 1.18.2, 1.19.2, 1.19.4, 1.20 – 1.20.6, 1.21 – 1.21
 
 **🧱 Стены и углы**
 - Голоса за стенами тише и глуше. Шерсть и металл глушат сильнее, стекло и листва слабее, открытые двери пропускают звук.
+- Шёпот за стеной теряется, крик проходит.
 - Голос из соседней комнаты идёт через дверной проём и тем глуше, чем круче поворот.
 - Двое рядом в узком тоннеле слышат друг друга чисто.
 

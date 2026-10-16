@@ -228,6 +228,42 @@ public class ServerWallsTest {
 
     // ---- tests --------------------------------------------------------------
 
+    /** RMS the listener gets behind a stone wall over the last frames of a voice, whispered or not. */
+    private double behindOneWall(boolean whisper) {
+        fire(packet(channel, 0, pack(tone(0)), whisper, 48F), listener, SoundPacketEvent.SOURCE_PROXIMITY);
+        setThickness(1.0);
+        double out = 0;
+        for (int i = 1; i <= 80; i++) {
+            assertTrue(fire(packet(channel, i, pack(tone(i)), whisper, 48F), listener, SoundPacketEvent.SOURCE_PROXIMITY));
+            if (i > 60) {
+                out += rms(unpack(sent.get(sent.size() - 1).getOpusEncodedData()));
+            }
+        }
+        return out;
+    }
+
+    private double whisperToTalk() {
+        double talk = behindOneWall(false);
+        walls.clear();
+        sent.clear();
+        walls.markWorldAvailable();
+        return behindOneWall(true) / talk;
+    }
+
+    @Test
+    @DisplayName("Behind a wall a whisper loses more than talking, and the same with the switch off")
+    void whisperLostBehindWall() {
+        double ratio = whisperToTalk();
+        // One stone wall takes about 13 dB more off a whisper: a fifth of the level
+        assertTrue(ratio > 0.12 && ratio < 0.35, "whisper against talking behind one wall: " + ratio);
+        walls.clear();
+        sent.clear();
+        settings.setWallLoudness(false);
+        walls.markWorldAvailable();
+        double same = whisperToTalk();
+        assertTrue(same > 0.95 && same < 1.05, "switched off: " + same);
+    }
+
     @Test
     @DisplayName("Before the wall is measured, packets pass through untouched")
     void unknownThicknessPassesThrough() {

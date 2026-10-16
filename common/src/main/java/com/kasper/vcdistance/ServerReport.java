@@ -30,6 +30,7 @@ public final class ServerReport {
                 : "Simple Voice Chat: not connected");
         out.add("Players: " + ctx.onlinePlayers() + " online, " + ctx.addonPlayers() + " with the addon");
         out.add("Walls: " + (p.isOcclusionEnabled() ? AdminCommands.pct(p.getOcclusionStrength()) : "off")
+                + ", loudness " + onOff(p.isWallLoudnessEnabled())
                 + ", server_walls " + onOff(s.isServerWalls()) + ", streams " + AudioDistancePlugin.SERVER_WALLS.activeStreams()
                 + "/" + s.getMaxStreams() + ", block rules " + s.getBlockRules().rules().size());
         out.add("Effects: server_effects " + onOff(s.isServerEffects()) + ", server_air " + onOff(s.isServerAir())
