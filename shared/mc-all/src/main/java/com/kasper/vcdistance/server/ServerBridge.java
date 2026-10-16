@@ -8,6 +8,7 @@ import com.kasper.vcdistance.AudioDistancePlugin;
 import com.kasper.vcdistance.EnvironmentEffects;
 import com.kasper.vcdistance.ServerHooks;
 import com.kasper.vcdistance.ServerPlayers;
+import com.kasper.vcdistance.Wind;
 import com.kasper.vcdistance.Zone;
 import com.kasper.vcdistance.ZoneOutlines;
 import net.minecraft.commands.CommandSourceStack;
@@ -51,7 +52,16 @@ public final class ServerBridge {
                 p.getX(), p.getY(), p.getZ(),
                 p.isShiftKeyDown(), p.isAlive(), p.isSpectator(),
                 item(p.getMainHandItem()), item(p.getOffhandItem()), Claims.at(p, world), PlayerLanguage.of(p),
-                effects && underwater(p), effects ? weather(p) : null, look.x, look.y, look.z);
+                effects && underwater(p), effects ? weather(p) : null, look.x, look.y, look.z, effects && sky(p));
+    }
+
+    /** The open sky over the player's head, in a world with weather: the wind reaches them. */
+    private static boolean sky(ServerPlayer p) {
+        try {
+            return Wind.windyWorld(String.valueOf(Mc.level(p).dimension())) && Mc.level(p).canSeeSky(p.blockPosition().above());
+        } catch (Throwable e) {
+            return false;
+        }
     }
 
     private static boolean underwater(ServerPlayer p) {

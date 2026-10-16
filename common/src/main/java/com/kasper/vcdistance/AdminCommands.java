@@ -92,7 +92,7 @@ public final class AdminCommands {
     static final String[] REQUIRE = {"off", "suggest", "warn", "kick"};
     static final String[] ON_OFF = {"on", "off"};
     /** {@code /vcd effects <part> ...}: the server's own air and the strengths the profile has. */
-    static final String[] EFFECT_PARTS = {"on", "off", "air", "curve", "water", "weather", "echo", "doppler", "facing", "status"};
+    static final String[] EFFECT_PARTS = {"on", "off", "air", "curve", "water", "weather", "echo", "doppler", "facing", "wind", "status"};
     static final String[] EFFECT_STEPS = {"off", "25", "50", "75", "100", "125", "150"};
     static final String[] ECHO_STEPS = {"off", "25", "50", "75", "100"};
     static final String[] DOPPLER_STEPS = {"off", "50", "100", "150", "200", "300"};
@@ -433,7 +433,7 @@ public final class AdminCommands {
 
     /**
      * {@code /vcd effects}: water, weather and echo for players without the addon ({@code on|off}), the
-     * distance air ({@code air on|off}) and the strengths the profile has ({@code water|weather|echo|doppler|facing}).
+     * distance air ({@code air on|off}) and the strengths the profile has ({@code water|weather|echo|doppler|facing|wind}).
      */
     private static void effects(Run r) {
         ServerSettings settings = r.settings;
@@ -470,7 +470,7 @@ public final class AdminCommands {
                 settings.setServerCurve(on);
                 r.saved(on ? "effects.curve_on" : "effects.curve_off");
             }
-            case "water", "weather", "echo", "doppler", "facing" -> {
+            case "water", "weather", "echo", "doppler", "facing", "wind" -> {
                 boolean echo = part.equals("echo");
                 boolean doppler = part.equals("doppler");
                 double max = echo ? DistanceConfig.REVERB_MAX : doppler ? Doppler.STRENGTH_MAX
@@ -497,6 +497,10 @@ public final class AdminCommands {
                     case "facing" -> {
                         p.setDirectivityEnabled(on);
                         p.setDirectivityStrength(on ? value : p.getDirectivityStrength());
+                    }
+                    case "wind" -> {
+                        p.setWindEnabled(on);
+                        p.setWindStrength(on ? value : p.getWindStrength());
                     }
                     default -> {
                         p.setReverbEnabled(on);
@@ -795,6 +799,8 @@ public final class AdminCommands {
                 r.change(effectText(m, p.isDopplerEnabled(), p.getDopplerStrength()), "effects doppler"))));
         r.reply.add(CommandReply.line().addAll(m.spans("effects.facing", Style.PLAIN,
                 r.change(effectText(m, p.isDirectivityEnabled(), p.getDirectivityStrength()), "effects facing"))));
+        r.reply.add(CommandReply.line().addAll(m.spans("effects.wind", Style.PLAIN,
+                r.change(effectText(m, p.isWindEnabled(), p.getWindStrength()), "effects wind"))));
         r.reply.add(CommandReply.line().addAll(m.spans("effects.air", Style.PLAIN,
                 r.change(onOff(m, settings.isServerAir()), "effects air"))));
         r.reply.add(CommandReply.line().addAll(m.spans("effects.curve", Style.PLAIN,

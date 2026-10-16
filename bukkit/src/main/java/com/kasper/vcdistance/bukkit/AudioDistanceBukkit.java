@@ -410,7 +410,7 @@ public final class AudioDistanceBukkit extends JavaPlugin implements Listener {
                 places.isEmpty() ? (regions ? WorldGuardRegions.at(at) : com.kasper.vcdistance.Jv.listOf()) : withRegions(places, regions ? WorldGuardRegions.at(at) : com.kasper.vcdistance.Jv.listOf()),
                 language == null ? "" : language,
                 effects && RoomProbe.underwater(p), effects ? RoomProbe.weather(p) : null,
-                look.getX(), look.getY(), look.getZ());
+                look.getX(), look.getY(), look.getZ(), effects && RoomProbe.sky(p));
     }
 
     /** The Towny town, the Lands land and the zone a WorldGuard flag names at {@code at}, as the zone lookup writes them. */

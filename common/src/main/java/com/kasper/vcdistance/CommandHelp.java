@@ -24,7 +24,7 @@ final class CommandHelp {
             Jv.entry("walls", new String[]{"walls 60", "walls 85", "walls off", "walls loudness off"}),
             Jv.entry("serverwalls", new String[]{"serverwalls on", "serverwalls off"}),
             Jv.entry("effects", new String[]{"effects", "effects on", "effects off", "effects air on", "effects curve on", "effects water 100",
-                    "effects weather 50", "effects echo 70"}),
+                    "effects weather 50", "effects echo 70", "effects wind 50"}),
             Jv.entry("extras", new String[]{"extras", "extras radio on", "extras speakers on", "extras eavesdrop on",
                     "extras sculk on", "extras doorway on", "extras radio off"}),
             Jv.entry("eavesdrop", new String[]{"eavesdrop", "eavesdrop item minecraft:spyglass", "eavesdrop factor 0.3", "extras eavesdrop on"}),

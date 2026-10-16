@@ -20,7 +20,7 @@ public final class DistanceConfig {
      * 7: the HUD moves from the top left (under Simple Voice Chat's group list) to the top right;
      * 8: more materials (metal, earth, soft, ice, other); 9: HUD size, background, compact, colorblind colors;
      * 10: over_sound_physics; 11: Doppler effect; 12: voice direction; 13: quiet voices behind walls. */
-    private static final int CONFIG_VERSION = 13;
+    private static final int CONFIG_VERSION = 14;
     private static final String FILE_NAME = "vc-audio-distance.properties";
 
     // -------------------------------------------------------------------------
@@ -69,6 +69,9 @@ public final class DistanceConfig {
     /** A voice is quieter and duller behind the speaker's head, as in life: on by default. */
     public static final boolean DEFAULT_DIRECTIVITY_ENABLED = true;
     public static final double DEFAULT_DIRECTIVITY_STRENGTH = 1.0;
+    /** Wind high up under the open sky and in fast flight blows far voices away: on by default. */
+    public static final boolean DEFAULT_WIND_ENABLED = true;
+    public static final double DEFAULT_WIND_STRENGTH = 1.0;
 
     private volatile AttenuationModel model = DEFAULT_MODEL;
     private volatile double attenuationFactor = DEFAULT_ATTENUATION_FACTOR;
@@ -90,6 +93,8 @@ public final class DistanceConfig {
     private volatile double dopplerStrength = DEFAULT_DOPPLER_STRENGTH;
     private volatile boolean directivityEnabled = DEFAULT_DIRECTIVITY_ENABLED;
     private volatile double directivityStrength = DEFAULT_DIRECTIVITY_STRENGTH;
+    private volatile boolean windEnabled = DEFAULT_WIND_ENABLED;
+    private volatile double windStrength = DEFAULT_WIND_STRENGTH;
     private final double[] materialWeights = new double[AcousticMaterial.values().length];
     /** Blocks and block tags with a material of their own; replaced as a whole, never changed in place. */
     private volatile BlockRules blockRules = BlockRules.EMPTY;
@@ -306,6 +311,26 @@ public final class DistanceConfig {
 
     public void setDirectivityStrength(double value) {
         directivityStrength = clamp(value, Directivity.STRENGTH_MIN, Directivity.STRENGTH_MAX);
+        changed();
+    }
+
+    /** High up under the open sky, and in fast flight, the wind blows far voices away. */
+    public boolean isWindEnabled() {
+        return windEnabled;
+    }
+
+    public void setWindEnabled(boolean value) {
+        windEnabled = value;
+        changed();
+    }
+
+    /** How strong the wind is, 0 - 1.5 (1 = the usual). */
+    public double getWindStrength() {
+        return windStrength;
+    }
+
+    public void setWindStrength(double value) {
+        windStrength = clamp(value, EFFECT_STRENGTH_MIN, EFFECT_STRENGTH_MAX);
         changed();
     }
 
@@ -581,6 +606,8 @@ public final class DistanceConfig {
         dopplerStrength = DEFAULT_DOPPLER_STRENGTH;
         directivityEnabled = DEFAULT_DIRECTIVITY_ENABLED;
         directivityStrength = DEFAULT_DIRECTIVITY_STRENGTH;
+        windEnabled = DEFAULT_WIND_ENABLED;
+        windStrength = DEFAULT_WIND_STRENGTH;
         resetMaterials();
     }
 
@@ -615,6 +642,8 @@ public final class DistanceConfig {
                 dopplerStrength = DEFAULT_DOPPLER_STRENGTH;
                 directivityEnabled = DEFAULT_DIRECTIVITY_ENABLED;
                 directivityStrength = DEFAULT_DIRECTIVITY_STRENGTH;
+                windEnabled = DEFAULT_WIND_ENABLED;
+                windStrength = DEFAULT_WIND_STRENGTH;
             }
         }
         changed();
@@ -662,6 +691,8 @@ public final class DistanceConfig {
         dopplerStrength = other.dopplerStrength;
         directivityEnabled = other.directivityEnabled;
         directivityStrength = other.directivityStrength;
+        windEnabled = other.windEnabled;
+        windStrength = other.windStrength;
         for (AcousticMaterial m : AcousticMaterial.values()) {
             double w = other.getMaterialWeight(m);
             synchronized (materialWeights) {
@@ -791,6 +822,8 @@ public final class DistanceConfig {
                 dopplerStrength = other.dopplerStrength;
                 directivityEnabled = other.directivityEnabled;
                 directivityStrength = other.directivityStrength;
+                windEnabled = other.windEnabled;
+                windStrength = other.windStrength;
             }
         }
         changed();
@@ -1026,7 +1059,13 @@ public final class DistanceConfig {
                 .value(prefix + "directivity_enabled", directivityEnabled)
                 .comment("How strong it is, 0 - 1.5 (1 = as measured: about 5 dB quieter right behind, the highs lose more). Default 1.",
                         "Насколько сильно, 0 - 1.5 (1 - как в измерениях: прямо сзади примерно на 5 дБ тише, высокие теряются сильнее). По умолчанию 1.")
-                .value(prefix + "directivity_strength", directivityStrength);
+                .value(prefix + "directivity_strength", directivityStrength)
+                .comment("Wind: high up under the open sky (from about y 90, the most on peaks and in a storm) and in fast flight, far voices are blown away: true / false. Default true.",
+                        "Ветер: высоко под открытым небом (примерно с высоты 90, сильнее всего на вершинах и в грозу) и в быстром полёте дальние голоса сдувает: true / false. По умолчанию true.")
+                .value(prefix + "wind_enabled", windEnabled)
+                .comment("How strong it is, 0 - 1.5 (1 = up to about 6 dB quieter at the edge of the range in a full wind, gusts come and go). Default 1.",
+                        "Насколько сильно, 0 - 1.5 (1 - в сильный ветер на краю дальности до примерно 6 дБ тише, порывы то сильнее, то слабее). По умолчанию 1.")
+                .value(prefix + "wind_strength", windStrength);
     }
 
     /** Per-material weights with their explanations (shared by the client and server files). */
@@ -1074,6 +1113,8 @@ public final class DistanceConfig {
         props.setProperty(prefix + "doppler_strength", format(dopplerStrength));
         props.setProperty(prefix + "directivity_enabled", String.valueOf(directivityEnabled));
         props.setProperty(prefix + "directivity_strength", format(directivityStrength));
+        props.setProperty(prefix + "wind_enabled", String.valueOf(windEnabled));
+        props.setProperty(prefix + "wind_strength", format(windStrength));
         for (AcousticMaterial m : AcousticMaterial.values()) {
             props.setProperty(prefix + "material." + m.getId(), format(getMaterialWeight(m)));
         }
@@ -1106,6 +1147,9 @@ public final class DistanceConfig {
         directivityEnabled = parseBoolean(props, prefix + "directivity_enabled", DEFAULT_DIRECTIVITY_ENABLED);
         directivityStrength = clamp(parseDouble(props, prefix + "directivity_strength", DEFAULT_DIRECTIVITY_STRENGTH),
                 Directivity.STRENGTH_MIN, Directivity.STRENGTH_MAX);
+        windEnabled = parseBoolean(props, prefix + "wind_enabled", DEFAULT_WIND_ENABLED);
+        windStrength = clamp(parseDouble(props, prefix + "wind_strength", DEFAULT_WIND_STRENGTH),
+                EFFECT_STRENGTH_MIN, EFFECT_STRENGTH_MAX);
         synchronized (materialWeights) {
             for (AcousticMaterial m : AcousticMaterial.values()) {
                 materialWeights[m.ordinal()] = clamp(parseDouble(props, prefix + "material." + m.getId(), m.getDefaultWeight()), 0.0, AcousticMaterial.MAX_WEIGHT);

@@ -37,7 +37,10 @@ public final class ServerReport {
                 + ", server_curve " + onOff(s.isServerCurve())
                 + ", water " + strength(p.isUnderwaterEnabled(), p.getUnderwaterStrength())
                 + ", weather " + strength(p.isWeatherEnabled(), p.getWeatherStrength())
-                + ", echo " + strength(p.isReverbEnabled(), p.getReverbStrength()));
+                + ", echo " + strength(p.isReverbEnabled(), p.getReverbStrength())
+                + ", doppler " + strength(p.isDopplerEnabled(), p.getDopplerStrength())
+                + ", facing " + strength(p.isDirectivityEnabled(), p.getDirectivityStrength())
+                + ", wind " + strength(p.isWindEnabled(), p.getWindStrength()));
         out.add("Profile: " + s.getProfileMode().getId() + ", preset " + s.getProfilePreset() + ", model " + p.getModel().getId()
                 + ", locked " + DistanceConfig.Part.format(s.getLockedParts()) + ", allow_monitor " + onOff(s.isMonitorAllowed()));
         out.add("Rules: sneak " + AdminCommands.pct(s.getSneakMultiplier()) + ", dead_silent " + onOff(s.isDeadSilent())

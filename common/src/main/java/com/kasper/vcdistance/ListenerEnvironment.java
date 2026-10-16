@@ -2,7 +2,7 @@ package com.kasper.vcdistance;
 
 /**
  * Where the listener is, acoustically: how echoey the space around them is, whether their head is
- * under water, and the weather over them. Written by the client tick, read by the audio threads.
+ * under water, the weather over them and the wind. Written by the client tick, read by the audio threads.
  */
 public final class ListenerEnvironment {
 
@@ -12,6 +12,8 @@ public final class ListenerEnvironment {
     /** The listener's head in world coordinates, for directions to doorways; NaN when unknown. */
     private volatile double[] position = {Double.NaN, Double.NaN, Double.NaN};
     private volatile PlaceTuning.Tuning place = PlaceTuning.Tuning.NONE;
+    private final Wind.Speed speed = new Wind.Speed();
+    private volatile double windPlace;
 
     /** The echo around the listener right now, gliding towards the latest measurement. */
     public RoomEstimate room() {
@@ -43,6 +45,22 @@ public final class ListenerEnvironment {
 
     public void updatePlace(PlaceTuning.Place where) {
         place = PlaceTuning.of(where);
+        windPlace = Wind.place(where, underWater, weather);
+    }
+
+    /** How windy it is where the listener stands ({@link Wind#place}). */
+    public double windPlace() {
+        return windPlace;
+    }
+
+    /** The air rushing past the listener's ears ({@link Wind#airflow}). */
+    public double airflow() {
+        return Wind.airflow(speed.get(), underWater);
+    }
+
+    /** Blocks per second the listener moves, smoothed. */
+    public double speed() {
+        return speed.get();
     }
 
     public double[] position() {
@@ -50,7 +68,12 @@ public final class ListenerEnvironment {
     }
 
     public void setPosition(double x, double y, double z) {
+        setPosition(x, y, z, System.nanoTime());
+    }
+
+    public void setPosition(double x, double y, double z, long nowNanos) {
         position = new double[]{x, y, z};
+        speed.position(x, y, z, nowNanos);
     }
 
     public void reset() {
@@ -59,6 +82,8 @@ public final class ListenerEnvironment {
         underWater = false;
         weather = EnvironmentEffects.Weather.CLEAR;
         place = PlaceTuning.Tuning.NONE;
+        speed.reset();
+        windPlace = 0.0;
     }
 
     /** The stronger of two weathers: a thunderstorm at either end covers the voice. */

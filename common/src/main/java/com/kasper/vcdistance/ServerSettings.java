@@ -998,6 +998,7 @@ public final class ServerSettings {
         p.setProperty(prefix + "echo_strength", DistanceConfig.format(profile.isReverbEnabled() ? profile.getReverbStrength() : 0.0));
         p.setProperty(prefix + "doppler_strength", DistanceConfig.format(profile.isDopplerEnabled() ? profile.getDopplerStrength() : 0.0));
         p.setProperty(prefix + "directivity_strength", DistanceConfig.format(profile.isDirectivityEnabled() ? profile.getDirectivityStrength() : 0.0));
+        p.setProperty(prefix + "wind_strength", DistanceConfig.format(profile.isWindEnabled() ? profile.getWindStrength() : 0.0));
         // The plugin's extras
         p.setProperty(prefix + "server_radio", String.valueOf(serverRadio));
         p.setProperty(prefix + "server_speakers", String.valueOf(serverSpeakers));

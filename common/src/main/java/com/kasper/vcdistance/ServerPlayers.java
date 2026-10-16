@@ -23,16 +23,27 @@ public final class ServerPlayers {
      * @param underwater the player's head is under water; {@code false} where it is not known
      * @param weather   rain or thunder where the player stands under the open sky
      * @param lookX     where the player looks (any length), NaN when not known
+     * @param sky       the open sky is over the player's head, in a world with weather (for the wind)
      */
     @com.github.bsideup.jabel.Desugar
     public record Info(UUID id, String name, String world, double x, double y, double z,
                        boolean sneaking, boolean alive, boolean spectator,
                        String mainHand, String offHand, List<String> regions, String language,
                        boolean underwater, EnvironmentEffects.Weather weather,
-                       double lookX, double lookY, double lookZ) {
+                       double lookX, double lookY, double lookZ, boolean sky) {
 
         public Info {
             weather = weather == null ? EnvironmentEffects.Weather.CLEAR : weather;
+        }
+
+        /** A player whose sky is not known: no wind. */
+        public Info(UUID id, String name, String world, double x, double y, double z,
+                    boolean sneaking, boolean alive, boolean spectator,
+                    String mainHand, String offHand, List<String> regions, String language,
+                    boolean underwater, EnvironmentEffects.Weather weather,
+                    double lookX, double lookY, double lookZ) {
+            this(id, name, world, x, y, z, sneaking, alive, spectator, mainHand, offHand, regions, language,
+                    underwater, weather, lookX, lookY, lookZ, false);
         }
 
         /** A player whose facing is not known. */
@@ -57,6 +68,11 @@ public final class ServerPlayers {
             return Directivity.cos(lookX, lookY, lookZ, listener.x - x, listener.y - y, listener.z - z);
         }
 
+        /** {@link Wind#place} where the player stands. */
+        public double windPlace() {
+            return Wind.place(sky, underwater, y, weather);
+        }
+
         public double distanceTo(Info other) {
             double dx = x - other.x;
             double dy = y - other.y;
@@ -73,6 +89,8 @@ public final class ServerPlayers {
     /** Each player's velocity in blocks per second, from the last two refreshes: {vx, vy, vz}. */
     private final Map<UUID, double[]> velocities = new ConcurrentHashMap<>();
     private final Map<UUID, Long> refreshedAt = new ConcurrentHashMap<>();
+    /** Each player's speed through the air, smoothed, for the wind. */
+    private final Map<UUID, Wind.Speed> speeds = new ConcurrentHashMap<>();
 
     public void update(Info info) {
         update(info, System.nanoTime());
@@ -84,6 +102,11 @@ public final class ServerPlayers {
             return; // the same snapshot again (Folia keeps entries until the player's thread refreshes them)
         }
         Long then = refreshedAt.put(info.id(), nanos);
+        Wind.Speed speed = speeds.computeIfAbsent(info.id(), k -> new Wind.Speed());
+        if (old != null && !java.util.Objects.equals(old.world(), info.world())) {
+            speed.reset(); // a portal: the way through is no flight
+        }
+        speed.position(info.x(), info.y(), info.z(), nanos);
         double[] v = {0.0, 0.0, 0.0};
         if (old != null && then != null && java.util.Objects.equals(old.world(), info.world())) {
             double dt = (nanos - then) / 1.0e9;
@@ -99,6 +122,13 @@ public final class ServerPlayers {
         velocities.put(info.id(), v);
     }
 
+    /** The air rushing past the player ({@link Wind#airflow}), 0 when not known. */
+    public double airflow(UUID id) {
+        Info info = get(id);
+        Wind.Speed speed = id == null ? null : speeds.get(id);
+        return info == null || speed == null ? 0.0 : Wind.airflow(speed.get(), info.underwater());
+    }
+
     /** The player's velocity in blocks per second {vx, vy, vz}, or {@code null} when not known. */
     public double[] velocity(UUID id) {
         return id == null ? null : velocities.get(id);
@@ -108,12 +138,14 @@ public final class ServerPlayers {
         players.remove(id);
         velocities.remove(id);
         refreshedAt.remove(id);
+        speeds.remove(id);
     }
 
     public void clear() {
         players.clear();
         velocities.clear();
         refreshedAt.clear();
+        speeds.clear();
     }
 
     /** @return the player, or {@code null} when not online (or not refreshed yet) */

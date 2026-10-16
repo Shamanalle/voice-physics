@@ -37,6 +37,8 @@ public final class SpeakerRegistry {
         private final PitchShifter shifter = new PitchShifter();
         /** How fast the speaker comes closer (client tick). */
         private final Doppler.Closing closing = new Doppler.Closing();
+        /** How fast the speaker moves through the air (client tick). */
+        private final Wind.Speed speed = new Wind.Speed();
 
         volatile Kind kind;
         volatile UUID entityId;
@@ -55,6 +57,9 @@ public final class SpeakerRegistry {
         private volatile double bearing = Double.NaN;
         private volatile boolean underWater;
         private volatile EnvironmentEffects.Weather weather = EnvironmentEffects.Weather.CLEAR;
+        // How windy it is where the speaker stands (client tick), and what the wind took off the last frame (audio thread)
+        private volatile double windPlace;
+        private volatile float windLossDb;
         // Where the speaker looks, set while its entity is found (zero: unknown), and the cosine towards the listener
         private double lookX;
         private double lookY;
@@ -272,6 +277,34 @@ public final class SpeakerRegistry {
         public void setSurroundings(boolean underWater, EnvironmentEffects.Weather weather) {
             this.underWater = underWater;
             this.weather = weather == null ? EnvironmentEffects.Weather.CLEAR : weather;
+        }
+
+        /** Where the speaker is now, for {@link #getAirflow}; NaN when unknown. */
+        public void setWindPosition(double x, double y, double z, long nowNanos) {
+            speed.position(x, y, z, nowNanos);
+        }
+
+        /** {@link Wind#place} where the speaker stands; set after {@link #setSurroundings}. */
+        public void setWindPlace(double place) {
+            this.windPlace = place;
+        }
+
+        public double getWindPlace() {
+            return windPlace;
+        }
+
+        /** The air rushing past the speaker ({@link Wind#airflow}). */
+        public double getAirflow() {
+            return Wind.airflow(speed.get(), underWater);
+        }
+
+        /** Decibels the wind took off the last frame heard, 0 when none. */
+        public float getWindLossDb() {
+            return windLossDb;
+        }
+
+        public void setWindLossDb(float lossDb) {
+            this.windLossDb = lossDb;
         }
 
         /** Wall thickness on the straight line, in stone blocks. */

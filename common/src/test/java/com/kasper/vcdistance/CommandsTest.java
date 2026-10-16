@@ -585,10 +585,11 @@ public class CommandsTest {
         assertEquals(1.0, s.profile().getUnderwaterStrength(), 1e-9);
         List<String> subs = AdminCommands.suggestions("eff", s, viewer).stream().map(AdminCommands.Suggestion::text).toList();
         assertEquals(List.of("effects"), subs);
-        assertTrue(AdminCommands.suggestions("eff", s, viewer).get(0).tooltip().contains("water, weather, echo, air, Doppler and facing"));
+        assertTrue(AdminCommands.suggestions("eff", s, viewer).get(0).tooltip().contains("water, weather, echo, air, Doppler, facing and wind"));
 
-        assertEquals(List.of("on", "off", "air", "curve", "water", "weather", "echo", "doppler", "facing", "status"), AdminCommands.suggest("effects "));
+        assertEquals(List.of("on", "off", "air", "curve", "water", "weather", "echo", "doppler", "facing", "wind", "status"), AdminCommands.suggest("effects "));
         assertEquals(List.of("off", "25", "50", "75", "100", "125", "150"), AdminCommands.suggest("effects facing "));
+        assertEquals(List.of("off", "25", "50", "75", "100", "125", "150"), AdminCommands.suggest("effects wind "));
         assertEquals(List.of("on", "off"), AdminCommands.suggest("effects air "));
         assertEquals(List.of("off", "25", "50", "75", "100", "125", "150"), AdminCommands.suggest("effects water "));
         assertEquals(List.of("off", "25", "50", "75", "100"), AdminCommands.suggest("effects echo "));
@@ -627,6 +628,43 @@ public class CommandsTest {
         assertTrue(s.profile().isDirectivityEnabled());
         AdminCommands.run("undo", s, ctx);
         assertEquals(DistanceConfig.DEFAULT_DIRECTIVITY_STRENGTH, s.profile().getDirectivityStrength(), 1e-9);
+    }
+
+    @Test
+    @DisplayName("/vcd effects wind: on by default at 100%, set to 0-150%, off keeps the strength, in the state and the report, undo")
+    void effectsWind() throws IOException {
+        ServerSettings s = settings("");
+        AdminCommands.Context ctx = ctx();
+        String view = String.join("\n", AdminCommands.run("effects", s, ctx));
+        assertTrue(view.contains("Wind (from the profile): 100%"), view);
+        button(AdminCommands.execute("effects", s, ctx), "/vcd effects wind ");
+
+        assertTrue(AdminCommands.run("effects wind 50", s, ctx).get(0).contains("Wind: 50% for everyone"));
+        assertTrue(s.profile().isWindEnabled());
+        assertEquals(0.5, s.profile().getWindStrength(), 1e-9);
+        assertTrue(AdminCommands.run("effects wind 160", s, ctx).get(0).contains("0-150|off"));
+        assertEquals(0.5, s.profile().getWindStrength(), 1e-9);
+        assertTrue(String.join("\n", ServerReport.lines(s, ctx)).contains(", wind 50%"));
+        java.util.Properties state = new java.util.Properties();
+        s.writeState(state, "");
+        assertEquals(0.5, Double.parseDouble(state.getProperty("wind_strength")), 1e-9);
+
+        assertTrue(AdminCommands.run("effects wind off", s, ctx).get(0).contains("The wind no longer changes voices"));
+        assertFalse(s.profile().isWindEnabled());
+        assertEquals(0.5, s.profile().getWindStrength(), 1e-9, "the strength is kept for when it is turned on again");
+        state = new java.util.Properties();
+        s.writeState(state, "");
+        assertEquals(0.0, Double.parseDouble(state.getProperty("wind_strength")), 1e-9);
+        assertTrue(String.join("\n", ServerReport.lines(s, ctx)).contains(", wind off"));
+        ServerSettings again = new ServerSettings(s.getPath());
+        again.load();
+        assertFalse(again.profile().isWindEnabled(), "saved");
+        assertEquals(0.5, again.profile().getWindStrength(), 1e-9);
+
+        AdminCommands.run("undo", s, ctx);
+        assertTrue(s.profile().isWindEnabled());
+        AdminCommands.run("undo", s, ctx);
+        assertEquals(DistanceConfig.DEFAULT_WIND_STRENGTH, s.profile().getWindStrength(), 1e-9);
     }
 
     @Test

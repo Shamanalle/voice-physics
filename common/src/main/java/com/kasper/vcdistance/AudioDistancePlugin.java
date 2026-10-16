@@ -786,7 +786,7 @@ public class AudioDistancePlugin implements VoicechatPlugin {
 
     /**
      * Everything done to a voice's audio on the client: the Doppler shift, walls (with how loud the
-     * speaker talks), water, weather and the way the speaker faces as one filter, then the echo of
+     * speaker talks), water, weather, wind and the way the speaker faces as one filter, then the echo of
      * the room the listener is in. Never
      * throws; on a failure the voice plays as it came.
      */
@@ -828,6 +828,17 @@ public class AudioDistancePlugin implements VoicechatPlugin {
                         ListenerEnvironment.worse(env.weather(), speaker.getWeather()), speaker.getDistance() / range,
                         c.getWeatherStrength()));
             }
+            // High up under the open sky and in fast flight the wind blows far voices away; ours with Sound Physics Remastered too
+            double wind = 0.0;
+            if (c.isWindEnabled() && speaker.getDistance() >= 0.0) {
+                double range = speaker.getMaxDistance() > 0.0F ? speaker.getMaxDistance() : getServerMaxDistance();
+                UUID id = speaker.getChannelId();
+                wind = Wind.lossDb(env.windPlace(), speaker.getWindPlace(), env.airflow(), speaker.getAirflow(),
+                        speaker.getDistance() / range, c.getWindStrength(),
+                        Wind.gust(System.nanoTime(), id.getMostSignificantBits() ^ id.getLeastSignificantBits()));
+                effect = effect.plus(new EnvironmentEffects.Effect(0.0, wind));
+            }
+            speaker.setWindLossDb((float) wind);
             // The place: smoky Nether air, dense jungle, snow
             PlaceTuning.Tuning place = c.isPlaceTuning() ? env.place() : PlaceTuning.Tuning.NONE;
             if (place.air() > 0.0 && speaker.getDistance() >= 0.0) {

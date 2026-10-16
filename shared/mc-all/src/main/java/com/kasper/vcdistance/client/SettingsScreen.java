@@ -56,6 +56,9 @@ public abstract class SettingsScreen extends com.kasper.vcdistance.compat.BaseSc
     private static final String K = "gui.vc-audio-distance.";
     private static final int MAX_WIDTH = 420;
     private static final int ROW = 24;
+    /** {@link com.kasper.vcdistance.Wind#place} from which the Effects tab calls it a breeze, then a strong wind. */
+    private static final double WIND_BREEZE = 0.15;
+    private static final double WIND_STRONG = 0.6;
     private static final int GAP = 4;
     /** Pixels per step of the mouse wheel. */
     private static final int SCROLL_STEP = 18;
@@ -163,6 +166,7 @@ public abstract class SettingsScreen extends com.kasper.vcdistance.compat.BaseSc
     private RangeSlider weatherSlider;
     private RangeSlider dopplerSlider;
     private RangeSlider facingSlider;
+    private RangeSlider windSlider;
     private boolean serverChip;
     /** Current walk-away preview step, or -1 when it is not playing. */
     private int previewStep = -1;
@@ -249,6 +253,7 @@ public abstract class SettingsScreen extends com.kasper.vcdistance.compat.BaseSc
         weatherSlider = null;
         dopplerSlider = null;
         facingSlider = null;
+        windSlider = null;
         listenButton = null;
         copyButton = null;
         pasteButton = null;
@@ -880,7 +885,22 @@ public abstract class SettingsScreen extends com.kasper.vcdistance.compat.BaseSc
                 v -> tr("effects.facing.strength", pct(v)));
         facingSlider.active = shown().isDirectivityEnabled();
         edit(withTip(facingSlider, "effects.facing.strength.tooltip"), DistanceConfig.Part.EFFECTS);
-        int rows = 6;
+
+        // Wind up high and in fast flight
+        edit(Btn.builder(onOff("effects.wind", shown().isWindEnabled()), b -> {
+            config.setWindEnabled(!config.isWindEnabled());
+            b.setMessage(onOff("effects.wind", config.isWindEnabled()));
+            if (windSlider != null) {
+                windSlider.active = config.isWindEnabled();
+            }
+        }).bounds(left, y + ROW * 6, colW, 20).tooltip(tip("effects.wind.tooltip")).build(), DistanceConfig.Part.EFFECTS);
+        windSlider = new RangeSlider(right - colW, y + ROW * 6, colW, 20,
+                DistanceConfig.EFFECT_STRENGTH_MIN, DistanceConfig.EFFECT_STRENGTH_MAX, 0.05,
+                () -> shown().getWindStrength(), config::setWindStrength,
+                v -> tr("effects.wind.strength", pct(v)));
+        windSlider.active = shown().isWindEnabled();
+        edit(withTip(windSlider, "effects.wind.strength.tooltip"), DistanceConfig.Part.EFFECTS);
+        int rows = 7;
         // With the Doppler mod: whose effect voices get. This computer's choice, never locked
         if (ModEnvironment.isDopplerModPresent()) {
             content(Btn.builder(dopplerModLabel(), b -> {
@@ -1195,6 +1215,8 @@ public abstract class SettingsScreen extends com.kasper.vcdistance.compat.BaseSc
             y += ROW;
             strengthRow("server.effects.doppler", st, "doppler_strength", 300, left, y, half, "effects doppler");
             strengthRow("server.effects.facing", st, "directivity_strength", 150, x2, y, half, "effects facing");
+            y += ROW;
+            strengthRow("server.effects.wind", st, "wind_strength", 150, left, y, half, "effects wind");
             y += ROW;
         }
         y += 4;
@@ -2085,6 +2107,16 @@ public abstract class SettingsScreen extends com.kasper.vcdistance.compat.BaseSc
                 weather != EnvironmentEffects.Weather.CLEAR && shown.isWeatherEnabled() ? Palette.WARN : Palette.TEXT_MUTED);
         rowY += 14;
 
+        // Wind: the height and the weather, or the air rushing past in flight
+        double flow = env.airflow();
+        double wind = Math.max(env.windPlace(), flow);
+        String windKey = wind < WIND_BREEZE ? "effects.wind.calm"
+                : flow >= env.windPlace() ? "effects.wind.flight"
+                : wind < WIND_STRONG ? "effects.wind.breeze" : "effects.wind.strong";
+        c.text(fit(c, tr(windKey), w), x, rowY,
+                wind >= WIND_BREEZE && shown.isWindEnabled() ? Palette.WARN : Palette.TEXT_MUTED);
+        rowY += 14;
+
         // Corners: voices that come round a wall right now
         int round = 0;
         for (SpeakerRegistry.Speaker sp : AudioDistancePlugin.SPEAKERS.active(System.nanoTime())) {
@@ -2232,7 +2264,7 @@ public abstract class SettingsScreen extends com.kasper.vcdistance.compat.BaseSc
     /**
      * Why a voice is as loud as it is, in a line: how far the voice is and what the curve makes of it,
      * then what takes more away (the wall, the longer way round, the whisper, a voice too quiet for the
-     * wall, the speaker's facing).
+     * wall, the speaker's facing, the wind).
      */
     private Component whyQuiet(SpeakerRegistry.Speaker s, boolean wallsActive) {
         List<Component> parts = new ArrayList<>();
@@ -2259,7 +2291,11 @@ public abstract class SettingsScreen extends com.kasper.vcdistance.compat.BaseSc
         if (facingDb >= 1.0F) {
             parts.add(tr("monitor.why.facing", String.format(Locale.ROOT, "%.0f", facingDb)));
         }
-        if (parts.size() == 1 || (parts.size() == 2 && s.isWhispering() && lossDb < 1.5F && facingDb < 1.0F)) {
+        float windDb = s.getWindLossDb();
+        if (windDb >= 1.0F) {
+            parts.add(tr("monitor.why.wind", String.format(Locale.ROOT, "%.0f", windDb)));
+        }
+        if (parts.size() == 1 || (parts.size() == 2 && s.isWhispering() && lossDb < 1.5F && facingDb < 1.0F && windDb < 1.0F)) {
             parts.add(tr("monitor.why.clear"));
         }
         net.minecraft.network.chat.MutableComponent line = Txt.empty();

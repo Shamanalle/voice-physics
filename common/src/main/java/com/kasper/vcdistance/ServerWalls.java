@@ -81,6 +81,9 @@ public final class ServerWalls {
      */
     static final double FACING_START_DB = 1.0;
     static final double FACING_KEEP_DB = 0.5;
+    /** The same for the wind: a breeze on a hill is not worth a stream of its own. */
+    static final double WIND_START_DB = 1.0;
+    static final double WIND_KEEP_DB = 0.5;
     private static final int MAX_TRACES_PER_TICK = 48;
     private static final int MAX_DOORWAY_SEARCHES = 6;
     /** Per listener and tick, when each player's walls are measured on their own thread (Folia). */
@@ -605,6 +608,8 @@ public final class ServerWalls {
         double roomDistance = -1.0;
         // Where the speaker looks, towards the listener: only a player's own voice, not a sound from a place
         double facing = Double.NaN;
+        // High up and in fast flight the wind blows far voices away; also a player's voice only
+        double wind = 0.0;
         if (realism) {
             ServerPlayers.Info from = players.get(speakerId);
             ServerPlayers.Info to = players.get(listener);
@@ -615,6 +620,11 @@ public final class ServerWalls {
                 roomDistance = from.distanceTo(to);
                 if (position == null && settings.isServerEffects() && profile.isDirectivityEnabled()) {
                     facing = from.facing(to);
+                }
+                if (position == null && settings.isServerEffects() && profile.isWindEnabled()) {
+                    wind = Wind.lossDb(to.windPlace(), from.windPlace(), players.airflow(listener), players.airflow(speakerId),
+                            roomDistance / range, profile.getWindStrength(),
+                            Wind.gust(now, channel.getMostSignificantBits() ^ channel.getLeastSignificantBits()));
                 }
             }
         }
@@ -683,6 +693,9 @@ public final class ServerWalls {
                     muffle = 1.0 - (1.0 - muffle) * (1.0 - turned.muffle());
                     loss += turned.lossDb();
                 }
+            }
+            if (wind >= (pair.encoder == null ? WIND_START_DB : WIND_KEEP_DB)) {
+                loss += wind;
             }
             double pitch = 1.0;
             if (settings.isServerEffects() && profile.isDopplerEnabled()) {

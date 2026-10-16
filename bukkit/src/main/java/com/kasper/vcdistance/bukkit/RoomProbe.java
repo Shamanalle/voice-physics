@@ -60,6 +60,16 @@ final class RoomProbe {
         }
     }
 
+    /** The open sky over the player's head, in a world with weather: the wind reaches them. */
+    static boolean sky(Player player) {
+        try {
+            return player.getWorld().getEnvironment() == World.Environment.NORMAL
+                    && player.getEyeLocation().getBlock().getLightFromSky() >= 15;
+        } catch (Throwable t) {
+            return false;
+        }
+    }
+
     /** Rain or thunder on the player: a storm, in a biome where it rains, with nothing overhead. */
     @SuppressWarnings("deprecation")
     static EnvironmentEffects.Weather weather(Player player) {

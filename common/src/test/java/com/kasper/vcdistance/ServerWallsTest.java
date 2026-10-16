@@ -588,6 +588,92 @@ public class ServerWallsTest {
         assertTrue(sent.isEmpty());
     }
 
+    private static double voiceRange() {
+        double v = AudioDistancePlugin.serverVoiceDistance();
+        return v > 0.0 ? v : AudioDistancePlugin.FALLBACK_DISTANCE;
+    }
+
+    /** Speaker at the origin, listener {@code distance} blocks along +x, both at {@code y}, under the open sky or not. */
+    private ServerPlayers windPlayers(double distance, double y, boolean sky) {
+        ServerPlayers players = new ServerPlayers();
+        walls = new ServerWalls(settings, players);
+        walls.markWorldAvailable();
+        players.update(new ServerPlayers.Info(speaker, "Speaker", "world", 0, y, 0, false, true, false, "", "",
+                List.of(), "", false, EnvironmentEffects.Weather.CLEAR, Double.NaN, Double.NaN, Double.NaN, sky));
+        players.update(new ServerPlayers.Info(listener, "Listener", "world", distance, y, 0, false, true, false, "", "",
+                List.of(), "", false, EnvironmentEffects.Weather.CLEAR, Double.NaN, Double.NaN, Double.NaN, sky));
+        return players;
+    }
+
+    /** The listener, low down under a roof, flies along +z at {@code speed} blocks per second, measured afresh. */
+    private void listenerFlies(ServerPlayers players, double distance, double speed, long start) {
+        players.update(new ServerPlayers.Info(listener, "Listener", "world", distance, 64, 0, false, true, false, "", "",
+                List.of(), "", false, EnvironmentEffects.Weather.CLEAR), start);
+        players.update(new ServerPlayers.Info(listener, "Listener", "world", distance, 64, speed / 20.0, false, true, false, "", "",
+                List.of(), "", false, EnvironmentEffects.Weather.CLEAR), start + 50_000_000L);
+    }
+
+    @Test
+    @DisplayName("Wind: on a peak a far voice is blown away; in the valley, under a roof or with the wind off nothing happens")
+    void windOnAPeak() {
+        settings.setServerEffects(true);
+        double range = voiceRange();
+        windPlayers(range, 200, true);
+        heardLevel(0, 20); // the filter glides in
+        double far = heardLevel(20, 40);
+        // About 6 dB at the edge of the range, give or take the gusts (0.65 - 1.35 of it)
+        assertTrue(far > 0.37 && far < 0.66, "at the edge of the range on a peak: " + far);
+        assertEquals(1, walls.activeStreams());
+
+        sent.clear();
+        windPlayers(range, 64, true);
+        for (int i = 0; i < 5; i++) {
+            assertFalse(fireFrame(i), "no wind down in the valley");
+        }
+        windPlayers(range, 200, false);
+        for (int i = 0; i < 5; i++) {
+            assertFalse(fireFrame(i), "no wind under a roof");
+        }
+        settings.profile().setWindEnabled(false);
+        windPlayers(range, 200, true);
+        for (int i = 0; i < 5; i++) {
+            assertFalse(fireFrame(i), "the wind switched off in the profile");
+        }
+        assertTrue(sent.isEmpty());
+    }
+
+    @Test
+    @DisplayName("Wind: flying past a listener, the air rushing by covers the voice; a slow glide starts no stream but keeps one going")
+    void windInFlight() {
+        settings.setServerEffects(true);
+        double range = voiceRange();
+        ServerPlayers players = windPlayers(range, 64, false);
+        long t = System.nanoTime();
+        listenerFlies(players, range, 30.0, t);
+        assertTrue(players.airflow(listener) > 0.8, "elytra speed: " + players.airflow(listener));
+        assertEquals(0.0, players.airflow(speaker), "the speaker stands still");
+        heardLevel(0, 20);
+        double flying = heardLevel(20, 40);
+        // airflow 0.84 at the edge of the range: 5 dB, no gusts
+        assertTrue(flying > 0.50 && flying < 0.62, "flying at 30 blocks per second: " + flying);
+
+        // Slower: 0.7 dB, under the 1 dB it takes to start a stream, over the 0.5 dB that keeps one
+        listenerFlies(players, range, 17.0, t + 3_000_000_000L);
+        for (int i = 40; i < 80; i++) {
+            assertTrue(fireFrame(i), "the stream keeps going at frame " + i);
+        }
+        assertEquals(1, walls.activeStreams());
+
+        sent.clear();
+        players = windPlayers(range, 64, false);
+        listenerFlies(players, range, 17.0, t + 6_000_000_000L);
+        for (int i = 0; i < 5; i++) {
+            assertFalse(fireFrame(i), "a slow glide is not worth a stream of its own");
+        }
+        listenerFlies(players, range, 5.0, t + 9_000_000_000L);
+        assertEquals(0.0, players.airflow(listener), "on foot");
+    }
+
     @Test
     @DisplayName("The cave a player stands in adds an echo to the voice; leaving it takes the echo away")
     void echoInACave() throws InterruptedException {
