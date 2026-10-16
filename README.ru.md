@@ -33,7 +33,7 @@
 
 ## Быстрый старт
 
-**Какой файл:** на Fabric, Quilt, Forge и NeoForge — полный аддон, свой файл для каждого диапазона версий Minecraft. Серверам Paper, Purpur, Folia и Spigot — плагин. Точный файл для вашей версии — в разделе [Версии и файлы](#версии-и-файлы).
+**Какой файл:** на Fabric, Quilt, Forge и NeoForge — полный аддон: один файл для Fabric и Quilt и один для Forge и NeoForge, каждый на все версии Minecraft от 1.16.5 до 26.3. Серверам Paper, Purpur, Folia и Spigot — плагин. Имена файлов и нужная Java — в разделе [Версии и файлы](#версии-и-файлы).
 
 **Игрок**
 1. Установите [Simple Voice Chat](https://modrinth.com/plugin/simple-voice-chat) и, на Fabric, [Fabric API](https://modrinth.com/mod/fabric-api).

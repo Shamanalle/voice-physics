@@ -33,7 +33,7 @@ An addon for [Simple Voice Chat](https://modrinth.com/plugin/simple-voice-chat) 
 
 ## Quick start
 
-**Which file:** Fabric, Quilt, Forge and NeoForge get the full addon, with a file for each range of Minecraft versions. Paper, Purpur, Folia and Spigot servers get the plugin. The exact file for your version is in [Versions and files](#versions-and-files).
+**Which file:** Fabric, Quilt, Forge and NeoForge get the full addon: one file for Fabric and Quilt and one for Forge and NeoForge, each covering every Minecraft version from 1.16.5 to 26.3. Paper, Purpur, Folia and Spigot servers get the plugin. File names and Java versions are in [Versions and files](#versions-and-files).
 
 **Player**
 1. Install [Simple Voice Chat](https://modrinth.com/plugin/simple-voice-chat) and, on Fabric, [Fabric API](https://modrinth.com/mod/fabric-api).
