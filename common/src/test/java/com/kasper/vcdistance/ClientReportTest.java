@@ -54,7 +54,7 @@ public class ClientReportTest {
     void describe() {
         DistanceConfig c = new DistanceConfig();
         String line = ClientReport.describe(c);
-        for (String part : new String[]{"model ", "walls ", "corners ", "echo ", "water ", "weather ", "facing 100%", "block rules 0"}) {
+        for (String part : new String[]{"model ", "walls ", "corners ", "echo ", "water ", "weather ", "facing off", "block rules 0"}) {
             assertTrue(line.contains(part), line);
         }
     }

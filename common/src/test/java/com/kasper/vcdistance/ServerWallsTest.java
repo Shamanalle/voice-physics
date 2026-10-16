@@ -532,10 +532,17 @@ public class ServerWallsTest {
         return players;
     }
 
+    /** Facing is optional and gentle by default; these tests measure it switched on at full strength. */
+    private void facingOn() {
+        settings.profile().setDirectivityEnabled(true);
+        settings.profile().setDirectivityStrength(1.0);
+    }
+
     @Test
     @DisplayName("Facing: behind the speaker's back the voice is quieter and duller; in front it is left alone")
     void facingAway() {
         settings.setServerEffects(true);
+        facingOn();
         facingPlayers(5, 1.0, 0.0);
         for (int i = 0; i < 5; i++) {
             assertFalse(fireFrame(i), "the speaker faces the listener");
@@ -555,6 +562,7 @@ public class ServerWallsTest {
     @DisplayName("Facing: turning back to the listener frees the stream; off in the profile it does nothing")
     void facingTurnsBackAndSwitchesOff() {
         settings.setServerEffects(true);
+        facingOn();
         ServerPlayers players = facingPlayers(5, -1.0, 0.0);
         heardLevel(0, 20);
         players.update(new ServerPlayers.Info(speaker, "Speaker", "world", 0, 64, 0, false, true, false, "", "",
@@ -576,6 +584,7 @@ public class ServerWallsTest {
     @DisplayName("Facing: a small turn is not worth a re-encoded stream, and an unknown facing changes nothing")
     void facingThreshold() {
         settings.setServerEffects(true);
+        facingOn();
         // 60 degrees off: a fraction of a decibel
         facingPlayers(5, 0.5, Math.sqrt(0.75));
         for (int i = 0; i < 5; i++) {

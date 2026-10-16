@@ -796,12 +796,12 @@ public final class AdminCommands {
                 r.change(effectText(m, p.isUnderwaterEnabled(), p.getUnderwaterStrength()), "effects water"),
                 r.change(effectText(m, p.isWeatherEnabled(), p.getWeatherStrength()), "effects weather"),
                 r.change(effectText(m, p.isReverbEnabled(), p.getReverbStrength()), "effects echo"))));
+        r.reply.add(CommandReply.line().addAll(m.spans("effects.wind", Style.PLAIN,
+                r.change(effectText(m, p.isWindEnabled(), p.getWindStrength()), "effects wind"))));
         r.reply.add(CommandReply.line().addAll(m.spans("effects.doppler", Style.PLAIN,
                 r.change(effectText(m, p.isDopplerEnabled(), p.getDopplerStrength()), "effects doppler"))));
         r.reply.add(CommandReply.line().addAll(m.spans("effects.facing", Style.PLAIN,
                 r.change(effectText(m, p.isDirectivityEnabled(), p.getDirectivityStrength()), "effects facing"))));
-        r.reply.add(CommandReply.line().addAll(m.spans("effects.wind", Style.PLAIN,
-                r.change(effectText(m, p.isWindEnabled(), p.getWindStrength()), "effects wind"))));
         r.reply.add(CommandReply.line().addAll(m.spans("effects.air", Style.PLAIN,
                 r.change(onOff(m, settings.isServerAir()), "effects air"))));
         r.reply.add(CommandReply.line().addAll(m.spans("effects.curve", Style.PLAIN,

@@ -7,8 +7,10 @@ package com.kasper.vcdistance;
  * Measurements of speech (Chu and Warnock 2002, Monson et al. 2012) give about the same level
  * within 40 degrees of the front, a decibel or so less to the side and about 6 dB less behind,
  * where 1 kHz drops by about 5 dB and 4 kHz by 10 dB or more. A broadband loss and a low-pass
- * come close to that: at the default strength, behind the speaker, 5 dB and a cutoff near 4.2 kHz
+ * come close to that: at strength 1, behind the speaker, 5 dB and a cutoff near 4.2 kHz
  * (about -5 dB at 1 kHz and -10 dB at 4 kHz; below 500 Hz a few decibels more than measured).
+ * Being turned away matters little in play and a strong loss gets in the way, so it is optional
+ * and its default strength is half of that.
  * <p>
  * Only the sound that goes straight from the speaker to the listener has a direction. A voice heard
  * round a wall left the speaker towards the doorway, and the echo of a room comes from every side,

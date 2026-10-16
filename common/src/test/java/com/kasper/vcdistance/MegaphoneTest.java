@@ -43,12 +43,12 @@ public class MegaphoneTest {
     }
 
     @Test
-    @DisplayName("Range: the full multiplier ahead, a fifth of the extra behind, in between to the side, all round when unknown")
+    @DisplayName("Range: the full multiplier ahead, half of the extra behind, in between to the side, all round when unknown")
     void rangeFactor() {
         assertEquals(2.5, Megaphone.rangeFactor(2.5, 1.0), 1e-9);
         assertEquals(1.0 + 1.5 * Megaphone.BACK_SHARE, Megaphone.rangeFactor(2.5, -1.0), 1e-9);
         double side = Megaphone.rangeFactor(2.5, 0.0);
-        assertTrue(side > 1.3 && side < 2.5, String.valueOf(side));
+        assertTrue(side > 1.0 + 1.5 * Megaphone.BACK_SHARE && side < 2.5, String.valueOf(side));
         assertEquals(2.5, Megaphone.rangeFactor(2.5, Double.NaN), 1e-9);
         assertEquals(1.0, Megaphone.rangeFactor(1.0, -1.0), 1e-9);
         assertEquals(0.5, Megaphone.rangeFactor(0.5, -1.0), 1e-9, "a megaphone that makes quieter is left as it is");

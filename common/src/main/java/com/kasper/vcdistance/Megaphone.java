@@ -6,8 +6,11 @@ package com.kasper.vcdistance;
  */
 public final class Megaphone {
 
-    /** Straight behind the speaker the extra range is this share of the extra range in front. */
-    public static final double BACK_SHARE = 0.2;
+    /**
+     * Straight behind the speaker the extra range is this share of the extra range in front: enough
+     * to make facing the crowd worth it, not so much that turning round silences the megaphone.
+     */
+    public static final double BACK_SHARE = 0.5;
 
     private Megaphone() {
     }

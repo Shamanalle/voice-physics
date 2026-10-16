@@ -857,35 +857,6 @@ public abstract class SettingsScreen extends com.kasper.vcdistance.compat.BaseSc
             b.setMessage(onOff("effects.place", config.isPlaceTuning()));
         }).bounds(right - colW, y + ROW * 3, colW, 20).tooltip(tip("effects.place.tooltip")).build(), DistanceConfig.Part.EFFECTS);
 
-        edit(Btn.builder(onOff("effects.doppler", shown().isDopplerEnabled()), b -> {
-            config.setDopplerEnabled(!config.isDopplerEnabled());
-            b.setMessage(onOff("effects.doppler", config.isDopplerEnabled()));
-            if (dopplerSlider != null) {
-                dopplerSlider.active = config.isDopplerEnabled();
-            }
-        }).bounds(left, y + ROW * 4, colW, 20).tooltip(tip("effects.doppler.tooltip")).build(), DistanceConfig.Part.EFFECTS);
-        dopplerSlider = new RangeSlider(right - colW, y + ROW * 4, colW, 20,
-                Doppler.STRENGTH_MIN, Doppler.STRENGTH_MAX, 0.05,
-                () -> shown().getDopplerStrength(), config::setDopplerStrength,
-                v -> tr("effects.doppler.strength", pct(v)));
-        dopplerSlider.active = shown().isDopplerEnabled();
-        edit(withTip(dopplerSlider, "effects.doppler.strength.tooltip"), DistanceConfig.Part.EFFECTS);
-
-        // Which way the speaker faces
-        edit(Btn.builder(onOff("effects.facing", shown().isDirectivityEnabled()), b -> {
-            config.setDirectivityEnabled(!config.isDirectivityEnabled());
-            b.setMessage(onOff("effects.facing", config.isDirectivityEnabled()));
-            if (facingSlider != null) {
-                facingSlider.active = config.isDirectivityEnabled();
-            }
-        }).bounds(left, y + ROW * 5, colW, 20).tooltip(tip("effects.facing.tooltip")).build(), DistanceConfig.Part.EFFECTS);
-        facingSlider = new RangeSlider(right - colW, y + ROW * 5, colW, 20,
-                Directivity.STRENGTH_MIN, Directivity.STRENGTH_MAX, 0.05,
-                () -> shown().getDirectivityStrength(), config::setDirectivityStrength,
-                v -> tr("effects.facing.strength", pct(v)));
-        facingSlider.active = shown().isDirectivityEnabled();
-        edit(withTip(facingSlider, "effects.facing.strength.tooltip"), DistanceConfig.Part.EFFECTS);
-
         // Wind up high and in fast flight
         edit(Btn.builder(onOff("effects.wind", shown().isWindEnabled()), b -> {
             config.setWindEnabled(!config.isWindEnabled());
@@ -893,13 +864,42 @@ public abstract class SettingsScreen extends com.kasper.vcdistance.compat.BaseSc
             if (windSlider != null) {
                 windSlider.active = config.isWindEnabled();
             }
-        }).bounds(left, y + ROW * 6, colW, 20).tooltip(tip("effects.wind.tooltip")).build(), DistanceConfig.Part.EFFECTS);
-        windSlider = new RangeSlider(right - colW, y + ROW * 6, colW, 20,
+        }).bounds(left, y + ROW * 4, colW, 20).tooltip(tip("effects.wind.tooltip")).build(), DistanceConfig.Part.EFFECTS);
+        windSlider = new RangeSlider(right - colW, y + ROW * 4, colW, 20,
                 DistanceConfig.EFFECT_STRENGTH_MIN, DistanceConfig.EFFECT_STRENGTH_MAX, 0.05,
                 () -> shown().getWindStrength(), config::setWindStrength,
                 v -> tr("effects.wind.strength", pct(v)));
         windSlider.active = shown().isWindEnabled();
         edit(withTip(windSlider, "effects.wind.strength.tooltip"), DistanceConfig.Part.EFFECTS);
+
+        edit(Btn.builder(onOff("effects.doppler", shown().isDopplerEnabled()), b -> {
+            config.setDopplerEnabled(!config.isDopplerEnabled());
+            b.setMessage(onOff("effects.doppler", config.isDopplerEnabled()));
+            if (dopplerSlider != null) {
+                dopplerSlider.active = config.isDopplerEnabled();
+            }
+        }).bounds(left, y + ROW * 5, colW, 20).tooltip(tip("effects.doppler.tooltip")).build(), DistanceConfig.Part.EFFECTS);
+        dopplerSlider = new RangeSlider(right - colW, y + ROW * 5, colW, 20,
+                Doppler.STRENGTH_MIN, Doppler.STRENGTH_MAX, 0.05,
+                () -> shown().getDopplerStrength(), config::setDopplerStrength,
+                v -> tr("effects.doppler.strength", pct(v)));
+        dopplerSlider.active = shown().isDopplerEnabled();
+        edit(withTip(dopplerSlider, "effects.doppler.strength.tooltip"), DistanceConfig.Part.EFFECTS);
+
+        // Which way the speaker faces: optional and gentle, so last
+        edit(Btn.builder(onOff("effects.facing", shown().isDirectivityEnabled()), b -> {
+            config.setDirectivityEnabled(!config.isDirectivityEnabled());
+            b.setMessage(onOff("effects.facing", config.isDirectivityEnabled()));
+            if (facingSlider != null) {
+                facingSlider.active = config.isDirectivityEnabled();
+            }
+        }).bounds(left, y + ROW * 6, colW, 20).tooltip(tip("effects.facing.tooltip")).build(), DistanceConfig.Part.EFFECTS);
+        facingSlider = new RangeSlider(right - colW, y + ROW * 6, colW, 20,
+                Directivity.STRENGTH_MIN, Directivity.STRENGTH_MAX, 0.05,
+                () -> shown().getDirectivityStrength(), config::setDirectivityStrength,
+                v -> tr("effects.facing.strength", pct(v)));
+        facingSlider.active = shown().isDirectivityEnabled();
+        edit(withTip(facingSlider, "effects.facing.strength.tooltip"), DistanceConfig.Part.EFFECTS);
         int rows = 7;
         // With the Doppler mod: whose effect voices get. This computer's choice, never locked
         if (ModEnvironment.isDopplerModPresent()) {
@@ -1214,10 +1214,10 @@ public abstract class SettingsScreen extends com.kasper.vcdistance.compat.BaseSc
             strengthRow("server.effects.echo", st, "echo_strength", 100, left, y, half, "effects echo");
             serverToggle("server.effects.curve", st, "server_curve", "false", x2, y, half, "effects curve");
             y += ROW;
-            strengthRow("server.effects.doppler", st, "doppler_strength", 300, left, y, half, "effects doppler");
-            strengthRow("server.effects.facing", st, "directivity_strength", 150, x2, y, half, "effects facing");
-            y += ROW;
             strengthRow("server.effects.wind", st, "wind_strength", 150, left, y, half, "effects wind");
+            strengthRow("server.effects.doppler", st, "doppler_strength", 300, x2, y, half, "effects doppler");
+            y += ROW;
+            strengthRow("server.effects.facing", st, "directivity_strength", 150, left, y, half, "effects facing");
             y += ROW;
         }
         y += 4;

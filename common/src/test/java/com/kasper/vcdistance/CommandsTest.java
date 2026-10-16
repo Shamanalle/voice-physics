@@ -602,12 +602,12 @@ public class CommandsTest {
     }
 
     @Test
-    @DisplayName("/vcd effects facing: on by default at 100%, set to 0-150%, off keeps the strength, undo")
+    @DisplayName("/vcd effects facing: off by default, set to 0-150%, off keeps the strength, undo")
     void effectsFacing() throws IOException {
         ServerSettings s = settings("");
         AdminCommands.Context ctx = ctx();
         String view = String.join("\n", AdminCommands.run("effects", s, ctx));
-        assertTrue(view.contains("Speaker's facing (from the profile): 100%"), view);
+        assertTrue(view.contains("Speaker's facing (from the profile): off"), view);
         button(AdminCommands.execute("effects", s, ctx), "/vcd effects facing ");
 
         assertTrue(AdminCommands.run("effects facing 130", s, ctx).get(0).contains("Speaker's facing: 130% for everyone"));
@@ -627,6 +627,7 @@ public class CommandsTest {
         AdminCommands.run("undo", s, ctx);
         assertTrue(s.profile().isDirectivityEnabled());
         AdminCommands.run("undo", s, ctx);
+        assertFalse(s.profile().isDirectivityEnabled(), "back to the default: off");
         assertEquals(DistanceConfig.DEFAULT_DIRECTIVITY_STRENGTH, s.profile().getDirectivityStrength(), 1e-9);
     }
 

@@ -631,9 +631,9 @@ public final class ServerSettings {
                         "Предмет, который в руке работает как мегафон, например minecraft:goat_horn. Пусто = мегафона нет.")
                 .value("megaphone_item", megaphoneItem)
                 .comment("Voice range with the megaphone, times this: 1 - 10. Default 2.5. It is the range straight ahead",
-                        "of the speaker; to the sides it is less, straight behind 1 + a fifth of the extra (x1.3 at 2.5).",
+                        "of the speaker; to the sides it is less, straight behind 1 + half the extra (x1.75 at 2.5).",
                         "Дальность голоса с мегафоном умножается на это: 1 - 10. По умолчанию 2.5. Это дальность прямо",
-                        "перед говорящим; в стороны меньше, прямо за спиной 1 + пятая часть прибавки (x1.3 при 2.5).")
+                        "перед говорящим; в стороны меньше, прямо за спиной 1 + половина прибавки (x1.75 при 2.5).")
                 .value("megaphone_multiplier", megaphoneMultiplier)
                 .comment("true: the voice through the megaphone sounds like a horn (thin, a little overdriven), for every player.",
                         "Needs Simple Voice Chat 2.5.27 or newer on the server. Default true.",

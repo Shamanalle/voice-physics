@@ -167,13 +167,13 @@ public class ServerRulesTest {
     }
 
     @Test
-    @DisplayName("Megaphone: carries furthest straight ahead, a fifth of the extra behind, smoothly in between")
+    @DisplayName("Megaphone: carries furthest straight ahead, half of the extra behind, smoothly in between")
     void megaphoneDirection() throws IOException {
         ServerSettings s = settings("megaphone_item=goat_horn\nmegaphone_multiplier=2.5\n");
         ServerPlayers.Info speaker = new ServerPlayers.Info(UUID.randomUUID(), "Herald", "world", 0, 64, 0,
                 false, true, false, "minecraft:goat_horn", "", List.of(), "", false, EnvironmentEffects.Weather.CLEAR, 1, 0, 0);
         double side = 48 * Megaphone.rangeFactor(2.5, 0.0);
-        assertTrue(side > 62.4 && side < 120, "to the side between behind and ahead: " + side);
+        assertTrue(side > 84 && side < 120, "to the side between behind and ahead: " + side);
 
         ServerRange.Decision ahead = ServerRange.decide(s, speaker, player("a", "world", 100, 0), false, 48, 24);
         assertEquals(ServerRange.Reason.HEARS, ahead.reason());
@@ -182,7 +182,7 @@ public class ServerRulesTest {
 
         ServerRange.Decision behind = ServerRange.decide(s, speaker, player("b", "world", -60, 0), false, 48, 24);
         assertEquals(ServerRange.Reason.HEARS, behind.reason());
-        assertEquals(62.4, behind.distance(), 1e-9);
+        assertEquals(84.0, behind.distance(), 1e-9);
         assertEquals(ServerRange.Reason.RANGE, ServerRange.decide(s, speaker, player("b", "world", -100, 0), false, 48, 24).reason());
 
         assertEquals(ServerRange.Reason.HEARS, ServerRange.decide(s, speaker, player("c", "world", 0, side - 1), false, 48, 24).reason());

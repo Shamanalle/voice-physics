@@ -67,8 +67,8 @@ public final class DistanceConfig {
     public static final boolean DEFAULT_DOPPLER_ENABLED = false;
     public static final double DEFAULT_DOPPLER_STRENGTH = 1.0;
     /** A voice is quieter and duller behind the speaker's head, as in life: on by default. */
-    public static final boolean DEFAULT_DIRECTIVITY_ENABLED = true;
-    public static final double DEFAULT_DIRECTIVITY_STRENGTH = 1.0;
+    public static final boolean DEFAULT_DIRECTIVITY_ENABLED = false;
+    public static final double DEFAULT_DIRECTIVITY_STRENGTH = 0.5;
     /** Wind high up under the open sky and in fast flight blows far voices away: on by default. */
     public static final boolean DEFAULT_WIND_ENABLED = true;
     public static final double DEFAULT_WIND_STRENGTH = 1.0;
@@ -1054,11 +1054,11 @@ public final class DistanceConfig {
                 .comment("How strong it is, 0 - 3 (1 = as in air, where running barely changes a voice). Default 1.",
                         "Насколько сильно, 0 - 3 (1 - как в воздухе, где бег почти не меняет голос). По умолчанию 1.")
                 .value(prefix + "doppler_strength", dopplerStrength)
-                .comment("Voice direction: a speaker turned away from you sounds quieter and duller, as in life: true / false. Default true.",
-                        "Направленность голоса: говорящий, отвернувшийся от вас, звучит тише и глуше, как в жизни: true / false. По умолчанию true.")
+                .comment("Voice direction: a speaker turned away from you sounds quieter and duller, as in life. Optional and gentle by default: true / false. Default false.",
+                        "Направленность голоса: говорящий, отвернувшийся от вас, звучит тише и глуше, как в жизни. Дополнительно и мягко: true / false. По умолчанию false.")
                 .value(prefix + "directivity_enabled", directivityEnabled)
-                .comment("How strong it is, 0 - 1.5 (1 = as measured: about 5 dB quieter right behind, the highs lose more). Default 1.",
-                        "Насколько сильно, 0 - 1.5 (1 - как в измерениях: прямо сзади примерно на 5 дБ тише, высокие теряются сильнее). По умолчанию 1.")
+                .comment("How strong it is, 0 - 1.5 (1 = as measured: about 5 dB quieter right behind, the highs lose more; 0.5 is gentle). Default 0.5.",
+                        "Насколько сильно, 0 - 1.5 (1 - как в измерениях: прямо сзади примерно на 5 дБ тише, высокие теряются сильнее; 0.5 - мягко). По умолчанию 0.5.")
                 .value(prefix + "directivity_strength", directivityStrength)
                 .comment("Wind: high up under the open sky (from about y 90, the most on peaks and in a storm) and in fast flight, far voices are blown away: true / false. Default true.",
                         "Ветер: высоко под открытым небом (примерно с высоты 90, сильнее всего на вершинах и в грозу) и в быстром полёте дальние голоса сдувает: true / false. По умолчанию true.")
