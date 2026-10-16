@@ -793,6 +793,121 @@ public class ServerWallsTest {
         AudioDistancePlugin.MUTED_TALK.forget(speaker);
     }
 
+    /** A microphone frame whose audio the addon may replace, as on Simple Voice Chat 2.5.27+. */
+    private final class Mic {
+        byte[] data;
+        boolean settable = true;
+        final de.maxhenkel.voicechat.api.events.MicrophonePacketEvent event;
+
+        Mic() {
+            Map<String, java.util.function.Function<Object[], Object>> pm = new HashMap<>();
+            pm.put("isWhispering", a -> false);
+            pm.put("getOpusEncodedData", a -> data);
+            pm.put("setOpusEncodedData", a -> {
+                if (!settable) {
+                    throw new AbstractMethodError("setOpusEncodedData");
+                }
+                data = (byte[]) a[0];
+                return null;
+            });
+            de.maxhenkel.voicechat.api.packets.MicrophonePacket mic =
+                    proxy(de.maxhenkel.voicechat.api.packets.MicrophonePacket.class, pm);
+            VoicechatConnection player = connection(speaker);
+            Map<String, java.util.function.Function<Object[], Object>> cm = new HashMap<>();
+            cm.put("getPlayer", a -> player.getPlayer());
+            cm.put("isInGroup", a -> false);
+            VoicechatConnection sender = proxy(VoicechatConnection.class, cm);
+            VoicechatServerApi api = api();
+            Map<String, java.util.function.Function<Object[], Object>> m = new HashMap<>();
+            m.put("getPacket", a -> mic);
+            m.put("getSenderConnection", a -> sender);
+            m.put("getVoicechat", a -> api);
+            event = proxy(de.maxhenkel.voicechat.api.events.MicrophonePacketEvent.class, m);
+        }
+
+        /** Sends one frame of 8 kHz tone, well above the horn's band; returns what goes out. */
+        short[] send(int i) {
+            short[] pcm = new short[FRAME];
+            for (int k = 0; k < FRAME; k++) {
+                long n = (long) i * FRAME + k;
+                pcm[k] = (short) Math.round(8000 * Math.sin(2 * Math.PI * 8000 * n / 48000.0));
+            }
+            data = pack(pcm);
+            walls.onMicrophone(event);
+            return unpack(data);
+        }
+
+        void end() {
+            data = new byte[0];
+            walls.onMicrophone(event);
+        }
+    }
+
+    private void holder(ServerPlayers players, String hand) {
+        players.update(new ServerPlayers.Info(speaker, "Herald", "world", 0, 64, 0, false, true, false, hand, "",
+                List.of(), "", false, EnvironmentEffects.Weather.CLEAR, 1, 0, 0));
+    }
+
+    @Test
+    @DisplayName("Megaphone: the held horn changes the voice for everyone; put down, the voice is plain and the stream closes")
+    void megaphoneSound() {
+        ServerPlayers players = new ServerPlayers();
+        walls = new ServerWalls(settings, players);
+        walls.markWorldAvailable();
+        settings.setMegaphoneItem("minecraft:goat_horn");
+        AudioDistancePlugin.TALK.forget(speaker);
+        try {
+            holder(players, "");
+            Mic mic = new Mic();
+            short[] out = mic.send(0);
+            assertEquals(0, encodersCreated, "without the megaphone nothing is decoded");
+            assertTrue(rms(out) > 5000, "and the voice goes out as it is");
+
+            holder(players, "minecraft:goat_horn");
+            mic.end();
+            AudioDistancePlugin.TALK.forget(speaker);
+            for (int i = 0; i < 3; i++) {
+                out = mic.send(i);
+            }
+            assertEquals(1, walls.activeStreams());
+            assertTrue(rms(out) < 1500, "the horn cuts what is far above a voice: " + rms(out));
+
+            // Put down mid-talk: glides back to plain, then passes the voice through until the talk ends
+            holder(players, "");
+            for (int i = 3; i < 10; i++) {
+                out = mic.send(i);
+            }
+            assertTrue(rms(out) > 5000, "plain again: " + rms(out));
+            assertEquals(1, walls.activeStreams(), "kept until the talk ends, so the codec does not switch mid-word");
+            mic.end();
+            mic.send(10);
+            assertEquals(0, walls.activeStreams(), "a new talk without the megaphone closes the stream");
+
+            // Turned off by the admin
+            settings.setMegaphoneSound(false);
+            holder(players, "minecraft:goat_horn");
+            mic.end();
+            out = mic.send(11);
+            assertEquals(0, walls.activeStreams());
+            assertTrue(rms(out) > 5000);
+            settings.setMegaphoneSound(true);
+
+            // An old Simple Voice Chat cannot take new audio: the horn turns itself off, the voice is untouched
+            mic.settable = false;
+            mic.end();
+            AudioDistancePlugin.TALK.forget(speaker);
+            out = mic.send(12);
+            assertTrue(rms(out) > 5000);
+            assertEquals(0, walls.activeStreams(), "the stream is closed again");
+            int created = encodersCreated;
+            mic.end();
+            mic.send(13);
+            assertEquals(created, encodersCreated, "and is not tried again");
+        } finally {
+            AudioDistancePlugin.TALK.forget(speaker);
+        }
+    }
+
     @Test
     @DisplayName("Group voices: untouched by default, cancelled by the group rules the admin turned on")
     void groupRules() {

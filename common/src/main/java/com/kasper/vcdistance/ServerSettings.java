@@ -34,9 +34,9 @@ public final class ServerSettings {
      * 2: sections with comments, walls_strength and material.* at the top level, profile_preset;
      * 3: echo, water and weather; 4: zones and messages_language; 5: more materials;
      * 6: boxes and zone rules, game rules, the addon requirement, messages in every language;
-     * 10: wall_loudness, so older files get it with its comment.
+     * 10: wall_loudness, so older files get it with its comment; 11: megaphone_sound.
      */
-    private static final int SETTINGS_VERSION = 10;
+    private static final int SETTINGS_VERSION = 11;
     private static final String ZONE_PREFIX = "zone.";
     private static final String MUTE_PREFIX = "mute.";
     private static final String SPEAKER_PREFIX = "speaker.";
@@ -122,6 +122,7 @@ public final class ServerSettings {
     private volatile boolean spectatorsOnly;
     private volatile String megaphoneItem = "";
     private volatile double megaphoneMultiplier = DEFAULT_MEGAPHONE_MULTIPLIER;
+    private volatile boolean megaphoneSound = true;
     private volatile RequireAddon requireAddon = RequireAddon.OFF;
     private volatile String minAddonVersion = "";
     private volatile String addonUrl = DEFAULT_ADDON_URL;
@@ -377,6 +378,7 @@ public final class ServerSettings {
         spectatorsOnly = DistanceConfig.parseBoolean(props, "spectators_hear_only_spectators", false);
         megaphoneItem = itemId(props.getProperty("megaphone_item", ""));
         megaphoneMultiplier = DistanceConfig.clamp(DistanceConfig.parseDouble(props, "megaphone_multiplier", DEFAULT_MEGAPHONE_MULTIPLIER), 1.0, 10.0);
+        megaphoneSound = DistanceConfig.parseBoolean(props, "megaphone_sound", true);
         groupDeadSilent = DistanceConfig.parseBoolean(props, "group_dead_silent", false);
         groupSpectatorsApart = DistanceConfig.parseBoolean(props, "group_spectators_apart", false);
         groupIsolatedZones = DistanceConfig.parseBoolean(props, "group_isolated_zones", false);
@@ -628,9 +630,16 @@ public final class ServerSettings {
                 .comment("An item that works as a megaphone while held, e.g. minecraft:goat_horn. Empty = no megaphone.",
                         "Предмет, который в руке работает как мегафон, например minecraft:goat_horn. Пусто = мегафона нет.")
                 .value("megaphone_item", megaphoneItem)
-                .comment("Voice range with the megaphone, times this: 1 - 10. Default 2.5.",
-                        "Дальность голоса с мегафоном умножается на это: 1 - 10. По умолчанию 2.5.")
-                .value("megaphone_multiplier", megaphoneMultiplier);
+                .comment("Voice range with the megaphone, times this: 1 - 10. Default 2.5. It is the range straight ahead",
+                        "of the speaker; to the sides it is less, straight behind 1 + a fifth of the extra (x1.3 at 2.5).",
+                        "Дальность голоса с мегафоном умножается на это: 1 - 10. По умолчанию 2.5. Это дальность прямо",
+                        "перед говорящим; в стороны меньше, прямо за спиной 1 + пятая часть прибавки (x1.3 при 2.5).")
+                .value("megaphone_multiplier", megaphoneMultiplier)
+                .comment("true: the voice through the megaphone sounds like a horn (thin, a little overdriven), for every player.",
+                        "Needs Simple Voice Chat 2.5.27 or newer on the server. Default true.",
+                        "true: голос через мегафон звучит как из рупора (тонко, с лёгким перегрузом), для всех игроков.",
+                        "Нужен Simple Voice Chat 2.5.27 или новее на сервере. По умолчанию true.")
+                .value("megaphone_sound", megaphoneSound);
 
         w.section("7. Players without the addon: requirement", "7. Игроки без аддона: требование")
                 .comment("For players who have Simple Voice Chat but not this addon (or a version below min_addon_version):",
@@ -908,6 +917,15 @@ public final class ServerSettings {
         megaphoneMultiplier = DistanceConfig.clamp(m, 1.0, 10.0);
     }
 
+    /** The megaphone's voice sounds like a horn. */
+    public boolean isMegaphoneSound() {
+        return megaphoneSound;
+    }
+
+    public void setMegaphoneSound(boolean on) {
+        megaphoneSound = on;
+    }
+
     public RequireAddon getRequireAddon() {
         return requireAddon;
     }
@@ -982,6 +1000,7 @@ public final class ServerSettings {
         p.setProperty(prefix + "spectators_hear_only_spectators", String.valueOf(spectatorsOnly));
         p.setProperty(prefix + "megaphone_item", megaphoneItem);
         p.setProperty(prefix + "megaphone_multiplier", DistanceConfig.format(megaphoneMultiplier));
+        p.setProperty(prefix + "megaphone_sound", String.valueOf(megaphoneSound));
         p.setProperty(prefix + "group_dead_silent", String.valueOf(groupDeadSilent));
         p.setProperty(prefix + "group_spectators_apart", String.valueOf(groupSpectatorsApart));
         p.setProperty(prefix + "group_isolated_zones", String.valueOf(groupIsolatedZones));

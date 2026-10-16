@@ -1004,6 +1004,7 @@ public abstract class SettingsScreen extends com.kasper.vcdistance.compat.BaseSc
     private static final String[] SERVER_PRESETS = {"custom", "vanilla", "realistic", "clear", "stealth"};
     private static final String[] SERVER_REQUIRE = {"off", "suggest", "warn", "kick"};
     private static final String[] SERVER_SNEAK = {"1", "0.7", "0.5", "0.3"};
+    private static final String[] SERVER_MEGAPHONE_RANGE = {"2", "2.5", "3", "4"};
     /** How much of the walls' muffling an eavesdropper keeps (/vcd eavesdrop factor). */
     private static final String[] SERVER_EAVESDROP = {"0.1", "0.3", "0.5", "0.75", "1"};
     private static final String[] ZONE_RANGE = {"-", "0.4", "2", "3"};
@@ -1254,9 +1255,17 @@ public abstract class SettingsScreen extends com.kasper.vcdistance.compat.BaseSc
             serverButton(tr("server.sneak", pct(parse(sneak))), "server.sneak.tooltip", left, y, half,
                     "rule sneak " + next(SERVER_SNEAK, sneak));
             String megaphone = st.getProperty("megaphone_item", "");
-            serverButton(tr("server.megaphone", megaphone.isEmpty() ? tr("off") : Txt.translatable("item.minecraft.goat_horn")),
+            serverButton(tr("server.megaphone", megaphone.isEmpty() ? tr("off")
+                            : MEGAPHONE.equals(megaphone) ? Txt.translatable("item.minecraft.goat_horn") : Txt.literal(megaphone)),
                     "server.megaphone.tooltip", x2, y, half, "rule megaphone " + (megaphone.isEmpty() ? MEGAPHONE : "off"));
             y += ROW;
+            if (!megaphone.isEmpty()) {
+                String range = st.getProperty("megaphone_multiplier", "2.5");
+                serverButton(tr("server.megaphone_range", range), "server.megaphone_range.tooltip", left, y, half,
+                        "rule megaphone_range " + next(SERVER_MEGAPHONE_RANGE, range));
+                serverToggle("server.megaphone_sound", st, "megaphone_sound", "true", x2, y, half, "rule megaphone_sound");
+                y += ROW;
+            }
             serverToggle("server.dead", st, "dead_players_silent", "false", left, y, half, "rule dead");
             serverToggle("server.spectators", st, "spectators_hear_only_spectators", "false", x2, y, half, "rule spectators");
             y += ROW;

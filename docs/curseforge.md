@@ -41,7 +41,7 @@ Install it on your client, on the server, or on both. Each works on its own. On 
 Players **without the addon** also hear voices muffled through walls.
 
 - **Sound zones:** a stage heard twice as far, a quiet library, a soundproof room, a cathedral with echo. Everyone sees the zone's name above the hotbar on entering, even without the addon. WorldGuard regions and Open Parties and Claims claims work too.
-- **Game rules:** sneaking is quieter, the dead are silent, spectators talk only to each other, a goat horn works as a megaphone.
+- **Game rules:** sneaking is quieter, the dead are silent, spectators talk only to each other, a goat horn works as a megaphone that carries furthest ahead and sounds like one.
 - **One sound for everyone:** offer or enforce the server's settings for fair PvP and events.
 - **No seeing through walls:** turn off the monitor and radar.
 - **Require the addon:** send a download link, remind on every join, or kick.

@@ -167,6 +167,37 @@ public class ServerRulesTest {
     }
 
     @Test
+    @DisplayName("Megaphone: carries furthest straight ahead, a fifth of the extra behind, smoothly in between")
+    void megaphoneDirection() throws IOException {
+        ServerSettings s = settings("megaphone_item=goat_horn\nmegaphone_multiplier=2.5\n");
+        ServerPlayers.Info speaker = new ServerPlayers.Info(UUID.randomUUID(), "Herald", "world", 0, 64, 0,
+                false, true, false, "minecraft:goat_horn", "", List.of(), "", false, EnvironmentEffects.Weather.CLEAR, 1, 0, 0);
+        double side = 48 * Megaphone.rangeFactor(2.5, 0.0);
+        assertTrue(side > 62.4 && side < 120, "to the side between behind and ahead: " + side);
+
+        ServerRange.Decision ahead = ServerRange.decide(s, speaker, player("a", "world", 100, 0), false, 48, 24);
+        assertEquals(ServerRange.Reason.HEARS, ahead.reason());
+        assertEquals(120.0, ahead.distance(), 1e-9);
+        assertEquals(ServerRange.Reason.RANGE, ServerRange.decide(s, speaker, player("a", "world", 125, 0), false, 48, 24).reason());
+
+        ServerRange.Decision behind = ServerRange.decide(s, speaker, player("b", "world", -60, 0), false, 48, 24);
+        assertEquals(ServerRange.Reason.HEARS, behind.reason());
+        assertEquals(62.4, behind.distance(), 1e-9);
+        assertEquals(ServerRange.Reason.RANGE, ServerRange.decide(s, speaker, player("b", "world", -100, 0), false, 48, 24).reason());
+
+        assertEquals(ServerRange.Reason.HEARS, ServerRange.decide(s, speaker, player("c", "world", 0, side - 1), false, 48, 24).reason());
+        assertEquals(ServerRange.Reason.RANGE, ServerRange.decide(s, speaker, player("c", "world", 0, side + 1), false, 48, 24).reason());
+
+        // Where the speaker looks is not known (an old client, the first tick): the full range all round
+        ServerPlayers.Info blind = player("Herald", "world", 0, 0, false, true, false, "minecraft:goat_horn");
+        assertEquals(120.0, ServerRange.decide(s, blind, player("b", "world", -100, 0), false, 48, 24).distance(), 1e-9);
+        // Without the megaphone nothing depends on where one looks
+        ServerPlayers.Info plain = new ServerPlayers.Info(speaker.id(), "Herald", "world", 0, 64, 0,
+                false, true, false, "", "", List.of(), "", false, EnvironmentEffects.Weather.CLEAR, 1, 0, 0);
+        assertEquals(48.0, ServerRange.decide(s, plain, player("b", "world", -40, 0), false, 48, 24).distance(), 1e-9);
+    }
+
+    @Test
     @DisplayName("Who hears whom: range, isolated zones, dead players, spectators, other worlds")
     void decisions() throws IOException {
         ServerSettings s = settings("""
@@ -273,6 +304,16 @@ public class ServerRulesTest {
         assertEquals(0.4, saved.getSneakMultiplier(), 1e-9);
         assertTrue(saved.isDeadSilent());
         assertEquals("minecraft:goat_horn", saved.getMegaphoneItem());
+        assertTrue(saved.isMegaphoneSound(), "the horn sound is on by default");
+        AdminCommands.run("rule megaphone_sound off", s, ctx);
+        saved.load();
+        assertFalse(saved.isMegaphoneSound());
+        AdminCommands.run("rule megaphone_sound maybe", s, ctx);
+        saved.load();
+        assertFalse(saved.isMegaphoneSound(), "a wrong value changes nothing");
+        AdminCommands.run("rule megaphone_sound on", s, ctx);
+        saved.load();
+        assertTrue(saved.isMegaphoneSound());
         assertEquals(ServerSettings.RequireAddon.WARN, saved.getRequireAddon());
         assertEquals("1.8", saved.getMinAddonVersion());
         assertEquals(s.zones(), saved.zones());

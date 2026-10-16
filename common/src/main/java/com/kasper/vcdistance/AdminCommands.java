@@ -38,7 +38,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * /vcd notices on|off                          zone names above the hotbar when players enter or leave
  * /vcd zones [page]                            every zone
  * /vcd zone ...                                see {@link ZoneCommands}
- * /vcd rule sneak|dead|spectators|megaphone|megaphone_range &lt;value&gt;
+ * /vcd rule sneak|dead|spectators|megaphone|megaphone_range|megaphone_sound &lt;value&gt;
  * /vcd require off|suggest|warn|kick [min version]
  * /vcd debug [player]                          what a player hears, and why not
  * </pre>
@@ -87,7 +87,7 @@ public final class AdminCommands {
     static final String[] MODES = {"off", "suggest", "enforce"};
     static final String[] PRESETS = {"vanilla", "realistic", "clear", "stealth", "custom", "export", "import"};
     static final String[] LOCK_PARTS = {"all", "none", "curve", "walls", "materials", "effects"};
-    static final String[] RULES = {"sneak", "dead", "spectators", "megaphone", "megaphone_range"};
+    static final String[] RULES = {"sneak", "dead", "spectators", "megaphone", "megaphone_range", "megaphone_sound"};
     static final String[] GROUP_RULES = {"dead", "spectators", "zones", "open_range"};
     static final String[] REQUIRE = {"off", "suggest", "warn", "kick"};
     static final String[] ON_OFF = {"on", "off"};
@@ -404,7 +404,8 @@ public final class AdminCommands {
                 r.change(onOff(m, settings.isDeadSilent()), "rule dead"),
                 r.change(onOff(m, settings.isSpectatorsOnly()), "rule spectators"),
                 r.change(settings.getMegaphoneItem().isEmpty() ? m.get("off")
-                        : settings.getMegaphoneItem() + " ×" + fmt(settings.getMegaphoneMultiplier()), "rule megaphone"))));
+                        : settings.getMegaphoneItem() + " ×" + fmt(settings.getMegaphoneMultiplier()), "rule megaphone"),
+                r.change(onOff(m, settings.isMegaphoneSound()), "rule megaphone_sound"))));
         r.reply.add(CommandReply.line().addAll(m.spans("status.require", Style.PLAIN,
                 r.change(settings.getRequireAddon().getId(), "require"),
                 settings.getMinAddonVersion().isEmpty() ? "-" : settings.getMinAddonVersion())));
@@ -1207,6 +1208,15 @@ public final class AdminCommands {
                 }
                 settings.setMegaphoneMultiplier(v);
                 r.saved("rule.megaphone_range", fmt(settings.getMegaphoneMultiplier()));
+            }
+            case "megaphone_sound" -> {
+                Boolean on = parseOnOff(value);
+                if (on == null) {
+                    r.badValue("rule megaphone_sound", value, "on|off", "rule");
+                    return;
+                }
+                settings.setMegaphoneSound(on);
+                r.saved(on ? "rule.megaphone_sound.on" : "rule.megaphone_sound.off");
             }
             default -> r.badValue("rule", name, String.join("|", RULES), "rule");
         }

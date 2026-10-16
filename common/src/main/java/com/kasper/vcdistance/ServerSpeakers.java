@@ -2,6 +2,7 @@ package com.kasper.vcdistance;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.ToDoubleFunction;
 
 /**
  * The loudspeakers of the Paper plugin: who is picked up by which speaker, and who hears it. Pure logic over
@@ -24,6 +25,12 @@ public final class ServerSpeakers {
      */
     public static List<Delivery> deliveries(ServerSettings s, PlayerPrefs prefs, ServerPlayers players,
                                             ServerPlayers.Info talker, double hearRange) {
+        return deliveries(s, prefs, players, talker, other -> hearRange);
+    }
+
+    /** As above, with the range the voice carries towards each player (a megaphone carries furthest ahead). */
+    public static List<Delivery> deliveries(ServerSettings s, PlayerPrefs prefs, ServerPlayers players,
+                                            ServerPlayers.Info talker, ToDoubleFunction<ServerPlayers.Info> hearRange) {
         if (!s.isServerSpeakers() || s.speakers().isEmpty() || (s.isDeadSilent() && !talker.alive())) {
             return Jv.listOf();
         }
@@ -35,7 +42,7 @@ public final class ServerSpeakers {
             List<ServerPlayers.Info> listeners = new ArrayList<>();
             for (ServerPlayers.Info other : players.all()) {
                 if (!other.id().equals(talker.id()) && speaker.reaches(other) && prefs.volume(other.id(), talker.id()) > 0
-                        && !(Zone.sameWorld(talker.world(), other.world()) && talker.distanceTo(other) <= hearRange)) {
+                        && !(Zone.sameWorld(talker.world(), other.world()) && talker.distanceTo(other) <= hearRange.applyAsDouble(other))) {
                     listeners.add(other);
                 }
             }

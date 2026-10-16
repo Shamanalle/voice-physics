@@ -91,6 +91,7 @@ final class CommandSuggest {
                 case "dead", "spectators" -> AdminCommands.ON_OFF;
                 case "megaphone" -> new String[]{"off", "minecraft:goat_horn", "minecraft:bell"};
                 case "megaphone_range" -> new String[]{"2", "2.5", "3", "4"};
+                case "megaphone_sound" -> AdminCommands.ON_OFF;
                 default -> new String[0];
             }, typed);
         } else if (sub.equals("walls") && args.length == 3 && action.equals("loudness")) {

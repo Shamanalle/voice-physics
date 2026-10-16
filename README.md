@@ -118,7 +118,7 @@ Available in the full Fabric, Forge and NeoForge mods and as a plugin for Paper,
   - show a message on entering.
 
   Entering and leaving a zone is shown above the hotbar to every player, with or without the addon (`/vcd notices off` turns it off). `/vcd zone show <name>` draws a box's borders with particles.
-- **Game rules.** Sneaking players carry less far. Dead players are silent until they respawn. Spectators are heard only by spectators. An item in hand, such as a goat horn, works as a megaphone. You choose which rules also apply inside Simple Voice Chat groups.
+- **Game rules.** Sneaking players carry less far. Dead players are silent until they respawn. Spectators are heard only by spectators. An item in hand, such as a goat horn, works as a megaphone: the voice carries furthest the way the player looks and sounds like a horn to everyone (the sound needs Simple Voice Chat 2.5.27 or newer). You choose which rules also apply inside Simple Voice Chat groups.
 - **One sound for everyone.** Offer the server's sound profile with a button, or enforce it while players are on the server (fair PvP and events). Lock all of it or only some parts: curve, walls, materials, effects. Locked walls lock each block's percentage too.
 - **No seeing through walls.** Turn off the monitor, the radar and nearby players in the HUD.
 - **Require the addon.** Players with Simple Voice Chat but without the addon can get a download link once, on every join, or be kicked. Players without voice chat are never affected.
@@ -274,7 +274,7 @@ Replies are coloured and clickable: values in `/vcd status` put the command that
 | `/vcd zone tp <name>` | Go to the middle of a box |
 | `/vcd zone rename <name> <new name>` | Rename a box; its settings stay |
 | `/vcd zone delete <name>` | Remove a zone (asks first; `/vcd undo` brings it back) |
-| `/vcd rule sneak 0.1-1\|dead on\|off\|spectators on\|off\|megaphone <item>\|megaphone_range 1-10` | Game rules |
+| `/vcd rule sneak 0.1-1\|dead on\|off\|spectators on\|off\|megaphone <item>\|megaphone_range 1-10\|megaphone_sound on\|off` | Game rules |
 | `/vcd group dead\|spectators\|zones\|open_range on\|off` | Rules inside Simple Voice Chat groups |
 | `/vcd require off\|suggest\|warn\|kick [version]` | Addon requirement |
 | `/vcd mute <player> [time] [reason]` | Nobody hears the player for `30s`, `10m`, `2h`, `1d`, `1w` or `perm` (no time: until unmuted); muting again changes the time and reason |
@@ -456,7 +456,8 @@ All of these are new and have not been tried in a live game yet: turn one on on 
 | `dead_players_silent` | true / false | false | Dead players are silent until they respawn |
 | `spectators_hear_only_spectators` | true / false | false | Spectators are heard only by spectators |
 | `megaphone_item` | item id or empty | empty | Item that works as a megaphone, e.g. `minecraft:goat_horn` |
-| `megaphone_multiplier` | 1 – 10 | 2.5 | Voice range with the megaphone, times this |
+| `megaphone_multiplier` | 1 – 10 | 2.5 | Voice range with the megaphone, times this, straight ahead; behind the player a fifth of the extra range |
+| `megaphone_sound` | true / false | true | The megaphone voice sounds like a horn (thin, a little overdriven) to everyone; needs Simple Voice Chat 2.5.27 or newer and shares the re-encoding limit with the walls (`server_walls_max_streams`) |
 | `group_dead_silent` | true / false | false | Dead players are silent in their group too |
 | `group_spectators_apart` | true / false | false | Spectators in a group are heard only by its spectators |
 | `group_isolated_zones` | true / false | false | Isolated zones cut group voices too |

@@ -69,6 +69,20 @@ public final class ServerRange {
         return range;
     }
 
+    /**
+     * How far {@code speaker}'s voice carries towards {@code listener}: as {@link #rangeOf}, but a
+     * megaphone carries furthest the way the speaker looks (see {@link Megaphone#rangeFactor}).
+     */
+    public static double rangeTo(ServerSettings s, ServerPlayers.Info speaker, ServerPlayers.Info listener,
+                                 boolean whispering, double voice, double whisper) {
+        double range = rangeOf(s, speaker, whispering, voice, whisper);
+        if (isMegaphone(s, speaker)) {
+            double m = s.getMegaphoneMultiplier();
+            range *= Megaphone.rangeFactor(m, speaker.facing(listener)) / m;
+        }
+        return range;
+    }
+
     public static boolean isMegaphone(ServerSettings s, ServerPlayers.Info speaker) {
         return !s.getMegaphoneItem().isEmpty() && speaker.holds(s.getMegaphoneItem());
     }
@@ -101,7 +115,7 @@ public final class ServerRange {
     /** Whether {@code listener} hears {@code speaker}, and over what range. */
     public static Decision decide(ServerSettings s, ServerPlayers.Info speaker, ServerPlayers.Info listener,
                                   boolean whispering, double voice, double whisper) {
-        double range = rangeOf(s, speaker, whispering, voice, whisper);
+        double range = rangeTo(s, speaker, listener, whispering, voice, whisper);
         if (s.muteOf(speaker.id(), System.currentTimeMillis()) != null) {
             return new Decision(Reason.MUTED, range);
         }

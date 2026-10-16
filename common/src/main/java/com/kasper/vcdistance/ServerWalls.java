@@ -84,6 +84,13 @@ public final class ServerWalls {
     /** The same for the wind: a breeze on a hill is not worth a stream of its own. */
     static final double WIND_START_DB = 1.0;
     static final double WIND_KEEP_DB = 0.5;
+    /** A pause this long ends a talk; the next frame starts the horn's codecs clean. */
+    static final long HORN_GAP_NANOS = TimeUnit.MILLISECONDS.toNanos(300);
+    /**
+     * After the megaphone is put down the voice still goes through our codec until the talk pauses
+     * (switching codecs mid-word can crackle), but not longer than this.
+     */
+    static final long HORN_PLAIN_NANOS = TimeUnit.SECONDS.toNanos(2);
     private static final int MAX_TRACES_PER_TICK = 48;
     private static final int MAX_DOORWAY_SEARCHES = 6;
     /** Per listener and tick, when each player's walls are measured on their own thread (Folia). */
@@ -123,6 +130,23 @@ public final class ServerWalls {
         }
     }
 
+    /** A megaphone's voice: decoded, made to sound like a horn and encoded again, before Simple Voice Chat sends it. */
+    private static final class HornStream {
+        final OpusDecoder decoder;
+        final OpusEncoder encoder;
+        final Megaphone.Horn sound = new Megaphone.Horn();
+        /** No frame yet, or the last talk ended: the next frame starts a new one. */
+        boolean idle = true;
+        long lastNanos;
+        /** Since when the horn is put down and the voice passes plain through our codec; 0 while it sounds. */
+        long plainSinceNanos;
+
+        HornStream(OpusDecoder decoder, OpusEncoder encoder) {
+            this.decoder = decoder;
+            this.encoder = encoder;
+        }
+    }
+
     private static final class Stream {
         OpusDecoder decoder;
         long lastSequence = Long.MIN_VALUE;
@@ -134,6 +158,9 @@ public final class ServerWalls {
     private final Set<UUID> addonListeners = ConcurrentHashMap.newKeySet();
     private final Map<PairKey, Pair> pairs = new ConcurrentHashMap<>();
     private final Map<UUID, Stream> streams = new ConcurrentHashMap<>();
+    private final Map<UUID, HornStream> horns = new ConcurrentHashMap<>();
+    /** This Simple Voice Chat cannot change a microphone packet's audio (before API 2.5.27): no horn sound. */
+    private volatile boolean hornUnsupported;
     /** Each speaker's usual voice, measured on the frames decoded for them. */
     private final VoiceLevel.Book voiceLevels = new VoiceLevel.Book();
     private final AtomicInteger encoding = new AtomicInteger();
@@ -370,7 +397,13 @@ public final class ServerWalls {
                 event.cancel();
                 return;
             }
-            AudioDistancePlugin.TALK.spoke(talking, System.nanoTime());
+            long now = System.nanoTime();
+            boolean talkGoesOn = AudioDistancePlugin.TALK.spokeWithin(talking, now, HORN_GAP_NANOS);
+            AudioDistancePlugin.TALK.spoke(talking, now);
+            if (!horns.isEmpty() || (settings.isMegaphoneSound() && !settings.getMegaphoneItem().isEmpty() && !hornUnsupported)) {
+                // First, so the voice sounds through the horn everywhere: nearby, in an open group, on the radio and from speakers
+                horn(event, packet, talking, sender, now, talkGoesOn);
+            }
             if (settings.isServerRadio() && AudioDistancePlugin.PLAYER_PREFS.anyRadio()) {
                 radio(event, packet, talking);
             }
@@ -394,32 +427,32 @@ public final class ServerWalls {
             }
             boolean whispering = packet.isWhispering();
             double own = whispering ? whisperRange() : voiceRange();
+            // The furthest the voice carries; a megaphone carries less to the sides and behind, decide(...) says how far
             double range = ServerRange.rangeOf(settings, speaker, whispering, voiceRange(), whisperRange());
             if (range <= own + 0.01) {
                 return;
             }
             VoicechatServerApi voicechat = event.getVoicechat();
-            EntitySoundPacket out = null;
             for (ServerPlayers.Info other : players.all()) {
                 double d = other.distanceTo(speaker);
-                if (other.id().equals(id) || d <= own || d > range
-                        || !ServerRange.decide(settings, speaker, other, whispering, voiceRange(), whisperRange()).hears()) {
+                if (other.id().equals(id) || d <= own || d > range) {
+                    continue;
+                }
+                ServerRange.Decision rule = ServerRange.decide(settings, speaker, other, whispering, voiceRange(), whisperRange());
+                if (!rule.hears()) {
                     continue;
                 }
                 VoicechatConnection c = voicechat.getConnectionOf(other.id());
                 if (c == null || !c.isConnected() || c.isDisabled()) {
                     continue;
                 }
-                if (out == null) {
-                    out = packet.entitySoundPacketBuilder()
-                            .channelId(id)
-                            .entityUuid(id)
-                            .whispering(whispering)
-                            .distance((float) range)
-                            .opusEncodedData(packet.getOpusEncodedData())
-                            .build();
-                }
-                EntitySoundPacket send = out;
+                EntitySoundPacket send = packet.entitySoundPacketBuilder()
+                        .channelId(id)
+                        .entityUuid(id)
+                        .whispering(whispering)
+                        .distance((float) rule.distance())
+                        .opusEncodedData(packet.getOpusEncodedData())
+                        .build();
                 resending.set(Boolean.TRUE);
                 try {
                     voicechat.sendEntitySoundPacketTo(c, send);
@@ -435,6 +468,109 @@ public final class ServerWalls {
     }
 
     /**
+     * The megaphone's horn sound: while {@code id} holds the megaphone, their microphone frame is decoded,
+     * made to sound like a horn and put back into the packet, so Simple Voice Chat sends that to everyone.
+     *
+     * @param talkGoesOn whether the last frame came a moment ago (the megaphone was taken up mid-talk)
+     */
+    private void horn(MicrophonePacketEvent event, MicrophonePacket packet, UUID id, VoicechatConnection sender,
+                      long now, boolean talkGoesOn) {
+        long start = System.nanoTime();
+        HornStream h = horns.get(id);
+        try {
+            boolean on = false;
+            if (settings.isMegaphoneSound() && !hornUnsupported) {
+                ServerPlayers.Info speaker = players.get(id);
+                on = speaker != null && ServerRange.isMegaphone(settings, speaker) && rangeRulesFor(sender);
+            }
+            byte[] opus = packet.getOpusEncodedData();
+            if (h == null) {
+                if (!on || opus == null || opus.length == 0 || encoding.get() >= settings.getMaxStreams()) {
+                    return;
+                }
+                VoicechatServerApi api = event.getVoicechat();
+                h = new HornStream(api.createDecoder(), api.createEncoder());
+                encoding.incrementAndGet();
+                horns.put(id, h);
+                if (talkGoesOn) {
+                    // Taken up mid-talk: glide into the horn
+                    h.idle = false;
+                    h.lastNanos = now;
+                }
+            }
+            synchronized (h) {
+                if (horns.get(id) != h) {
+                    return; // closed meanwhile
+                }
+                if (opus == null || opus.length == 0) {
+                    // The end of a talk: the empty frame goes out as it is
+                    h.idle = true;
+                    return;
+                }
+                if (h.idle || now - h.lastNanos > HORN_GAP_NANOS) {
+                    if (!on) {
+                        closeHorn(id, h);
+                        return;
+                    }
+                    // A new talk: codecs and horn start clean, the horn at once
+                    h.decoder.resetState();
+                    h.encoder.resetState();
+                    h.sound.reset(true);
+                }
+                h.idle = false;
+                h.lastNanos = now;
+                if (!on && !h.sound.isEngaged()) {
+                    if (h.plainSinceNanos == 0L) {
+                        h.plainSinceNanos = now;
+                    } else if (now - h.plainSinceNanos > HORN_PLAIN_NANOS) {
+                        closeHorn(id, h);
+                        return;
+                    }
+                } else {
+                    h.plainSinceNanos = 0L;
+                }
+                short[] pcm = h.decoder.decode(opus);
+                if (pcm == null || pcm.length == 0) {
+                    closeHorn(id, h);
+                    return;
+                }
+                h.sound.process(pcm, on);
+                packet.setOpusEncodedData(h.encoder.encode(pcm));
+            }
+        } catch (AbstractMethodError | NoSuchMethodError e) {
+            hornUnsupported = true;
+            if (h != null) {
+                closeHorn(id, h);
+            }
+            DistanceConfig.LOGGER.warn("This Simple Voice Chat cannot change a voice before sending it (its API is older than 2.5.27): "
+                    + "the megaphone carries further but does not sound like one");
+        } catch (Throwable t) {
+            logFailure(t);
+            if (h != null) {
+                closeHorn(id, h);
+            }
+        } finally {
+            perf.add(System.nanoTime() - start);
+        }
+    }
+
+    private void closeHorn(UUID id, HornStream h) {
+        synchronized (h) {
+            if (horns.remove(id, h)) {
+                try {
+                    h.decoder.close();
+                } catch (Throwable ignored) {
+                }
+                try {
+                    h.encoder.close();
+                } catch (Throwable ignored) {
+                }
+                encoding.decrementAndGet();
+            }
+        }
+    }
+
+    /**
      * The radio: everyone on the speaker's frequency who does not already hear the voice by distance gets it
      * as a static sound (in their ear, from any distance or world).
      */
@@ -445,8 +581,9 @@ public final class ServerWalls {
             if (speaker == null) {
                 return;
             }
-            double hearing = ServerRange.rangeOf(settings, speaker, packet.isWhispering(), voiceRange(), whisperRange());
-            java.util.List<ServerPlayers.Info> to = ServerRadio.receivers(settings, AudioDistancePlugin.PLAYER_PREFS, players, speaker, hearing);
+            boolean whispering = packet.isWhispering();
+            java.util.List<ServerPlayers.Info> to = ServerRadio.receivers(settings, AudioDistancePlugin.PLAYER_PREFS, players, speaker,
+                    other -> ServerRange.rangeTo(settings, speaker, other, whispering, voiceRange(), whisperRange()));
             if (to.isEmpty()) {
                 return;
             }
@@ -488,9 +625,10 @@ public final class ServerWalls {
             if (talker == null) {
                 return;
             }
-            double hearing = ServerRange.rangeOf(settings, talker, packet.isWhispering(), voiceRange(), whisperRange());
+            boolean whispering = packet.isWhispering();
             VoicechatServerApi voicechat = event.getVoicechat();
-            for (ServerSpeakers.Delivery d : ServerSpeakers.deliveries(settings, AudioDistancePlugin.PLAYER_PREFS, players, talker, hearing)) {
+            for (ServerSpeakers.Delivery d : ServerSpeakers.deliveries(settings, AudioDistancePlugin.PLAYER_PREFS, players, talker,
+                    other -> ServerRange.rangeTo(settings, talker, other, whispering, voiceRange(), whisperRange()))) {
                 Loudspeaker sp = d.speaker();
                 LocationalSoundPacket out = null;
                 for (ServerPlayers.Info other : d.listeners()) {
@@ -964,6 +1102,11 @@ public final class ServerWalls {
             }
             return true;
         });
+        for (Map.Entry<UUID, HornStream> e : horns.entrySet()) {
+            if (now - e.getValue().lastNanos > FORGET_NANOS) {
+                closeHorn(e.getKey(), e.getValue());
+            }
+        }
         streams.entrySet().removeIf(e -> {
             Stream s = e.getValue();
             if (now - s.lastSeenNanos <= FORGET_NANOS) {
@@ -989,6 +1132,9 @@ public final class ServerWalls {
             }
         }
         pairs.clear();
+        for (Map.Entry<UUID, HornStream> e : horns.entrySet()) {
+            closeHorn(e.getKey(), e.getValue());
+        }
         for (Stream s : streams.values()) {
             synchronized (s) {
                 if (s.decoder != null) {

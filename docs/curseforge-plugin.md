@@ -6,7 +6,7 @@ Players don't need to install anything. Those who also install the [Voice Physic
 
 - **Walls for everyone.** Players without the mod hear voices muffled through walls, a whisper lost sooner than a shout. Load is capped: above 24 voices at once (adjustable) the rest pass unfiltered, and on any error the original audio is sent, so voice chat never goes silent.
 - **Sound zones:** a stage heard twice as far, a quiet library, a soundproof room, a cathedral with echo. Draw a box in game with `/vcd zone`, use a whole world or a WorldGuard region. Everyone sees the zone's name above the hotbar on entering.
-- **Game rules:** sneaking is quieter, the dead are silent, spectators talk only to each other, a goat horn works as a megaphone.
+- **Game rules:** sneaking is quieter, the dead are silent, spectators talk only to each other, a goat horn works as a megaphone that carries furthest ahead and sounds like one.
 - **One sound for everyone:** offer or enforce the server's settings for players with the mod, for fair PvP and events.
 - **No seeing through walls:** turn off the monitor and radar of players with the mod.
 - **Require the mod:** send a download link, remind on every join, or kick.
