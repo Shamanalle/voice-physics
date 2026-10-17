@@ -7,3 +7,5 @@
   a few plain sentences per item: what changed, where the switch is, the command for players without the addon.
   No tests, CI or build internals, no implementation details (algorithms, decibels, thresholds, config keys, sources);
   those belong in the README.
+  Small things players barely notice (a hint that fits better, a typo, a layout nudge) get no item of their own:
+  one line "Small fixes." / "Мелкие исправления." is enough.
