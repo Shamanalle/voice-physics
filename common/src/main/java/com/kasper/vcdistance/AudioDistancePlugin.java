@@ -785,27 +785,37 @@ public class AudioDistancePlugin implements VoicechatPlugin {
     }
 
     /**
-     * Everything done to a voice's audio on the client: the Doppler shift, walls, water and weather
-     * as one filter, then the echo of the room the listener is in. Never throws; on a failure the voice plays as it came.
+     * Everything done to a voice's audio on the client: the Doppler shift, walls (with how loud the
+     * speaker talks), water, weather, wind and the way the speaker faces as one filter, then the echo of
+     * the room the listener is in. Never
+     * throws; on a failure the voice plays as it came.
      */
     private static void muffle(ClientReceiveSoundEvent event, SpeakerRegistry.Speaker speaker, short[] raw) {
         try {
             DistanceConfig c = config();
             OcclusionStatus status = occlusionStatus();
             EnvironmentEffects.Effect effect = EnvironmentEffects.Effect.NONE;
+            SoundBlend blend = null;
+            double quiet = 0.0;
             if (status == OcclusionStatus.ACTIVE && speaker.isOcclusionKnown()) {
                 // Through the wall and round it through a doorway, both at once
                 boolean round = speaker.hasOpening() && c.isDiffractionEnabled();
                 double range = speaker.getMaxDistance() > 0.0F ? speaker.getMaxDistance() : getServerMaxDistance();
                 boolean whispering = speaker.isWhispering();
-                SoundBlend blend = SoundBlend.of(Math.max(0.0, speaker.getDistance()), speaker.getThickness(),
+                blend = SoundBlend.of(Math.max(0.0, speaker.getDistance()), speaker.getThickness(),
                         round ? speaker.getPathLength() : Double.NaN, speaker.getPathThickness(),
                         c.getOcclusionStrength(), d -> curveGain(d, range, whispering));
                 speaker.setBlend(blend);
                 effect = new EnvironmentEffects.Effect(blend.muffle(), blend.lossDb());
+                // A whisper is lost behind the wall, a shout carries: only a player's voice, a sound from a place has no usual level
+                if (c.isWallLoudnessEnabled() && speaker.getKind() == SpeakerRegistry.Kind.ENTITY) {
+                    quiet = VoiceLevel.extraLossDb(blend.lossDb(), speaker.getEffortDb());
+                    effect = effect.plus(new EnvironmentEffects.Effect(0.0, quiet));
+                }
             } else {
                 speaker.setBlend(null);
             }
+            speaker.setQuietLossDb((float) quiet);
             // Sound Physics Remastered does its own water and echo unless the player chose ours; weather is ours either way
             boolean ownPhysics = status != OcclusionStatus.SOUND_PHYSICS && status != OcclusionStatus.UNAVAILABLE;
             ListenerEnvironment env = ENVIRONMENT;
@@ -818,6 +828,17 @@ public class AudioDistancePlugin implements VoicechatPlugin {
                         ListenerEnvironment.worse(env.weather(), speaker.getWeather()), speaker.getDistance() / range,
                         c.getWeatherStrength()));
             }
+            // High up under the open sky and in fast flight the wind blows far voices away; ours with Sound Physics Remastered too
+            double wind = 0.0;
+            if (c.isWindEnabled() && speaker.getDistance() >= 0.0) {
+                double range = speaker.getMaxDistance() > 0.0F ? speaker.getMaxDistance() : getServerMaxDistance();
+                UUID id = speaker.getChannelId();
+                wind = Wind.lossDb(env.windPlace(), speaker.getWindPlace(), env.airflow(), speaker.getAirflow(),
+                        speaker.getDistance() / range, c.getWindStrength(),
+                        Wind.gust(System.nanoTime(), id.getMostSignificantBits() ^ id.getLeastSignificantBits()));
+                effect = effect.plus(new EnvironmentEffects.Effect(0.0, wind));
+            }
+            speaker.setWindLossDb((float) wind);
             // The place: smoky Nether air, dense jungle, snow
             PlaceTuning.Tuning place = c.isPlaceTuning() ? env.place() : PlaceTuning.Tuning.NONE;
             if (place.air() > 0.0 && speaker.getDistance() >= 0.0) {
@@ -825,6 +846,26 @@ public class AudioDistancePlugin implements VoicechatPlugin {
                 effect = effect.plus(new EnvironmentEffects.Effect(
                         ServerEffects.air(speaker.getDistance() / range).muffle() * place.air(), 0.0));
             }
+
+            // The echo is worked out first: the more of the voice is the room's, the less the speaker's facing shows
+            Reverb reverb = speaker.getReverb();
+            RoomEstimate room = RoomEstimate.combine(env.room(), speaker.getRoom());
+            double wet = 0.0;
+            double echo = 0.0;
+            if (ownPhysics && c.isReverbEnabled() && room.isAudible()) {
+                double[] level = echoLevels(room, speaker, c.getReverbStrength() * place.echo());
+                wet = level[0];
+                echo = level[1];
+            }
+            // Turned away: quieter and duller, but only the straight way; round a wall the voice left towards the doorway
+            EnvironmentEffects.Effect turned = EnvironmentEffects.Effect.NONE;
+            if (c.isDirectivityEnabled()) {
+                double round = blend != null ? blend.pathShare() : 0.0;
+                double indirect = 1.0 - (1.0 - round) * (1.0 - wet);
+                turned = Directivity.effect(speaker.getFacing(), c.getDirectivityStrength(), indirect);
+                effect = effect.plus(turned);
+            }
+            speaker.setFacingLossDb((float) turned.lossDb());
 
             // All stages work on the frame in place; the pitch first, so the echo is of the shifted voice
             boolean changed = false;
@@ -838,15 +879,6 @@ public class AudioDistancePlugin implements VoicechatPlugin {
             if (effect.muffle() > 0.0 || effect.lossDb() > 0.0 || filter.isEngaged()) {
                 filter.process(raw, effect.muffle(), effect.lossDb());
                 changed = true;
-            }
-            Reverb reverb = speaker.getReverb();
-            RoomEstimate room = RoomEstimate.combine(env.room(), speaker.getRoom());
-            double wet = 0.0;
-            double echo = 0.0;
-            if (ownPhysics && c.isReverbEnabled() && room.isAudible()) {
-                double[] level = echoLevels(room, speaker, c.getReverbStrength() * place.echo());
-                wet = level[0];
-                echo = level[1];
             }
             if (wet > 0.0 || echo > 0.0 || reverb.isActive()) {
                 reverb.process(raw, room, wet, echo);

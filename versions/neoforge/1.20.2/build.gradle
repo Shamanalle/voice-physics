@@ -5,8 +5,8 @@ plugins {
 
 // NeoForge 1.20.2 - 1.20.3: the full addon. These NeoForge versions have the event channels of Forge 1.20.1
 // (NetworkRegistry.newEventChannel) and no payload registration, which 1.20.4 introduced; everything else
-// in the hooks is the same as in ../neoforge-1.20.4.
-def repoRoot = file('../..')
+// in the hooks is the same as in ../1.20.4.
+def repoRoot = file('../../..')
 def props = new Properties()
 new File(repoRoot, 'gradle.properties').withInputStream { props.load(it) }
 

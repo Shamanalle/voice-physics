@@ -37,6 +37,8 @@ public final class SpeakerRegistry {
         private final PitchShifter shifter = new PitchShifter();
         /** How fast the speaker comes closer (client tick). */
         private final Doppler.Closing closing = new Doppler.Closing();
+        /** How fast the speaker moves through the air (client tick). */
+        private final Wind.Speed speed = new Wind.Speed();
 
         volatile Kind kind;
         volatile UUID entityId;
@@ -55,6 +57,19 @@ public final class SpeakerRegistry {
         private volatile double bearing = Double.NaN;
         private volatile boolean underWater;
         private volatile EnvironmentEffects.Weather weather = EnvironmentEffects.Weather.CLEAR;
+        // How windy it is where the speaker stands (client tick), and what the wind took off the last frame (audio thread)
+        private volatile double windPlace;
+        private volatile float windLossDb;
+        // Where the speaker looks, set while its entity is found (zero: unknown), and the cosine towards the listener
+        private double lookX;
+        private double lookY;
+        private double lookZ;
+        private volatile double facing = Double.NaN;
+        // Written by the audio thread: what the facing took off the last frame, for the monitor
+        private volatile float facingLossDb;
+        // How loud the speaker talks against their usual voice (audio thread), and what a quiet voice lost behind the wall
+        private volatile VoiceLevel.Tracker level;
+        private volatile float quietLossDb;
         // The way around a wall (client tick), or no opening
         private volatile boolean hasOpening;
         private volatile double openingX;
@@ -264,6 +279,34 @@ public final class SpeakerRegistry {
             this.weather = weather == null ? EnvironmentEffects.Weather.CLEAR : weather;
         }
 
+        /** Where the speaker is now, for {@link #getAirflow}; NaN when unknown. */
+        public void setWindPosition(double x, double y, double z, long nowNanos) {
+            speed.position(x, y, z, nowNanos);
+        }
+
+        /** {@link Wind#place} where the speaker stands; set after {@link #setSurroundings}. */
+        public void setWindPlace(double place) {
+            this.windPlace = place;
+        }
+
+        public double getWindPlace() {
+            return windPlace;
+        }
+
+        /** The air rushing past the speaker ({@link Wind#airflow}). */
+        public double getAirflow() {
+            return Wind.airflow(speed.get(), underWater);
+        }
+
+        /** Decibels the wind took off the last frame heard, 0 when none. */
+        public float getWindLossDb() {
+            return windLossDb;
+        }
+
+        public void setWindLossDb(float lossDb) {
+            this.windLossDb = lossDb;
+        }
+
         /** Wall thickness on the straight line, in stone blocks. */
         public double getThickness() {
             return thickness;
@@ -321,6 +364,61 @@ public final class SpeakerRegistry {
             this.bearing = bearing;
         }
 
+        /** Where the speaker looks; any length. */
+        public void setLook(double x, double y, double z) {
+            this.lookX = x;
+            this.lookY = y;
+            this.lookZ = z;
+        }
+
+        public void clearLook() {
+            setLook(0.0, 0.0, 0.0);
+        }
+
+        /** Sets {@link #getFacing} from the way from the speaker to the listener. */
+        public void updateFacing(double toListenerX, double toListenerY, double toListenerZ) {
+            this.facing = Directivity.cos(lookX, lookY, lookZ, toListenerX, toListenerY, toListenerZ);
+        }
+
+        public void clearFacing() {
+            this.facing = Double.NaN;
+        }
+
+        /**
+         * Cosine of the angle between where the speaker looks and the way to the listener: 1 facing
+         * the listener, -1 turned away; NaN when unknown (a sound from a place, or not loaded).
+         */
+        public double getFacing() {
+            return facing;
+        }
+
+        /** Decibels the speaker's facing took off the last frame heard, 0 when none. */
+        public float getFacingLossDb() {
+            return facingLossDb;
+        }
+
+        public void setFacingLossDb(float lossDb) {
+            this.facingLossDb = lossDb;
+        }
+
+        /**
+         * Decibels above (positive) or below the speaker's usual voice ({@link VoiceLevel.Tracker#effortDb});
+         * 0 for a sound from a place, which has no usual voice.
+         */
+        public double getEffortDb() {
+            VoiceLevel.Tracker t = level;
+            return t != null ? t.effortDb(whispering) : 0.0;
+        }
+
+        /** Decibels the wall took off the last frame on top of its usual loss because the voice was quiet. */
+        public float getQuietLossDb() {
+            return quietLossDb;
+        }
+
+        public void setQuietLossDb(float lossDb) {
+            this.quietLossDb = lossDb;
+        }
+
         public String getDisplayName() {
             return displayName;
         }
@@ -353,6 +451,8 @@ public final class SpeakerRegistry {
     private static final long PRUNE_INTERVAL_NANOS = TimeUnit.SECONDS.toNanos(2);
 
     private final Map<UUID, Speaker> speakers = new ConcurrentHashMap<>();
+    /** Each speaker's usual voice, kept across the pauses that make a speaker be forgotten. */
+    private final VoiceLevel.Book levels = new VoiceLevel.Book();
     private volatile long lastPruneNanos = System.nanoTime();
 
     public Speaker onEntityFrame(UUID channelId, UUID entityId, boolean whispering, float maxDistance, short[] pcm) {
@@ -361,7 +461,14 @@ public final class SpeakerRegistry {
         s.entityId = entityId;
         s.whispering = whispering;
         s.maxDistance = maxDistance;
-        touch(s, pcm);
+        long now = touch(s, pcm);
+        VoiceLevel.Tracker level = s.level;
+        if (level == null) {
+            level = levels.of(channelId, now);
+            s.level = level;
+        }
+        // The frame as it came, before any of the addon's own changes
+        level.update(s.levelDb, pcm == null ? 0.0 : pcm.length / VoiceLevel.SAMPLE_RATE, whispering, now);
         return s;
     }
 
@@ -374,6 +481,7 @@ public final class SpeakerRegistry {
         s.soundY = y;
         s.soundZ = z;
         s.maxDistance = maxDistance;
+        s.level = null;
         touch(s, pcm);
         return s;
     }
@@ -404,9 +512,10 @@ public final class SpeakerRegistry {
 
     public void clear() {
         speakers.clear();
+        levels.clear();
     }
 
-    private void touch(Speaker s, short[] pcm) {
+    private long touch(Speaker s, short[] pcm) {
         long now = System.nanoTime();
         s.lastHeardNanos = now;
         s.levelDb = rmsDb(pcm);
@@ -415,6 +524,7 @@ public final class SpeakerRegistry {
             lastPruneNanos = now;
             prune(now);
         }
+        return now;
     }
 
     static float rmsDb(short[] pcm) {

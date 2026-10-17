@@ -1,6 +1,7 @@
 package com.kasper.vcdistance;
 
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -11,6 +12,8 @@ import static org.junit.jupiter.api.Assertions.*;
 /** What {@code /voicephysics report} copies. */
 public class ClientReportTest {
 
+    // Other tests (the server's voice processing) leave problems behind
+    @BeforeEach
     @AfterEach
     void clear() {
         Problems.clear();
@@ -51,7 +54,7 @@ public class ClientReportTest {
     void describe() {
         DistanceConfig c = new DistanceConfig();
         String line = ClientReport.describe(c);
-        for (String part : new String[]{"model ", "walls ", "corners ", "echo ", "water ", "weather ", "block rules 0"}) {
+        for (String part : new String[]{"model ", "walls ", "corners ", "echo ", "water ", "weather ", "facing off", "block rules 0"}) {
             assertTrue(line.contains(part), line);
         }
     }

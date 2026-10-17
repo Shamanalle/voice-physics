@@ -30,18 +30,23 @@ public final class ServerReport {
                 : "Simple Voice Chat: not connected");
         out.add("Players: " + ctx.onlinePlayers() + " online, " + ctx.addonPlayers() + " with the addon");
         out.add("Walls: " + (p.isOcclusionEnabled() ? AdminCommands.pct(p.getOcclusionStrength()) : "off")
+                + ", loudness " + onOff(p.isWallLoudnessEnabled())
                 + ", server_walls " + onOff(s.isServerWalls()) + ", streams " + AudioDistancePlugin.SERVER_WALLS.activeStreams()
                 + "/" + s.getMaxStreams() + ", block rules " + s.getBlockRules().rules().size());
         out.add("Effects: server_effects " + onOff(s.isServerEffects()) + ", server_air " + onOff(s.isServerAir())
                 + ", server_curve " + onOff(s.isServerCurve())
                 + ", water " + strength(p.isUnderwaterEnabled(), p.getUnderwaterStrength())
                 + ", weather " + strength(p.isWeatherEnabled(), p.getWeatherStrength())
-                + ", echo " + strength(p.isReverbEnabled(), p.getReverbStrength()));
+                + ", echo " + strength(p.isReverbEnabled(), p.getReverbStrength())
+                + ", doppler " + strength(p.isDopplerEnabled(), p.getDopplerStrength())
+                + ", facing " + strength(p.isDirectivityEnabled(), p.getDirectivityStrength())
+                + ", wind " + strength(p.isWindEnabled(), p.getWindStrength()));
         out.add("Profile: " + s.getProfileMode().getId() + ", preset " + s.getProfilePreset() + ", model " + p.getModel().getId()
                 + ", locked " + DistanceConfig.Part.format(s.getLockedParts()) + ", allow_monitor " + onOff(s.isMonitorAllowed()));
         out.add("Rules: sneak " + AdminCommands.pct(s.getSneakMultiplier()) + ", dead_silent " + onOff(s.isDeadSilent())
                 + ", spectators_apart " + onOff(s.isSpectatorsOnly()) + ", megaphone "
-                + (s.getMegaphoneItem().isEmpty() ? "off" : s.getMegaphoneItem() + " x" + AdminCommands.fmt(s.getMegaphoneMultiplier())));
+                + (s.getMegaphoneItem().isEmpty() ? "off" : s.getMegaphoneItem() + " x" + AdminCommands.fmt(s.getMegaphoneMultiplier())
+                        + ", by facing " + onOff(s.isMegaphoneDirection()) + ", horn " + onOff(s.isMegaphoneSound())));
         out.add("Groups: dead " + onOff(s.isGroupDeadSilent()) + ", spectators " + onOff(s.isGroupSpectatorsApart())
                 + ", zones " + onOff(s.isGroupIsolatedZones()) + ", open_range " + onOff(s.isOpenGroupRange()));
         Map<String, Integer> kinds = new TreeMap<>();

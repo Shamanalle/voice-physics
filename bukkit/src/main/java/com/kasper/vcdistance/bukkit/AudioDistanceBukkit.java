@@ -402,13 +402,15 @@ public final class AudioDistanceBukkit extends JavaPlugin implements Listener {
         }
         // Only looked at when the server's effects are on: it is a block or two per player
         boolean effects = AudioDistancePlugin.SERVER_SETTINGS.isServerEffects();
+        org.bukkit.util.Vector look = at.getDirection();
         return new ServerPlayers.Info(p.getUniqueId(), p.getName(), p.getWorld().getName(),
                 at.getX(), at.getY(), at.getZ(),
                 p.isSneaking(), !p.isDead(), p.getGameMode() == GameMode.SPECTATOR,
                 item(p.getInventory().getItemInMainHand()), item(p.getInventory().getItemInOffHand()),
                 places.isEmpty() ? (regions ? WorldGuardRegions.at(at) : com.kasper.vcdistance.Jv.listOf()) : withRegions(places, regions ? WorldGuardRegions.at(at) : com.kasper.vcdistance.Jv.listOf()),
                 language == null ? "" : language,
-                effects && RoomProbe.underwater(p), effects ? RoomProbe.weather(p) : null);
+                effects && RoomProbe.underwater(p), effects ? RoomProbe.weather(p) : null,
+                look.getX(), look.getY(), look.getZ(), effects && RoomProbe.sky(p));
     }
 
     /** The Towny town, the Lands land and the zone a WorldGuard flag names at {@code at}, as the zone lookup writes them. */

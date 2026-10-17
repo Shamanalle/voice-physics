@@ -8,7 +8,16 @@
 # The loader version is needed for NeoForge and Forge: the installer's version (Forge and NeoForge for 1.20.1: "1.20.1-47.4.0"). Everything else is
 # looked up: Fabric's loader and installer from meta.fabricmc.net, Paper and Folia builds from PaperMC,
 # Simple Voice Chat and Fabric API from Modrinth.
+#
+# A download that fails on the way (net-failure.sh: a timeout, a reset connection, HTTP 429 / 5xx) is
+# tried again: curl does it by itself, the Forge / NeoForge installer runs once more, and the server is
+# started once more when it stopped on a download before any mod was loaded. Each of these leaves a
+# warning on the run. Everything after that is checked once, as before.
 set -euo pipefail
+
+here="$(cd "$(dirname "$0")" && pwd)"
+# shellcheck source=net-failure.sh
+. "${here}/net-failure.sh"
 
 loader="$1"
 mc="$2"
@@ -28,8 +37,19 @@ say() {
   echo "== $*"
 }
 
+# curl tries a timeout, a refused connection and HTTP 408 / 429 / 5xx again by itself; a 404 is final
+api() {
+  curl -fsSL --retry 4 --retry-delay 3 --retry-connrefused --connect-timeout 20 --max-time 120 "$@"
+}
+
 fetch() {
-  curl -fsSL --retry 4 --retry-delay 3 -o "$2" "$1"
+  curl -fsSL --retry 4 --retry-delay 3 --retry-connrefused --connect-timeout 20 --max-time 900 -o "$2" "$1"
+}
+
+# A warning on the run, so a passing job still shows that something had to be tried twice
+retrying() {
+  echo "::warning title=Network failure (${loader} ${mc})::$*"
+  sleep "${NET_RETRY_DELAY:-30}"
 }
 
 # The newest file of a Modrinth project for this loader and Minecraft version. A file built for exactly
@@ -37,7 +57,7 @@ fetch() {
 modrinth() {
   local slug="$1" loaders="$2" out="$3"
   local url
-  url=$(curl -fsSL --retry 4 -G "https://api.modrinth.com/v2/project/${slug}/version" \
+  url=$(api -G "https://api.modrinth.com/v2/project/${slug}/version" \
       --data-urlencode "loaders=${loaders}" --data-urlencode "game_versions=[\"${mc}\"]" \
     | jq -r --arg mc "${mc}" '[.[] | select(.version_type == "release" or .version_type == "beta")]
              | ([.[] | select(.version_number | test("(^|[^0-9.])" + ($mc | gsub("\\."; "\\.")) + "-[0-9]"))] + .)[0].files
@@ -53,11 +73,11 @@ modrinth() {
 # A PaperMC project's newest build of this version (the fill API, then the older v2 API)
 papermc() {
   local project="$1" url
-  url=$(curl -fsSL --retry 4 "https://fill.papermc.io/v3/projects/${project}/versions/${mc}/builds/latest" 2>/dev/null \
+  url=$(api "https://fill.papermc.io/v3/projects/${project}/versions/${mc}/builds/latest" 2>/dev/null \
     | jq -r '.downloads["server:default"].url // empty' || true)
   if [ -z "${url}" ]; then
     local build
-    build=$(curl -fsSL --retry 4 "https://api.papermc.io/v2/projects/${project}/versions/${mc}/builds" \
+    build=$(api "https://api.papermc.io/v2/projects/${project}/versions/${mc}/builds" \
       | jq -r '.builds[-1].build')
     url="https://api.papermc.io/v2/projects/${project}/versions/${mc}/builds/${build}/downloads/${project}-${mc}-${build}.jar"
   fi
@@ -67,9 +87,9 @@ papermc() {
 
 # "latest": the newest version PaperMC builds this project for
 if [ "${mc}" = "latest" ]; then
-  mc=$(curl -fsSL --retry 4 "https://api.papermc.io/v2/projects/${loader}" 2>/dev/null | jq -r '.versions[-1] // empty' || true)
+  mc=$(api "https://api.papermc.io/v2/projects/${loader}" 2>/dev/null | jq -r '.versions[-1] // empty' || true)
   if [ -z "${mc}" ]; then
-    mc=$(curl -fsSL --retry 4 "https://fill.papermc.io/v3/projects/${loader}" \
+    mc=$(api "https://fill.papermc.io/v3/projects/${loader}" \
       | jq -r '[.versions | to_entries[] | .value[]] | .[0] // empty')
   fi
   echo "Newest ${loader}: ${mc}"
@@ -78,8 +98,8 @@ fi
 say "Setting up ${loader} ${mc}"
 case "${loader}" in
   fabric)
-    fabric_loader=$(curl -fsSL https://meta.fabricmc.net/v2/versions/loader | jq -r '[.[] | select(.stable)][0].version')
-    installer=$(curl -fsSL https://meta.fabricmc.net/v2/versions/installer | jq -r '[.[] | select(.stable)][0].version')
+    fabric_loader=$(api https://meta.fabricmc.net/v2/versions/loader | jq -r '[.[] | select(.stable)][0].version')
+    installer=$(api https://meta.fabricmc.net/v2/versions/installer | jq -r '[.[] | select(.stable)][0].version')
     fetch "https://meta.fabricmc.net/v2/versions/loader/${mc}/${fabric_loader}/${installer}/server/jar" server.jar
     mkdir -p mods
     modrinth fabric-api '["fabric"]' mods/fabric-api.jar || exit 1
@@ -97,7 +117,17 @@ case "${loader}" in
     else
       fetch "https://maven.minecraftforge.net/net/minecraftforge/forge/${loader_version}/forge-${loader_version}-installer.jar" installer.jar
     fi
-    java -jar installer.jar --installServer > installer.log 2>&1 || { tail -40 installer.log; exit 1; }
+    # The installer downloads Minecraft and the loader's libraries; run again, it keeps the files that
+    # came whole (it checks each one's checksum) and fetches the rest
+    if ! java -jar installer.jar --installServer > installer.log 2>&1; then
+      if ! network_failure installer.log; then
+        tail -40 installer.log
+        exit 1
+      fi
+      mv installer.log installer-1.log
+      retrying "the installer could not download everything ($(grep -Eo "${net_failure_pattern}" installer-1.log | head -1)), running it once more"
+      java -jar installer.jar --installServer > installer.log 2>&1 || { tail -40 installer.log; exit 1; }
+    fi
     mkdir -p mods
     modrinth simple-voice-chat "[\"${loader}\"]" mods/voicechat.jar || exit 1
     cp "${addon}" mods/
@@ -138,12 +168,6 @@ simulation-distance=4
 server-port=25599
 EOF
 
-# The console reads from a FIFO that stays open, so commands can be sent while it runs
-mkfifo console
-exec 3<>console
-"${run[@]}" < console > "${log}" 2>&1 &
-server=$!
-
 send() {
   echo "$*" >&3
 }
@@ -158,21 +182,43 @@ stop_server() {
     kill -9 "${server}" 2>/dev/null || true
   fi
 }
-trap stop_server EXIT
+
+# Starts the server and waits for it. Sets state to "up", "stopped" (the process ended first) or
+# "timeout". The console reads from a FIFO that stays open, so commands can be sent while it runs.
+start_server() {
+  rm -f console
+  mkfifo console
+  exec 3<>console
+  "${run[@]}" < console > "${log}" 2>&1 &
+  server=$!
+  for _ in $(seq 1 "${start_timeout}"); do
+    if grep -q 'Done (' "${log}"; then
+      state=up
+      return
+    fi
+    if ! kill -0 "${server}" 2>/dev/null; then
+      state=stopped
+      return
+    fi
+    sleep 1
+  done
+  state=timeout
+}
 
 say "Waiting for the server"
-up=false
-for _ in $(seq 1 "${start_timeout}"); do
-  if grep -q 'Done (' "${log}"; then
-    up=true
-    break
-  fi
-  if ! kill -0 "${server}" 2>/dev/null; then
-    break
-  fi
-  sleep 1
-done
-if [ "${up}" != true ]; then
+server=''
+trap stop_server EXIT
+start_server
+# Fabric's launcher and Paper download Minecraft and its libraries on the first start, before any mod
+# or plugin is loaded. Only a server that stopped there, on a failed download, is started again.
+if [ "${state}" = stopped ] && network_failure "${log}" \
+    && ! grep -Eiq 'vcdistance|vc_audio_distance|voice.?physics|voicechat|voice chat' "${log}"; then
+  exec 3>&-
+  mv "${log}" "${dir}/server-1.log"
+  retrying "${loader} ${mc} stopped on a download before loading any mod ($(grep -Eo "${net_failure_pattern}" "${dir}/server-1.log" | head -1)), starting it once more"
+  start_server
+fi
+if [ "${state}" != up ]; then
   tail -80 "${log}"
   echo "::error::${loader} ${mc} did not start"
   exit 1

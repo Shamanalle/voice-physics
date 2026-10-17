@@ -304,7 +304,7 @@ public class ModerationTest {
         Span copy = reply.lines().get(0).spans().stream().filter(sp -> sp.click() == Click.COPY).findFirst().orElseThrow();
         String text = copy.action();
         assertTrue(text.startsWith("Voice Physics " + BuildInfo.version() + " on Test"), text);
-        assertTrue(text.contains("Walls: 60%, server_walls on"), text);
+        assertTrue(text.contains("Walls: 60%, loudness on, server_walls on"), text);
         assertTrue(text.contains("Effects: server_effects off, server_air off"), text);
         assertTrue(text.contains("mutes 1"), text);
         assertTrue(text.contains("x2 Server voice processing: java.lang.IllegalStateException: boom"), text);

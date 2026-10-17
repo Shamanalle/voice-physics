@@ -33,7 +33,7 @@ sourceSets {
     main {
         java {
             srcDir "${rootDir}/shared/mc-all/src/main/java"
-            srcDir "${rootDir}/fabric-26/src/main/java"
+            srcDir "${rootDir}/versions/fabric/26/src/main/java"
             srcDir sharedForge
             // From shared/forge only the networking: 26.x has its own permission, language and screen adapters
             exclude { FileTreeElement e ->

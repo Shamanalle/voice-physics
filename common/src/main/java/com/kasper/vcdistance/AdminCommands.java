@@ -38,7 +38,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * /vcd notices on|off                          zone names above the hotbar when players enter or leave
  * /vcd zones [page]                            every zone
  * /vcd zone ...                                see {@link ZoneCommands}
- * /vcd rule sneak|dead|spectators|megaphone|megaphone_range &lt;value&gt;
+ * /vcd rule sneak|dead|spectators|megaphone|megaphone_range|megaphone_direction|megaphone_sound &lt;value&gt;
  * /vcd require off|suggest|warn|kick [min version]
  * /vcd debug [player]                          what a player hears, and why not
  * </pre>
@@ -87,12 +87,12 @@ public final class AdminCommands {
     static final String[] MODES = {"off", "suggest", "enforce"};
     static final String[] PRESETS = {"vanilla", "realistic", "clear", "stealth", "custom", "export", "import"};
     static final String[] LOCK_PARTS = {"all", "none", "curve", "walls", "materials", "effects"};
-    static final String[] RULES = {"sneak", "dead", "spectators", "megaphone", "megaphone_range"};
+    static final String[] RULES = {"sneak", "dead", "spectators", "megaphone", "megaphone_range", "megaphone_direction", "megaphone_sound"};
     static final String[] GROUP_RULES = {"dead", "spectators", "zones", "open_range"};
     static final String[] REQUIRE = {"off", "suggest", "warn", "kick"};
     static final String[] ON_OFF = {"on", "off"};
     /** {@code /vcd effects <part> ...}: the server's own air and the strengths the profile has. */
-    static final String[] EFFECT_PARTS = {"on", "off", "air", "curve", "water", "weather", "echo", "doppler", "status"};
+    static final String[] EFFECT_PARTS = {"on", "off", "air", "curve", "water", "weather", "echo", "doppler", "wind", "facing", "status"};
     static final String[] EFFECT_STEPS = {"off", "25", "50", "75", "100", "125", "150"};
     static final String[] ECHO_STEPS = {"off", "25", "50", "75", "100"};
     static final String[] DOPPLER_STEPS = {"off", "50", "100", "150", "200", "300"};
@@ -236,9 +236,20 @@ public final class AdminCommands {
             }
             case "preset" -> preset(r);
             case "walls" -> {
+                if (r.args.length > 1 && r.args[1].equalsIgnoreCase("loudness")) {
+                    Boolean on = r.args.length > 2 ? parseOnOff(r.args[2]) : null;
+                    if (on == null) {
+                        r.badValue("walls loudness", r.arg(2), "on|off", "walls");
+                        break;
+                    }
+                    settings.setWallLoudness(on);
+                    r.saved(on ? "walls_loudness_on" : "walls_loudness_off");
+                    wallsNote(r);
+                    break;
+                }
                 Double strength = r.args.length > 1 ? parsePercent(r.args[1]) : null;
                 if (strength == null) {
-                    r.badValue("walls", r.arg(1), "0-100|off", "walls");
+                    r.badValue("walls", r.arg(1), "0-100|off|loudness on|off", "walls");
                     break;
                 }
                 settings.setWallsStrength(strength);
@@ -366,6 +377,7 @@ public final class AdminCommands {
         DistanceConfig p = settings.profile();
         r.reply.add(CommandReply.line().addAll(m.spans("status.walls", Style.PLAIN,
                 r.change(p.isOcclusionEnabled() ? pct(p.getOcclusionStrength()) : m.get("off"), "walls"),
+                r.change(onOff(m, p.isWallLoudnessEnabled()), "walls loudness"),
                 r.change(onOff(m, settings.isServerWalls()), "serverwalls"),
                 AudioDistancePlugin.SERVER_WALLS.activeStreams(), settings.getMaxStreams())));
         r.reply.add(CommandReply.line().addAll(m.spans("status.effects", Style.PLAIN,
@@ -392,7 +404,9 @@ public final class AdminCommands {
                 r.change(onOff(m, settings.isDeadSilent()), "rule dead"),
                 r.change(onOff(m, settings.isSpectatorsOnly()), "rule spectators"),
                 r.change(settings.getMegaphoneItem().isEmpty() ? m.get("off")
-                        : settings.getMegaphoneItem() + " ×" + fmt(settings.getMegaphoneMultiplier()), "rule megaphone"))));
+                        : settings.getMegaphoneItem() + " ×" + fmt(settings.getMegaphoneMultiplier()), "rule megaphone"),
+                r.change(onOff(m, settings.isMegaphoneDirection()), "rule megaphone_direction"),
+                r.change(onOff(m, settings.isMegaphoneSound()), "rule megaphone_sound"))));
         r.reply.add(CommandReply.line().addAll(m.spans("status.require", Style.PLAIN,
                 r.change(settings.getRequireAddon().getId(), "require"),
                 settings.getMinAddonVersion().isEmpty() ? "-" : settings.getMinAddonVersion())));
@@ -421,7 +435,7 @@ public final class AdminCommands {
 
     /**
      * {@code /vcd effects}: water, weather and echo for players without the addon ({@code on|off}), the
-     * distance air ({@code air on|off}) and the strengths the profile has ({@code water|weather|echo|doppler}).
+     * distance air ({@code air on|off}) and the strengths the profile has ({@code water|weather|echo|doppler|facing|wind}).
      */
     private static void effects(Run r) {
         ServerSettings settings = r.settings;
@@ -458,10 +472,11 @@ public final class AdminCommands {
                 settings.setServerCurve(on);
                 r.saved(on ? "effects.curve_on" : "effects.curve_off");
             }
-            case "water", "weather", "echo", "doppler" -> {
+            case "water", "weather", "echo", "doppler", "facing", "wind" -> {
                 boolean echo = part.equals("echo");
                 boolean doppler = part.equals("doppler");
-                double max = echo ? DistanceConfig.REVERB_MAX : doppler ? Doppler.STRENGTH_MAX : DistanceConfig.EFFECT_STRENGTH_MAX;
+                double max = echo ? DistanceConfig.REVERB_MAX : doppler ? Doppler.STRENGTH_MAX
+                        : part.equals("facing") ? Directivity.STRENGTH_MAX : DistanceConfig.EFFECT_STRENGTH_MAX;
                 Double value = r.args.length > 2 ? parseStrength(r.args[2], max) : null;
                 if (value == null) {
                     r.badValue("effects " + part, r.arg(2), (echo ? "0-100" : doppler ? "0-300" : "0-150") + "|off", "effects");
@@ -480,6 +495,14 @@ public final class AdminCommands {
                     case "doppler" -> {
                         p.setDopplerEnabled(on);
                         p.setDopplerStrength(on ? value : p.getDopplerStrength());
+                    }
+                    case "facing" -> {
+                        p.setDirectivityEnabled(on);
+                        p.setDirectivityStrength(on ? value : p.getDirectivityStrength());
+                    }
+                    case "wind" -> {
+                        p.setWindEnabled(on);
+                        p.setWindStrength(on ? value : p.getWindStrength());
                     }
                     default -> {
                         p.setReverbEnabled(on);
@@ -774,8 +797,12 @@ public final class AdminCommands {
                 r.change(effectText(m, p.isUnderwaterEnabled(), p.getUnderwaterStrength()), "effects water"),
                 r.change(effectText(m, p.isWeatherEnabled(), p.getWeatherStrength()), "effects weather"),
                 r.change(effectText(m, p.isReverbEnabled(), p.getReverbStrength()), "effects echo"))));
+        r.reply.add(CommandReply.line().addAll(m.spans("effects.wind", Style.PLAIN,
+                r.change(effectText(m, p.isWindEnabled(), p.getWindStrength()), "effects wind"))));
         r.reply.add(CommandReply.line().addAll(m.spans("effects.doppler", Style.PLAIN,
                 r.change(effectText(m, p.isDopplerEnabled(), p.getDopplerStrength()), "effects doppler"))));
+        r.reply.add(CommandReply.line().addAll(m.spans("effects.facing", Style.PLAIN,
+                r.change(effectText(m, p.isDirectivityEnabled(), p.getDirectivityStrength()), "effects facing"))));
         r.reply.add(CommandReply.line().addAll(m.spans("effects.air", Style.PLAIN,
                 r.change(onOff(m, settings.isServerAir()), "effects air"))));
         r.reply.add(CommandReply.line().addAll(m.spans("effects.curve", Style.PLAIN,
@@ -1181,7 +1208,26 @@ public final class AdminCommands {
                     return;
                 }
                 settings.setMegaphoneMultiplier(v);
-                r.saved("rule.megaphone_range", fmt(settings.getMegaphoneMultiplier()));
+                r.saved(settings.isMegaphoneDirection() ? "rule.megaphone_range" : "rule.megaphone_range.all",
+                        fmt(settings.getMegaphoneMultiplier()));
+            }
+            case "megaphone_direction" -> {
+                Boolean on = parseOnOff(value);
+                if (on == null) {
+                    r.badValue("rule megaphone_direction", value, "on|off", "rule");
+                    return;
+                }
+                settings.setMegaphoneDirection(on);
+                r.saved(on ? "rule.megaphone_direction.on" : "rule.megaphone_direction.off");
+            }
+            case "megaphone_sound" -> {
+                Boolean on = parseOnOff(value);
+                if (on == null) {
+                    r.badValue("rule megaphone_sound", value, "on|off", "rule");
+                    return;
+                }
+                settings.setMegaphoneSound(on);
+                r.saved(on ? "rule.megaphone_sound.on" : "rule.megaphone_sound.off");
             }
             default -> r.badValue("rule", name, String.join("|", RULES), "rule");
         }

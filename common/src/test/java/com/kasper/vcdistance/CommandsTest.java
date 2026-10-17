@@ -585,9 +585,11 @@ public class CommandsTest {
         assertEquals(1.0, s.profile().getUnderwaterStrength(), 1e-9);
         List<String> subs = AdminCommands.suggestions("eff", s, viewer).stream().map(AdminCommands.Suggestion::text).toList();
         assertEquals(List.of("effects"), subs);
-        assertTrue(AdminCommands.suggestions("eff", s, viewer).get(0).tooltip().contains("water, weather, echo, air and Doppler"));
+        assertTrue(AdminCommands.suggestions("eff", s, viewer).get(0).tooltip().contains("water, weather, echo, air, Doppler, wind and facing"));
 
-        assertEquals(List.of("on", "off", "air", "curve", "water", "weather", "echo", "doppler", "status"), AdminCommands.suggest("effects "));
+        assertEquals(List.of("on", "off", "air", "curve", "water", "weather", "echo", "doppler", "wind", "facing", "status"), AdminCommands.suggest("effects "));
+        assertEquals(List.of("off", "25", "50", "75", "100", "125", "150"), AdminCommands.suggest("effects facing "));
+        assertEquals(List.of("off", "25", "50", "75", "100", "125", "150"), AdminCommands.suggest("effects wind "));
         assertEquals(List.of("on", "off"), AdminCommands.suggest("effects air "));
         assertEquals(List.of("off", "25", "50", "75", "100", "125", "150"), AdminCommands.suggest("effects water "));
         assertEquals(List.of("off", "25", "50", "75", "100"), AdminCommands.suggest("effects echo "));
@@ -597,6 +599,73 @@ public class CommandsTest {
         CommandReply help = AdminCommands.execute("help effects", s, ctx());
         assertEquals("/vcd effects", help.plain().get(0));
         assertEquals(Click.SUGGEST, button(help, "/vcd effects air on").click());
+    }
+
+    @Test
+    @DisplayName("/vcd effects facing: off by default, set to 0-150%, off keeps the strength, undo")
+    void effectsFacing() throws IOException {
+        ServerSettings s = settings("");
+        AdminCommands.Context ctx = ctx();
+        String view = String.join("\n", AdminCommands.run("effects", s, ctx));
+        assertTrue(view.contains("Speaker's facing (from the profile): off"), view);
+        button(AdminCommands.execute("effects", s, ctx), "/vcd effects facing ");
+
+        assertTrue(AdminCommands.run("effects facing 130", s, ctx).get(0).contains("Speaker's facing: 130% for everyone"));
+        assertTrue(s.profile().isDirectivityEnabled());
+        assertEquals(1.3, s.profile().getDirectivityStrength(), 1e-9);
+        assertTrue(AdminCommands.run("effects facing 200", s, ctx).get(0).contains("0-150|off"));
+        assertEquals(1.3, s.profile().getDirectivityStrength(), 1e-9);
+
+        AdminCommands.run("effects facing off", s, ctx);
+        assertFalse(s.profile().isDirectivityEnabled());
+        assertEquals(1.3, s.profile().getDirectivityStrength(), 1e-9, "the strength is kept for when it is turned on again");
+        ServerSettings again = new ServerSettings(s.getPath());
+        again.load();
+        assertFalse(again.profile().isDirectivityEnabled(), "saved");
+        assertEquals(1.3, again.profile().getDirectivityStrength(), 1e-9);
+
+        AdminCommands.run("undo", s, ctx);
+        assertTrue(s.profile().isDirectivityEnabled());
+        AdminCommands.run("undo", s, ctx);
+        assertFalse(s.profile().isDirectivityEnabled(), "back to the default: off");
+        assertEquals(DistanceConfig.DEFAULT_DIRECTIVITY_STRENGTH, s.profile().getDirectivityStrength(), 1e-9);
+    }
+
+    @Test
+    @DisplayName("/vcd effects wind: on by default at 100%, set to 0-150%, off keeps the strength, in the state and the report, undo")
+    void effectsWind() throws IOException {
+        ServerSettings s = settings("");
+        AdminCommands.Context ctx = ctx();
+        String view = String.join("\n", AdminCommands.run("effects", s, ctx));
+        assertTrue(view.contains("Wind (from the profile): 100%"), view);
+        button(AdminCommands.execute("effects", s, ctx), "/vcd effects wind ");
+
+        assertTrue(AdminCommands.run("effects wind 50", s, ctx).get(0).contains("Wind: 50% for everyone"));
+        assertTrue(s.profile().isWindEnabled());
+        assertEquals(0.5, s.profile().getWindStrength(), 1e-9);
+        assertTrue(AdminCommands.run("effects wind 160", s, ctx).get(0).contains("0-150|off"));
+        assertEquals(0.5, s.profile().getWindStrength(), 1e-9);
+        assertTrue(String.join("\n", ServerReport.lines(s, ctx)).contains(", wind 50%"));
+        java.util.Properties state = new java.util.Properties();
+        s.writeState(state, "");
+        assertEquals(0.5, Double.parseDouble(state.getProperty("wind_strength")), 1e-9);
+
+        assertTrue(AdminCommands.run("effects wind off", s, ctx).get(0).contains("The wind no longer changes voices"));
+        assertFalse(s.profile().isWindEnabled());
+        assertEquals(0.5, s.profile().getWindStrength(), 1e-9, "the strength is kept for when it is turned on again");
+        state = new java.util.Properties();
+        s.writeState(state, "");
+        assertEquals(0.0, Double.parseDouble(state.getProperty("wind_strength")), 1e-9);
+        assertTrue(String.join("\n", ServerReport.lines(s, ctx)).contains(", wind off"));
+        ServerSettings again = new ServerSettings(s.getPath());
+        again.load();
+        assertFalse(again.profile().isWindEnabled(), "saved");
+        assertEquals(0.5, again.profile().getWindStrength(), 1e-9);
+
+        AdminCommands.run("undo", s, ctx);
+        assertTrue(s.profile().isWindEnabled());
+        AdminCommands.run("undo", s, ctx);
+        assertEquals(DistanceConfig.DEFAULT_WIND_STRENGTH, s.profile().getWindStrength(), 1e-9);
     }
 
     @Test
@@ -746,5 +815,38 @@ public class CommandsTest {
                 }
             }
         }
+    }
+
+    @Test
+    @DisplayName("/vcd walls loudness turns whisper and shout behind walls on and off, and keeps the wall strength")
+    void wallLoudness() throws IOException {
+        ServerSettings s = settings("walls_strength=0.7\n");
+        AdminCommands.Context ctx = ctx();
+        assertTrue(s.profile().isWallLoudnessEnabled(), "on by default");
+        List<String> off = AdminCommands.run("walls loudness off", s, ctx);
+        assertTrue(off.get(0).startsWith("Behind walls a whisper and a shout now lose the same"), off.toString());
+        assertFalse(s.profile().isWallLoudnessEnabled());
+        assertEquals(0.7, s.profile().getOcclusionStrength(), 1e-9);
+        ServerSettings again = new ServerSettings(s.getPath());
+        again.load();
+        assertFalse(again.profile().isWallLoudnessEnabled(), "saved");
+        assertTrue(Files.readString(s.getPath()).contains("\nwall_loudness=false\n"));
+        assertTrue(String.join("\n", AdminCommands.run("status", s, ctx)).contains("whisper and shout: off"));
+
+        AdminCommands.run("undo", s, ctx);
+        assertTrue(s.profile().isWallLoudnessEnabled(), "undone");
+        AdminCommands.run("walls loudness off", s, ctx);
+        AdminCommands.run("walls loudness on", s, ctx);
+        assertTrue(s.profile().isWallLoudnessEnabled());
+        assertTrue(AdminCommands.run("walls loudness maybe", s, ctx).get(0).contains("on|off"));
+        assertTrue(AdminCommands.run("walls loudness", s, ctx).get(0).contains("on|off"));
+
+        assertTrue(AdminCommands.suggest("walls ").contains("loudness"));
+        assertEquals(List.of("loudness"), AdminCommands.suggest("walls lo"));
+        assertEquals(List.of("on", "off"), AdminCommands.suggest("walls loudness "));
+
+        java.util.Properties state = new java.util.Properties();
+        s.writeState(state, "");
+        assertEquals("true", state.getProperty("wall_loudness"));
     }
 }

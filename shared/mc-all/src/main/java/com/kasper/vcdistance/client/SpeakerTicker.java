@@ -8,6 +8,7 @@ import com.kasper.vcdistance.ListenerEnvironment;
 import com.kasper.vcdistance.RoomEstimate;
 import com.kasper.vcdistance.SoundPath;
 import com.kasper.vcdistance.SpeakerRegistry;
+import com.kasper.vcdistance.Wind;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.List;
@@ -91,6 +92,7 @@ public final class SpeakerTicker {
             for (SpeakerRegistry.Speaker s : active) {
                 s.setDistance(-1.0, now);
                 s.clearOcclusion();
+                s.clearFacing();
             }
             return;
         }
@@ -124,17 +126,26 @@ public final class SpeakerTicker {
 
         for (SpeakerRegistry.Speaker s : active) {
             try {
+                // Set again while the entity is found; a sound from a place has no facing
+                s.clearLook();
                 Vec3 source = s.getKind() == SpeakerRegistry.Kind.ENTITY
                         ? access.entitySpeakerPosition(s, now)
                         : new Vec3(s.getSoundX(), s.getSoundY(), s.getSoundZ());
                 if (source == null || listener == null) {
                     s.setDistance(-1.0, now);
+                    s.setWindPosition(Double.NaN, Double.NaN, Double.NaN, now);
                     s.clearOcclusion();
+                    s.clearFacing();
                     continue;
                 }
                 s.setDistance(listener.distanceTo(source), now);
+                s.updateFacing(listener.x - source.x, listener.y - source.y, listener.z - source.z);
                 s.setBearing(Bearing.relative(source.x - listener.x, source.z - listener.z, yaw));
                 s.setSurroundings(access.isUnderWater(source), access.weatherAt(source));
+                if (config.isWindEnabled()) {
+                    s.setWindPosition(source.x, source.y, source.z, now);
+                    s.setWindPlace(Wind.place(access.placeAt(source), s.isUnderWater(), s.getWeather()));
+                }
 
                 if (!tracing || s.getDistance() > MAX_TRACE_DISTANCE) {
                     s.clearOcclusion();
@@ -163,6 +174,7 @@ public final class SpeakerTicker {
             } catch (Throwable t) {
                 DistanceConfig.LOGGER.debug("Failed to update speaker {}: {}", s.getChannelId(), t.toString());
                 s.clearOcclusion();
+                s.clearFacing();
             }
         }
         if (roomSpeaker != null) {
@@ -219,7 +231,7 @@ public final class SpeakerTicker {
                 return;
             }
             env.update(access.isUnderWater(listener), access.weatherAt(listener));
-            env.setPosition(listener.x, listener.y, listener.z);
+            env.setPosition(listener.x, listener.y, listener.z, System.nanoTime());
             env.updatePlace(access.placeAt(listener));
             Double zoneEcho = AudioDistancePlugin.LINK.zoneEcho();
             if (zoneEcho != null) {

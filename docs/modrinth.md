@@ -13,6 +13,7 @@ Install it on your client, on the server, or on both. Each works on its own.
 
 **🧱 Walls and corners**
 - Voices behind walls are quieter and duller. Wool and metal block more, glass and leaves less, open doors let sound through.
+- A whisper is lost behind a wall, a shout still carries.
 - A voice from the next room comes through the doorway, and it gets duller the sharper the turn.
 - Players side by side in a narrow tunnel hear each other clearly.
 
@@ -23,6 +24,7 @@ Install it on your client, on the server, or on both. Each works on its own.
 - Caves, the Nether and the End sound different: echo and air follow the place.
 - Dull voices under water; rain and thunder cover far voices. You choose how strong each is.
 - The Doppler effect (off by default): a voice flying or riding towards you sounds higher, one moving away lower.
+- A voice is quieter and duller behind the speaker's back, as with real speech.
 
 **👀 HUD and monitor**
 - See who is talking, how far, from where, and whether they are behind a wall.
@@ -37,11 +39,11 @@ Install it on your client, on the server, or on both. Each works on its own.
 Players **without the addon** also hear voices muffled through walls.
 
 - **Sound zones:** a stage heard twice as far, a quiet library, a soundproof room, a cathedral with echo. Everyone sees the zone's name above the hotbar on entering, even without the addon. WorldGuard regions and Open Parties and Claims claims work too.
-- **Game rules:** sneaking is quieter, the dead are silent, spectators talk only to each other, a goat horn works as a megaphone.
+- **Game rules:** sneaking is quieter, the dead are silent, spectators talk only to each other, a goat horn works as a megaphone that carries furthest ahead and sounds like one.
 - **One sound for everyone:** offer or enforce the server's settings for fair PvP and events.
 - **No seeing through walls:** turn off the monitor and radar.
 - **Require the addon:** send a download link, remind on every join, or kick.
-- **Realism without the addon** (off by default): water, rain, echo, the Doppler effect and the server profile's distance curve for players who only have voice chat.
+- **Realism without the addon** (off by default): water, rain, echo, the speaker's facing, wind, the Doppler effect and the server profile's distance curve for players who only have voice chat.
 - **Mute** a player's voice for a time or for good, with `/vcd mute`.
 - **Paper extras** (off by default, not yet tried in a live game): a radio, loudspeakers, an eavesdrop item, a sculk reaction to shouts, doorway sound, and Towny, Lands, WorldGuard and LuckPerms integrations. `/vcd extras` lists the switches.
 - **Paper:** `/voice` for every player (talk quietly or shout, walls off for yourself, per-player volume) and PlaceholderAPI placeholders for scoreboards and tab lists.
@@ -78,6 +80,7 @@ Minecraft 1.16.5, 1.17.1, 1.18.2, 1.19.2, 1.19.4, 1.20 – 1.20.6, 1.21 – 1.21
 
 **🧱 Стены и углы**
 - Голоса за стенами тише и глуше. Шерсть и металл глушат сильнее, стекло и листва слабее, открытые двери пропускают звук.
+- Шёпот за стеной теряется, крик проходит.
 - Голос из соседней комнаты идёт через дверной проём и тем глуше, чем круче поворот.
 - Двое рядом в узком тоннеле слышат друг друга чисто.
 

@@ -11,7 +11,7 @@ name: Minecraft 26.x compatibility
 on:
   pull_request:
     paths:
-      - 'fabric-26/**'
+      - 'versions/fabric/26/**'
       - 'shared/mc-all/**'
       - 'common/src/main/**'
       - 'gradle.properties'
@@ -83,14 +83,14 @@ jobs:
         run: |
           ./gradlew :fabric-26:assemble :fabric-26:writeCompileClasspath --no-daemon
           version=$(grep '^mod_version=' gradle.properties | cut -d= -f2)
-          cp "fabric-26/build/libs/voice-physics-fabric-${version}+mc26.x.jar" "${RUNNER_TEMP}/mod.jar"
-          cp fabric-26/build/compile-classpath.txt "${RUNNER_TEMP}/reference-classpath.txt"
+          cp "versions/fabric/26/build/libs/voice-physics-fabric-${version}+mc26.x.jar" "${RUNNER_TEMP}/mod.jar"
+          cp versions/fabric/26/build/compile-classpath.txt "${RUNNER_TEMP}/reference-classpath.txt"
 
       - name: Classpath of Minecraft ${{ matrix.mc }}
         run: |
           ./gradlew :fabric-26:writeCompileClasspath --no-daemon \
             -Pmc26_minecraft=${{ matrix.mc }} -Pmc26_fabric_api=${{ matrix.api }}
-          cp fabric-26/build/compile-classpath.txt "${RUNNER_TEMP}/target-classpath.txt"
+          cp versions/fabric/26/build/compile-classpath.txt "${RUNNER_TEMP}/target-classpath.txt"
 
       # For information only: what ships is the jar built for the reference version, and the two
       # checks after this one decide whether it runs here. Compiling against older Fabric API

@@ -26,13 +26,13 @@ def fabricUniversalName = "voice-physics-fabric-${project.mod_version}+mc1.16.5-
 // A band is built by its project's jar task, by another task of it (reobfJar: Forge 1.17.1 - 1.20.1 run with
 // Forge's names) or by its own Gradle (legacy: see legacyTargets). "toml" is the metadata the band's loader reads.
 def forgeBands = [
-        [id: 'forge_1_16_5', legacy: 'legacy/forge-1.16.5', loader: 'forge', java: 52],
+        [id: 'forge_1_16_5', legacy: 'versions/forge/1.16.5', loader: 'forge', java: 52],
         [id: 'forge_1_17', project: ':forge-1.17', task: 'reobfJar', loader: 'forge', java: 60],
         [id: 'forge_1_18', project: ':forge-1.18', task: 'reobfJar', loader: 'forge', java: 61],
         [id: 'forge_1_19', project: ':forge-1.19', task: 'reobfJar', loader: 'forge', java: 61],
         [id: 'forge_1_19_4', project: ':forge-1.19.4', task: 'reobfJar', loader: 'forge', java: 61],
         [id: 'forge_1_20_1', project: ':forge-1.20.1', task: 'reobfJar', loader: 'forge', java: 61],
-        [id: 'forge_1_20_4', legacy: 'legacy/forge-1.20.4', loader: 'forge', java: 61],
+        [id: 'forge_1_20_4', legacy: 'versions/forge/1.20.4', loader: 'forge', java: 61],
         [id: 'forge_1_20_6', project: ':forge-1.20.6', loader: 'forge', java: 65],
         [id: 'forge_1_21', project: ':forge-1.21', loader: 'forge', java: 65],
         [id: 'forge_1_21_5', project: ':forge-1.21.5', loader: 'forge', java: 65],
@@ -41,8 +41,8 @@ def forgeBands = [
         [id: 'forge_1_21_11', project: ':forge-1.21.11', loader: 'forge', java: 65],
         [id: 'forge_26', project: ':forge-26', loader: 'forge', java: 65],
         // NeoForge 1.20.2 - 1.20.4 still read META-INF/mods.toml, like Forge
-        [id: 'neoforge_1_20_2', legacy: 'legacy/neoforge-1.20.2', loader: 'neoforge', toml: 'META-INF/mods.toml', java: 61],
-        [id: 'neoforge_1_20_4', legacy: 'legacy/neoforge-1.20.4', loader: 'neoforge', toml: 'META-INF/mods.toml', java: 61],
+        [id: 'neoforge_1_20_2', legacy: 'versions/neoforge/1.20.2', loader: 'neoforge', toml: 'META-INF/mods.toml', java: 61],
+        [id: 'neoforge_1_20_4', legacy: 'versions/neoforge/1.20.4', loader: 'neoforge', toml: 'META-INF/mods.toml', java: 61],
         [id: 'neoforge_1_20_6', project: ':neoforge-1.20.6', loader: 'neoforge', java: 65],
         [id: 'neoforge_1_21', project: ':neoforge-1.21', loader: 'neoforge', java: 65],
         [id: 'neoforge_1_21_5', project: ':neoforge-1.21.5', loader: 'neoforge', java: 65],
@@ -55,18 +55,18 @@ def forgeBands = [
 }
 def forgeUniversalName = "voice-physics-forge-neoforge-${project.mod_version}+mc1.16.5-26.x.jar"
 
-// Builds of their own, with Gradle 8 (legacy/*): Forge 1.16.5 (Architectury Loom, Java 8) and Forge 1.20.2 - 1.20.4 run with SRG names, which only
+// Builds of their own, with Gradle 8 (the legacy targets): Forge 1.16.5 (Architectury Loom, Java 8) and Forge 1.20.2 - 1.20.4 run with SRG names, which only
 // ForgeGradle 6 remaps to, and ForgeGradle 6 cannot share this build with ForgeGradle 7. NeoForge 1.20.2 -
-// 1.20.4 need NeoGradle 7, which cannot share it either. A legacy/ project without a Gradle wrapper of its
-// own runs the wrapper of legacy/neoforge-1.20.4. Their jars are bands of the universal jar. They need a
+// 1.20.4 need NeoGradle 7, which cannot share it either. A legacy target without a Gradle wrapper of its
+// own runs the wrapper of versions/neoforge/1.20.4. Their jars are bands of the universal jar. They need a
 // JDK 17 or 21 for their Gradle: LEGACY_JAVA_HOME, or the JAVA_HOME_21_X64 / JAVA_HOME_17_X64 that
 // GitHub's runners set.
 def legacyTargets = [
-        [dir: 'legacy/forge-1.20.4', file: 'voice-physics-forge-%s+mc1.20.2-1.20.4.jar'],
-        [dir: 'legacy/neoforge-1.20.2', file: 'voice-physics-neoforge-%s+mc1.20.2-1.20.3.jar'],
-        [dir: 'legacy/neoforge-1.20.4', file: 'voice-physics-neoforge-%s+mc1.20.4.jar'],
-        // Java 8 bytecode through Jabel, whose javac plugin needs a JDK 17 (see legacy/forge-1.16.5/settings.gradle)
-        [dir: 'legacy/forge-1.16.5', file: 'voice-physics-forge-%s+mc1.16.5.jar', jdk: '17'],
+        [dir: 'versions/forge/1.20.4', file: 'voice-physics-forge-%s+mc1.20.2-1.20.4.jar'],
+        [dir: 'versions/neoforge/1.20.2', file: 'voice-physics-neoforge-%s+mc1.20.2-1.20.3.jar'],
+        [dir: 'versions/neoforge/1.20.4', file: 'voice-physics-neoforge-%s+mc1.20.4.jar'],
+        // Java 8 bytecode through Jabel, whose javac plugin needs a JDK 17 (see versions/forge/1.16.5/settings.gradle)
+        [dir: 'versions/forge/1.16.5', file: 'voice-physics-forge-%s+mc1.16.5.jar', jdk: '17'],
 ]
 
 // A target with jdk: '17' needs exactly that one (LEGACY_JAVA_HOME may point at a JDK 17 or 21)
@@ -74,7 +74,7 @@ def legacyJavaHome = { String jdk = null ->
     def names = jdk == '17' ? ['JAVA_HOME_17_X64', 'LEGACY_JAVA_HOME'] : ['LEGACY_JAVA_HOME', 'JAVA_HOME_21_X64', 'JAVA_HOME_17_X64']
     def home = names.collect { System.getenv(it) }.find { it }
     if (home == null) {
-        throw new GradleException('The legacy/ builds need Gradle 8 on Java 17 or 21: set LEGACY_JAVA_HOME to such a JDK')
+        throw new GradleException('The legacy builds (versions/forge/1.16.5, ...) need Gradle 8 on Java 17 or 21: set LEGACY_JAVA_HOME to such a JDK')
     }
     home
 }
@@ -85,7 +85,7 @@ legacyTargets.each { t ->
         group = 'build'
         description = "Builds ${t.dir} with its own Gradle"
         workingDir = file(t.dir)
-        def wrapper = file("${t.dir}/gradlew").exists() ? 'gradlew' : '../neoforge-1.20.4/gradlew'
+        def wrapper = file("${t.dir}/gradlew").exists() ? 'gradlew' : '../1.20.4/gradlew'
         commandLine 'sh', wrapper, 'build', '--no-daemon', '--stacktrace'
         doFirst {
             environment 'JAVA_HOME', legacyJavaHome(t.jdk)
@@ -95,7 +95,7 @@ legacyTargets.each { t ->
 
 tasks.register('buildLegacy') {
     group = 'build'
-    description = 'Builds the legacy/ projects'
+    description = 'Builds the Forge 1.16.5 / 1.20.4 and NeoForge 1.20.2 / 1.20.4 builds of their own'
     dependsOn legacyTargets.collect { 'buildLegacy_' + it.dir.replaceAll('[^A-Za-z0-9]', '_') }
 }
 

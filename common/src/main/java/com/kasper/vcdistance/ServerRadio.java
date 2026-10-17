@@ -2,6 +2,7 @@ package com.kasper.vcdistance;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.ToDoubleFunction;
 
 /**
  * The radio of the Paper plugin: players tuned to the same frequency (1-9999, {@code /voice radio})
@@ -34,6 +35,12 @@ public final class ServerRadio {
      */
     public static List<ServerPlayers.Info> receivers(ServerSettings s, PlayerPrefs prefs, ServerPlayers players,
                                                      ServerPlayers.Info speaker, double hearRange) {
+        return receivers(s, prefs, players, speaker, other -> hearRange);
+    }
+
+    /** As above, with the range the voice carries towards each player (a megaphone carries furthest ahead). */
+    public static List<ServerPlayers.Info> receivers(ServerSettings s, PlayerPrefs prefs, ServerPlayers players,
+                                                     ServerPlayers.Info speaker, ToDoubleFunction<ServerPlayers.Info> hearRange) {
         int frequency = frequency(s, prefs, speaker);
         if (frequency == 0 || (s.isDeadSilent() && !speaker.alive())) {
             return Jv.listOf();
@@ -45,7 +52,7 @@ public final class ServerRadio {
                 continue;
             }
             boolean near = speaker.world() != null && other.world() != null
-                    && Zone.sameWorld(speaker.world(), other.world()) && speaker.distanceTo(other) <= hearRange;
+                    && Zone.sameWorld(speaker.world(), other.world()) && speaker.distanceTo(other) <= hearRange.applyAsDouble(other);
             if (!near) {
                 out.add(other);
             }

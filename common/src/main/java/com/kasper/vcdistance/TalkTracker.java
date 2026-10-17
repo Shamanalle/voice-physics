@@ -28,6 +28,12 @@ public final class TalkTracker {
         return at != null && nowNanos - at <= HOLD_NANOS;
     }
 
+    /** Whether {@code player}'s last voice packet came at most {@code nanos} before {@code nowNanos}. */
+    public boolean spokeWithin(UUID player, long nowNanos, long nanos) {
+        Long at = player == null ? null : last.get(player);
+        return at != null && nowNanos - at <= nanos;
+    }
+
     public void forget(UUID player) {
         last.remove(player);
     }

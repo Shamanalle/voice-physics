@@ -7,7 +7,7 @@ plugins {
 // Mojang's names and turned into Forge's runtime (SRG) names by remapJar. Minecraft 1.16.5 runs on
 // Java 8, so the Java 17 sources (the common module included) are compiled to Java 8 bytecode with Jabel
 // (gradle/jabel.gradle of the main build explains it). The Forge hooks are this module's own.
-def repoRoot = file('../..')
+def repoRoot = file('../../..')
 def props = new Properties()
 new File(repoRoot, 'gradle.properties').withInputStream { props.load(it) }
 

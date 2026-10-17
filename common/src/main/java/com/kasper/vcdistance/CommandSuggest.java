@@ -46,7 +46,10 @@ final class CommandSuggest {
                 case "help", "?" -> addAll(out, AdminCommands.TOPICS, typed);
                 case "profile" -> addAll(out, AdminCommands.MODES, typed);
                 case "preset" -> addAll(out, AdminCommands.PRESETS, typed);
-                case "walls" -> addAll(out, AdminCommands.WALLS_STEPS, typed);
+                case "walls" -> {
+                    addAll(out, AdminCommands.WALLS_STEPS, typed);
+                    add(out, "loudness", typed, null);
+                }
                 case "serverwalls", "monitor", "notices" -> addAll(out, AdminCommands.ON_OFF, typed);
                 case "effects" -> addAll(out, AdminCommands.EFFECT_PARTS, typed);
                 case "extras" -> addAll(out, AdminCommands.EXTRAS, typed);
@@ -88,14 +91,17 @@ final class CommandSuggest {
                 case "dead", "spectators" -> AdminCommands.ON_OFF;
                 case "megaphone" -> new String[]{"off", "minecraft:goat_horn", "minecraft:bell"};
                 case "megaphone_range" -> new String[]{"2", "2.5", "3", "4"};
+                case "megaphone_direction", "megaphone_sound" -> AdminCommands.ON_OFF;
                 default -> new String[0];
             }, typed);
+        } else if (sub.equals("walls") && args.length == 3 && action.equals("loudness")) {
+            addAll(out, AdminCommands.ON_OFF, typed);
         } else if (sub.equals("mute") && args.length == 3) {
             addAll(out, AdminCommands.MUTE_TIMES, typed);
         } else if (sub.equals("effects") && args.length == 3) {
             addAll(out, switch (action) {
                 case "air", "curve" -> AdminCommands.ON_OFF;
-                case "water", "weather" -> AdminCommands.EFFECT_STEPS;
+                case "water", "weather", "facing", "wind" -> AdminCommands.EFFECT_STEPS;
                 case "echo" -> AdminCommands.ECHO_STEPS;
                 case "doppler" -> AdminCommands.DOPPLER_STEPS;
                 default -> new String[0];

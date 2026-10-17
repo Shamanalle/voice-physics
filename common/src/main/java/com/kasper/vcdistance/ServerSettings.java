@@ -33,9 +33,11 @@ public final class ServerSettings {
     /**
      * 2: sections with comments, walls_strength and material.* at the top level, profile_preset;
      * 3: echo, water and weather; 4: zones and messages_language; 5: more materials;
-     * 6: boxes and zone rules, game rules, the addon requirement, messages in every language.
+     * 6: boxes and zone rules, game rules, the addon requirement, messages in every language;
+     * 10: wall_loudness, so older files get it with its comment; 11: megaphone_sound;
+     * 12: megaphone_direction.
      */
-    private static final int SETTINGS_VERSION = 9;
+    private static final int SETTINGS_VERSION = 12;
     private static final String ZONE_PREFIX = "zone.";
     private static final String MUTE_PREFIX = "mute.";
     private static final String SPEAKER_PREFIX = "speaker.";
@@ -121,6 +123,8 @@ public final class ServerSettings {
     private volatile boolean spectatorsOnly;
     private volatile String megaphoneItem = "";
     private volatile double megaphoneMultiplier = DEFAULT_MEGAPHONE_MULTIPLIER;
+    private volatile boolean megaphoneSound = true;
+    private volatile boolean megaphoneDirection = true;
     private volatile RequireAddon requireAddon = RequireAddon.OFF;
     private volatile String minAddonVersion = "";
     private volatile String addonUrl = DEFAULT_ADDON_URL;
@@ -376,6 +380,8 @@ public final class ServerSettings {
         spectatorsOnly = DistanceConfig.parseBoolean(props, "spectators_hear_only_spectators", false);
         megaphoneItem = itemId(props.getProperty("megaphone_item", ""));
         megaphoneMultiplier = DistanceConfig.clamp(DistanceConfig.parseDouble(props, "megaphone_multiplier", DEFAULT_MEGAPHONE_MULTIPLIER), 1.0, 10.0);
+        megaphoneSound = DistanceConfig.parseBoolean(props, "megaphone_sound", true);
+        megaphoneDirection = DistanceConfig.parseBoolean(props, "megaphone_direction", true);
         groupDeadSilent = DistanceConfig.parseBoolean(props, "group_dead_silent", false);
         groupSpectatorsApart = DistanceConfig.parseBoolean(props, "group_spectators_apart", false);
         groupIsolatedZones = DistanceConfig.parseBoolean(props, "group_isolated_zones", false);
@@ -423,6 +429,7 @@ public final class ServerSettings {
                 DistanceConfig.STRENGTH_MIN, DistanceConfig.STRENGTH_MAX);
         profile.setOcclusionEnabled(strength > 0.0);
         profile.setOcclusionStrength(strength);
+        profile.setWallLoudnessEnabled(DistanceConfig.parseBoolean(props, "wall_loudness", profile.isWallLoudnessEnabled()));
         for (AcousticMaterial m : AcousticMaterial.values()) {
             profile.setMaterialWeight(m, DistanceConfig.parseDouble(props, "material." + m.getId(), profile.getMaterialWeight(m)));
         }
@@ -452,7 +459,12 @@ public final class ServerSettings {
         w.section("1. Walls, for every player", "1. Стены, для всех игроков")
                 .comment("How strongly walls muffle voices, 0 - 1. 0 = walls off. Default 0.6.",
                         "Насколько сильно стены глушат голоса, 0 - 1. 0 = стены выключены. По умолчанию 0.6.")
-                .value("walls_strength", profile.isOcclusionEnabled() ? profile.getOcclusionStrength() : 0.0);
+                .value("walls_strength", profile.isOcclusionEnabled() ? profile.getOcclusionStrength() : 0.0)
+                .comment("true: how loud the speaker talks counts behind a wall: a whisper is lost there, a shout carries through.",
+                        "Only players' voices, not sounds from a place. Default true.",
+                        "true: за стеной важно, как громко говорят: шёпот там теряется, крик проходит.",
+                        "Только голоса игроков, не звуки из места. По умолчанию true.")
+                .value("wall_loudness", profile.isWallLoudnessEnabled());
         profile.writeMaterials(w, "");
 
         w.section("2. Players without the addon", "2. Игроки без аддона")
@@ -621,9 +633,21 @@ public final class ServerSettings {
                 .comment("An item that works as a megaphone while held, e.g. minecraft:goat_horn. Empty = no megaphone.",
                         "Предмет, который в руке работает как мегафон, например minecraft:goat_horn. Пусто = мегафона нет.")
                 .value("megaphone_item", megaphoneItem)
-                .comment("Voice range with the megaphone, times this: 1 - 10. Default 2.5.",
-                        "Дальность голоса с мегафоном умножается на это: 1 - 10. По умолчанию 2.5.")
-                .value("megaphone_multiplier", megaphoneMultiplier);
+                .comment("Voice range with the megaphone, times this: 1 - 10. Default 2.5. It is the range straight ahead",
+                        "of the speaker; to the sides it is less, straight behind 1 + half the extra (x1.75 at 2.5).",
+                        "Дальность голоса с мегафоном умножается на это: 1 - 10. По умолчанию 2.5. Это дальность прямо",
+                        "перед говорящим; в стороны меньше, прямо за спиной 1 + половина прибавки (x1.75 при 2.5).")
+                .value("megaphone_multiplier", megaphoneMultiplier)
+                .comment("true: the megaphone carries furthest the way the speaker looks, less to the sides and behind.",
+                        "false: the same range all round. Default true.",
+                        "true: мегафон дальше всего слышно туда, куда смотрит говорящий, в стороны и назад меньше.",
+                        "false: одинаковая дальность во все стороны. По умолчанию true.")
+                .value("megaphone_direction", megaphoneDirection)
+                .comment("true: the voice through the megaphone sounds like a horn (thin, a little overdriven), for every player.",
+                        "Needs Simple Voice Chat 2.5.27 or newer on the server. Default true.",
+                        "true: голос через мегафон звучит как из рупора (тонко, с лёгким перегрузом), для всех игроков.",
+                        "Нужен Simple Voice Chat 2.5.27 или новее на сервере. По умолчанию true.")
+                .value("megaphone_sound", megaphoneSound);
 
         w.section("7. Players without the addon: requirement", "7. Игроки без аддона: требование")
                 .comment("For players who have Simple Voice Chat but not this addon (or a version below min_addon_version):",
@@ -901,6 +925,24 @@ public final class ServerSettings {
         megaphoneMultiplier = DistanceConfig.clamp(m, 1.0, 10.0);
     }
 
+    /** The megaphone's voice sounds like a horn. */
+    public boolean isMegaphoneSound() {
+        return megaphoneSound;
+    }
+
+    public void setMegaphoneSound(boolean on) {
+        megaphoneSound = on;
+    }
+
+    /** The megaphone carries furthest the way the speaker looks; off, the same range all round. */
+    public boolean isMegaphoneDirection() {
+        return megaphoneDirection;
+    }
+
+    public void setMegaphoneDirection(boolean on) {
+        megaphoneDirection = on;
+    }
+
     public RequireAddon getRequireAddon() {
         return requireAddon;
     }
@@ -968,12 +1010,15 @@ public final class ServerSettings {
         p.setProperty(prefix + "allow_monitor", String.valueOf(allowMonitor));
         p.setProperty(prefix + "zone_notices", String.valueOf(zoneNotices));
         p.setProperty(prefix + "walls_strength", DistanceConfig.format(profile.isOcclusionEnabled() ? profile.getOcclusionStrength() : 0.0));
+        p.setProperty(prefix + "wall_loudness", String.valueOf(profile.isWallLoudnessEnabled()));
         p.setProperty(prefix + "server_walls", String.valueOf(serverWalls));
         p.setProperty(prefix + "sneak_range_multiplier", DistanceConfig.format(sneakMultiplier));
         p.setProperty(prefix + "dead_players_silent", String.valueOf(deadSilent));
         p.setProperty(prefix + "spectators_hear_only_spectators", String.valueOf(spectatorsOnly));
         p.setProperty(prefix + "megaphone_item", megaphoneItem);
         p.setProperty(prefix + "megaphone_multiplier", DistanceConfig.format(megaphoneMultiplier));
+        p.setProperty(prefix + "megaphone_sound", String.valueOf(megaphoneSound));
+        p.setProperty(prefix + "megaphone_direction", String.valueOf(megaphoneDirection));
         p.setProperty(prefix + "group_dead_silent", String.valueOf(groupDeadSilent));
         p.setProperty(prefix + "group_spectators_apart", String.valueOf(groupSpectatorsApart));
         p.setProperty(prefix + "group_isolated_zones", String.valueOf(groupIsolatedZones));
@@ -989,6 +1034,8 @@ public final class ServerSettings {
         p.setProperty(prefix + "weather_strength", DistanceConfig.format(profile.isWeatherEnabled() ? profile.getWeatherStrength() : 0.0));
         p.setProperty(prefix + "echo_strength", DistanceConfig.format(profile.isReverbEnabled() ? profile.getReverbStrength() : 0.0));
         p.setProperty(prefix + "doppler_strength", DistanceConfig.format(profile.isDopplerEnabled() ? profile.getDopplerStrength() : 0.0));
+        p.setProperty(prefix + "directivity_strength", DistanceConfig.format(profile.isDirectivityEnabled() ? profile.getDirectivityStrength() : 0.0));
+        p.setProperty(prefix + "wind_strength", DistanceConfig.format(profile.isWindEnabled() ? profile.getWindStrength() : 0.0));
         // The plugin's extras
         p.setProperty(prefix + "server_radio", String.valueOf(serverRadio));
         p.setProperty(prefix + "server_speakers", String.valueOf(serverSpeakers));
@@ -1354,6 +1401,11 @@ public final class ServerSettings {
         double s = DistanceConfig.clamp(strength, DistanceConfig.STRENGTH_MIN, DistanceConfig.STRENGTH_MAX);
         profile.setOcclusionEnabled(s > 0.0);
         profile.setOcclusionStrength(s);
+    }
+
+    /** Whether a whisper is lost behind walls and a shout carries; call {@link #save()} to keep it. */
+    public void setWallLoudness(boolean on) {
+        profile.setWallLoudnessEnabled(on);
     }
 
     /** Changes the mode in memory; call {@link #save()} to keep it. */
