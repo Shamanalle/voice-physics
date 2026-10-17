@@ -55,7 +55,15 @@ public class SettingsScreenGameTest implements FabricClientGameTest {
      * Server tab has something to show. Commands from the tab go nowhere.
      */
     private static void pretendAdmin() {
+        pretendAdmin(false);
+    }
+
+    /** @param plugin a Paper server with a few of its extras and the megaphone on, so those sections show too */
+    private static void pretendAdmin(boolean plugin) {
         ServerSettings settings = new ServerSettings();
+        if (plugin) {
+            settings.setMegaphoneItem("minecraft:goat_horn");
+        }
         settings.setSneakMultiplier(0.5);
         settings.setGroupSpectatorsApart(true);
         settings.setWallsStrength(0.55);
@@ -67,7 +75,13 @@ public class SettingsScreenGameTest implements FabricClientGameTest {
                 new Zone.Box("minecraft:overworld", 100, 60, 100, 140, 90, 140), 0));
         AudioDistancePlugin.LINK.setAdminSender(text -> { });
         AudioDistancePlugin.LINK.onProfile(LinkProtocol.profile(settings, null, 48.0, 16.0, true));
-        AudioDistancePlugin.LINK.onAdminReply(LinkProtocol.adminReply(com.kasper.vcdistance.Jv.listOf(), settings));
+        java.util.Map<String, String> extra = new java.util.LinkedHashMap<>();
+        if (plugin) {
+            extra.put("plugin", "true");
+            extra.put("server_radio", "true");
+            extra.put("server_eavesdrop", "true");
+        }
+        AudioDistancePlugin.LINK.onAdminReply(LinkProtocol.adminReply(com.kasper.vcdistance.Jv.listOf(), settings, extra));
     }
 
     /** A page of the change log as the server would send it, so the Log screen has lines to show. */
@@ -116,11 +130,12 @@ public class SettingsScreenGameTest implements FabricClientGameTest {
             context.runOnClient(client -> TestScreens.open(client, null));
             context.waitTicks(1);
         }
-        // The folded parts open: the curve's tuning, the materials, the Server tab's sections
+        // The folded parts open: the materials, the Server tab's sections and one of its zones
         context.runOnClient(client -> {
-            pretendAdmin();
+            pretendAdmin(true);
             AudioDistancePlugin.CONFIG.setBlockRules(BlockRules.parse("create:andesite_casing=metal,#c:glass_blocks=glass,mc:x=door"));
             SettingsScreen.unfoldAll();
+            SettingsScreen.pickZone("arena-north");
         });
         for (SettingsScreen.Tab tab : new SettingsScreen.Tab[]{SettingsScreen.Tab.DISTANCE, SettingsScreen.Tab.WALLS,
                 SettingsScreen.Tab.SERVER}) {
@@ -131,13 +146,12 @@ public class SettingsScreenGameTest implements FabricClientGameTest {
             });
             context.waitTicks(3);
             context.takeScreenshot("settings-" + name);
-            context.runOnClient(client -> {
-                if (TestScreens.current(client) instanceof SettingsScreen screen) {
-                    screen.scrollToEnd();
-                }
-            });
-            context.waitTicks(2);
-            context.takeScreenshot("settings-" + name + "-end");
+            // Page by page, so every section is seen once
+            for (int page = 2; page < 12 && context.computeOnClient(client ->
+                    TestScreens.current(client) instanceof SettingsScreen screen && screen.scrollPage()); page++) {
+                context.waitTicks(2);
+                context.takeScreenshot("settings-" + name + "-" + page);
+            }
             context.runOnClient(client -> TestScreens.open(client, null));
             context.waitTicks(1);
         }
