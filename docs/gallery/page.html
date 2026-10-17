@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Voice Physics gallery card</title>
+<style>
+  /* One 1920x1080 picture: the cover (?cover) or a card (?title=&text=&shot=). Rendered by make.js. */
+  @font-face {
+    font-family: "Inter";
+    src: url("fonts/Inter-latin.woff2") format("woff2");
+    font-weight: 100 900;
+  }
+  :root {
+    --bg: #1f2327;
+    --bg-deep: #15181b;
+    --cyan: #19b3cc;
+    --cyan-dark: #0e788c;
+    --text: #f0f4f6;
+    --dim: #a9b4bb;
+    --line: rgba(255, 255, 255, 0.09);
+  }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { width: 1920px; height: 1080px; overflow: hidden; }
+  body {
+    font-family: "Inter", sans-serif;
+    color: var(--text);
+    background:
+      radial-gradient(1200px 700px at 85% -10%, rgba(25, 179, 204, 0.16), transparent 70%),
+      radial-gradient(900px 600px at -5% 110%, rgba(25, 179, 204, 0.08), transparent 70%),
+      linear-gradient(160deg, var(--bg) 0%, var(--bg-deep) 100%);
+    -webkit-font-smoothing: antialiased;
+  }
+  .shot {
+    display: block;
+    border-radius: 14px;
+    border: 1px solid var(--line);
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(0, 0, 0, 0.4);
+  }
+
+  /* Card: a line of text above a big screenshot */
+  .card { position: absolute; inset: 0; }
+  .card header {
+    position: absolute; left: 200px; right: 200px; top: 44px;
+    display: flex; align-items: center; gap: 28px;
+  }
+  .card header img.icon { width: 84px; height: 84px; image-rendering: pixelated; flex: none; }
+  .card h1 { font-size: 50px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.05; }
+  .card p { font-size: 26px; color: var(--dim); margin-top: 8px; line-height: 1.3; }
+  .card .shot { position: absolute; left: 200px; top: 168px; width: 1520px; height: 855px; }
+
+  /* Cover: name, line and what it does on the left, the settings screen on the right */
+  .cover { position: absolute; inset: 0; }
+  .cover .left { position: absolute; left: 120px; top: 150px; width: 820px; }
+  .cover img.icon { width: 176px; height: 176px; image-rendering: pixelated; }
+  .cover .for { margin-top: 40px; font-size: 26px; font-weight: 600; color: var(--cyan); letter-spacing: 0.02em; }
+  .cover h1 { font-size: 112px; font-weight: 800; letter-spacing: -0.035em; line-height: 1; margin-top: 10px; }
+  .cover .line { font-size: 34px; color: var(--dim); line-height: 1.35; margin-top: 28px; }
+  .cover .chips { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 44px; }
+  .cover .chip {
+    font-size: 24px; font-weight: 600; padding: 11px 20px; border-radius: 999px;
+    background: rgba(25, 179, 204, 0.12); border: 1px solid rgba(25, 179, 204, 0.35); color: #d9f4f8;
+  }
+  .cover .chip.new { background: var(--cyan); border-color: var(--cyan); color: #0b1e23; }
+  .cover .loaders { position: absolute; left: 120px; bottom: 70px; font-size: 24px; color: var(--dim); }
+  .cover .loaders b { color: var(--text); font-weight: 600; }
+  .cover .shot { position: absolute; left: 1010px; top: 150px; width: 1360px; height: 765px; }
+</style>
+</head>
+<body>
+<script>
+  const q = new URLSearchParams(location.search);
+  const esc = s => s.replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  if (q.has("cover")) {
+    const chips = q.getAll("chip").map(c => c.startsWith("+")
+      ? `<span class="chip new">${esc(c.slice(1))}</span>` : `<span class="chip">${esc(c)}</span>`).join("");
+    document.body.innerHTML = `
+      <div class="cover">
+        <div class="left">
+          <img class="icon" src="../../icon.png" alt="">
+          <div class="for">${esc(q.get("for") || "")}</div>
+          <h1>${esc(q.get("title") || "")}</h1>
+          <div class="line">${esc(q.get("text") || "")}</div>
+          <div class="chips">${chips}</div>
+        </div>
+        <img class="shot" src="${esc(q.get("shot"))}" alt="">
+        <div class="loaders">${q.get("loaders") || ""}</div>
+      </div>`;
+  } else {
+    document.body.innerHTML = `
+      <div class="card">
+        <header>
+          <img class="icon" src="../../icon.png" alt="">
+          <div><h1>${esc(q.get("title") || "")}</h1><p>${esc(q.get("text") || "")}</p></div>
+        </header>
+        <img class="shot" src="${esc(q.get("shot"))}" alt="">
+      </div>`;
+  }
+</script>
+</body>
+</html>

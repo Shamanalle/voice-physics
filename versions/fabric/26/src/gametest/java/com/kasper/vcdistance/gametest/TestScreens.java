@@ -69,6 +69,22 @@ final class TestScreens {
         }
     }
 
+    /**
+     * Hides the game's own HUD (hotbar, hearts, chat) the way F1 does; open screens still draw. F1's
+     * flag moved from the options to a private field of the HUD in 26.x, so it is set by reflection;
+     * without it the HUD stays.
+     */
+    static void hideHud(Minecraft client, boolean hide) {
+        try {
+            Object hud = client.gui.getClass().getField("hud").get(client.gui);
+            java.lang.reflect.Field hidden = hud.getClass().getDeclaredField("isHidden");
+            hidden.setAccessible(true);
+            hidden.setBoolean(hud, hide);
+        } catch (ReflectiveOperationException | RuntimeException ignored) {
+            // Another layout; the pictures keep the HUD
+        }
+    }
+
     /** Whether the game has finished loading resources. */
     static boolean loaded(Minecraft client) {
         return reload == null || reload.isDone();
