@@ -17,14 +17,15 @@ Install it on your client, on the server, or on both. Each works on its own. On 
 - A voice from the next room comes through the doorway, and it gets duller the sharper the turn.
 - Players side by side in a narrow tunnel hear each other clearly.
 
-**🌊 Echo, water, rain**
+**🌊 Echo, water, rain, wind**
 - The echo fits the place: short in a stone room, long in a cave, soft in a wooden house, none in a forest or field.
 - Near cliffs the voice comes back a moment later.
 - The echo changes smoothly as you walk between places.
 - Caves, the Nether and the End sound different: echo and air follow the place.
 - Dull voices under water; rain and thunder cover far voices. You choose how strong each is.
+- High up under the open sky and in fast elytra flight, wind blows far voices away a little.
 - The Doppler effect (off by default): a voice flying or riding towards you sounds higher, one moving away lower.
-- A voice is quieter and duller behind the speaker's back, as with real speech.
+- Which way the speaker faces (off by default): behind their back a voice is a little quieter and duller, as with real speech.
 
 **👀 HUD and monitor**
 - See who is talking, how far, from where, and whether they are behind a wall.
