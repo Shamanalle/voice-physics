@@ -37,6 +37,9 @@ public final class SpeakerTicker {
     private static final int PATHS_PER_TICK = 2;
     private static final int PATH_NODES = 1200;
 
+    /** Set by the store screenshots: the ticker leaves the made-up monitor as it is. */
+    public static volatile boolean frozen;
+
     private final WorldAccess access;
     /** Block lookups for this tick's wall rays' ways round, shared so each block is read once. */
     private final GridCache grid = new GridCache();
@@ -69,6 +72,9 @@ public final class SpeakerTicker {
     }
 
     private void tickUnsafe() {
+        if (frozen) {
+            return;
+        }
         Object world = access.worldIdentity();
         if (world != lastWorld) {
             // Joined, left or switched world/server: forget everything tied to the old one
