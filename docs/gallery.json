@@ -1,44 +1,79 @@
 [
   {
-    "file": "docs/images/ui-distance.png",
+    "file": "docs/images/gallery/cover.png",
+    "title": "Voice Physics",
+    "description": "Proximity voice chat that sounds like the world around you.",
+    "featured": true,
+    "cover": {
+      "for": "An addon for Simple Voice Chat",
+      "heading": "Voice Physics",
+      "text": "Voices fade with distance, are muffled by walls, come round corners through doorways and echo in caves.",
+      "chips": ["Walls and materials", "Echo", "Doorways", "Water and rain", "+Whisper and shout", "+Wind", "+Facing", "+Megaphone", "HUD"],
+      "shot": "docs/images/ui-distance.png",
+      "loaders": "<b>Fabric · Quilt · Forge · NeoForge · Paper</b> &nbsp; Minecraft 1.16.5 – 26.x"
+    }
+  },
+  {
+    "file": "docs/images/gallery/distance.png",
     "title": "The Distance tab",
     "description": "The fade curve with the players you hear, presets and a Listen button.",
-    "featured": true
+    "featured": false,
+    "heading": "Voices fade the way you choose",
+    "text": "A live curve with the players you hear, presets for every kind of server, and a Listen button.",
+    "shot": "docs/images/ui-distance.png"
   },
   {
-    "file": "docs/images/ui-walls.png",
+    "file": "docs/images/gallery/walls.png",
     "title": "The Walls tab",
     "description": "How a voice sounds behind glass, leaves, wood, dirt, stone, iron and wool.",
-    "featured": false
+    "featured": false,
+    "heading": "Walls muffle, doorways let through",
+    "text": "Glass, wood, stone and wool each sound different. A whisper is lost behind a wall; a shout carries.",
+    "shot": "docs/images/ui-walls.png"
   },
   {
-    "file": "docs/images/ui-effects.png",
+    "file": "docs/images/gallery/effects.png",
     "title": "The Effects tab",
-    "description": "Echo, water, rain and sound round corners, with what applies around you right now.",
-    "featured": false
+    "description": "Echo, water, rain, wind, Doppler and facing, with what applies around you right now.",
+    "featured": false,
+    "heading": "Echo, water, rain and wind",
+    "text": "Caves echo, water dulls, wind blows far voices away, and a voice is quieter behind the speaker's back.",
+    "shot": "docs/images/ui-effects.png"
   },
   {
-    "file": "docs/images/ui-hud.png",
+    "file": "docs/images/gallery/hud.png",
     "title": "The HUD",
     "description": "Who is talking, how far, behind a wall or whispering, and how many hear you.",
-    "featured": false
+    "featured": false,
+    "heading": "See who is talking",
+    "text": "How far, from where, behind a wall or whispering, and how many players hear you.",
+    "shot": "docs/images/ui-hud.png"
   },
   {
-    "file": "docs/images/ui-server.png",
+    "file": "docs/images/gallery/server.png",
     "title": "The Server tab",
-    "description": "For admins: profile, walls, game rules and zones, saved on the server right away.",
-    "featured": false
+    "description": "For admins: profile, walls, game rules, megaphone and zones, saved on the server right away.",
+    "featured": false,
+    "heading": "Run it from the server",
+    "text": "Profiles, zones, game rules and the megaphone. Walls work even for players without the mod.",
+    "shot": "docs/images/ui-server.png"
   },
   {
-    "file": "docs/images/ui-log.png",
+    "file": "docs/images/gallery/log.png",
     "title": "The change log",
-    "description": "Every change to the server's settings, ten a page, filtered by player, with undo.",
-    "featured": false
+    "description": "Every change to the server's settings, filtered by player, with undo.",
+    "featured": false,
+    "heading": "Every change on record",
+    "text": "Who changed what and when, one player's changes or everyone's, and undo in one click.",
+    "shot": "docs/images/ui-log.png"
   },
   {
-    "file": "docs/images/ui-locked.png",
+    "file": "docs/images/gallery/locked.png",
     "title": "Settings locked by the server",
     "description": "When a server enforces its profile, the locked controls show a padlock.",
-    "featured": false
+    "featured": false,
+    "heading": "Servers can lock settings",
+    "text": "When a server enforces its profile, locked controls show a padlock, so players know why.",
+    "shot": "docs/images/ui-locked.png"
   }
 ]

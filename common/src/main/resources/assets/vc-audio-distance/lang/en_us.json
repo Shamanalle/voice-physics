@@ -739,7 +739,7 @@
   "gui.vc-audio-distance.log.filter.tooltip": "Shows only this player's changes: type a name, or console. Empty shows everyone.",
   "gui.vc-audio-distance.log.apply": "Filter",
   "gui.vc-audio-distance.log.all": "Everyone",
-  "gui.vc-audio-distance.log.page": "Page %s of %s",
+  "gui.vc-audio-distance.log.range": "%s–%s of %s",
   "gui.vc-audio-distance.log.total": "%s changes",
   "gui.vc-audio-distance.log.total.by": "%s changes by %s",
   "gui.vc-audio-distance.log.empty": "No changes yet.",

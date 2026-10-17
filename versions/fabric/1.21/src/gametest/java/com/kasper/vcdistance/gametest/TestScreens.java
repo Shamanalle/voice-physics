@@ -51,6 +51,11 @@ final class TestScreens {
         client.gui.getChat().clearMessages(false);
     }
 
+    /** Hides the game's own HUD (hotbar, hearts, chat) the way F1 does; open screens still draw. */
+    static void hideHud(Minecraft client, boolean hide) {
+        client.options.hideGui = hide;
+    }
+
     /** Whether the game has finished loading resources. */
     static boolean loaded(Minecraft client) {
         return reload == null || reload.isDone();

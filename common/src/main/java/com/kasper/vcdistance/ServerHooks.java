@@ -237,14 +237,39 @@ public final class ServerHooks {
             return null;
         }
         ServerSettings settings = AudioDistancePlugin.SERVER_SETTINGS;
+        String[] words = command.trim().split("\\s+");
+        boolean log = words[0].equalsIgnoreCase("log") && ctx.allows(AdminCommands.PERM_SETTINGS);
+        ChangeLog.Window window = log ? ChangeLog.parseWindow(words) : null;
+        if (window != null) {
+            return logReply(settings, ctx, window);
+        }
         List<String> lines = AdminCommands.run(command, settings, ctx);
         java.util.Map<String, String> state = tabState(settings, ctx);
-        // The Log screen asks with /vcd log [page] [player] and gets that page with the reply
-        String[] words = command.trim().split("\\s+");
-        if (words[0].equalsIgnoreCase("log") && ctx.allows(AdminCommands.PERM_SETTINGS)) {
+        // Older clients ask with /vcd log [page] [player] and get that page of ten with the reply
+        if (log) {
             ChangeLog.writePage(ChangeLog.page(ChangeLog.read(settings), ChangeLog.parseView(words)), state);
         }
         return LinkProtocol.adminReply(lines, settings, state);
+    }
+
+    /**
+     * The Log screen's {@code log rows=<n> from=<n> [player]}: the changes in the state and no chat lines (the
+     * screen does not show them). With long commands not all the rows fit in one message, so the page is cut
+     * until it does; the screen goes on from the first change it did not get.
+     */
+    static String logReply(ServerSettings settings, AdminCommands.Context ctx, ChangeLog.Window window) {
+        java.util.Map<String, String> state = tabState(settings, ctx);
+        ChangeLog.Page page = ChangeLog.window(ChangeLog.read(settings), window);
+        while (true) {
+            java.util.Map<String, String> withPage = new java.util.LinkedHashMap<>(state);
+            ChangeLog.writePage(page, withPage);
+            String reply = LinkProtocol.adminReply(Jv.listOf(), settings, withPage);
+            int n = page.entries().size();
+            if (reply.length() <= LinkProtocol.MAX_LENGTH || n <= 1) {
+                return reply;
+            }
+            page = page.first(Math.min(n - 1, (int) ((long) n * LinkProtocol.MAX_LENGTH / reply.length())));
+        }
     }
 
     /** How many latest changes the Server tab lists. */
@@ -259,6 +284,8 @@ public final class ServerHooks {
             out.put("allows." + permission, String.valueOf(ctx.allows(permission)));
         }
         if (ctx.allows(AdminCommands.PERM_SETTINGS)) {
+            // This server reads the Log screen's log rows=<n> from=<n>, up to this many rows
+            out.put("logrows", String.valueOf(ChangeLog.MAX_ROWS));
             List<ChangeLog.Entry> log = ChangeLog.read(settings);
             for (int i = 0; i < Math.min(TAB_LOG, log.size()); i++) {
                 ChangeLog.Entry e = log.get(i);

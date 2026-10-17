@@ -346,6 +346,70 @@ public class CommandsTest {
     }
 
     @Test
+    @DisplayName("The Log screen asks for as many changes as it is high, from any change on; the reply always fits")
+    void logWindows() throws IOException {
+        ServerSettings s = settings("");
+        AdminCommands.Context ctx = ctx();
+        for (int i = 0; i < 37; i++) {
+            AdminCommands.run("walls " + (20 + i), s, ctx);
+        }
+        String who = ChangeLog.read(s).get(0).who();
+
+        // rows= and from= in any order, beside a player; chat pages skip them, and without rows= it is a chat page
+        ChangeLog.Window w = ChangeLog.parseWindow(new String[]{"log", "from=14", who, "rows=24"});
+        assertEquals(new ChangeLog.Window(14, 24, who), w);
+        assertEquals(new ChangeLog.Window(0, 5, null), ChangeLog.parseWindow(new String[]{"log", "ROWS=5"}));
+        assertNull(ChangeLog.parseWindow(new String[]{"log", "2", who}));
+        assertEquals(new ChangeLog.View(1, null), ChangeLog.parseView(new String[]{"log", "rows=24", "from=14"}));
+        assertEquals(new ChangeLog.View(2, "Steve"), ChangeLog.parseView(new String[]{"log", "rows=24", "2", "Steve"}));
+
+        // A window starts where it is asked to, and a start past the end is the last change
+        List<ChangeLog.Entry> all = ChangeLog.read(s);
+        ChangeLog.Page middle = ChangeLog.window(all, new ChangeLog.Window(14, 20, null));
+        assertEquals(14, middle.from());
+        assertEquals(20, middle.entries().size());
+        assertEquals(all.get(14), middle.entries().get(0));
+        assertEquals(37, middle.total());
+        ChangeLog.Page end = ChangeLog.window(all, new ChangeLog.Window(30, 20, null));
+        assertEquals(7, end.entries().size());
+        assertEquals(36, ChangeLog.window(all, new ChangeLog.Window(500, 20, null)).from());
+        assertEquals(ChangeLog.MAX_ROWS, ChangeLog.window(java.util.Collections.nCopies(500, all.get(0)),
+                new ChangeLog.Window(0, 10_000, null)).entries().size());
+        assertTrue(ChangeLog.window(all, new ChangeLog.Window(0, 20, "Nobody")).entries().isEmpty());
+        assertEquals(10, ChangeLog.page(all, new ChangeLog.View(2, null)).from(), "a chat page says where it starts too");
+
+        // Through the server: the changes in the state, no chat lines; the server says it takes windows
+        assertEquals(String.valueOf(ChangeLog.MAX_ROWS), ServerHooks.tabState(s, ctx).get("logrows"));
+        assertNull(ServerHooks.tabState(s, ctx(admin.id(), null, AdminCommands.PERM_STATUS)).get("logrows"));
+        LinkProtocol.AdminReply reply = LinkProtocol.parseAdminReply(ServerHooks.logReply(s, ctx, new ChangeLog.Window(5, 30, null)));
+        assertTrue(reply.lines().isEmpty());
+        ChangeLog.Page received = ChangeLog.readPage(reply.state());
+        assertEquals(5, received.from());
+        assertEquals(30, received.entries().size());
+        assertEquals(all.get(5), received.entries().get(0));
+
+        // Long commands: fewer changes than asked, from the same start, and the message still fits
+        String zone = "x".repeat(200);
+        for (int i = 0; i < 150; i++) {
+            ChangeLog.append(s, new ChangeLog.Entry(java.time.Instant.now(), "Steve", "/vcd zone create " + zone + i + " 8", false));
+        }
+        String big = ServerHooks.logReply(s, ctx, new ChangeLog.Window(3, ChangeLog.MAX_ROWS, null));
+        assertTrue(big.length() <= LinkProtocol.MAX_LENGTH, "reply of " + big.length());
+        LinkProtocol.encode(big);
+        ChangeLog.Page cut = ChangeLog.readPage(LinkProtocol.parseAdminReply(big).state());
+        assertEquals(3, cut.from());
+        assertTrue(cut.entries().size() > 10 && cut.entries().size() < ChangeLog.MAX_ROWS, "got " + cut.entries().size());
+        assertEquals(ChangeLog.read(s).get(3), cut.entries().get(0));
+
+        // A reply of an older server: pages of ten and no start
+        java.util.Properties old = new java.util.Properties();
+        old.setProperty("logpage.page", "3");
+        old.setProperty("logpage.pages", "4");
+        old.setProperty("logpage.total", "37");
+        assertEquals(20, ChangeLog.readPage(old).from());
+    }
+
+    @Test
     @DisplayName("Server tab: its reply carries undo, the player's permissions and the latest changes")
     void serverTabState() throws IOException {
         ServerSettings s = settings("");

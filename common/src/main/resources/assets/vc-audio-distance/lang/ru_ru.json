@@ -739,7 +739,7 @@
   "gui.vc-audio-distance.log.filter.tooltip": "Показывает изменения только этого игрока: впишите ник или console. Пусто — все.",
   "gui.vc-audio-distance.log.apply": "Найти",
   "gui.vc-audio-distance.log.all": "Все",
-  "gui.vc-audio-distance.log.page": "Страница %s из %s",
+  "gui.vc-audio-distance.log.range": "%s–%s из %s",
   "gui.vc-audio-distance.log.total": "Изменений: %s",
   "gui.vc-audio-distance.log.total.by": "Изменений: %s, игрок %s",
   "gui.vc-audio-distance.log.empty": "Изменений пока нет.",

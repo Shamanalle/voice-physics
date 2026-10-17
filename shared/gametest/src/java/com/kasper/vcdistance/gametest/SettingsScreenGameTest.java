@@ -84,23 +84,37 @@ public class SettingsScreenGameTest implements FabricClientGameTest {
         AudioDistancePlugin.LINK.onAdminReply(LinkProtocol.adminReply(com.kasper.vcdistance.Jv.listOf(), settings, extra));
     }
 
-    /** A page of the change log as the server would send it, so the Log screen has lines to show. */
+    /**
+     * A server with a long change log that answers the Log screen as a real one does, so the screen fills
+     * its height and the pager has somewhere to go.
+     */
     private static void pretendLog() {
         java.time.Instant now = java.time.Instant.now();
-        java.util.List<ChangeLog.Entry> entries = new java.util.ArrayList<>();
         String[][] rows = {
                 {"Alex", "/vcd walls 60", "false"}, {"Alex", "/vcd walls 85", "true"},
                 {ChangeLog.CONSOLE, "/vcd zone create spawn 8", "false"}, {"Steve", "/vcd rule sneak 0.5", "false"},
                 {"Alex", "/vcd lock curve,walls,materials", "false"}, {"SomeoneWithALongName", "/vcd zone set arena-north range 24 echo 0.8 isolated on", "false"},
                 {"Steve", "/vcd profile enforce", "false"}, {"Alex", "/vcd preset realistic", "true"},
                 {ChangeLog.CONSOLE, "/vcd reload", "false"}, {"Steve", "/vcd walls 40", "false"},
+                {"Alex", "/vcd megaphone item minecraft:goat_horn", "false"}, {"Steve", "/vcd zone set spawn notices on", "false"},
+                {"Alex", "/vcd block add create:andesite_casing metal", "false"}, {ChangeLog.CONSOLE, "/vcd doppler on", "false"},
+                {"Steve", "/vcd range 48", "false"}, {"Alex", "/vcd whisper 16", "false"},
         };
-        for (int i = 0; i < rows.length; i++) {
-            entries.add(new ChangeLog.Entry(now.minusSeconds(3600L * i), rows[i][0], rows[i][1], Boolean.parseBoolean(rows[i][2])));
+        java.util.List<ChangeLog.Entry> all = new java.util.ArrayList<>();
+        for (int i = 0; i < 37; i++) {
+            String[] row = rows[i % rows.length];
+            all.add(new ChangeLog.Entry(now.minusSeconds(2700L * i), row[0], row[1], Boolean.parseBoolean(row[2])));
         }
         java.util.Map<String, String> state = new java.util.LinkedHashMap<>();
         state.put("undo", "3");
-        ChangeLog.writePage(new ChangeLog.Page(entries, 1, 4, 37, ""), state);
+        state.put("logrows", String.valueOf(ChangeLog.MAX_ROWS));
+        AudioDistancePlugin.LINK.setAdminSender(text -> {
+            String command = LinkProtocol.parseAdminRequest(text);
+            ChangeLog.Window window = command == null ? null : ChangeLog.parseWindow(command.trim().split("\\s+"));
+            java.util.Map<String, String> reply = new java.util.LinkedHashMap<>(state);
+            ChangeLog.writePage(window == null ? ChangeLog.page(all, new ChangeLog.View(1, null)) : ChangeLog.window(all, window), reply);
+            AudioDistancePlugin.LINK.onAdminReply(LinkProtocol.adminReply(com.kasper.vcdistance.Jv.listOf(), new ServerSettings(), reply));
+        });
         AudioDistancePlugin.LINK.onAdminReply(LinkProtocol.adminReply(com.kasper.vcdistance.Jv.listOf(), new ServerSettings(), state));
     }
 
@@ -168,8 +182,8 @@ public class SettingsScreenGameTest implements FabricClientGameTest {
     }
 
     /**
-     * The pictures for the store pages and the README: one look (3840 x 2160, English, empty chat),
-     * named {@code store-<name>}. The folded parts are still open from the shots above.
+     * The pictures for the store pages and the README: one look (3840 x 2160, English, no game HUD or
+     * chat behind the screen), named {@code store-<name>}. The folded parts are still open from the shots above.
      */
     private static void shootStore(ClientGameTestContext context) {
         context.getInput().resizeWindow(STORE_WIDTH, STORE_HEIGHT);
@@ -177,9 +191,14 @@ public class SettingsScreenGameTest implements FabricClientGameTest {
         context.runOnClient(client -> TestScreens.guiScale(client, STORE_GUI_SCALE));
         context.waitTicks(2);
         context.runOnClient(client -> {
+            // Only the screen in the picture: no hotbar, hearts or chat behind it
+            TestScreens.hideHud(client, true);
             TestScreens.clearChat(client);
             pretendAdmin();
             pretendLog();
+            // The optional effects on, so the Effects tab shows their sliders
+            AudioDistancePlugin.CONFIG.setDopplerEnabled(true);
+            AudioDistancePlugin.CONFIG.setDirectivityEnabled(true);
         });
         for (SettingsScreen.Tab tab : new SettingsScreen.Tab[]{SettingsScreen.Tab.DISTANCE, SettingsScreen.Tab.WALLS,
                 SettingsScreen.Tab.EFFECTS, SettingsScreen.Tab.HUD, SettingsScreen.Tab.SERVER}) {
@@ -214,6 +233,9 @@ public class SettingsScreenGameTest implements FabricClientGameTest {
         context.runOnClient(client -> {
             TestScreens.open(client, null);
             AudioDistancePlugin.LINK.reset();
+            AudioDistancePlugin.CONFIG.setDopplerEnabled(false);
+            AudioDistancePlugin.CONFIG.setDirectivityEnabled(false);
+            TestScreens.hideHud(client, false);
             // Automatic again for the shots that follow
             TestScreens.guiScale(client, 0);
         });

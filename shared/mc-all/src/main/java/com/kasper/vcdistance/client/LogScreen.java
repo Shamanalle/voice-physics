@@ -18,9 +18,10 @@ import java.util.List;
 
 /**
  * The server's change log on a screen of its own, for admins: who changed the settings with
- * {@code /vcd} or the Server tab, when, and what. Ten changes a page (the same pages as
- * {@code /vcd log}), everyone's or one player's, with a button that takes the last change back and one
- * that copies the page. The server does the paging; each page comes with the admin reply.
+ * {@code /vcd} or the Server tab, when, and what: as many changes as the screen is high, everyone's or
+ * one player's, with a button that takes the last change back and one that copies the page. The server
+ * does the paging; each page comes with the admin reply. A server before 2.12.1 only knows the pages of
+ * ten of {@code /vcd log}, so with one the screen shows ten at a time.
  * <p>
  * Version subclasses only forward rendering through a {@link Canvas} and switch screens.
  */
@@ -48,10 +49,14 @@ public abstract class LogScreen extends com.kasper.vcdistance.compat.BaseScreen 
     private Button copyButton;
     private int copiedTicks;
 
-    /** The player whose changes are shown ("" = everyone), and the page last asked for. */
+    /** The player whose changes are shown ("" = everyone), and where the page last asked for starts (0 = newest). */
     private String who = "";
-    private int wantPage = 1;
+    private int wantFrom;
     private boolean asked;
+    /** Whether the server takes {@code log rows=<n> from=<n>}, and the rows asked for last. */
+    private boolean windows;
+    private int maxRows = ChangeLog.PAGE;
+    private int askedRows;
     private int seenReplies = -1;
     /** The latest page from the server, or {@code null} until the first reply. */
     private ChangeLog.Page shown;
@@ -91,20 +96,20 @@ public abstract class LogScreen extends com.kasper.vcdistance.compat.BaseScreen 
         filterBox.setValue(who);
         Tip.set(filterBox, tip("log.filter.tooltip"));
         addRenderableWidget(filterBox);
-        addRenderableWidget(Btn.builder(tr("log.apply"), b -> ask(1, typedName()))
+        addRenderableWidget(Btn.builder(tr("log.apply"), b -> ask(0, typedName()))
                 .bounds(left + boxW + GAP, 22, applyW, 20).tooltip(tip("log.filter.tooltip")).build());
         addRenderableWidget(Btn.builder(tr("log.all"), b -> {
             filterBox.setValue("");
-            ask(1, "");
+            ask(0, "");
         }).bounds(right - allW, 22, allW, 20).build());
 
-        // Pager: previous and next page either side of the page number
-        int page = shown == null ? 1 : shown.page();
-        int pages = shown == null ? 1 : shown.pages();
-        Button prev = Btn.builder(Txt.literal("‹"), b -> ask(page - 1, who)).bounds(left, pagerY, 30, 20).build();
-        Button next = Btn.builder(Txt.literal("›"), b -> ask(page + 1, who)).bounds(right - 30, pagerY, 30, 20).build();
-        prev.active = shown != null && page > 1;
-        next.active = shown != null && page < pages;
+        // Pager: the changes before and after these, either side of which ones are shown
+        int from = shown == null ? 0 : shown.from();
+        int after = shown == null ? 0 : from + shown.entries().size();
+        Button prev = Btn.builder(Txt.literal("‹"), b -> ask(from - rows(), who)).bounds(left, pagerY, 30, 20).build();
+        Button next = Btn.builder(Txt.literal("›"), b -> ask(after, who)).bounds(right - 30, pagerY, 30, 20).build();
+        prev.active = shown != null && from > 0;
+        next.active = shown != null && after < shown.total();
         addRenderableWidget(prev);
         addRenderableWidget(next);
 
@@ -122,8 +127,31 @@ public abstract class LogScreen extends com.kasper.vcdistance.compat.BaseScreen 
 
         if (!asked) {
             asked = true;
-            ask(1, "");
+            readCapability(AudioDistancePlugin.LINK.adminReply());
+            ask(0, "");
+        } else if (windows && rows() != askedRows) {
+            // The window was resized: as many rows as fit now, from the same first change
+            ask(wantFrom, who);
         }
+    }
+
+    /** Changes that fit between the header and the pager, or ten for a server that only knows pages. */
+    private int rows() {
+        return windows ? Math.max(1, Math.min(maxRows, (listBottom - listTop) / LINE)) : ChangeLog.PAGE;
+    }
+
+    /** Learns from a reply's state whether the server takes {@code log rows=<n>}; @return whether it newly does. */
+    private boolean readCapability(LinkProtocol.AdminReply reply) {
+        if (windows || reply == null) {
+            return false;
+        }
+        try {
+            maxRows = Math.max(1, Integer.parseInt(reply.state().getProperty("logrows", "")));
+        } catch (NumberFormatException e) {
+            return false;
+        }
+        windows = true;
+        return true;
     }
 
     // =========================================================================
@@ -134,17 +162,21 @@ public abstract class LogScreen extends com.kasper.vcdistance.compat.BaseScreen 
         return filterBox == null ? who : filterBox.getValue().replaceAll("\\s+", "");
     }
 
-    /** Asks the server for a page; it arrives with the next admin reply. */
-    private void ask(int page, String name) {
+    /** Asks the server for the changes from the {@code from}-th on; they arrive with the next admin reply. */
+    private void ask(int from, String name) {
         who = name;
-        wantPage = Math.max(1, page);
-        AudioDistancePlugin.LINK.sendAdmin("log " + wantPage + (name.isEmpty() ? "" : " " + name));
+        wantFrom = Math.max(0, from);
+        askedRows = rows();
+        String player = name.isEmpty() ? "" : " " + name;
+        AudioDistancePlugin.LINK.sendAdmin(windows
+                ? "log rows=" + askedRows + " from=" + wantFrom + player
+                : "log " + (wantFrom / ChangeLog.PAGE + 1) + player);
     }
 
     private void undoLast() {
         // The undo reply carries no log page, so ask for the page again right after it
         AudioDistancePlugin.LINK.sendAdmin("undo");
-        ask(wantPage, who);
+        ask(wantFrom, who);
     }
 
     @Override
@@ -164,12 +196,16 @@ public abstract class LogScreen extends com.kasper.vcdistance.compat.BaseScreen 
         ChangeLog.Page page = ChangeLog.readPage(reply.state());
         if (page != null) {
             shown = page;
-            wantPage = page.page();
+            wantFrom = page.from();
         }
         try {
             undoable = Integer.parseInt(reply.state().getProperty("undo", "0"));
         } catch (NumberFormatException e) {
             undoable = 0;
+        }
+        if (readCapability(reply)) {
+            // The first reply said the server takes more than ten rows: ask again for a full screen
+            ask(wantFrom, who);
         }
         rebuild();
     }
@@ -249,8 +285,11 @@ public abstract class LogScreen extends com.kasper.vcdistance.compat.BaseScreen 
             c.text(fit(c, command, right - x - 2), x, y, e.undo() ? Palette.WARN : Palette.TEXT_DIM);
         }
 
-        // Page number between the arrows
-        c.centered(tr("log.page", shown.page(), shown.pages()), this.width / 2, pagerY + 6, Palette.TEXT_DIM);
+        // Which changes these are, between the arrows
+        if (!entries.isEmpty()) {
+            Component range = tr("log.range", shown.from() + 1, shown.from() + entries.size(), shown.total());
+            c.centered(range, this.width / 2, pagerY + 6, Palette.TEXT_DIM);
+        }
     }
 
     private static String who(ChangeLog.Entry e) {

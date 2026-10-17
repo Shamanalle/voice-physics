@@ -17,14 +17,15 @@ Install it on your client, on the server, or on both. Each works on its own.
 - A voice from the next room comes through the doorway, and it gets duller the sharper the turn.
 - Players side by side in a narrow tunnel hear each other clearly.
 
-**🌊 Echo, water, rain**
+**🌊 Echo, water, rain, wind**
 - The echo fits the place: short in a stone room, long in a cave, soft in a wooden house, none in a forest or field.
 - Near cliffs the voice comes back a moment later.
 - The echo changes smoothly as you walk between places.
 - Caves, the Nether and the End sound different: echo and air follow the place.
 - Dull voices under water; rain and thunder cover far voices. You choose how strong each is.
+- High up under the open sky and in fast elytra flight, wind blows far voices away a little.
 - The Doppler effect (off by default): a voice flying or riding towards you sounds higher, one moving away lower.
-- A voice is quieter and duller behind the speaker's back, as with real speech.
+- Which way the speaker faces (off by default): behind their back a voice is a little quieter and duller, as with real speech.
 
 **👀 HUD and monitor**
 - See who is talking, how far, from where, and whether they are behind a wall.
@@ -84,12 +85,15 @@ Minecraft 1.16.5, 1.17.1, 1.18.2, 1.19.2, 1.19.4, 1.20 – 1.20.6, 1.21 – 1.21
 - Голос из соседней комнаты идёт через дверной проём и тем глуше, чем круче поворот.
 - Двое рядом в узком тоннеле слышат друг друга чисто.
 
-**🌊 Эхо, вода, дождь**
+**🌊 Эхо, вода, дождь, ветер**
 - Эхо по месту: короткое в каменной комнате, долгое в пещере, мягкое в деревянном доме, никакого в лесу и в поле.
 - У скал голос возвращается через мгновение.
 - Эхо меняется плавно, когда вы переходите из одного места в другое.
 - Пещеры, Незер и Энд звучат по-разному: эхо и воздух следуют за местом.
 - Глухие голоса под водой; дождь и гроза заглушают дальние голоса. Силу каждого выбираете вы.
+- Высоко под открытым небом и в быстром полёте на элитрах ветер немного сдувает дальние голоса.
+- Эффект Доплера (по умолчанию выключен): голос того, кто летит или едет к вам, звучит выше, а того, кто удаляется, — ниже.
+- Куда смотрит говорящий (по умолчанию выключено): за его спиной голос чуть тише и глуше, как у живой речи.
 
 **👀 HUD и монитор**
 - Видно, кто говорит, как далеко, откуда и за стеной ли.
@@ -104,11 +108,11 @@ Minecraft 1.16.5, 1.17.1, 1.18.2, 1.19.2, 1.19.4, 1.20 – 1.20.6, 1.21 – 1.21
 Игроки **без аддона** тоже слышат голоса за стенами приглушёнными.
 
 - **Звуковые зоны:** сцена, которую слышно вдвое дальше, тихая библиотека, звукоизолированная комната, собор с эхом. При входе все видят название зоны над хотбаром, даже без аддона. Подходят и регионы WorldGuard, и приваты Open Parties and Claims.
-- **Правила игры:** на корточках тише, мёртвые молчат, наблюдатели говорят только между собой, козий рог работает как мегафон.
+- **Правила игры:** на корточках тише, мёртвые молчат, наблюдатели говорят только между собой, козий рог работает как мегафон: звучит как рупор, и дальше всего его слышно впереди.
 - **Один звук для всех:** предложите или закрепите настройки сервера для честного PvP и ивентов.
 - **Без взгляда сквозь стены:** выключите монитор и радар.
 - **Обязательный аддон:** ссылка на скачивание, напоминание при каждом входе или кик.
-- **Реализм без аддона** (по умолчанию выключен): вода, дождь и эхо для игроков, у которых есть только голосовой чат.
+- **Реализм без аддона** (по умолчанию выключен): вода, дождь, эхо, поворот головы говорящего, ветер, эффект Доплера и кривая расстояния из профиля сервера для игроков, у которых есть только голосовой чат.
 - **Заглушение** голоса игрока на время или насовсем командой `/vcd mute`.
 - **Дополнения Paper** (по умолчанию выключены, ещё не опробованы в живой игре): рация, громкоговорители, предмет для подслушивания, реакция скалка на крик, звук через дверной проём и интеграции с Towny, Lands, WorldGuard и LuckPerms. Переключатели — в `/vcd extras`.
 - **Paper:** `/voice` для каждого игрока (говорить тише или кричать, свои стены выключить, громкость каждого) и плейсхолдеры PlaceholderAPI для скорбордов и таба.

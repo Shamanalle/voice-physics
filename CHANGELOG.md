@@ -6,295 +6,235 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 *Все заметные изменения проекта описываются в этом файле. Каждая версия описана сначала на английском, затем на русском.*
 
+## [2.12.1] - 2026-10-17
+
+### English
+
+#### Changed
+- **The Log screen fills the screen.** It used to show ten changes at a time even on a big monitor; now it shows as many as fit, and the arrows say which ones you see (*1–24 of 137*). With a server on an older version it still shows ten at a time.
+
+### Русский
+
+#### Изменено
+- **Экран журнала занимает весь экран.** Раньше он показывал по десять изменений даже на большом мониторе, теперь столько, сколько помещается, а между стрелками написано, какие видно («1–24 из 137»). Если сервер на старой версии, по-прежнему по десять.
+
 ## [2.12.0] - 2026-10-17
 
 ### English
 
 #### Added
-- **Which way the speaker faces (optional, off by default).** A voice is clearest in front of the speaker. Behind their back it is quieter and duller, the high tones most: about 5 dB at 100%, as measured for real speech (Chu and Warnock 2002, Monson et al. 2012). The default strength is a gentle 50%, about 2.5 dB, so turning round does not get in the way of the game, and the switch is the last one on the *Effects* tab. Within 40 degrees of the front nothing changes, and to the side it is a little quieter. Only the sound that comes straight counts: a voice heard round a corner left the speaker towards the doorway, and the echo of a room comes from every side, so there the difference is smaller. A sound played from a place (a loudspeaker, a radio) has no facing. Strength 0 – 150%.
-  - **With the addon:** a *Facing* switch with its strength slider on the *Effects* tab (`directivity_enabled`, `directivity_strength` in the client file). They belong to the *effects* part of a server profile, so a server can offer or lock them. The monitor's line for a voice says *turned away* when it takes a decibel or more.
-  - **For players without the addon:** `/vcd effects facing <0-150>|off` (a *Facing* row in the *Players without the addon* section of the *Server* tab, `profile.directivity_enabled` and `profile.directivity_strength` in the server file). It works when the server effects are on (`/vcd effects on`), with the plugin and with the mod on the server. The server re-encodes a voice for it only when the speaker is turned far enough away to take at least 1 dB off (about 100 degrees at the default 50%, about 80 at 100%), never for a voice heard through a doorway, and it shares the re-encoding limit with the walls (`server_walls_max_streams`). `/vcd effects facing off` turns it off and saves that load.
-- **A whisper is lost behind a wall, a shout carries (on by default).** A wall takes the same decibels off every voice, but a whisper starts much quieter, so behind one wall it sinks under the noise of the world while a shout still carries through two. Now how loud a player talks counts behind walls: through one stone wall a whisper loses about 13 dB more than talking, through two it is barely there, a normal voice changes only from the third wall on, and a shout carries through three. Each player's usual level is learnt from their voice over the first seconds and kept for ten minutes, so the microphone's volume does not matter; Simple Voice Chat's whisper always counts as quiet, because it is sent at the normal level. In the open and through an open doorway nothing changes, and a sound played from a place (a loudspeaker, a radio) is left as it was.
-  - **With the addon:** a *Whisper and shout behind walls* switch on the *Walls* tab (`wall_loudness_enabled` in the client file). It belongs to the *walls* part of a server profile. The monitor's line for a voice says *too quiet for the wall* when it takes a decibel or more.
-  - **For players without the addon:** `/vcd walls loudness on|off` (a row in the *Walls* section of the *Server* tab, `wall_loudness` in the server file, which is rewritten once with its comment). It needs no extra re-encoding: only voices the walls already muffle change.
-- **Wind on heights and in fast flight (on by default).** High up under the open sky the wind blows far voices away: it starts at a height of about 90 and is strongest on mountain peaks, more still in rain and a thunderstorm. In fast flight on elytra the air rushing past covers voices too, from about 12 blocks a second. At the edge of the range it takes about 6 dB, close by much less, and it comes in gusts. Under a roof, under water, in the Nether and the End there is no wind. It only makes far voices quieter and does not muffle them. Strength 0 – 150%.
-  - **With the addon:** a *Wind* switch with its strength slider on the *Effects* tab (`wind_enabled`, `wind_strength` in the client file). They belong to the *effects* part of a server profile. The *Effects* tab shows the wind where you are, and the monitor's line for a voice says *wind* when it takes a decibel or more.
-  - **For players without the addon:** `/vcd effects wind <0-150>|off` (a *Wind* row in the *Players without the addon* section of the *Server* tab, `profile.wind_enabled` and `profile.wind_strength` in the server file). It works when the server effects are on (`/vcd effects on`), with the plugin and with the mod on the server. The server re-encodes a voice for it only when the wind takes at least 1 dB, and it shares the re-encoding limit with the walls (`server_walls_max_streams`). `/vcd effects wind off` turns it off and saves that load.
+- **Which way the speaker faces (optional, off by default).** A voice is clearest in front of the speaker; behind their back it is a little quieter and duller. The default strength is gentle, so turning round does not get in the way of the game. A *Facing* switch with a strength slider at the end of the *Effects* tab. For players without the addon: `/vcd effects facing <0-150>|off`.
+- **A whisper is lost behind a wall, a shout carries (on by default).** Behind one wall a whisper is barely heard, a normal voice changes only from the third wall, and a shout carries through three. The microphone's volume does not matter: each player's usual level is learnt from their voice. A switch on the *Walls* tab; for players without the addon: `/vcd walls loudness on|off`.
+- **Wind on heights and in fast flight (on by default).** High up under the open sky, and in fast elytra flight, far voices are blown away a little, more so in rain and thunder. Under a roof, under water, in the Nether and the End there is no wind. A *Wind* switch with a strength slider on the *Effects* tab; for players without the addon: `/vcd effects wind <0-150>|off`.
 
 #### Changed
-- **A megaphone sounds like one, and carries furthest ahead.** The voice of a player holding the megaphone item (`/vcd rule megaphone <item>`) now sounds like a horn to everyone, also to players without the addon: thin, nasal and a little overdriven. Taking it up mid-word glides into the horn, without a click. It carries the full `megaphone_multiplier` the way the player looks; behind them half of the extra range (x1.75 at the default 2.5), smoothly in between, so facing the crowd is worth it but turning round does not silence the megaphone; `/vcd rule megaphone_direction off` gives the same range all round (a *Range by facing* row on the *Server* tab, `megaphone_direction` in the server file). When the server does not know where the player looks, the full range all round, as before. The sound needs Simple Voice Chat 2.5.27 or newer (older versions keep only the range), shares the re-encoding limit with the walls (`server_walls_max_streams`), and `/vcd rule megaphone_sound off` turns it off (a row in the *Megaphone* section of the *Server* tab, `megaphone_sound` in the server file). The *Server* tab can now also set the megaphone's range.
-- **The settings screen is laid out anew.** Many switches came in over the last versions and the screen had grown crowded, so it is rebuilt:
-  - Each effect is one row: a small switch and its strength slider beside it. When the effect is off, the slider says *Off* and stays where it was.
-  - The *Effects* tab is split into *Surroundings* (echo, under water, rain and thunder, wind, corners, by place) and *Movement and facing* (Doppler, facing).
-  - The *HUD* tab is split into *Show the HUD*, *Look* and *Easier to read*. When to show the HUD, and the monitor's list or radar, are now a row of buttons with the chosen one marked, instead of a button that cycles.
-  - On the *Walls* tab the material sliders are in a folded section that says whether any were changed, and your own blocks are in a section of their own.
-  - On the *Server* tab everything for players without the addon (walls, effects, air, curve, water, rain, echo, wind, Doppler, facing) is in one section, *Players without the addon*. The megaphone has its own section (item, sound, range, range by facing), *Walls and monitor* is now *Walls*, and the monitor switch moved to *Game rules*. A folded section says in its header what is set inside.
-  - Buttons are placed by the width of their labels, so they fit in every language, also in a small window. A zone's line that is too long is shortened, and its tooltip shows it whole.
-
-#### Fixed
-- A test of the client report no longer fails when it runs after the server's voice processing tests.
+- **A megaphone sounds like one, and carries furthest ahead.** A player holding the megaphone item sounds like a horn to everyone, also to players without the addon. It carries furthest the way they look and less behind them, but never goes quiet. `/vcd rule megaphone_sound off` and `/vcd rule megaphone_direction off` turn either part off; the *Server* tab now has a *Megaphone* section with the item, sound and range.
+- **The settings screen is laid out anew.** Each effect is one row with its switch and strength slider. The *Effects*, *HUD* and *Walls* tabs are split into clear sections, and on the *Server* tab everything for players without the addon is in one place. Buttons fit in every language, also in a small window.
 
 ### Русский
 
 #### Добавлено
-- **Куда смотрит говорящий (по желанию, по умолчанию выключено).** Голос чище всего слышен перед говорящим. За его спиной он тише и глуше, сильнее всего в высоких тонах: примерно на 5 дБ при 100%, как по замерам настоящей речи (Chu и Warnock 2002, Monson и др. 2012). По умолчанию сила мягкая, 50%, примерно 2,5 дБ, чтобы поворот не мешал игре, а переключатель стоит последним на вкладке «Эффекты». В пределах 40 градусов от направления взгляда ничего не меняется, а сбоку голос чуть тише. Считается только звук, идущий напрямую: голос из-за угла ушёл от говорящего к проёму, а эхо комнаты приходит со всех сторон, поэтому там разница меньше. У звука из места (громкоговоритель, радио) поворота нет. Сила 0 – 150%.
-  - **С аддоном:** переключатель «Поворот головы» и ползунок силы на вкладке «Эффекты» (`directivity_enabled`, `directivity_strength` в файле клиента). Они входят в часть «эффекты» профиля сервера, так что сервер может их предложить или закрепить. В строке монитора для голоса появляется «отвернулся», когда это убавляет децибел или больше.
-  - **Для игроков без аддона:** `/vcd effects facing <0-150>|off` (строка «Поворот головы» в разделе «Игроки без аддона» вкладки «Сервер», `profile.directivity_enabled` и `profile.directivity_strength` в файле сервера). Работает, когда включены эффекты сервера (`/vcd effects on`), и с плагином, и с модом на сервере. Сервер перекодирует голос ради этого, только когда говорящий отвернулся настолько, что разница не меньше 1 дБ (примерно на 100 градусов при 50% по умолчанию, на 80 при 100%), и никогда — для голоса, который слышно через проём; лимит перекодирования общий со стенами (`server_walls_max_streams`). `/vcd effects facing off` выключает это и снимает нагрузку.
-- **Шёпот за стеной теряется, крик проходит (по умолчанию включено).** Стена отнимает у любого голоса одинаковое число децибел, но шёпот с самого начала намного тише, поэтому за одной стеной он тонет в шуме мира, а крик проходит и через две. Теперь за стенами важно, как громко говорит игрок: через одну каменную стену шёпот теряет примерно на 13 дБ больше обычной речи, через две его почти не слышно, обычный голос меняется только с третьей стены, а крик проходит и через три. Обычная громкость каждого игрока узнаётся по его голосу за первые секунды и помнится десять минут, так что громкость микрофона не важна; шёпот Simple Voice Chat всегда считается тихим, потому что он передаётся с обычной громкостью. На открытом месте и через открытый проём ничего не меняется, а звук из места (громкоговоритель, радио) остаётся как был.
-  - **С аддоном:** переключатель «Шёпот и крик за стенами» на вкладке «Стены» (`wall_loudness_enabled` в файле клиента). Он входит в часть «стены» профиля сервера. В строке монитора для голоса появляется «слишком тихо для стены», когда это убавляет децибел или больше.
-  - **Для игроков без аддона:** `/vcd walls loudness on|off` (строка в разделе «Стены» вкладки «Сервер», `wall_loudness` в файле сервера, который один раз перезаписывается с комментарием). Лишнего перекодирования не нужно: меняются только голоса, которые стены и так глушат.
-- **Ветер на высоте и в быстром полёте (по умолчанию включено).** Высоко под открытым небом ветер сдувает дальние голоса: он начинается с высоты около 90 и сильнее всего на вершинах гор, а в дождь и грозу ещё сильнее. В быстром полёте на элитрах голоса заглушает и встречный поток, примерно с 12 блоков в секунду. На краю слышимости ветер отнимает около 6 дБ, вблизи намного меньше, и дует порывами. Под крышей, под водой, в Незере и Энде ветра нет. Он только делает дальние голоса тише и не приглушает их. Сила 0 – 150%.
-  - **С аддоном:** переключатель «Ветер» и ползунок силы на вкладке «Эффекты» (`wind_enabled`, `wind_strength` в файле клиента). Они входят в часть «эффекты» профиля сервера. На вкладке «Эффекты» видно, какой ветер там, где вы стоите, а в строке монитора для голоса появляется «ветер», когда он убавляет децибел или больше.
-  - **Для игроков без аддона:** `/vcd effects wind <0-150>|off` (строка «Ветер» в разделе «Игроки без аддона» вкладки «Сервер», `profile.wind_enabled` и `profile.wind_strength` в файле сервера). Работает, когда включены эффекты сервера (`/vcd effects on`), и с плагином, и с модом на сервере. Сервер перекодирует голос ради этого, только когда ветер отнимает не меньше 1 дБ; лимит перекодирования общий со стенами (`server_walls_max_streams`). `/vcd effects wind off` выключает это и снимает нагрузку.
+- **Куда смотрит говорящий (по желанию, по умолчанию выключено).** Голос чище всего слышен перед говорящим, а за его спиной чуть тише и глуше. По умолчанию сила мягкая, чтобы поворот не мешал игре. Переключатель «Поворот головы» с ползунком силы в конце вкладки «Эффекты». Для игроков без аддона: `/vcd effects facing <0-150>|off`.
+- **Шёпот за стеной теряется, крик проходит (по умолчанию включено).** За одной стеной шёпот почти не слышен, обычный голос меняется только с третьей стены, а крик проходит и через три. Громкость микрофона не важна: обычная громкость каждого игрока узнаётся по его голосу. Переключатель на вкладке «Стены»; для игроков без аддона: `/vcd walls loudness on|off`.
+- **Ветер на высоте и в быстром полёте (по умолчанию включено).** Высоко под открытым небом и в быстром полёте на элитрах дальние голоса немного сдувает, в дождь и грозу сильнее. Под крышей, под водой, в Незере и Энде ветра нет. Переключатель «Ветер» с ползунком силы на вкладке «Эффекты»; для игроков без аддона: `/vcd effects wind <0-150>|off`.
 
 #### Изменено
-- **Мегафон звучит как мегафон, и дальше всего слышно впереди.** Голос игрока с предметом-мегафоном (`/vcd rule megaphone <предмет>`) теперь для всех, в том числе для игроков без аддона, звучит как из рупора: тонко, в нос и чуть с перегрузом. Если взять мегафон посреди слова, голос плавно переходит в рупор, без щелчка. Полный `megaphone_multiplier` действует туда, куда смотрит игрок; за спиной — половина прибавки (x1.75 при 2.5 по умолчанию), между ними плавно: к толпе стоит повернуться, но и за спиной мегафон не глохнет; `/vcd rule megaphone_direction off` даёт одинаковую дальность во все стороны (строка «Дальность по взгляду» на вкладке «Сервер», `megaphone_direction` в файле сервера). Если сервер не знает, куда смотрит игрок, дальность полная во все стороны, как раньше. Для звука нужен Simple Voice Chat 2.5.27 или новее (на старых остаётся только дальность), лимит перекодирования общий со стенами (`server_walls_max_streams`), а `/vcd rule megaphone_sound off` выключает звук (строка в разделе «Мегафон» вкладки «Сервер», `megaphone_sound` в файле сервера). На вкладке «Сервер» теперь можно задать и дальность мегафона.
-- **Экран настроек собран заново.** За последние версии добавилось много переключателей, и экран стал тесным, поэтому он перестроен:
-  - Каждый эффект занимает одну строку: маленький переключатель и рядом ползунок силы. Когда эффект выключен, на ползунке написано «Выкл», а значение остаётся прежним.
-  - Вкладка «Эффекты» разделена на «Окружение» (эхо, под водой, дождь и гроза, ветер, из-за угла, по месту) и «Движение и взгляд» (эффект Доплера, поворот головы).
-  - Вкладка «HUD» разделена на «Показывать HUD», «Вид» и «Удобство чтения». Когда показывать HUD, а также список или радар монитора теперь выбираются рядом кнопок, где отмечена выбранная, а не одной кнопкой по кругу.
-  - На вкладке «Стены» ползунки материалов убраны в свёрнутый раздел, в заголовке которого видно, менялось ли что-то, а свои блоки — в отдельном разделе.
-  - На вкладке «Сервер» всё для игроков без аддона (стены, эффекты, воздух, кривая, вода, дождь, эхо, ветер, Доплер, поворот головы) собрано в один раздел «Игроки без аддона». У мегафона свой раздел (предмет, звук, дальность, дальность по взгляду), «Стены и монитор» теперь просто «Стены», а переключатель монитора перешёл в «Правила игры». В заголовке свёрнутого раздела видно, что в нём задано.
-  - Кнопки раскладываются по ширине подписей, так что они помещаются на всех языках и в маленьком окне. Слишком длинная строка зоны сокращается, а целиком её видно в подсказке.
-
-#### Исправлено
-- Тест отчёта клиента больше не падает, если запускается после тестов обработки голоса на сервере.
+- **Мегафон звучит как мегафон, и дальше всего слышно впереди.** Игрок с предметом-мегафоном для всех звучит как из рупора, в том числе для игроков без аддона. Дальше всего его слышно туда, куда он смотрит, за спиной меньше, но не глохнет. `/vcd rule megaphone_sound off` и `/vcd rule megaphone_direction off` выключают одно или другое; на вкладке «Сервер» появился раздел «Мегафон» с предметом, звуком и дальностью.
+- **Экран настроек собран заново.** Каждый эффект занимает одну строку: переключатель и ползунок силы. Вкладки «Эффекты», «HUD» и «Стены» разбиты на понятные разделы, а на вкладке «Сервер» всё для игроков без аддона собрано в одном месте. Кнопки помещаются на всех языках и в маленьком окне.
 
 ## [2.11.1] - 2026-10-11
 
 ### English
 
 #### Changed
-- **Fewer files: 3 instead of 34.** One file now covers Fabric and Quilt on every Minecraft version from 1.16.5 to 26.3 (`voice-physics-fabric-2.11.1+mc1.16.5-26.x.jar`), one covers every Forge version from 1.16.5 and every NeoForge version from 1.20.1 to 26.3 (`voice-physics-forge-neoforge-2.11.1+mc1.16.5-26.x.jar`), and the Bukkit plugin keeps its file. Each holds the same builds as before, one per Minecraft version, and picks the one of the running game at start, so nothing changes in game. Each build needs the same Java as before: Forge 1.16.5 still runs on Java 8.
+- **Fewer files: 3 instead of 34.** One file for Fabric and Quilt, one for Forge and NeoForge, each for every Minecraft version from 1.16.5 to 26.3, and the Bukkit plugin. Nothing changes in game. Forge 1.16.5 still runs on Java 8.
 
 ### Русский
 
 #### Изменено
-- **Меньше файлов: 3 вместо 34.** Теперь один файл подходит для Fabric и Quilt на всех версиях Minecraft от 1.16.5 до 26.3 (`voice-physics-fabric-2.11.1+mc1.16.5-26.x.jar`), один — для всех версий Forge с 1.16.5 и NeoForge с 1.20.1 до 26.3 (`voice-physics-forge-neoforge-2.11.1+mc1.16.5-26.x.jar`), а у плагина для Bukkit остаётся свой файл. Внутри те же сборки, что и раньше, по одной на версию Minecraft, и при запуске выбирается сборка запущенной игры, так что в игре ничего не меняется. Java нужна та же, что и раньше: Forge 1.16.5 по-прежнему работает на Java 8.
+- **Меньше файлов: 3 вместо 34.** Один файл для Fabric и Quilt, один для Forge и NeoForge, каждый для всех версий Minecraft от 1.16.5 до 26.3, и плагин для Bukkit. В игре ничего не меняется. Forge 1.16.5 по-прежнему работает на Java 8.
 
 ## [2.11.0] - 2026-10-10
 
 ### English
 
 #### Added
-- **The Doppler effect (optional, off by default).** A voice coming closer sounds higher, one moving away lower: on elytra, in boats on ice, on horses and in minecarts. Only how fast the distance between the two players changes counts, so walking about, turning round or flying side by side changes nothing. The pitch is changed without changing the timing, so the voice never runs ahead or falls behind. Strength 0 – 300%: 100% is as in real air, where only fast movement is heard; higher makes slower movement heard too.
-  - **With the addon:** a *Doppler* switch and a strength slider on the *Effects* tab (`doppler_enabled`, `doppler_strength` in the client file). They belong to the *effects* part of a server profile, so a server can offer or lock them.
-  - **For players without the addon:** `/vcd effects doppler <0-300>|off` (a *Doppler* row in the *Effects* section of the *Server* tab, `profile.doppler_enabled` and `profile.doppler_strength` in the server file). It works when the server effects are on (`/vcd effects on`), with the plugin and with the mod on the server, and shares the re-encoding limit with the walls.
-  - **With the [Doppler](https://github.com/imAETHER/Doppler) mod:** that mod changes the pitch of voices too. When it is installed, the *Effects* tab has a button that chooses whose effect voices get: *The mod's* (the default, as before), *Ours* (the mod keeps handling all other sounds) or *Both*. It is set only on your computer (`doppler_mod` in the client file), and `/voicephysics report` shows it.
+- **The Doppler effect (optional, off by default).** A voice coming closer sounds higher, one moving away lower: on elytra, in boats on ice, on horses and in minecarts. Walking side by side or turning round changes nothing. A *Doppler* switch with a strength slider on the *Effects* tab; for players without the addon: `/vcd effects doppler <0-300>|off`.
+- With the [Doppler](https://github.com/imAETHER/Doppler) mod installed, a button on the *Effects* tab chooses whose effect voices get: the mod's (as before), ours, or both.
 
 ### Русский
 
 #### Добавлено
-- **Эффект Доплера (по желанию, по умолчанию выключен).** Голос приближающегося звучит выше, удаляющегося — ниже: на элитрах, в лодках на льду, на лошадях и в вагонетках. Важна только скорость, с которой меняется расстояние между двумя игроками, поэтому ходьба рядом, повороты или полёт бок о бок ничего не меняют. Высота меняется без изменения темпа, так что голос не убегает вперёд и не отстаёт. Сила 0 – 300%: 100% — как в настоящем воздухе, где слышно только быстрое движение; выше — слышно и более медленное.
-  - **С аддоном:** переключатель «Эффект Доплера» и ползунок силы на вкладке «Эффекты» (`doppler_enabled`, `doppler_strength` в файле клиента). Они входят в часть «эффекты» профиля сервера, так что сервер может их предложить или закрепить.
-  - **Для игроков без аддона:** `/vcd effects doppler <0-300>|off` (строка «Доплер» в разделе «Эффекты» вкладки «Сервер», `profile.doppler_enabled` и `profile.doppler_strength` в файле сервера). Работает, когда включены эффекты сервера (`/vcd effects on`), и с плагином, и с модом на сервере; лимит перекодирования общий со стенами.
-  - **С модом [Doppler](https://github.com/imAETHER/Doppler):** этот мод тоже меняет высоту голосов. Если он установлен, на вкладке «Эффекты» есть кнопка, которая выбирает, чей эффект получают голоса: «Мода» (по умолчанию, как раньше), «Наш» (остальные звуки мод обрабатывает как раньше) или «Оба». Это настройка только вашего компьютера (`doppler_mod` в файле клиента), её показывает `/voicephysics report`.
+- **Эффект Доплера (по желанию, по умолчанию выключен).** Голос приближающегося звучит выше, удаляющегося — ниже: на элитрах, в лодках на льду, на лошадях и в вагонетках. Ходьба рядом или повороты ничего не меняют. Переключатель «Эффект Доплера» с ползунком силы на вкладке «Эффекты»; для игроков без аддона: `/vcd effects doppler <0-300>|off`.
+- Если установлен мод [Doppler](https://github.com/imAETHER/Doppler), кнопка на вкладке «Эффекты» выбирает, чей эффект получают голоса: мода (как раньше), наш или оба.
 
 ## [2.10.5] - 2026-10-06
 
 ### English
 
 #### Added
-- **The distance curve for players without the addon (optional).** `/vcd effects curve on` (`server_curve` in the server file, a *Curve* switch in the *Effects* section of the *Server* tab, off by default) makes the server fade voices for players who only have Simple Voice Chat with the server profile's curve, the same curve players with the addon hear. Simple Voice Chat still fades those voices along its own straight line on the player's computer, so the server takes off only the difference. The server can only make a voice quieter: where the profile's curve is louder than that line, the voice stays as Simple Voice Chat plays it. Works with the plugin and with the mod on the server. It shares the re-encoding limit with the walls (`server_walls_max_streams`).
+- **The distance curve for players without the addon (optional, off by default).** Players who have only Simple Voice Chat hear voices fade by the server's curve too, like players with the addon. `/vcd effects curve on`, or the *Curve* switch in the *Effects* section of the *Server* tab.
 
 ### Русский
 
 #### Добавлено
-- **Кривая громкости для игроков без аддона (по желанию).** `/vcd effects curve on` (`server_curve` в файле сервера, переключатель «Кривая» в разделе «Эффекты» вкладки «Сервер», по умолчанию выключено) заставляет сервер приглушать голоса игрокам, у которых есть только Simple Voice Chat, по кривой профиля сервера, той же, что слышат игроки с аддоном. Simple Voice Chat всё равно приглушает эти голоса по своей прямой на компьютере игрока, поэтому сервер убирает только разницу. Сервер может только убавить голос: там, где кривая профиля громче этой прямой, голос звучит так же, как в Simple Voice Chat. Работает и с плагином, и с модом на сервере. Лимит перекодирования общий со стенами (`server_walls_max_streams`).
+- **Кривая громкости для игроков без аддона (по желанию, по умолчанию выключено).** Игроки, у которых есть только Simple Voice Chat, тоже слышат, как голоса затихают по кривой сервера, как и игроки с аддоном. `/vcd effects curve on` или переключатель «Кривая» в разделе «Эффекты» вкладки «Сервер».
 
 ## [2.10.4] - 2026-10-05
 
 ### English
 
 #### Fixed
-- **The distance curve now works in play.** Since the curve was added, Simple Voice Chat reset each voice's volume right after the addon set it, so voices stayed at full volume and then cut off at the edge of the range. Only the graph showed the curve. The addon now applies the curve after Simple Voice Chat has set the volume, so voices fade as the graph shows. This affects every loader and Minecraft version, with or without Sound Physics Remastered. Volume boosts above 100% in Simple Voice Chat still work.
+- **The distance curve now works in play.** Before, voices stayed at full volume and then cut off at the edge of the range; only the graph showed the curve. Now voices fade as the graph shows, on every loader and Minecraft version.
 
 #### Added
-- **Voice Physics over Sound Physics Remastered (optional).** With Sound Physics Remastered installed, the note on the *Walls* and *Effects* tabs has a *Use ours* switch (`over_sound_physics` in the client file, off by default). When it is on, the addon takes Sound Physics Remastered's filters off voice chat and applies its own walls, round corners, echo and water to voices. All other game sounds stay with Sound Physics Remastered. The switch is a choice for your computer only; a server profile never sets or locks it. `/voicephysics report` shows which of the two handles voices.
+- **Voice Physics over Sound Physics Remastered (optional).** With Sound Physics Remastered installed, a *Use ours* switch on the *Walls* and *Effects* tabs gives voices our walls, corners, echo and water. All other game sounds stay with Sound Physics Remastered.
 
 #### Changed
-- *Distance* tab: the curve shape, edge volume and full-volume range are always shown; the *More curve settings* fold is gone, three controls do not need one.
+- *Distance* tab: the curve shape, edge volume and full-volume range are always shown.
 
 ### Русский
 
 #### Исправлено
-- **Кривая громкости теперь работает в игре.** С тех пор как появилась кривая, Simple Voice Chat сразу после аддона заново выставлял громкость каждого голоса, поэтому голоса звучали в полную громкость, а на краю дальности резко пропадали. Кривую показывал только график. Теперь аддон применяет кривую после того, как Simple Voice Chat выставил громкость, и голоса затихают так, как показывает график. Это касается всех загрузчиков и версий Minecraft, с Sound Physics Remastered и без него. Усиление громкости выше 100% в Simple Voice Chat по-прежнему работает.
+- **Кривая громкости теперь работает в игре.** Раньше голоса звучали в полную громкость, а на краю дальности резко пропадали; кривую показывал только график. Теперь голоса затихают так, как показывает график, на всех загрузчиках и версиях Minecraft.
 
 #### Добавлено
-- **Voice Physics вместо Sound Physics Remastered (по желанию).** Если установлен Sound Physics Remastered, в заметке на вкладках «Стены» и «Эффекты» есть переключатель «Использовать наш» (`over_sound_physics` в файле клиента, по умолчанию выключен). Когда он включён, аддон снимает фильтры Sound Physics Remastered с голосового чата и применяет к голосам свои стены, звук из-за угла, эхо и воду. Все остальные звуки игры остаются за Sound Physics Remastered. Это выбор только для вашего компьютера; профиль сервера его не задаёт и не закрепляет. `/voicephysics report` показывает, кто из двух обрабатывает голоса.
+- **Voice Physics вместо Sound Physics Remastered (по желанию).** Если установлен Sound Physics Remastered, переключатель «Использовать наш» на вкладках «Стены» и «Эффекты» отдаёт голоса нашим стенам, углам, эху и воде. Все остальные звуки игры остаются за Sound Physics Remastered.
 
 #### Изменено
-- Вкладка «Дистанция»: форма кривой, громкость на краю и зона полной громкости показаны всегда; сворачивания «Ещё настройки кривой» больше нет, для трёх элементов оно не нужно.
+- Вкладка «Дистанция»: форма кривой, громкость на краю и зона полной громкости показаны всегда.
 
 ## [2.10.3] - 2026-10-02
 
 ### English
 
 #### Added
-- **Forge for 1.17.1 and 1.19.4**, the two Forge builds that 2.10.2 left out. Same features as the other Forge files; Simple Voice Chat 2.5.12 is the newest one on those versions. Forge 1.17.1 runs on Java 16 or newer (built as Java 8 bytecode, like Fabric 1.17.1).
-- Both are compiled against their oldest Forge in CI (`build.yml`) and start on a real server in the in-game tests (`ingame.yml`, oldest and newest loader).
-- Not built: Minecraft 1.19.3 and 1.12.2.
+- **Forge for 1.17.1 and 1.19.4**, with the same features as the other Forge versions. Forge 1.17.1 needs Java 16 or newer. Minecraft 1.19.3 and 1.12.2 are not supported.
 
 ### Русский
 
 #### Добавлено
-- **Forge для 1.17.1 и 1.19.4**: две сборки Forge, которые не вошли в 2.10.2. Те же возможности, что и в остальных файлах Forge; на этих версиях новейшая Simple Voice Chat — 2.5.12. Forge 1.17.1 работает на Java 16 и новее (собран как байткод Java 8, как и Fabric 1.17.1).
-- Обе собираются в CI на самом старом Forge (`build.yml`) и запускаются на настоящем сервере в игровых тестах (`ingame.yml`, самый старый и самый новый загрузчик).
-- Не собираются: Minecraft 1.19.3 и 1.12.2.
+- **Forge для 1.17.1 и 1.19.4**, с теми же возможностями, что и на других версиях Forge. Forge 1.17.1 нужна Java 16 или новее. Minecraft 1.19.3 и 1.12.2 не поддерживаются.
 
 ## [2.10.2] - 2026-10-01
 
 ### English
 
 #### Added
-- **Older Minecraft, same features.** The addon now also runs on **Minecraft 1.16.5, 1.17.1, 1.18.2, 1.19.2 and 1.19.4**:
-  - Fabric / Quilt for 1.16.5, 1.17.1, 1.18.2, 1.19.2 and 1.19.4.
-  - Forge for 1.16.5, 1.18.2 and 1.19.2.
-  - The Paper/Purpur/Folia/Spigot plugin on **1.16.5 – 1.19.4** (it needed 1.20 before). The same jar for every version; `api-version` in `plugin.yml` is lowered to 1.16 so older servers load it. Where an API is missing on 1.16 (mineable tags, `Block#getCollisionShape`, spyglass), the plugin falls back to what 1.16 has; the Folia part is compiled apart.
-- Java 8 for the 1.16.5 and 1.17.1 builds: the shared code is built as Java 8 bytecode, so it loads on the Java those versions use. Everything else still runs on its usual Java.
-- Compatibility checks: the plugin is linked against every Paper API from 1.16.5 on (`compat-bukkit.yml`), every new file is built against the oldest loader of its range, and real servers start in the in-game tests (Fabric 1.16.5, 1.17.1, 1.18.2, 1.19.2, 1.19.4; Forge 1.16.5 on Java 8, 1.18.2, 1.19.2; Paper 1.16.5, 1.17.1, 1.18.2, 1.19.4).
-- Not built: Minecraft 1.19.3, Forge for 1.17.1 and 1.19.4 (Simple Voice Chat itself stopped at 2.5.12 there), and 1.12.2.
+- **Older Minecraft, same features.** The addon now runs on **Minecraft 1.16.5, 1.17.1, 1.18.2, 1.19.2 and 1.19.4**: Fabric and Quilt on all five, Forge on 1.16.5, 1.18.2 and 1.19.2, and the Paper/Purpur/Folia/Spigot plugin on 1.16.5 – 1.19.4 (it needed 1.20 before). The 1.16.5 files run on Java 8, as the game does.
 
 ### Русский
 
 #### Добавлено
-- **Старый Minecraft, те же возможности.** Аддон теперь работает и на **Minecraft 1.16.5, 1.17.1, 1.18.2, 1.19.2 и 1.19.4**:
-  - Fabric / Quilt для 1.16.5, 1.17.1, 1.18.2, 1.19.2 и 1.19.4.
-  - Forge для 1.16.5, 1.18.2 и 1.19.2.
-  - Плагин Paper/Purpur/Folia/Spigot на **1.16.5 – 1.19.4** (раньше нужна была 1.20). Один и тот же jar для всех версий; `api-version` в `plugin.yml` снижен до 1.16, чтобы старые серверы его загружали. Где API нет на 1.16 (теги mineable, `Block#getCollisionShape`, подзорная труба), плагин использует то, что есть в 1.16; часть для Folia компилируется отдельно.
-- Java 8 для сборок 1.16.5 и 1.17.1: общий код собирается как байткод Java 8, поэтому загружается на той Java, которую используют эти версии. Остальное по-прежнему работает на своей Java.
-- Проверки совместимости: плагин проверяется на каждом Paper API начиная с 1.16.5 (`compat-bukkit.yml`), каждый новый файл собирается на самом старом загрузчике своего диапазона, а в игровых тестах запускаются настоящие серверы (Fabric 1.16.5, 1.17.1, 1.18.2, 1.19.2, 1.19.4; Forge 1.16.5 на Java 8, 1.18.2, 1.19.2; Paper 1.16.5, 1.17.1, 1.18.2, 1.19.4).
-- Не собираются: Minecraft 1.19.3, Forge для 1.17.1 и 1.19.4 (сам Simple Voice Chat там остановился на 2.5.12) и 1.12.2.
+- **Старый Minecraft, те же возможности.** Аддон теперь работает на **Minecraft 1.16.5, 1.17.1, 1.18.2, 1.19.2 и 1.19.4**: Fabric и Quilt на всех пяти, Forge на 1.16.5, 1.18.2 и 1.19.2, а плагин для Paper/Purpur/Folia/Spigot на 1.16.5 – 1.19.4 (раньше нужна была 1.20). Файлы для 1.16.5 работают на Java 8, как и сама игра.
 
 ## [2.10.1] - 2026-10-01
 
 ### English
 
 #### Added
-- **Server tab: effects for players without the addon.** A new "Effects without the addon" section sets what `/vcd effects` sets: effects on/off, air on/off, and water, weather and echo strength in 10% steps (water and weather up to 150%, echo up to 100%, 0 = off). Every button sends the same `/vcd` command, so nothing changes for the console.
-- **Server tab: plugin extras.** On the Paper/Folia plugin only, a new "Plugin extras" section (closed by default) has a switch for each of radio, loudspeakers, eavesdrop item, sculk and wardens, doorway sound and integrations, and a step button for the eavesdrop factor. The section is not shown on Fabric, Forge or NeoForge servers, which have none of these. The extras are still not play-tested; the section says so.
-- The buttons grey out for players without the `vcd.settings` permission, as the others do.
-
-#### Not in the panel, on purpose
-Placing and removing loudspeakers, the radio and eavesdrop items, mutes, `undo`, `report`, `debug`, `reload` and the Towny/Lands zone names stay commands only: they need text, a place or a player, or are rare.
+- **Server tab: effects for players without the addon.** A new section does what `/vcd effects` does: turns the effects on and off and sets how strong water, weather and echo are.
+- **Server tab: plugin extras.** On the Paper/Folia plugin, a folded section switches the radio, loudspeakers, eavesdrop item, sculk and wardens, doorway sound and integrations.
 
 ### Русский
 
 #### Добавлено
-- **Вкладка «Сервер»: эффекты для игроков без аддона.** Новый раздел «Эффекты без аддона» задаёт то же, что `/vcd effects`: эффекты вкл/выкл, воздух вкл/выкл, силу воды, погоды и эха шагами по 10% (вода и погода до 150%, эхо до 100%, 0 = выключено). Каждая кнопка отправляет ту же команду `/vcd`, так что для консоли ничего не меняется.
-- **Вкладка «Сервер»: дополнения плагина.** Только на плагине Paper/Folia появился раздел «Дополнения плагина» (по умолчанию свёрнут): переключатель для рации, громкоговорителей, предмета подслушивания, скалка и вардена, звука через двери и интеграций, и кнопка шага для коэффициента подслушивания. На серверах Fabric, Forge и NeoForge раздела нет: там этих возможностей нет. Дополнения всё ещё не проверены в игре, об этом сказано в разделе.
-- Кнопки неактивны у игроков без права `vcd.settings`, как и остальные.
-
-#### Намеренно не в панели
-Расстановка и удаление громкоговорителей, предметы рации и подслушивания, мьюты, `undo`, `report`, `debug`, `reload` и названия зон Towny/Lands остаются только командами: им нужен текст, место или игрок, либо они нужны редко.
+- **Вкладка «Сервер»: эффекты для игроков без аддона.** Новый раздел делает то же, что `/vcd effects`: включает и выключает эффекты и задаёт силу воды, погоды и эха.
+- **Вкладка «Сервер»: дополнения плагина.** На плагине Paper/Folia свёрнутый раздел включает рацию, громкоговорители, предмет для подслушивания, скалк и варденов, звук через двери и интеграции.
 
 ## [2.10.0] - 2026-09-30
 
 ### English
 
-> **Everything new in this release is for the Paper/Folia plugin, off by default and not yet tried in a live game.** Turn each one on with `/vcd extras <name> on` on a test server first; `/vcd undo` takes a switch back. The mods are unchanged apart from the version number.
+> **Everything new in this release is for the Paper/Folia plugin, off by default and not yet tried in a live game.** Turn each one on with `/vcd extras <name> on` on a test server first; `/vcd undo` takes a switch back.
 
 #### Added
-- **`/vcd extras`** lists the new features with a switch each, in the server file's section 12 (`server_radio`, `server_speakers`, `server_eavesdrop`, `server_sculk`, `server_doorway`, `server_integrations`; all `false`). Changes can be undone and appear in the change log.
-- **Radio.** `/voice radio <1-9999|off>` tunes a player's radio (permission `vcd.player.radio`, on for everyone): players on the same frequency hear each other at any distance and in any world, like a voice in the ear, unless they already hear the speaker by distance or ignore them. `radio_item` (for example `minecraft:clock`) makes holding that item necessary. `/vcd radio` shows who is on the air and sets the item (`/vcd radio item <id>|none`). Keys `server_radio`, `radio_item`.
-- **Loudspeakers.** `/vcd speaker add <name> [radius] [pickup]` places a loudspeaker where you stand; whoever talks within its pickup distance is heard from it by every player within its radius (up to 256 blocks), as a located sound. `list`, `tp <name>` and `remove <name>` manage them (permission `vcd.speaker`; `list` needs only `vcd.status`). Saved as `speaker.<name>=world|x|y|z|pickup|radius`.
-- **Eavesdrop item.** A player holding `eavesdrop_item` (default `minecraft:spyglass`) hears walls as thinner: the muffling is multiplied by `eavesdrop_factor` (default 0.3, 0.05 - 1). `/vcd eavesdrop [item <id>|none|factor <0.05-1>]`. Works for players without the addon.
-- **Sculk and wardens.** A shout (`/voice mode shout`) or a megaphone voice raises a game event at the speaker that sculk sensors and wardens react to, at most once every 3 seconds; whispers, sneaking, ordinary talking and the dead raise nothing. Switch `/vcd extras sculk on`.
-- **Doorway sound** for players without the addon: behind a wall, a voice with a clearly better way round through an open door or gap is heard from that opening, muffled only by the bends, instead of through the wall (at most 6 searches per tick, 48 blocks). Any failure leaves the muffled straight path. Switch `/vcd extras doorway on`.
-- **Integrations** (`/vcd extras integrations on`, each needs its plugin, all by reflection): Towny towns and Lands lands as zones (`zone.town.<name>`, `zone.land.<name>`, `/vcd zone set town:<name> ...`); a WorldGuard region flag `vcd-zone` that puts a region in one of the settings file's zones by name; LuckPerms contexts `vcd:mode`, `vcd:walls` and `vcd:zone`.
-
-#### Fixed
-- The Modrinth page workflow no longer fails when a gallery picture is already there.
+- **`/vcd extras`** lists the new features below, each with a switch.
+- **Radio.** `/voice radio <1-9999|off>`: players on the same frequency hear each other at any distance and in any world. A server can make players hold an item for it: `/vcd radio item <id>`.
+- **Loudspeakers.** `/vcd speaker add <name>` places one where you stand: whoever talks near it is heard from it by everyone around. `/vcd speaker list|tp|remove` manage them.
+- **Eavesdrop item.** A player holding a spyglass hears walls as thinner; `/vcd eavesdrop` sets the item and how much. Works for players without the addon.
+- **Sculk and wardens** react to a shout or a megaphone voice. Whispers, sneaking and normal talk do not wake them.
+- **Doorway sound** for players without the addon: behind a wall, a voice is heard from a nearby open door or gap instead of through the wall.
+- **Integrations:** Towny towns and Lands lands as zones, a WorldGuard flag that puts a region in a zone, and LuckPerms contexts.
 
 ### Русский
 
-> **Всё новое в этом выпуске — для плагина Paper/Folia, выключено по умолчанию и ещё не опробовано в живой игре.** Включайте каждое командой `/vcd extras <название> on` сначала на тестовом сервере; `/vcd undo` возвращает переключатель. Моды не изменились, кроме номера версии.
+> **Всё новое в этом выпуске — для плагина Paper/Folia, выключено по умолчанию и ещё не опробовано в живой игре.** Включайте каждое командой `/vcd extras <название> on` сначала на тестовом сервере; `/vcd undo` возвращает переключатель.
 
 #### Добавлено
-- **`/vcd extras`** показывает новые возможности с переключателем у каждой, в разделе 12 файла сервера (`server_radio`, `server_speakers`, `server_eavesdrop`, `server_sculk`, `server_doorway`, `server_integrations`; все `false`). Изменения можно отменить, они попадают в журнал.
-- **Рация.** `/voice radio <1-9999|off>` настраивает рацию игрока (право `vcd.player.radio`, у всех включено): игроки на одной частоте слышат друг друга на любом расстоянии и в любом мире, как голос в ухе, если только не слышат говорящего и так по расстоянию или не игнорируют его. `radio_item` (например `minecraft:clock`) делает обязательным предмет в руке. `/vcd radio` показывает, кто в эфире, и задаёт предмет (`/vcd radio item <id>|none`). Ключи `server_radio`, `radio_item`.
-- **Громкоговорители.** `/vcd speaker add <имя> [радиус] [захват]` ставит громкоговоритель там, где вы стоите; того, кто говорит в пределах захвата, слышат из него все игроки в его радиусе (до 256 блоков) как позиционный звук. `list`, `tp <имя>` и `remove <имя>` управляют ими (право `vcd.speaker`; для `list` хватает `vcd.status`). Хранится как `speaker.<имя>=мир|x|y|z|захват|радиус`.
-- **Предмет для подслушивания.** Игрок с `eavesdrop_item` в руке (по умолчанию `minecraft:spyglass`) слышит стены тоньше: приглушение умножается на `eavesdrop_factor` (по умолчанию 0.3, от 0.05 до 1). `/vcd eavesdrop [item <id>|none|factor <0.05-1>]`. Работает и для игроков без аддона.
-- **Скалк и вардены.** Крик (`/voice mode shout`) или голос с мегафоном создаёт у говорящего игровое событие, на которое реагируют скалковые датчики и вардены, не чаще раза в 3 секунды; шёпот, корточки, обычная речь и мёртвые ничего не создают. Переключатель `/vcd extras sculk on`.
-- **Звук через дверной проём** для игроков без аддона: за стеной голос, у которого есть заметно лучший путь через открытую дверь или проём, слышен из этого проёма, приглушённый только изгибами, а не через стену (не больше 6 поисков за тик, 48 блоков). При любом сбое остаётся приглушённый прямой путь. Переключатель `/vcd extras doorway on`.
-- **Интеграции** (`/vcd extras integrations on`, каждой нужен свой плагин, всё через reflection): города Towny и земли Lands как зоны (`zone.town.<имя>`, `zone.land.<имя>`, `/vcd zone set town:<имя> ...`); флаг региона WorldGuard `vcd-zone`, относящий регион к зоне из файла настроек по имени; контексты LuckPerms `vcd:mode`, `vcd:walls` и `vcd:zone`.
-
-#### Исправлено
-- Workflow страницы Modrinth больше не падает, если картинка галереи уже есть.
+- **`/vcd extras`** показывает новые возможности ниже, у каждой свой переключатель.
+- **Рация.** `/voice radio <1-9999|off>`: игроки на одной частоте слышат друг друга на любом расстоянии и в любом мире. Сервер может требовать предмет в руке: `/vcd radio item <id>`.
+- **Громкоговорители.** `/vcd speaker add <имя>` ставит громкоговоритель там, где вы стоите: того, кто говорит рядом с ним, слышат из него все вокруг. `/vcd speaker list|tp|remove` управляют ими.
+- **Предмет для подслушивания.** Игрок с подзорной трубой в руке слышит стены тоньше; `/vcd eavesdrop` задаёт предмет и насколько. Работает и для игроков без аддона.
+- **Скалк и вардены** реагируют на крик или голос с мегафоном. Шёпот, корточки и обычная речь их не будят.
+- **Звук через дверной проём** для игроков без аддона: за стеной голос слышен из ближайшей открытой двери или проёма, а не сквозь стену.
+- **Интеграции:** города Towny и земли Lands как зоны, флаг WorldGuard, относящий регион к зоне, и контексты LuckPerms.
 
 ## [2.9.0] - 2026-09-30
 
 ### English
 
 #### Added
-- **`/voice` for every player (Paper/Folia), with or without the mod.** Choose how loud you talk (`mode quiet|normal|shout`: half, normal or double range; shouting needs the `vcd.shout` permission), turn wall muffling off for yourself (`walls off`), set how loud a player is to you (`volume <player> <0-100>`) or ignore one (`ignore`), and show who is talking near you above the hotbar (`hud on`). Choices are saved per player in `vc-audio-distance-players.properties`. Replies are clickable: *Your choices* shows buttons for every value, every change has an *Undo*, `/voice help` has examples, `/voice menu` opens the same choices as an inventory menu, and each part has its own permission (`vcd.player.mode`, `.walls`, `.hud`, `.volume`, `.menu`).
-- A shout does not stretch a range a zone sets and does not add to a megaphone; the talking line follows `allow_monitor` and hides players hidden by vanish plugins; `vcd.admin` includes `vcd.shout`. A volume below 100% and wall muffling apply together.
-- `/voice walls off` is refused while the server has enforced its profile with walls locked, and inside a zone that sets its own wall strength; the walls then apply to everyone there. `/vcd debug` says "ignored" when a listener turned a player off with `/voice ignore`.
-- **Server realism for players without the addon** (off by default; `/vcd effects on`). The server dulls voices under water, covers far ones in rain and thunder, and gives a speaker in a cave or hall an echo for a listener outside it, the same physics the addon does at home. `/vcd effects air on` also dulls voices a little as they near the edge of their range. Strengths are the server profile's (`/vcd effects water|weather|echo <0-150>`). Water, rain and air work on Paper, Fabric, Forge and NeoForge; measuring a room for the echo is Paper only, and a zone with its own echo works everywhere. Keys `server_effects` and `server_air`.
-- **Mute:** `/vcd mute <player> [time] [reason]`, `/vcd unmute <player>`, `/vcd mutes`. Nobody hears a muted player for the time given (`30s`, `10m`, `2h`, `1d`, `1w`, `perm`) or until unmuted. Kept across restarts, in the change log, with an *Undo* and an *Unmute* button, in `/vcd debug`; permission `vcd.mute`.
-- **PlaceholderAPI (Paper):** `%vcd_mode%`, `%vcd_mode_name%`, `%vcd_talking%`, `%vcd_muted%`, `%vcd_mute_left%`, `%vcd_mute_reason%`, `%vcd_range%`, `%vcd_whisper_range%`, `%vcd_walls%`, `%vcd_zone%`, `%vcd_addon%`, `%vcd_talking_near%`, `%vcd_muted_count%`.
-- **Bug reports in one click:** `/vcd report` (permission `vcd.debug`) and `/voicephysics report` give one short text to copy, with versions, the settings that change how voices sound, load and the last problems. Player and zone names are left out.
-- **Block materials from data files.** A resource pack, a data pack or a mod's own jar can list blocks and block tags with a material in `voice_physics/materials.json` (`assets/<namespace>/` for the client, `data/<namespace>/` for the server), for blocks of other mods the automatic guess gets wrong. The server's and the player's own rules still come first. Mistakes are logged and shown in the reports.
-- **Sound by place** (on by default, a switch on the *Effects* tab): deep caves and the deep dark ring longer, the Nether's smoke dulls far voices, the End's open void has no echo, snow and dense jungle swallow sound. Mild, on top of what is measured. Part of the server profile (`place_tuning`).
-- **Accessibility:** *High contrast* (the HUD on a solid dark panel with bright text), *Direction marks* (a subtitle-style line such as `◀ Sam 3m` for voices off to the side) and a HUD up to twice the size (`hud_contrast`, `hud_markers`, `hud_scale` up to 2).
-- **Statistics (plugin):** anonymous usage numbers to [bStats](https://bstats.org), on by default; `metrics=false` in the server file, or `plugins/bStats/config.yml`, turns them off. No names, addresses or chat.
-- **Questions and problems:** a new README section (no walls, no HUD, locked settings, modded blocks, water and rain without the addon, how to report a bug), a documented data-file format, PlaceholderAPI table, and the new settings in both READMEs and on the store pages.
-- **Audio regression test:** known signals through the filter and the echo, held to the filter's design and the echo's decay time, so a change that alters how voices sound fails a test instead of being found by ear.
+- **`/voice` for every player (Paper/Folia), with or without the mod.** Choose how loud you talk (`/voice mode quiet|normal|shout`), turn wall muffling off for yourself, set how loud a player is to you or ignore them, and show who is talking near you above the hotbar. `/voice menu` opens the same choices as a menu. A server can take any part away by permission.
+- **Realism for players without the addon** (off by default, `/vcd effects on`): voices are dull under water, far ones are covered by rain and thunder, and a voice from a cave or hall echoes. The room echo is measured on Paper only.
+- **Mute:** `/vcd mute <player> [time] [reason]`, `/vcd unmute <player>`, `/vcd mutes`. Kept across restarts.
+- **PlaceholderAPI (Paper):** placeholders for a player's mode, mute, range, zone and who is talking near them; the list is in the README.
+- **Bug reports in one click:** `/vcd report` and `/voicephysics report` give one text to copy into a bug report, without player or zone names.
+- **Materials for modded blocks:** resource packs, data packs and mods can say which material their blocks count as. The format is in the README.
+- **Sound by place** (on by default, a switch on the *Effects* tab): deep caves ring longer, the Nether dulls far voices, the End has no echo, snow and dense jungle swallow sound.
+- **Accessibility:** a high-contrast HUD, direction marks for voices off to the side, and a HUD up to twice the size.
+- **Statistics (plugin):** anonymous usage numbers to [bStats](https://bstats.org), no names, addresses or chat; the README says how to turn them off.
+- A *Questions and problems* section in the README.
 
 #### Changed
-- A zone that sets `walls_strength` now decides the walls for everyone in it, also for players without the addon: their own `/voice walls off` does not apply there (the command, the menu and the status say which zone decides), and a zone's strength works even where walls are off elsewhere on the server.
-- Performance: the block lookups of one tick are shared between the wall, echo and round-the-corner measurements without creating garbage, and the addon slows its own measuring down step by step when the game gets busy, then speeds up again.
+- A zone with its own wall strength now applies it to everyone in it, also to players who turned walls off with `/voice walls off`.
+- The addon does less work each tick and measures less often while the game is busy.
 
 ### Русский
 
 #### Добавлено
-- **`/voice` для каждого игрока (Paper/Folia), с модом или без.** Выберите, как громко говорите (`mode quiet|normal|shout`: вдвое ближе, обычно или вдвое дальше; для крика нужно право `vcd.shout`), отключите для себя приглушение стенами (`walls off`), задайте громкость игрока (`volume <игрок> <0-100>`) или игнорируйте его (`ignore`) и включите над хотбаром показ того, кто говорит рядом (`hud on`). Выбор сохраняется для каждого игрока в `vc-audio-distance-players.properties`. Ответы кликабельны: «Ваш выбор» показывает кнопки для каждого значения, у каждого изменения есть «Отменить», у `/voice help` есть примеры, `/voice menu` открывает тот же выбор как меню-инвентарь, а у каждой части своё право (`vcd.player.mode`, `.walls`, `.hud`, `.volume`, `.menu`).
-- Крик не растягивает дальность, заданную зоной, и не прибавляется к мегафону; строка «кто говорит» подчиняется `allow_monitor` и не показывает скрытых vanish-плагинами игроков; `vcd.admin` включает `vcd.shout`. Громкость ниже 100% и приглушение стенами применяются вместе.
-- `/voice walls off` не работает, пока сервер принудительно задал профиль и закрепил стены, и внутри зоны со своей силой стен: там стены действуют для всех. `/vcd debug` пишет «игнор», если слушающий отключил игрока командой `/voice ignore`.
-- **Серверный реализм для игроков без аддона** (по умолчанию выключен; `/vcd effects on`). Сервер глушит голоса под водой, заглушает дальние в дождь и грозу и даёт эхо говорящему в пещере или зале для слушателя снаружи: та же физика, что аддон делает у себя. `/vcd effects air on` ещё и слегка глушит голоса у края дальности. Силы берутся из профиля сервера (`/vcd effects water|weather|echo <0-150>`). Вода, дождь и воздух работают на Paper, Fabric, Forge и NeoForge; измерение помещения для эха есть только на Paper, а зона с собственным эхом работает везде. Ключи `server_effects` и `server_air`.
-- **Заглушение:** `/vcd mute <игрок> [время] [причина]`, `/vcd unmute <игрок>`, `/vcd mutes`. Заглушенного игрока никто не слышит заданное время (`30s`, `10m`, `2h`, `1d`, `1w`, `perm`) или пока не снимут заглушение. Хранится между перезапусками, попадает в журнал изменений, есть кнопки «Отменить» и «Снять», виден в `/vcd debug`; право `vcd.mute`.
-- **PlaceholderAPI (Paper):** `%vcd_mode%`, `%vcd_mode_name%`, `%vcd_talking%`, `%vcd_muted%`, `%vcd_mute_left%`, `%vcd_mute_reason%`, `%vcd_range%`, `%vcd_whisper_range%`, `%vcd_walls%`, `%vcd_zone%`, `%vcd_addon%`, `%vcd_talking_near%`, `%vcd_muted_count%`.
-- **Баг-репорт в один клик:** `/vcd report` (право `vcd.debug`) и `/voicephysics report` выдают один короткий текст для копирования: версии, настройки, меняющие звук голосов, нагрузка и последние проблемы. Имена игроков и зон не включаются.
-- **Материалы блоков из файлов данных.** Ресурспак, датапак или собственный jar мода могут перечислить блоки и теги блоков с материалом в `voice_physics/materials.json` (`assets/<пространство имён>/` для клиента, `data/<пространство имён>/` для сервера) — для блоков других модов, которые автоматическое определение угадывает неверно. Собственные правила сервера и игрока по-прежнему главнее. Ошибки пишутся в лог и видны в отчётах.
-- **Звук по месту** (включено по умолчанию, переключатель на вкладке «Эффекты»): в глубоких пещерах и глубинной тьме эхо дольше, дым Незера глушит дальние голоса, в открытой пустоте Энда эха нет, снег и густые джунгли поглощают звук. Мягко, поверх измеренного. Входит в профиль сервера (`place_tuning`).
-- **Доступность:** «Высокий контраст» (HUD на сплошной тёмной панели с яркими буквами), «Метки направления» (строка в духе субтитров вроде `◀ Sam 3m` для голосов сбоку) и HUD до двойного размера (`hud_contrast`, `hud_markers`, `hud_scale` до 2).
-- **Статистика (плагин):** анонимные цифры использования в [bStats](https://bstats.org), включены по умолчанию; `metrics=false` в файле сервера или `plugins/bStats/config.yml` выключают их. Без имён, адресов и чата.
-- **Вопросы и проблемы:** новый раздел README (нет стен, нет HUD, закреплённые настройки, блоки из модов, вода и дождь без аддона, как сообщить об ошибке), описанный формат файлов данных, таблица PlaceholderAPI и новые настройки в обоих README и на страницах площадок.
-- **Тест «звук не изменился»:** известные сигналы через фильтр и эхо, которые сверяются с расчётом фильтра и временем затухания эха, так что изменение, которое меняет звук голосов, роняет тест, а не обнаруживается на слух.
+- **`/voice` для каждого игрока (Paper/Folia), с модом или без.** Выберите, как громко говорите (`/voice mode quiet|normal|shout`), отключите для себя приглушение стенами, задайте громкость игрока или игнорируйте его и включите над хотбаром показ того, кто говорит рядом. `/voice menu` открывает тот же выбор как меню. Сервер может отнять любую часть правами.
+- **Реализм для игроков без аддона** (по умолчанию выключен, `/vcd effects on`): голоса глухие под водой, дальние заглушает дождь и гроза, а голос из пещеры или зала звучит с эхом. Эхо помещения измеряется только на Paper.
+- **Заглушение:** `/vcd mute <игрок> [время] [причина]`, `/vcd unmute <игрок>`, `/vcd mutes`. Сохраняется между перезапусками.
+- **PlaceholderAPI (Paper):** плейсхолдеры для режима игрока, заглушения, дальности, зоны и того, кто говорит рядом; список в README.
+- **Баг-репорт в один клик:** `/vcd report` и `/voicephysics report` выдают один текст для баг-репорта, без имён игроков и зон.
+- **Материалы для блоков из модов:** ресурспаки, датапаки и моды могут указать, каким материалом считаются их блоки. Формат описан в README.
+- **Звук по месту** (включено по умолчанию, переключатель на вкладке «Эффекты»): в глубоких пещерах эхо дольше, Незер глушит дальние голоса, в Энде эха нет, снег и густые джунгли поглощают звук.
+- **Доступность:** HUD с высоким контрастом, метки направления для голосов сбоку и HUD до двойного размера.
+- **Статистика (плагин):** анонимные цифры использования в [bStats](https://bstats.org), без имён, адресов и чата; как выключить, написано в README.
+- Раздел «Вопросы и проблемы» в README.
 
 #### Изменено
-- Зона с `walls_strength` теперь решает стены за всех в ней, в том числе за игроков без аддона: их `/voice walls off` там не действует (команда, меню и статус говорят, какая зона решает), а сила зоны работает и там, где на остальном сервере стены выключены.
-- Производительность: обращения к блокам за один тик делятся между измерениями стен, эха и пути из-за угла без создания мусора, а аддон шаг за шагом замедляет собственные измерения, когда игра занята, и потом снова ускоряется.
+- Зона со своей силой стен теперь применяет её ко всем внутри, в том числе к тем, кто выключил стены командой `/voice walls off`.
+- Аддон делает меньше работы за тик и измеряет реже, когда игра занята.
 
 ## [2.7.1] - 2026-09-30
 
 ### English
 
 #### Fixed
-- A voice behind a wall is now heard from the doorway it comes through, and a voice from a cave echoes for you outside it. Neither had ever started: the check that starts them could never pass.
-- The echo fades in over about a second and a half when you walk into a cave; after a long time in one place it used to jump there at once.
-- With a player's volume above 100%, a voice no longer keeps the old, quieter volume when you move closer.
-- Voices from more than 256 blocks away are not traced through walls, so a far source cannot slow the game down.
-- Server walls: with many players talking, every listener's walls are measured in turn. Before, pairs beyond the first hundred or so were never measured and heard no walls.
-- Paper/Folia: the block material cache is safe on several threads.
+- A voice behind a wall is now heard from the doorway it comes through, and a voice from a cave echoes for you outside it. Neither worked before.
+- The echo fades in smoothly when you walk into a cave instead of jumping in.
+- With a player's volume above 100%, a voice no longer stays quiet when you move closer.
+- Very far voices no longer slow the game down.
+- With many players talking on a server, everyone hears walls; before, some players heard none.
 - `/vcd zone tp` takes you to the middle of the zone, not to its bottom.
-- `/vcd walls 1%` is 1%, not 100% (likewise `0.5%`).
-- A backslash in a zone message (`C:\underworld`) no longer breaks the settings file.
-- `/vcd walls` now says whom it reaches by itself: players without the addon, and players with it only when the profile is enforced with walls locked.
+- `/vcd walls 1%` is 1%, not 100%.
+- A backslash in a zone message no longer breaks the settings file.
+- `/vcd walls` says whom it reaches.
 
 ### Русский
 
 #### Исправлено
-- Голос за стеной теперь слышен из дверного проёма, через который он проходит, а голос из пещеры даёт эхо и снаружи. Раньше ни то ни другое не запускалось: проверка, которая их включает, никогда не срабатывала.
-- Эхо нарастает около полутора секунд, когда вы заходите в пещеру; после долгого времени на одном месте оно раньше появлялось сразу.
-- При громкости игрока выше 100% голос больше не остаётся на прежней, более тихой громкости, когда вы подходите ближе.
-- Голоса дальше 256 блоков не просвечиваются на стены, поэтому далёкий источник не может затормозить игру.
-- Стены на сервере: когда говорит много игроков, стены каждого слушателя измеряются по очереди. Раньше пары после первой сотни примерно не измерялись и стен не слышали.
-- Paper/Folia: кэш материалов блоков безопасен при работе в нескольких потоках.
+- Голос за стеной теперь слышен из дверного проёма, через который он проходит, а голос из пещеры даёт эхо и снаружи. Раньше ни то ни другое не работало.
+- Эхо плавно нарастает, когда вы заходите в пещеру, а не появляется сразу.
+- При громкости игрока выше 100% голос больше не остаётся тихим, когда вы подходите ближе.
+- Очень далёкие голоса больше не тормозят игру.
+- Когда на сервере говорит много игроков, стены слышат все; раньше некоторые не слышали.
 - `/vcd zone tp` переносит в середину зоны, а не на её дно.
-- `/vcd walls 1%` — это 1%, а не 100% (так же `0.5%`).
-- Обратная косая черта в сообщении зоны (`C:\underworld`) больше не ломает файл настроек.
-- `/vcd walls` теперь сам говорит, до кого доходит: до игроков без аддона, а до игроков с ним — только когда профиль принудительный и стены закреплены.
+- `/vcd walls 1%` — это 1%, а не 100%.
+- Обратная косая черта в сообщении зоны больше не ломает файл настроек.
+- `/vcd walls` говорит, до кого доходит.
 
 ## [2.7.0] - 2026-09-29
 
@@ -498,7 +438,7 @@ Placing and removing loudspeakers, the radio and eavesdrop items, mutes, `undo`,
 - *Reset* resets only the open tab.
 - Settings the server locks show a padlock and say why.
 - A preset no longer changes walls the server locks.
-- Plain words instead of dB, kHz and ms per tick; shorter tooltips.
+- Plain words instead of technical units; shorter tooltips.
 - Server tab: settings in sections, the zone you are in is marked, deleting a zone asks for a second click.
 - The server plugin is called VoicePhysics. Its settings folder moves from `plugins/VoicechatAudioDistance` by itself.
 
@@ -521,7 +461,7 @@ Placing and removing loudspeakers, the radio and eavesdrop items, mutes, `undo`,
 - «Сбросить» сбрасывает только открытую вкладку.
 - Заблокированные сервером настройки отмечены замком и объясняют почему.
 - Пресет больше не меняет стены, если сервер их заблокировал.
-- Понятные слова вместо дБ, кГц и мс за тик; подсказки короче.
+- Понятные слова вместо технических единиц; подсказки короче.
 - Вкладка «Сервер»: настройки по разделам, зона, в которой вы стоите, отмечена, удаление зоны просит второй клик.
 - Серверный плагин называется VoicePhysics. Папка настроек сама переносится из `plugins/VoicechatAudioDistance`.
 
