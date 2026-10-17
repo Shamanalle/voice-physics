@@ -60,7 +60,6 @@
     font-size: 22px; font-weight: 600; padding: 10px 18px; border-radius: 999px;
     background: rgba(25, 179, 204, 0.12); border: 1px solid rgba(25, 179, 204, 0.35); color: #d9f4f8;
   }
-  .cover .chip.new { background: var(--cyan); border-color: var(--cyan); color: #0b1e23; }
   .cover .loaders { position: absolute; left: 110px; bottom: 60px; font-size: 24px; color: var(--dim); }
   .cover .loaders b { color: var(--text); font-weight: 600; }
   /* The whole screenshot stays inside the picture */
@@ -72,8 +71,7 @@
   const q = new URLSearchParams(location.search);
   const esc = s => s.replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
   if (q.has("cover")) {
-    const chips = q.getAll("chip").map(c => c.startsWith("+")
-      ? `<span class="chip new">${esc(c.slice(1))}</span>` : `<span class="chip">${esc(c)}</span>`).join("");
+    const chips = q.getAll("chip").map(c => `<span class="chip">${esc(c)}</span>`).join("");
     document.body.innerHTML = `
       <div class="cover">
         <div class="left">

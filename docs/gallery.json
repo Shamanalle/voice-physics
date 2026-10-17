@@ -8,7 +8,7 @@
       "for": "An addon for Simple Voice Chat",
       "heading": "Voice Physics",
       "text": "Voices fade with distance, are muffled by walls, come round corners through doorways and echo in caves.",
-      "chips": ["Walls and materials", "Echo", "Doorways", "Water and rain", "+Whisper and shout", "+Wind", "+Facing", "+Megaphone", "HUD"],
+      "chips": ["Walls and materials", "Whisper and shout", "Doorways", "Echo", "Water and rain", "Wind", "Facing", "Megaphone", "HUD"],
       "shot": "docs/images/ui-distance.png",
       "loaders": "<b>Fabric · Quilt · Forge · NeoForge · Paper</b> &nbsp; Minecraft 1.16.5 – 26.x"
     }
