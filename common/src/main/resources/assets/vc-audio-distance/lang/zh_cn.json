@@ -739,7 +739,7 @@
   "gui.vc-audio-distance.log.filter.tooltip": "只显示该玩家的更改：输入名字或 console。留空显示所有人。",
   "gui.vc-audio-distance.log.apply": "筛选",
   "gui.vc-audio-distance.log.all": "所有人",
-  "gui.vc-audio-distance.log.page": "第 %s 页，共 %s 页",
+  "gui.vc-audio-distance.log.range": "第 %s–%s 条，共 %s 条",
   "gui.vc-audio-distance.log.total": "%s 条更改",
   "gui.vc-audio-distance.log.total.by": "%s 条更改，玩家 %s",
   "gui.vc-audio-distance.log.empty": "还没有更改。",

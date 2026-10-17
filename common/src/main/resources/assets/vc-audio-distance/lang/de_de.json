@@ -739,7 +739,7 @@
   "gui.vc-audio-distance.log.filter.tooltip": "Zeigt nur die Änderungen dieses Spielers: Namen oder console eingeben. Leer zeigt alle.",
   "gui.vc-audio-distance.log.apply": "Filtern",
   "gui.vc-audio-distance.log.all": "Alle",
-  "gui.vc-audio-distance.log.page": "Seite %s von %s",
+  "gui.vc-audio-distance.log.range": "%s–%s von %s",
   "gui.vc-audio-distance.log.total": "%s Änderungen",
   "gui.vc-audio-distance.log.total.by": "%s Änderungen von %s",
   "gui.vc-audio-distance.log.empty": "Noch keine Änderungen.",

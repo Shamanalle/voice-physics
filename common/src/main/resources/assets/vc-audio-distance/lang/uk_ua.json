@@ -739,7 +739,7 @@
   "gui.vc-audio-distance.log.filter.tooltip": "Показує зміни лише цього гравця: впишіть нік або console. Порожньо — усі.",
   "gui.vc-audio-distance.log.apply": "Знайти",
   "gui.vc-audio-distance.log.all": "Усі",
-  "gui.vc-audio-distance.log.page": "Сторінка %s з %s",
+  "gui.vc-audio-distance.log.range": "%s–%s з %s",
   "gui.vc-audio-distance.log.total": "Змін: %s",
   "gui.vc-audio-distance.log.total.by": "Змін: %s, гравець %s",
   "gui.vc-audio-distance.log.empty": "Змін поки немає.",
