@@ -619,7 +619,7 @@
   "gui.vc-audio-distance.server.group.spectators.tooltip": "Spectators in a group are heard only by the spectators in it.",
   "gui.vc-audio-distance.server.group.zones": "Isolated zones: %s",
   "gui.vc-audio-distance.server.group.zones.tooltip": "An isolated zone also cuts group voices between the players inside and outside it.",
-  "gui.vc-audio-distance.server.hint": "Changes are saved on the server right away. More: /vcd help",
+  "gui.vc-audio-distance.server.hint": "Saved on the server right away. Help: /vcd help",
   "gui.vc-audio-distance.server.kind.box": "Box",
   "gui.vc-audio-distance.server.kind.region": "Region",
   "gui.vc-audio-distance.server.kind.world": "World",

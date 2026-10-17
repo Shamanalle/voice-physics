@@ -619,7 +619,7 @@
   "gui.vc-audio-distance.server.group.spectators.tooltip": "A los espectadores de un grupo solo los oyen los espectadores de ese grupo.",
   "gui.vc-audio-distance.server.group.zones": "Zonas aisladas: %s",
   "gui.vc-audio-distance.server.group.zones.tooltip": "Una zona aislada también corta las voces de grupo entre quienes están dentro y fuera.",
-  "gui.vc-audio-distance.server.hint": "Los cambios se guardan en el servidor al instante. Más: /vcd help",
+  "gui.vc-audio-distance.server.hint": "Se guarda al instante en el servidor. Ayuda: /vcd help",
   "gui.vc-audio-distance.server.kind.box": "Caja",
   "gui.vc-audio-distance.server.kind.region": "Región",
   "gui.vc-audio-distance.server.kind.world": "Mundo",

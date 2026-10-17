@@ -50,6 +50,15 @@
     "shot": "docs/images/ui-hud.png"
   },
   {
+    "file": "docs/images/gallery/monitor.png",
+    "title": "The Monitor tab",
+    "description": "Players nearby: who is talking, how loud you hear them and who will not hear you back.",
+    "featured": false,
+    "heading": "Know who hears you",
+    "text": "Everyone nearby, how loud each voice reaches you, and who has their sound off.",
+    "shot": "docs/images/ui-monitor.png"
+  },
+  {
     "file": "docs/images/gallery/server.png",
     "title": "The Server tab",
     "description": "For admins: profile, walls, game rules, megaphone and zones, saved on the server right away.",

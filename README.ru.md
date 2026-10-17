@@ -14,9 +14,9 @@
 |---|---|---|---|
 | ![Вкладка «Дистанция»: график кривой и пресеты](docs/images/ui-distance.png) | ![Вкладка «Стены»: сила и материалы](docs/images/ui-walls.png) | ![Вкладка «Эффекты»: эхо, вода, дождь](docs/images/ui-effects.png) | ![Вкладка HUD: кто говорит и кто слышит вас](docs/images/ui-hud.png) |
 
-| Сервер | Журнал изменений | Настройки закреплены сервером |
-|---|---|---|
-| ![Вкладка «Сервер» для админов](docs/images/ui-server.png) | ![Журнал изменений сервера на отдельном экране](docs/images/ui-log.png) | ![Настройки закреплены сервером](docs/images/ui-locked.png) |
+| Монитор | Сервер | Журнал изменений | Настройки закреплены сервером |
+|---|---|---|---|
+| ![Вкладка «Монитор»: игроки рядом и как громко вы их слышите](docs/images/ui-monitor.png) | ![Вкладка «Сервер» для админов](docs/images/ui-server.png) | ![Журнал изменений сервера на отдельном экране](docs/images/ui-log.png) | ![Настройки закреплены сервером](docs/images/ui-locked.png) |
 
 ## Содержание
 
@@ -159,9 +159,9 @@
 
 | Загрузчик | Minecraft | Файл | Java | Simple Voice Chat |
 |---|---|---|---|---|
-| **Fabric / Quilt** | 1.16.5 – 26.3 | `voice-physics-fabric-2.12.1+mc1.16.5-26.x.jar` | 8+ (какая нужна этому Minecraft) | 2.4.0+ (2.5.0+ с 1.20.5, 2.6.0+ на 26.x) |
-| **Forge / NeoForge** | Forge 1.16.5 – 26.3, NeoForge 1.20.1 – 26.3 | `voice-physics-forge-neoforge-2.12.1+mc1.16.5-26.x.jar` | 8+ (какая нужна этому Minecraft) | 2.4.0+ (2.5.0+ с 1.20.5, 2.6.0+ на 26.x) |
-| **Paper / Purpur / Folia / Spigot / Bukkit** | 1.16.5 – 26.3 | `voice-physics-bukkit-2.12.1.jar` | 8+ (17+ с 1.18) | версия для Bukkit |
+| **Fabric / Quilt** | 1.16.5 – 26.3 | `voice-physics-fabric-2.12.2+mc1.16.5-26.x.jar` | 8+ (какая нужна этому Minecraft) | 2.4.0+ (2.5.0+ с 1.20.5, 2.6.0+ на 26.x) |
+| **Forge / NeoForge** | Forge 1.16.5 – 26.3, NeoForge 1.20.1 – 26.3 | `voice-physics-forge-neoforge-2.12.2+mc1.16.5-26.x.jar` | 8+ (какая нужна этому Minecraft) | 2.4.0+ (2.5.0+ с 1.20.5, 2.6.0+ на 26.x) |
+| **Paper / Purpur / Folia / Spigot / Bukkit** | 1.16.5 – 26.3 | `voice-physics-bukkit-2.12.2.jar` | 8+ (17+ с 1.18) | версия для Bukkit |
 
 - **Fabric**, **Forge** и **NeoForge** — полный аддон, для клиента и сервера. Для Fabric нужен [Fabric API](https://modrinth.com/mod/fabric-api); [Mod Menu](https://modrinth.com/mod/modmenu) — по желанию. На Forge для 1.21.6 – 1.21.7 нет HUD голоса: этот Forge не умеет его добавлять. NeoForge 1.20.1 — ответвление Forge 1.20.1 и загружает файл как Forge. На NeoForge 1.20.4 нужен NeoForge 20.4.80 или новее. Версии Forge: 1.16.5, 1.17.1, 1.18.2, 1.19.2, 1.19.4 и 1.20 – 26.3 (1.20.5 и 1.21.2 Forge пропустил).
 - **Один файл на много версий.** Всего файлов три. В файле для Fabric есть сборка для каждой версии Minecraft от 1.16.5 до 26.3, в файле для Forge / NeoForge — для каждой версии Forge и NeoForge; при запуске аддон выбирает сборку запущенной игры. Каждой сборке нужна та Java, которая нужна её Minecraft, не новее.

@@ -2759,7 +2759,7 @@ public abstract class SettingsScreen extends com.kasper.vcdistance.compat.BaseSc
      */
     private static List<Component> wrap(Component text, int maxWidth, int maxLines, java.util.function.ToIntFunction<Component> width) {
         List<Component> lines = new ArrayList<>();
-        String[] words = text.getString().split(" ");
+        String[] words = keepCommandsWhole(text.getString().split(" "));
         StringBuilder line = new StringBuilder();
         int i = 0;
         while (i < words.length && lines.size() < maxLines - 1) {
@@ -2791,6 +2791,19 @@ public abstract class SettingsScreen extends com.kasper.vcdistance.compat.BaseSc
             lines.add(last);
         }
         return lines;
+    }
+
+    /** A command and its first word stay on one line: "/vcd help" is never split into "/vcd" and "help". */
+    private static String[] keepCommandsWhole(String[] words) {
+        List<String> out = new ArrayList<>();
+        for (int i = 0; i < words.length; i++) {
+            if (words[i].length() > 1 && words[i].startsWith("/") && i + 1 < words.length) {
+                out.add(words[i] + " " + words[++i]);
+            } else {
+                out.add(words[i]);
+            }
+        }
+        return out.toArray(new String[0]);
     }
 
     /** Draws a wrapped text from {@code y} down, one line every 10 pixels; returns the y under it. */

@@ -14,9 +14,9 @@ An addon for [Simple Voice Chat](https://modrinth.com/plugin/simple-voice-chat) 
 |---|---|---|---|
 | ![Distance tab: curve graph and presets](docs/images/ui-distance.png) | ![Walls tab: strength and materials](docs/images/ui-walls.png) | ![Effects tab: echo, water, rain](docs/images/ui-effects.png) | ![HUD tab: who is talking and who hears you](docs/images/ui-hud.png) |
 
-| Server | Change log | Settings locked by the server |
-|---|---|---|
-| ![Server tab for admins](docs/images/ui-server.png) | ![The server's change log on its own screen](docs/images/ui-log.png) | ![Settings locked by the server](docs/images/ui-locked.png) |
+| Monitor | Server | Change log | Settings locked by the server |
+|---|---|---|---|
+| ![Monitor tab: players nearby and how loud you hear them](docs/images/ui-monitor.png) | ![Server tab for admins](docs/images/ui-server.png) | ![The server's change log on its own screen](docs/images/ui-log.png) | ![Settings locked by the server](docs/images/ui-locked.png) |
 
 ## Contents
 
@@ -160,9 +160,9 @@ With the addon on both sides the client muffles walls itself and the server skip
 
 | Loader | Minecraft | File | Java | Simple Voice Chat |
 |---|---|---|---|---|
-| **Fabric / Quilt** | 1.16.5 – 26.3 | `voice-physics-fabric-2.12.1+mc1.16.5-26.x.jar` | 8+ (what that Minecraft needs) | 2.4.0+ (2.5.0+ on 1.20.5+, 2.6.0+ on 26.x) |
-| **Forge / NeoForge** | Forge 1.16.5 – 26.3, NeoForge 1.20.1 – 26.3 | `voice-physics-forge-neoforge-2.12.1+mc1.16.5-26.x.jar` | 8+ (what that Minecraft needs) | 2.4.0+ (2.5.0+ on 1.20.5+, 2.6.0+ on 26.x) |
-| **Paper / Purpur / Folia / Spigot / Bukkit** | 1.16.5 – 26.3 | `voice-physics-bukkit-2.12.1.jar` | 8+ (17+ on 1.18+) | Bukkit version |
+| **Fabric / Quilt** | 1.16.5 – 26.3 | `voice-physics-fabric-2.12.2+mc1.16.5-26.x.jar` | 8+ (what that Minecraft needs) | 2.4.0+ (2.5.0+ on 1.20.5+, 2.6.0+ on 26.x) |
+| **Forge / NeoForge** | Forge 1.16.5 – 26.3, NeoForge 1.20.1 – 26.3 | `voice-physics-forge-neoforge-2.12.2+mc1.16.5-26.x.jar` | 8+ (what that Minecraft needs) | 2.4.0+ (2.5.0+ on 1.20.5+, 2.6.0+ on 26.x) |
+| **Paper / Purpur / Folia / Spigot / Bukkit** | 1.16.5 – 26.3 | `voice-physics-bukkit-2.12.2.jar` | 8+ (17+ on 1.18+) | Bukkit version |
 
 - **Fabric**, **Forge** and **NeoForge** are the full addon, for the client and the server. Fabric needs [Fabric API](https://modrinth.com/mod/fabric-api); [Mod Menu](https://modrinth.com/mod/modmenu) is optional. On Forge for 1.21.6 – 1.21.7 the voice HUD is off: that Forge cannot add it. NeoForge 1.20.1 is a fork of Forge 1.20.1 and loads the file as Forge. On NeoForge 1.20.4 it needs NeoForge 20.4.80 or newer. Forge versions: 1.16.5, 1.17.1, 1.18.2, 1.19.2, 1.19.4 and 1.20 – 26.3 (Forge skipped 1.20.5 and 1.21.2).
 - **One file covers many versions.** So there are three files in all. The Fabric file holds a build for every Minecraft version from 1.16.5 to 26.3, and the Forge / NeoForge file one for every Forge and NeoForge version; at start the addon picks the one of the running game. Each build needs the Java its Minecraft needs, nothing newer.

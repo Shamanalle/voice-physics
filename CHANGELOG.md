@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 *Все заметные изменения проекта описываются в этом файле. Каждая версия описана сначала на английском, затем на русском.*
 
+## [2.12.2] - 2026-10-17
+
+### English
+
+#### Fixed
+- **The hint at the bottom of the Server tab fits on one line.** It is shorter now, and a command in it is no longer split across two lines.
+
+### Русский
+
+#### Исправлено
+- **Подсказка внизу вкладки «Сервер» помещается в одну строку.** Она стала короче, и команда в ней больше не разрывается на две строки.
+
 ## [2.12.1] - 2026-10-17
 
 ### English

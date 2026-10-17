@@ -9,7 +9,10 @@ import com.kasper.vcdistance.DistanceConfig;
 import com.kasper.vcdistance.LinkProtocol;
 import com.kasper.vcdistance.ServerSettings;
 import com.kasper.vcdistance.Zone;
+import com.kasper.vcdistance.NearbyPlayers;
+import com.kasper.vcdistance.VoiceState;
 import com.kasper.vcdistance.client.SettingsScreen;
+import com.kasper.vcdistance.client.SpeakerTicker;
 import net.fabricmc.fabric.api.client.gametest.v1.FabricClientGameTest;
 import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
 import net.fabricmc.fabric.api.client.gametest.v1.context.TestSingleplayerContext;
@@ -85,6 +88,36 @@ public class SettingsScreenGameTest implements FabricClientGameTest {
     }
 
     /**
+     * A few players around you for the Monitor tab: two talking (one whispering), the rest quiet, one with
+     * the sound off. Call it right before the shot: a voice counts as talking for a moment after its last frame.
+     */
+    private static void pretendMonitor() {
+        SpeakerTicker.frozen = true;
+        String[] names = {"Alex", "Steve", "Sam", "Kai", "Noor"};
+        double[] distance = {6.4, 13.8, 21.5, 29.0, 37.2};
+        double[] bearing = {-35, 70, 150, -110, 10};
+        java.util.List<NearbyPlayers.Player> nearby = new java.util.ArrayList<>();
+        java.util.Map<java.util.UUID, VoiceState> states = new java.util.LinkedHashMap<>();
+        short[] pcm = new short[960];
+        for (int i = 0; i < pcm.length; i++) {
+            pcm[i] = (short) (6000 * Math.sin(i * 2 * Math.PI * 220 / 48000.0));
+        }
+        for (int i = 0; i < names.length; i++) {
+            java.util.UUID id = java.util.UUID.nameUUIDFromBytes(("store-" + names[i]).getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            nearby.add(new NearbyPlayers.Player(id, names[i], distance[i], bearing[i]));
+            states.put(id, i == 3 ? VoiceState.SOUND_OFF : VoiceState.CONNECTED);
+            if (i < 2) {
+                com.kasper.vcdistance.SpeakerRegistry.Speaker s = AudioDistancePlugin.SPEAKERS.onEntityFrame(id, id, i == 1, 48.0F, pcm);
+                s.setDisplayName(names[i]);
+                s.setDistance(distance[i], System.nanoTime());
+                s.setBearing(bearing[i]);
+            }
+        }
+        AudioDistancePlugin.NEARBY.update(nearby);
+        AudioDistancePlugin.LINK.onNearby(LinkProtocol.nearby(states));
+    }
+
+    /**
      * A server with a long change log that answers the Log screen as a real one does, so the screen fills
      * its height and the pager has somewhere to go.
      */
@@ -141,7 +174,10 @@ public class SettingsScreenGameTest implements FabricClientGameTest {
             });
             context.waitTicks(2);
             context.takeScreenshot("settings-" + name + "-end");
-            context.runOnClient(client -> TestScreens.open(client, null));
+            context.runOnClient(client -> {
+                TestScreens.open(client, null);
+                SpeakerTicker.frozen = false;
+            });
             context.waitTicks(1);
         }
         // The folded parts open: the materials, the Server tab's sections and one of its zones
@@ -201,12 +237,15 @@ public class SettingsScreenGameTest implements FabricClientGameTest {
             AudioDistancePlugin.CONFIG.setDirectivityEnabled(true);
         });
         for (SettingsScreen.Tab tab : new SettingsScreen.Tab[]{SettingsScreen.Tab.DISTANCE, SettingsScreen.Tab.WALLS,
-                SettingsScreen.Tab.EFFECTS, SettingsScreen.Tab.HUD, SettingsScreen.Tab.SERVER}) {
+                SettingsScreen.Tab.EFFECTS, SettingsScreen.Tab.HUD, SettingsScreen.Tab.MONITOR, SettingsScreen.Tab.SERVER}) {
             context.runOnClient(client -> {
                 SettingsScreen.openOn(tab);
                 TestScreens.open(client, new AudioDistanceScreen(null));
             });
             parkCursor(context);
+            if (tab == SettingsScreen.Tab.MONITOR) {
+                context.runOnClient(client -> pretendMonitor());
+            }
             context.takeScreenshot("store-" + tab.name().toLowerCase(java.util.Locale.ROOT));
             context.runOnClient(client -> TestScreens.open(client, null));
             context.waitTicks(1);
