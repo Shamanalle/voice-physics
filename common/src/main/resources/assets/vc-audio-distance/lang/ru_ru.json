@@ -619,7 +619,7 @@
   "gui.vc-audio-distance.server.group.spectators.tooltip": "Наблюдателей в группе слышат только наблюдатели этой группы.",
   "gui.vc-audio-distance.server.group.zones": "Изолированные зоны: %s",
   "gui.vc-audio-distance.server.group.zones.tooltip": "Изолированная зона отрезает и голоса группы между теми, кто внутри неё и снаружи.",
-  "gui.vc-audio-distance.server.hint": "Изменения сразу сохраняются на сервере. Подробнее: /vcd help",
+  "gui.vc-audio-distance.server.hint": "Сразу сохраняется на сервере. Справка: /vcd help",
   "gui.vc-audio-distance.server.kind.box": "Бокс",
   "gui.vc-audio-distance.server.kind.region": "Регион",
   "gui.vc-audio-distance.server.kind.world": "Мир",

@@ -619,7 +619,7 @@
   "gui.vc-audio-distance.server.group.spectators.tooltip": "群组中的旁观者只能被该群组中的旁观者听到。",
   "gui.vc-audio-distance.server.group.zones": "隔离区域：%s",
   "gui.vc-audio-distance.server.group.zones.tooltip": "隔离区域也会切断区域内外玩家之间的群组语音。",
-  "gui.vc-audio-distance.server.hint": "更改会立即保存到服务器。更多：/vcd help",
+  "gui.vc-audio-distance.server.hint": "立即保存到服务器。帮助：/vcd help",
   "gui.vc-audio-distance.server.kind.box": "方框",
   "gui.vc-audio-distance.server.kind.region": "区域",
   "gui.vc-audio-distance.server.kind.world": "世界",
