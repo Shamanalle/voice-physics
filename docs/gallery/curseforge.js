@@ -43,6 +43,7 @@ const pluginCover = {
 const copies = {
   cover: "docs/images/gallery/cover.png",
   "plugin-cover": "docs/images/gallery/cover-plugin.png",
+  banner: "docs/images/social-preview.png",
   walls: "docs/images/ui-walls.png",
   effects: "docs/images/ui-effects.png",
   monitor: "docs/images/ui-monitor.png",
