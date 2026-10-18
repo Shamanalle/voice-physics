@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Voice Physics social preview</title>
+<style>
+  /* The 1280x640 social preview of the GitHub repository: the name on the left, a voice going through a
+     wall on the right, loud and sharp before it, quiet and dull behind it. Rendered by curseforge.js. */
+  @font-face {
+    font-family: "Inter";
+    src: url("fonts/Inter-latin.woff2") format("woff2");
+    font-weight: 100 900;
+  }
+  :root {
+    --bg: #1f2327;
+    --bg-deep: #121417;
+    --cyan: #19b3cc;
+    --text: #f0f4f6;
+    --dim: #a9b4bb;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { width: 1280px; height: 640px; overflow: hidden; }
+  body {
+    font-family: "Inter", sans-serif;
+    color: var(--text);
+    background:
+      radial-gradient(700px 500px at 72% 50%, rgba(25, 179, 204, 0.17), transparent 70%),
+      radial-gradient(600px 420px at -5% 110%, rgba(25, 179, 204, 0.08), transparent 70%),
+      linear-gradient(160deg, var(--bg) 0%, var(--bg-deep) 100%);
+    -webkit-font-smoothing: antialiased;
+  }
+  canvas { position: absolute; left: 0; top: 0; }
+  .left { position: absolute; left: 68px; top: 0; bottom: 0; width: 600px; display: flex; flex-direction: column; justify-content: center; }
+  .head { display: flex; align-items: center; gap: 22px; }
+  .head img { width: 88px; height: 88px; image-rendering: pixelated; }
+  .for { font-size: 23px; font-weight: 600; color: var(--cyan); letter-spacing: 0.02em; }
+  h1 { font-size: 92px; font-weight: 800; letter-spacing: -0.04em; line-height: 1; margin-top: 30px; }
+  .line { font-size: 34px; font-weight: 500; color: #d3dade; line-height: 1.25; margin-top: 18px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 30px; }
+  .chip {
+    font-size: 21px; font-weight: 600; padding: 8px 16px; border-radius: 999px;
+    background: rgba(25, 179, 204, 0.12); border: 1px solid rgba(25, 179, 204, 0.35); color: #d9f4f8;
+  }
+  .loaders { margin-top: 30px; font-size: 20px; color: var(--dim); }
+  .loaders b { color: var(--text); font-weight: 600; }
+  .tag { position: absolute; font-size: 18px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
+</style>
+</head>
+<body>
+<canvas id="c" width="1280" height="640"></canvas>
+<div class="left">
+  <div class="head"><img src="../../icon.png" alt=""><div class="for">An addon for<br>Simple Voice Chat</div></div>
+  <h1>Voice Physics</h1>
+  <div class="line">Proximity voice chat that sounds like the world around you.</div>
+  <div class="chips"><span class="chip">Distance</span><span class="chip">Walls</span><span class="chip">Doorways</span><span class="chip">Echo</span><span class="chip">Water</span></div>
+  <div class="loaders"><b>Fabric · Quilt · Forge · NeoForge · Paper</b> &nbsp; 1.16.5 – 26.x</div>
+</div>
+<div class="tag" style="left: 742px; top: 548px; color: #7fe3f2;">voice</div>
+<div class="tag" style="left: 1066px; top: 548px; color: #7c8a91;">behind a wall</div>
+<script>
+  const ctx = document.getElementById("c").getContext("2d");
+  let seed = 7;
+  const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+
+  // The same voice on both sides: speech-like bars, loud and jagged before the wall, then quieter,
+  // smoothed (the muffling) and greyer behind it
+  const step = 9, x0 = 700, x1 = 1280, wallX = 940, wallW = 96, mid = 320;
+  const raw = [];
+  for (let x = x0, i = 0; x < x1; x += step, i++) {
+    const syllable = 0.35 + 0.65 * Math.pow(Math.abs(Math.sin(i * 0.23 + 0.6)), 0.7);
+    raw.push(syllable * (0.45 + 0.55 * rnd()));
+  }
+  const smooth = raw.map((_, i) => {
+    let s = 0, n = 0;
+    for (let k = -3; k <= 3; k++) if (raw[i + k] !== undefined) { s += raw[i + k]; n++; }
+    return s / n;
+  });
+  raw.forEach((v, i) => {
+    const x = x0 + i * step;
+    if (x + 5 > wallX && x < wallX + wallW) return;
+    const before = x < wallX;
+    const fadeIn = Math.min(1, (x - x0) / 90);
+    const h = before ? v * 210 : smooth[i] * 72;
+    ctx.globalAlpha = before ? fadeIn : 0.95 - 0.5 * (x - wallX - wallW) / (x1 - wallX - wallW);
+    ctx.fillStyle = before ? "#3fd0e6" : "#5f7a82";
+    if (before) { ctx.shadowColor = "rgba(63, 208, 230, 0.55)"; ctx.shadowBlur = 14; } else ctx.shadowBlur = 0;
+    ctx.beginPath();
+    ctx.roundRect(x, mid - h, 5, h * 2, 2.5);
+    ctx.fill();
+  });
+  ctx.globalAlpha = 1;
+  ctx.shadowBlur = 0;
+
+  // A stone brick wall from top to bottom, 6 px a texel like a Minecraft block
+  const t = 6, cols = wallW / t, palette = ["#8a8a8a", "#7f7f7f", "#777777", "#929292", "#848484", "#6f6f6f"];
+  for (let r = 0; r < 640 / t + 1; r++) {
+    for (let c = 0; c < cols; c++) {
+      const row = r % 16, col = c % 16;
+      const offset = (Math.floor(r / 8) % 2) * 8;
+      const mortar = row === 7 || row === 15 || (col + offset) % 16 === 15;
+      let color = palette[Math.floor(rnd() * palette.length)];
+      if (mortar) color = "#565656";
+      else if (row === 0 || row === 8 || (col + offset) % 16 === 0) color = "#9e9e9e";
+      ctx.fillStyle = color;
+      ctx.fillRect(wallX + c * t, r * t, t, t);
+    }
+  }
+  const shade = ctx.createLinearGradient(wallX, 0, wallX + wallW, 0);
+  shade.addColorStop(0, "rgba(255,255,255,0.06)");
+  shade.addColorStop(1, "rgba(0,0,0,0.28)");
+  ctx.fillStyle = shade;
+  ctx.fillRect(wallX, 0, wallW, 640);
+  ctx.fillStyle = "rgba(0,0,0,0.35)";
+  ctx.fillRect(wallX + wallW, 0, 10, 640);
+</script>
+</body>
+</html>
