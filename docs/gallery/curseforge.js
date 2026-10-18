@@ -1,6 +1,7 @@
 // Renders the pictures of the CurseForge descriptions of the mod and the plugin
 // (docs/images/curseforge/*.png): section headings and facts strips from banner.html, and 840 px
 // copies of the cover and screenshots. CurseForge refuses pictures 850 px wide or wider.
+// Also renders the plugin's cover and the GitHub social preview (docs/images/social-preview.png).
 // Run from the repo root: NODE_PATH=$(npm root -g) node docs/gallery/curseforge.js
 const { chromium } = require("playwright");
 const path = require("path");
@@ -38,6 +39,14 @@ const pluginCover = {
   shot: "docs/images/ui-server.png",
   loaders: "<b>Paper · Purpur · Folia · Spigot</b> &nbsp; Minecraft 1.16.5 – 26.3 &nbsp; Players need nothing",
 };
+// The social preview of the GitHub repository, 1280x640, set by hand in Settings → General
+const social = {
+  for: "An addon for Simple Voice Chat",
+  title: "Voice Physics",
+  text: "Voices fade with distance, are muffled by walls, come round corners and echo in caves.",
+  shot: "docs/images/ui-walls.png",
+  loaders: "<b>Fabric · Quilt · Forge · NeoForge · Paper</b><br>Minecraft 1.16.5 – 26.x",
+};
 const copies = {
   cover: "docs/images/gallery/cover.png",
   "plugin-cover": "docs/images/gallery/cover-plugin.png",
@@ -56,6 +65,11 @@ const copies = {
   await big.goto(pathToFileURL(path.join(__dirname, "page.html")).href + "?" + cq);
   await big.evaluate(async () => { await document.fonts.ready; await Promise.all([...document.images].map(i => i.decode())); });
   await big.screenshot({ path: path.join(root, "docs/images/gallery/cover-plugin.png") });
+  const small = await browser.newPage({ viewport: { width: 1280, height: 640 } });
+  await small.goto(pathToFileURL(path.join(__dirname, "page.html")).href + "?" + new URLSearchParams({ social: "",
+    for: social.for, title: social.title, text: social.text, shot: "../../" + social.shot, loaders: social.loaders }));
+  await small.evaluate(async () => { await document.fonts.ready; await Promise.all([...document.images].map(i => i.decode())); });
+  await small.screenshot({ path: path.join(root, "docs/images/social-preview.png") });
   const tab = await browser.newPage({ viewport: { width: 840, height: 600 } });
   const shoot = async (query, name) => {
     await tab.goto(banner + "?" + query);
