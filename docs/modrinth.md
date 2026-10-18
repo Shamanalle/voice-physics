@@ -1,3 +1,5 @@
+![Voice Physics](https://raw.githubusercontent.com/Shamanalle/voice-physics/main/docs/images/social-preview.png)
+
 An addon for [Simple Voice Chat](https://modrinth.com/plugin/simple-voice-chat) that makes proximity voice chat sound real: voices fade with distance, get muffled behind walls (occlusion), come round corners through doorways and echo in caves.
 
 Install it on your client, on the server, or on both. Each works on its own.
