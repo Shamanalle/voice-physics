@@ -58,7 +58,7 @@
   "command.vc-audio-distance.preset_set": "Profil-Preset: %s. Gespeichert und an Spieler mit dem Addon gesendet.",
   "command.vc-audio-distance.profile_set": "Profilmodus: %s. Gespeichert und an Spieler mit dem Addon gesendet.",
   "command.vc-audio-distance.reloaded": "Einstellungen aus %s neu geladen und an Spieler mit dem Addon gesendet.",
-  "command.vc-audio-distance.require.message": "Dieser Server nutzt Voice Physics: Stimmen werden mit der Entfernung leiser und von Wänden gedämpft. Installiere das Addon, um es wie gedacht zu hören: %s",
+  "command.vc-audio-distance.require.message": "Dieser Server nutzt Voice Physics. Installiere das Addon, um es wie gedacht zu hören: %s",
   "command.vc-audio-distance.require.set": "Addon verlangt: %s (Mindestversion %s). Gespeichert.",
   "command.vc-audio-distance.require.update": "Dieser Server braucht Voice Physics %s oder neuer, bitte aktualisieren: %s",
   "command.vc-audio-distance.rule.dead.off": "Tote Spieler sind wie gewohnt zu hören. Gespeichert.",

@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 *Все заметные изменения проекта описываются в этом файле. Каждая версия описана сначала на английском, затем на русском.*
 
+## [Unreleased]
+
+### English
+
+#### Changed
+- The message for players without the addon is shorter and now links to the CurseForge page. Servers that set their own link keep it.
+
+### Русский
+
+#### Изменено
+- Сообщение игрокам без аддона стало короче и теперь ведёт на страницу CurseForge. Если сервер указал свою ссылку, она остаётся.
+
 ## [2.12.2] - 2026-10-17
 
 ### English

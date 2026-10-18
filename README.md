@@ -473,7 +473,7 @@ All of these are new and have not been tried in a live game yet: turn one on on 
 |---|---|---|---|
 | `require_addon` | `off` / `suggest` / `warn` / `kick` | `off` | Players without the addon: nothing / one message per server start / a message on every join / disconnect |
 | `min_addon_version` | version or empty | empty | Oldest addon version that counts |
-| `addon_download_url` | link | GitHub releases | Where the message sends players |
+| `addon_download_url` | link | the CurseForge page | Where the message sends players |
 | `messages_language` | `auto` / `en_us` / `ru_ru` / `uk_ua` / `de_de` / `es_es` / `pt_br` / `zh_cn` | `auto` | Language of `/vcd` replies and player messages; `auto` = each player's game language |
 
 The texts are in `vc-audio-distance-lang/<language>.json` next to the settings file. Edit any line, or add a file such as `fr_fr.json` for a new language; missing lines fall back to the built-in ones.
