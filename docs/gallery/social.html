@@ -5,7 +5,8 @@
 <title>Voice Physics social preview</title>
 <style>
   /* The 1280x640 social preview of the GitHub repository: the name on the left, a voice going through a
-     wall on the right, loud and sharp before it, quiet and dull behind it. Rendered by curseforge.js. */
+     wall on the right, loud and sharp before it, quiet and dull behind it. Rendered by curseforge.js.
+     ?h=720 gives the 16:9 version for the store galleries. */
   @font-face {
     font-family: "Inter";
     src: url("fonts/Inter-latin.woff2") format("woff2");
@@ -58,13 +59,21 @@
 <div class="tag" style="left: 742px; top: 548px; color: #7fe3f2;">voice</div>
 <div class="tag" style="left: 1066px; top: 548px; color: #7c8a91;">behind a wall</div>
 <script>
-  const ctx = document.getElementById("c").getContext("2d");
+  const H = Number(new URLSearchParams(location.search).get("h")) || 640;
+  document.documentElement.style.height = document.body.style.height = H + "px";
+  // Sharp at any device scale: the canvas draws in device pixels
+  const canvas = document.getElementById("c"), dpr = window.devicePixelRatio || 1;
+  canvas.width = 1280 * dpr; canvas.height = H * dpr;
+  canvas.style.width = "1280px"; canvas.style.height = H + "px";
+  document.querySelectorAll(".tag").forEach(tag => tag.style.top = (H - 92) + "px");
+  const ctx = canvas.getContext("2d");
+  ctx.scale(dpr, dpr);
   let seed = 7;
   const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
 
   // The same voice on both sides: speech-like bars, loud and jagged before the wall, then quieter,
   // smoothed (the muffling) and greyer behind it
-  const step = 9, x0 = 700, x1 = 1280, wallX = 940, wallW = 96, mid = 320;
+  const step = 9, x0 = 700, x1 = 1280, wallX = 940, wallW = 96, mid = H / 2;
   const raw = [];
   for (let x = x0, i = 0; x < x1; x += step, i++) {
     const syllable = 0.35 + 0.65 * Math.pow(Math.abs(Math.sin(i * 0.23 + 0.6)), 0.7);
@@ -93,7 +102,7 @@
 
   // A stone brick wall from top to bottom, 6 px a texel like a Minecraft block
   const t = 6, cols = wallW / t, palette = ["#8a8a8a", "#7f7f7f", "#777777", "#929292", "#848484", "#6f6f6f"];
-  for (let r = 0; r < 640 / t + 1; r++) {
+  for (let r = 0; r < H / t + 1; r++) {
     for (let c = 0; c < cols; c++) {
       const row = r % 16, col = c % 16;
       const offset = (Math.floor(r / 8) % 2) * 8;
@@ -109,9 +118,9 @@
   shade.addColorStop(0, "rgba(255,255,255,0.06)");
   shade.addColorStop(1, "rgba(0,0,0,0.28)");
   ctx.fillStyle = shade;
-  ctx.fillRect(wallX, 0, wallW, 640);
+  ctx.fillRect(wallX, 0, wallW, H);
   ctx.fillStyle = "rgba(0,0,0,0.35)";
-  ctx.fillRect(wallX + wallW, 0, 10, 640);
+  ctx.fillRect(wallX + wallW, 0, 10, H);
 </script>
 </body>
 </html>

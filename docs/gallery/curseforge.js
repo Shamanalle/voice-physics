@@ -63,6 +63,11 @@ const copies = {
   await small.goto(pathToFileURL(path.join(__dirname, "social.html")).href);
   await small.evaluate(async () => { await document.fonts.ready; await Promise.all([...document.images].map(i => i.decode())); });
   await small.screenshot({ path: path.join(root, "docs/images/social-preview.png") });
+  // The same banner in 16:9 for the Modrinth and CurseForge galleries, which show pictures in that shape
+  const wide = await browser.newPage({ viewport: { width: 1280, height: 720 }, deviceScaleFactor: 1.5 });
+  await wide.goto(pathToFileURL(path.join(__dirname, "social.html")).href + "?h=720");
+  await wide.evaluate(async () => { await document.fonts.ready; await Promise.all([...document.images].map(i => i.decode())); });
+  await wide.screenshot({ path: path.join(root, "docs/images/gallery/banner.png") });
   const tab = await browser.newPage({ viewport: { width: 840, height: 600 } });
   const shoot = async (query, name) => {
     await tab.goto(banner + "?" + query);
