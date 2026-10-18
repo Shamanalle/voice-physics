@@ -61,6 +61,8 @@ Players **without the addon** also hear voices muffled through walls.
 
 Before 1.20 the mod is made for 1.16.5, 1.17.1, 1.18.2, 1.19.2 and 1.19.4. Forge itself has no 1.20.5 and 1.21.2.
 
+**Statistics.** Only the Paper plugin sends anonymous usage numbers to [bStats](https://bstats.org): server software and versions, player count, country, and whether a few of its options are on. No names, addresses, chat or voice. Turn it off with `metrics=false` in `plugins/VoicePhysics/vc-audio-distance-server.properties`, or for all plugins in `plugins/bStats/config.yml`. The mod sends nothing.
+
 **[All settings, commands and what works where →](https://github.com/Shamanalle/voice-physics#readme)** · [Changelog](https://github.com/Shamanalle/voice-physics/blob/main/CHANGELOG.md) · [Questions and problems](https://github.com/Shamanalle/voice-physics#questions-and-problems) · [Report a bug](https://github.com/Shamanalle/voice-physics/issues)
 
 ---
@@ -128,6 +130,8 @@ Before 1.20 the mod is made for 1.16.5, 1.17.1, 1.18.2, 1.19.2 and 1.19.4. Forge
 | Paper, Purpur, Folia, Spigot | 1.16.5 – 26.3 | `voice-physics-bukkit-…`, только сервер |
 
 До 1.20 мод сделан для 1.16.5, 1.17.1, 1.18.2, 1.19.2 и 1.19.4. У самого Forge нет 1.20.5 и 1.21.2.
+
+**Статистика.** Только плагин для Paper отправляет в [bStats](https://bstats.org) анонимные цифры использования: серверное ПО и версии, число игроков, страну и включены ли несколько его опций. Без имён, адресов, чата и голоса. Выключается строкой `metrics=false` в `plugins/VoicePhysics/vc-audio-distance-server.properties` или для всех плагинов в `plugins/bStats/config.yml`. Мод ничего не отправляет.
 
 **[Все настройки, команды и что где работает →](https://github.com/Shamanalle/voice-physics/blob/main/README.ru.md)** · [Список изменений](https://github.com/Shamanalle/voice-physics/blob/main/CHANGELOG.md) · [Вопросы и проблемы](https://github.com/Shamanalle/voice-physics/blob/main/README.ru.md#вопросы-и-проблемы) · [Сообщить об ошибке](https://github.com/Shamanalle/voice-physics/issues)
 
