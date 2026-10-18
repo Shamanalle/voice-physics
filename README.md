@@ -160,9 +160,9 @@ With the addon on both sides the client muffles walls itself and the server skip
 
 | Loader | Minecraft | File | Java | Simple Voice Chat |
 |---|---|---|---|---|
-| **Fabric / Quilt** | 1.16.5 – 26.3 | `voice-physics-fabric-2.12.2+mc1.16.5-26.x.jar` | 8+ (what that Minecraft needs) | 2.4.0+ (2.5.0+ on 1.20.5+, 2.6.0+ on 26.x) |
-| **Forge / NeoForge** | Forge 1.16.5 – 26.3, NeoForge 1.20.1 – 26.3 | `voice-physics-forge-neoforge-2.12.2+mc1.16.5-26.x.jar` | 8+ (what that Minecraft needs) | 2.4.0+ (2.5.0+ on 1.20.5+, 2.6.0+ on 26.x) |
-| **Paper / Purpur / Folia / Spigot / Bukkit** | 1.16.5 – 26.3 | `voice-physics-bukkit-2.12.2.jar` | 8+ (17+ on 1.18+) | Bukkit version |
+| **Fabric / Quilt** | 1.16.5 – 26.3 | `voice-physics-fabric-2.12.3+mc1.16.5-26.x.jar` | 8+ (what that Minecraft needs) | 2.4.0+ (2.5.0+ on 1.20.5+, 2.6.0+ on 26.x) |
+| **Forge / NeoForge** | Forge 1.16.5 – 26.3, NeoForge 1.20.1 – 26.3 | `voice-physics-forge-neoforge-2.12.3+mc1.16.5-26.x.jar` | 8+ (what that Minecraft needs) | 2.4.0+ (2.5.0+ on 1.20.5+, 2.6.0+ on 26.x) |
+| **Paper / Purpur / Folia / Spigot / Bukkit** | 1.16.5 – 26.3 | `voice-physics-bukkit-2.12.3.jar` | 8+ (17+ on 1.18+) | Bukkit version |
 
 - **Fabric**, **Forge** and **NeoForge** are the full addon, for the client and the server. Fabric needs [Fabric API](https://modrinth.com/mod/fabric-api); [Mod Menu](https://modrinth.com/mod/modmenu) is optional. On Forge for 1.21.6 – 1.21.7 the voice HUD is off: that Forge cannot add it. NeoForge 1.20.1 is a fork of Forge 1.20.1 and loads the file as Forge. On NeoForge 1.20.4 it needs NeoForge 20.4.80 or newer. Forge versions: 1.16.5, 1.17.1, 1.18.2, 1.19.2, 1.19.4 and 1.20 – 26.3 (Forge skipped 1.20.5 and 1.21.2).
 - **One file covers many versions.** So there are three files in all. The Fabric file holds a build for every Minecraft version from 1.16.5 to 26.3, and the Forge / NeoForge file one for every Forge and NeoForge version; at start the addon picks the one of the running game. Each build needs the Java its Minecraft needs, nothing newer.
