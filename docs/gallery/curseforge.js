@@ -29,8 +29,18 @@ const pluginFacts = [
   "Servers|Paper · Purpur · Folia · Spigot",
   "Minecraft|1.16.5 – 26.3",
 ];
+// The plugin's cover, in the gallery's size for its CurseForge gallery and as an 840 px copy
+const pluginCover = {
+  for: "A plugin for Simple Voice Chat",
+  title: "Voice Physics",
+  text: "Voices are muffled behind walls for every player, sound zones change how far a voice carries, and game rules decide who hears whom.",
+  chips: ["Walls for everyone", "Sound zones", "Game rules", "Megaphone", "Water and rain", "Echo", "/voice", "Mute", "PlaceholderAPI", "WorldGuard"],
+  shot: "docs/images/ui-server.png",
+  loaders: "<b>Paper · Purpur · Folia · Spigot</b> &nbsp; Minecraft 1.16.5 – 26.3 &nbsp; Players need nothing",
+};
 const copies = {
   cover: "docs/images/gallery/cover.png",
+  "plugin-cover": "docs/images/gallery/cover-plugin.png",
   walls: "docs/images/ui-walls.png",
   effects: "docs/images/ui-effects.png",
   monitor: "docs/images/ui-monitor.png",
@@ -39,6 +49,13 @@ const copies = {
 
 (async () => {
   const browser = await chromium.launch();
+  const big = await browser.newPage({ viewport: { width: 1920, height: 1080 } });
+  const cq = new URLSearchParams({ cover: "", for: pluginCover.for, title: pluginCover.title, text: pluginCover.text,
+    shot: "../../" + pluginCover.shot, loaders: pluginCover.loaders });
+  pluginCover.chips.forEach(chip => cq.append("chip", chip));
+  await big.goto(pathToFileURL(path.join(__dirname, "page.html")).href + "?" + cq);
+  await big.evaluate(async () => { await document.fonts.ready; await Promise.all([...document.images].map(i => i.decode())); });
+  await big.screenshot({ path: path.join(root, "docs/images/gallery/cover-plugin.png") });
   const tab = await browser.newPage({ viewport: { width: 840, height: 600 } });
   const shoot = async (query, name) => {
     await tab.goto(banner + "?" + query);
