@@ -114,7 +114,7 @@ public final class ServerSettings {
     }
 
     public static final double DEFAULT_MEGAPHONE_MULTIPLIER = 2.5;
-    public static final String DEFAULT_ADDON_URL = "https://github.com/Shamanalle/voice-physics/releases";
+    public static final String DEFAULT_ADDON_URL = "https://www.curseforge.com/minecraft/mc-mods/voice-physics";
 
     private final Path path;
     private final DistanceConfig profile;
@@ -389,7 +389,9 @@ public final class ServerSettings {
         requireAddon = RequireAddon.fromId(props.getProperty("require_addon"), RequireAddon.OFF);
         minAddonVersion = props.getProperty("min_addon_version", "").trim();
         String url = props.getProperty("addon_download_url", DEFAULT_ADDON_URL).trim();
-        addonUrl = url.isEmpty() ? DEFAULT_ADDON_URL : url;
+        // Configs written by older versions hold the old default (the GitHub releases); they get the new one
+        boolean oldDefault = url.matches("https://github\\.com/(?i:shamanalle)/(voice-physics|voicechat-audio-distance)/releases/?");
+        addonUrl = url.isEmpty() || oldDefault ? DEFAULT_ADDON_URL : url;
         serverWalls = DistanceConfig.parseBoolean(props, "server_walls", true);
         maxStreams = (int) DistanceConfig.clamp(DistanceConfig.parseDouble(props, "server_walls_max_streams", DEFAULT_MAX_STREAMS), 0, MAX_STREAMS_LIMIT);
         serverEffects = DistanceConfig.parseBoolean(props, "server_effects", false);
