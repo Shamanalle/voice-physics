@@ -1,6 +1,6 @@
-// Renders the pictures of the CurseForge description (docs/images/curseforge/*.png): section headings
-// and the facts strip from banner.html, and 840 px copies of the cover and screenshots. CurseForge
-// refuses pictures 850 px wide or wider.
+// Renders the pictures of the CurseForge descriptions of the mod and the plugin
+// (docs/images/curseforge/*.png): section headings and facts strips from banner.html, and 840 px
+// copies of the cover and screenshots. CurseForge refuses pictures 850 px wide or wider.
 // Run from the repo root: NODE_PATH=$(npm root -g) node docs/gallery/curseforge.js
 const { chromium } = require("playwright");
 const path = require("path");
@@ -14,10 +14,19 @@ const headings = {
   players: { title: "For players", text: "Install it on your client. Works on any server, even without the addon there.", accent: "#3fd0e6" },
   servers: { title: "For servers", text: "Install it on the server, or the plugin on Paper. Players need nothing.", accent: "#f2c46d" },
   files: { title: "Which file do I need?", text: "One file for Fabric, one for Forge and NeoForge, the plugin for Paper.", accent: "#a98bff" },
+  // The plugin's page (docs/curseforge-plugin.html)
+  "plugin-hear": { title: "What players hear", text: "For everyone on the server, with only Simple Voice Chat installed.", accent: "#3fd0e6" },
+  "plugin-admin": { title: "Tools for admins", text: "Zones, rules and commands, all changed in game with /vcd.", accent: "#f2c46d" },
+  "plugin-install": { title: "Install", text: "One file for Paper, Purpur, Folia and Spigot 1.16.5 – 26.3.", accent: "#a98bff" },
 };
 const facts = [
   "Install on|client, server or both",
   "Loaders|Fabric · Quilt · Forge · NeoForge · Paper",
+  "Minecraft|1.16.5 – 26.3",
+];
+const pluginFacts = [
+  "Players need|nothing but voice chat",
+  "Servers|Paper · Purpur · Folia · Spigot",
   "Minecraft|1.16.5 – 26.3",
 ];
 const copies = {
@@ -40,6 +49,9 @@ const copies = {
   const q = new URLSearchParams({ facts: "", accent: "#3fd0e6" });
   facts.forEach(f => q.append("fact", f));
   await shoot(q.toString(), "facts");
+  const pq = new URLSearchParams({ facts: "", accent: "#3fd0e6" });
+  pluginFacts.forEach(f => pq.append("fact", f));
+  await shoot(pq.toString(), "plugin-facts");
   for (const [name, file] of Object.entries(copies)) {
     await tab.setContent(`<img src="${pathToFileURL(path.join(root, file)).href}" style="display:block;width:840px">`);
     await tab.evaluate(() => document.images[0].decode());

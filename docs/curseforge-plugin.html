@@ -1,0 +1,30 @@
+<p style="text-align: center;"><img src="https://raw.githubusercontent.com/Shamanalle/voice-physics/main/docs/images/curseforge/cover.png" alt="Voice Physics" /></p>
+<p style="text-align: center;">A server plugin for <a href="https://www.curseforge.com/minecraft/bukkit-plugins/simple-voice-chat">Simple Voice Chat</a> that makes proximity voice chat realistic:<br /><strong>voices are muffled behind walls for every player, sound zones change how far a voice carries, and game rules decide who hears whom.</strong></p>
+<p style="text-align: center;"><img src="https://raw.githubusercontent.com/Shamanalle/voice-physics/main/docs/images/curseforge/plugin-facts.png" alt="Players need nothing but voice chat. Paper, Purpur, Folia, Spigot. Minecraft 1.16.5 – 26.3" /></p>
+<p style="text-align: center;">Players who also install the <a href="https://www.curseforge.com/projects/1712556">Voice Physics mod</a> get the rest: distance curves, round corners, echo in caves, a HUD and a monitor.</p>
+<p>&nbsp;</p>
+<p style="text-align: center;"><img src="https://raw.githubusercontent.com/Shamanalle/voice-physics/main/docs/images/curseforge/heading-plugin-hear.png" alt="What players hear" /></p>
+<p><span style="color: #3fd0e6;">✦</span> <strong>Walls</strong> — voices are muffled through walls, a whisper lost sooner than a shout. Load is capped, and on any error the original audio is sent, so voice chat never goes silent.</p>
+<p><span style="color: #3fd0e6;">✦</span> <strong>Sound zones</strong> — a stage heard twice as far, a quiet library, a soundproof room, a cathedral with echo. Everyone sees the zone's name above the hotbar on entering.</p>
+<p><span style="color: #3fd0e6;">✦</span> <strong>Realism</strong> <em>(off by default)</em> — dull voices under water, far voices covered by rain and thunder, echo in caves, wind high up, a quieter voice behind the speaker's back, and the Doppler effect.</p>
+<p><span style="color: #3fd0e6;">✦</span> <strong>Player controls</strong> — <code>/voice</code> lets anyone talk quietly or shout, turn walls off for themselves, set other players' volume and see who is talking nearby. Clickable, with a menu and undo.</p>
+<p>&nbsp;</p>
+<p style="text-align: center;"><img src="https://raw.githubusercontent.com/Shamanalle/voice-physics/main/docs/images/curseforge/heading-plugin-admin.png" alt="Tools for admins" /></p>
+<p><span style="color: #f2c46d;">✦</span> <strong>Zones</strong> — draw a box in game with <code>/vcd zone</code>, use a whole world or a WorldGuard region.</p>
+<p><span style="color: #f2c46d;">✦</span> <strong>Game rules</strong> — sneaking is quieter, the dead are silent, spectators talk only to each other, a goat horn works as a megaphone.</p>
+<p><span style="color: #f2c46d;">✦</span> <strong>Fair play</strong> — offer or enforce the server's settings for players with the mod, turn off their monitor and radar so nobody sees through walls.</p>
+<p><span style="color: #f2c46d;">✦</span> <strong>Require the mod</strong> — send a download link, remind on every join, or kick.</p>
+<p><span style="color: #f2c46d;">✦</span> <strong>Mute</strong> — <code>/vcd mute &lt;player&gt; [time] [reason]</code>, <code>/vcd unmute</code>, <code>/vcd mutes</code>.</p>
+<p><span style="color: #f2c46d;">✦</span> <strong>Admin tools</strong> — clickable <code>/vcd</code> commands with undo, a log of who changed what, <code>/vcd debug &lt;player&gt;</code> to see whom a player hears and why not, messages in each player's language.</p>
+<p><span style="color: #f2c46d;">✦</span> <strong>PlaceholderAPI</strong> — <code>%vcd_mode%</code>, <code>%vcd_talking%</code>, <code>%vcd_zone%</code> and more for scoreboards and tab lists.</p>
+<p><span style="color: #f2c46d;">✦</span> <strong>Extras</strong> <em>(off by default, not yet tried in a live game)</em> — a radio, loudspeakers, an eavesdrop item, a sculk reaction to shouts, doorway sound, Towny, Lands, WorldGuard and LuckPerms. <code>/vcd extras</code> lists them.</p>
+<p style="text-align: center;"><img src="https://raw.githubusercontent.com/Shamanalle/voice-physics/main/docs/images/curseforge/server.png" alt="The Server tab of the mod: admins with the mod change the plugin's settings here" /></p>
+<p style="text-align: center;"><em>Admins with the mod change all of this in its Server tab.</em></p>
+<p>&nbsp;</p>
+<p style="text-align: center;"><img src="https://raw.githubusercontent.com/Shamanalle/voice-physics/main/docs/images/curseforge/heading-plugin-install.png" alt="Install" /></p>
+<p><span style="color: #a98bff;">1.</span> Put <code>voice-physics-bukkit-*.jar</code> into <code>plugins/</code>. Simple Voice Chat must be installed.</p>
+<p><span style="color: #a98bff;">2.</span> Restart the server. Settings are in <code>plugins/VoicePhysics/vc-audio-distance-server.properties</code>, and all of them can be changed in game with <code>/vcd</code>.</p>
+<p>Java 8+ (17+ on 1.18 and newer). Each part of <code>/vcd</code> has its own permission (<code>vcd.status</code>, <code>vcd.settings</code>, <code>vcd.zone</code>, <code>vcd.debug</code>, <code>vcd.mute</code>, <code>vcd.speaker</code>, <code>vcd.admin</code>); operators have all of them. Anonymous usage numbers go to bStats (no names, addresses or chat); <code>metrics=false</code> in the settings file turns it off.</p>
+<p>Running Fabric, Forge or NeoForge? Install the <a href="https://www.curseforge.com/projects/1712556">mod</a> on the server instead, it does all of this too.</p>
+<p>&nbsp;</p>
+<p style="text-align: center;"><strong><a href="https://github.com/Shamanalle/voice-physics#for-servers">All settings, commands and permissions</a></strong> · <a href="https://github.com/Shamanalle/voice-physics/blob/main/CHANGELOG.md">Changelog</a> · <a href="https://github.com/Shamanalle/voice-physics#questions-and-problems">Questions and problems</a> · <a href="https://github.com/Shamanalle/voice-physics/issues">Report a bug</a></p>
