@@ -58,7 +58,7 @@
   "command.vc-audio-distance.preset_set": "Пресет профиля: %s. Сохранено и отправлено игрокам с аддоном.",
   "command.vc-audio-distance.profile_set": "Режим профиля: %s. Сохранено и отправлено игрокам с аддоном.",
   "command.vc-audio-distance.reloaded": "Настройки перечитаны из %s и отправлены игрокам с аддоном.",
-  "command.vc-audio-distance.require.message": "На этом сервере стоит Voice Physics: голоса затихают с расстоянием и глушатся стенами. Установите аддон, чтобы слышать всё как задумано: %s",
+  "command.vc-audio-distance.require.message": "На этом сервере стоит Voice Physics. Установите аддон, чтобы слышать всё как задумано: %s",
   "command.vc-audio-distance.require.set": "Требование аддона: %s (минимальная версия %s). Сохранено.",
   "command.vc-audio-distance.require.update": "Серверу нужен Voice Physics %s или новее, обновите его: %s",
   "command.vc-audio-distance.rule.dead.off": "Мёртвых слышно как обычно. Сохранено.",

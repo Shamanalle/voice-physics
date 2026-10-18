@@ -58,7 +58,7 @@
   "command.vc-audio-distance.preset_set": "配置预设：%s。已保存并发送给装有附属模组的玩家。",
   "command.vc-audio-distance.profile_set": "配置模式：%s。已保存并发送给装有附属模组的玩家。",
   "command.vc-audio-distance.reloaded": "已从 %s 重新读取设置，并发送给装有附属模组的玩家。",
-  "command.vc-audio-distance.require.message": "本服务器使用 Voice Physics：语音随距离减弱，并被墙壁消音。安装附属模组即可听到预期效果：%s",
+  "command.vc-audio-distance.require.message": "本服务器使用 Voice Physics。安装附属模组即可听到预期效果：%s",
   "command.vc-audio-distance.require.set": "要求附属模组：%s（最低版本 %s）。已保存。",
   "command.vc-audio-distance.require.update": "本服务器需要 Voice Physics %s 或更新版本，请更新：%s",
   "command.vc-audio-distance.rule.dead.off": "死亡的玩家可正常被听到。已保存。",

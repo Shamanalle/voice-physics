@@ -58,7 +58,7 @@
   "command.vc-audio-distance.preset_set": "Predefinição do perfil: %s. Salvo e enviado aos jogadores com o addon.",
   "command.vc-audio-distance.profile_set": "Modo do perfil: %s. Salvo e enviado aos jogadores com o addon.",
   "command.vc-audio-distance.reloaded": "Configurações recarregadas de %s e enviadas aos jogadores com o addon.",
-  "command.vc-audio-distance.require.message": "Este servidor usa o Voice Physics: as vozes diminuem com a distância e as paredes as abafam. Instale o addon para ouvir como foi pensado: %s",
+  "command.vc-audio-distance.require.message": "Este servidor usa o Voice Physics. Instale o addon para ouvir como foi pensado: %s",
   "command.vc-audio-distance.require.set": "Addon obrigatório: %s (versão mínima %s). Salvo.",
   "command.vc-audio-distance.require.update": "Este servidor precisa do Voice Physics %s ou mais novo, atualize: %s",
   "command.vc-audio-distance.rule.dead.off": "Jogadores mortos são ouvidos normalmente. Salvo.",

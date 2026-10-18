@@ -58,7 +58,7 @@
   "command.vc-audio-distance.preset_set": "Profile preset: %s. Saved and sent to players with the addon.",
   "command.vc-audio-distance.profile_set": "Profile mode: %s. Saved and sent to players with the addon.",
   "command.vc-audio-distance.reloaded": "Settings reloaded from %s and sent to players with the addon.",
-  "command.vc-audio-distance.require.message": "This server uses Voice Physics: voices fade with distance and are muffled by walls. Install the addon to hear it as intended: %s",
+  "command.vc-audio-distance.require.message": "This server uses Voice Physics. Install the addon to hear it as intended: %s",
   "command.vc-audio-distance.require.set": "Addon required: %s (lowest version %s). Saved.",
   "command.vc-audio-distance.require.update": "This server needs Voice Physics %s or newer; please update: %s",
   "command.vc-audio-distance.rule.dead.off": "Dead players are heard as usual. Saved.",
