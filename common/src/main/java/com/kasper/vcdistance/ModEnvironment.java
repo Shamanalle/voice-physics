@@ -14,6 +14,9 @@ public final class ModEnvironment {
     /** imAETHER's Doppler mod: OpenAL's own Doppler effect for every sound, voices included. */
     public static final String DOPPLER_MOD_ID = "doppler";
     private static volatile Boolean dopplerModPresent;
+    /** CodinGlitch's Simple Radio: walkie-talkies, transceivers, radios and speakers with their own radio sound. */
+    public static final String SIMPLE_RADIO_MOD_ID = "simpleradio";
+    private static volatile Boolean simpleRadioPresent;
     private static volatile Path configDirOverride;
 
     private ModEnvironment() {
@@ -93,6 +96,39 @@ public final class ModEnvironment {
             dopplerModPresent = cached;
         }
         return cached;
+    }
+
+    /**
+     * Simple Radio filters its own broadcasts (walkie-talkies, transceivers, radios and speakers)
+     * and plays them from the block or the holder's feet; muffling or fading them a second time
+     * wipes the voice out.
+     */
+    public static boolean isSimpleRadioPresent() {
+        Boolean cached = simpleRadioPresent;
+        if (cached == null) {
+            cached = isModLoaded(SIMPLE_RADIO_MOD_ID);
+            simpleRadioPresent = cached;
+        }
+        return cached;
+    }
+
+    /**
+     * Whether {@code category} is one of Simple Radio's four Simple Voice Chat volume categories
+     * ({@code radios}, {@code speakers}, {@code walkies}, {@code transceivers}).
+     */
+    public static boolean isSimpleRadioCategory(String category) {
+        if (category == null) {
+            return false;
+        }
+        switch (category) {
+            case "radios":
+            case "speakers":
+            case "walkies":
+            case "transceivers":
+                return true;
+            default:
+                return false;
+        }
     }
 
     private static <T> T attempt(ThrowingSupplier<T> supplier) {

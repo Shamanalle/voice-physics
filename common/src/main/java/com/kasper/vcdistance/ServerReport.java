@@ -23,7 +23,8 @@ public final class ServerReport {
         DistanceConfig p = s.profile();
         out.add("Voice Physics " + BuildInfo.version() + " on " + ctx.platform()
                 + (ctx.serverVersion().isEmpty() ? "" : " (" + ctx.serverVersion() + ")"));
-        out.add("Java " + System.getProperty("java.version") + ", " + System.getProperty("os.name") + " " + System.getProperty("os.arch"));
+        out.add("Java " + System.getProperty("java.version") + ", " + System.getProperty("os.name") + " " + System.getProperty("os.arch")
+                + (ModEnvironment.isSimpleRadioPresent() ? ", Simple Radio installed" : ""));
         double voice = AudioDistancePlugin.serverVoiceDistance();
         out.add(voice > 0.0
                 ? "Simple Voice Chat: voice " + AdminCommands.fmt(voice) + ", whisper " + AdminCommands.fmt(AudioDistancePlugin.serverWhisperDistance())

@@ -26,7 +26,8 @@ public final class ClientReport {
                 + (ModEnvironment.isSoundPhysicsPresent()
                         ? ", Sound Physics Remastered installed (voices: " + (own.isOverSoundPhysics() ? "Voice Physics" : "Sound Physics") + ")"
                         : "")
-                + (ModEnvironment.isDopplerModPresent() ? ", Doppler mod installed (voices: " + own.getDopplerMod().getId() + ")" : ""));
+                + (ModEnvironment.isDopplerModPresent() ? ", Doppler mod installed (voices: " + own.getDopplerMod().getId() + ")" : "")
+                + (ModEnvironment.isSimpleRadioPresent() ? ", Simple Radio installed" : ""));
         LinkProtocol.ServerProfile p = link.profile();
         if (p == null) {
             out.add("Server: no Voice Physics on the server (or not connected)");

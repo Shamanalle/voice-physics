@@ -571,6 +571,9 @@ public class AudioDistancePlugin implements VoicechatPlugin {
         if (event.getPosition() == null) {
             return; // group / static audio has no distance
         }
+        if (noteCategoryAndSkipRadio(event)) {
+            return;
+        }
         CONFIG.ensureLoaded();
         int source = event.getSource();
         try {
@@ -593,6 +596,9 @@ public class AudioDistancePlugin implements VoicechatPlugin {
      */
     private static void onOpenALSoundPost(OpenALSoundEvent event) {
         if (event.getPosition() == null) {
+            return;
+        }
+        if (noteCategoryAndSkipRadio(event)) {
             return;
         }
         CONFIG.ensureLoaded();
@@ -772,6 +778,20 @@ public class AudioDistancePlugin implements VoicechatPlugin {
         muffle(event, speaker, raw);
     }
 
+    /**
+     * Records the channel's Simple Voice Chat volume category on its {@link SpeakerRegistry.Speaker}
+     * and tells whether the channel belongs to Simple Radio, whose own filter and range must be left
+     * alone.
+     */
+    static boolean noteCategoryAndSkipRadio(OpenALSoundEvent event) {
+        String category = event.getCategory();
+        SpeakerRegistry.Speaker speaker = SPEAKERS.get(event.getChannelId());
+        if (speaker != null) {
+            speaker.setCategory(category);
+        }
+        return ModEnvironment.isSimpleRadioCategory(category) || (speaker != null && speaker.isSimpleRadio());
+    }
+
     private static void onLocationalSound(ClientReceiveSoundEvent.LocationalSound event) {
         short[] raw = event.getRawAudio();
         Position pos = event.getPosition();
@@ -781,6 +801,11 @@ public class AudioDistancePlugin implements VoicechatPlugin {
         CONFIG.ensureLoaded();
         SpeakerRegistry.Speaker speaker = SPEAKERS.onLocationalFrame(event.getId(), pos.getX(), pos.getY(), pos.getZ(),
                 event.getDistance(), raw);
+        // On a channel's first frame OpenALSoundEvent has not reported the category yet (and the
+        // client tick has not measured the source either); waiting for it keeps Simple Radio untouched
+        if (speaker.isSimpleRadio() || !speaker.isCategoryKnown()) {
+            return;
+        }
         muffle(event, speaker, raw);
     }
 

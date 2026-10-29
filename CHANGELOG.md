@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 *Все заметные изменения проекта описываются в этом файле. Каждая версия описана сначала на английском, затем на русском.*
 
+## [2.12.4] - 2026-10-30
+
+### English
+
+#### Fixed
+- **Simple Radio compatibility.** Walkie-talkies, transceivers, radios and speakers from the Simple Radio mod already have their own radio filter and range: the addon no longer muffles them a second time or shows them as a sound source behind a wall in the HUD and monitor.
+
+### Русский
+
+#### Исправлено
+- **Совместимость с Simple Radio.** У раций, трансиверов, радиоприёмников и динамиков из мода Simple Radio уже есть свой радиофильтр и дальность: аддон больше не глушит их повторно и не показывает их в HUD и мониторе как источник звука за стеной.
+
 ## [2.12.3] - 2026-10-18
 
 ### English

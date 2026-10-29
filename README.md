@@ -160,9 +160,9 @@ With the addon on both sides the client muffles walls itself and the server skip
 
 | Loader | Minecraft | File | Java | Simple Voice Chat |
 |---|---|---|---|---|
-| **Fabric / Quilt** | 1.16.5 – 26.3 | `voice-physics-fabric-2.12.3+mc1.16.5-26.x.jar` | 8+ (what that Minecraft needs) | 2.4.0+ (2.5.0+ on 1.20.5+, 2.6.0+ on 26.x) |
-| **Forge / NeoForge** | Forge 1.16.5 – 26.3, NeoForge 1.20.1 – 26.3 | `voice-physics-forge-neoforge-2.12.3+mc1.16.5-26.x.jar` | 8+ (what that Minecraft needs) | 2.4.0+ (2.5.0+ on 1.20.5+, 2.6.0+ on 26.x) |
-| **Paper / Purpur / Folia / Spigot / Bukkit** | 1.16.5 – 26.3 | `voice-physics-bukkit-2.12.3.jar` | 8+ (17+ on 1.18+) | Bukkit version |
+| **Fabric / Quilt** | 1.16.5 – 26.3 | `voice-physics-fabric-2.12.4+mc1.16.5-26.x.jar` | 8+ (what that Minecraft needs) | 2.4.0+ (2.5.0+ on 1.20.5+, 2.6.0+ on 26.x) |
+| **Forge / NeoForge** | Forge 1.16.5 – 26.3, NeoForge 1.20.1 – 26.3 | `voice-physics-forge-neoforge-2.12.4+mc1.16.5-26.x.jar` | 8+ (what that Minecraft needs) | 2.4.0+ (2.5.0+ on 1.20.5+, 2.6.0+ on 26.x) |
+| **Paper / Purpur / Folia / Spigot / Bukkit** | 1.16.5 – 26.3 | `voice-physics-bukkit-2.12.4.jar` | 8+ (17+ on 1.18+) | Bukkit version |
 
 - **Fabric**, **Forge** and **NeoForge** are the full addon, for the client and the server. Fabric needs [Fabric API](https://modrinth.com/mod/fabric-api); [Mod Menu](https://modrinth.com/mod/modmenu) is optional. On Forge for 1.21.6 – 1.21.7 the voice HUD is off: that Forge cannot add it. NeoForge 1.20.1 is a fork of Forge 1.20.1 and loads the file as Forge. On NeoForge 1.20.4 it needs NeoForge 20.4.80 or newer. Forge versions: 1.16.5, 1.17.1, 1.18.2, 1.19.2, 1.19.4 and 1.20 – 26.3 (Forge skipped 1.20.5 and 1.21.2).
 - **One file covers many versions.** So there are three files in all. The Fabric file holds a build for every Minecraft version from 1.16.5 to 26.3, and the Forge / NeoForge file one for every Forge and NeoForge version; at start the addon picks the one of the running game. Each build needs the Java its Minecraft needs, nothing newer.
@@ -173,6 +173,7 @@ With the addon on both sides the client muffles walls itself and the server skip
 
 - **Sound Physics Remastered:** when it is installed, the addon leaves walls, echo and water to it by default, so nothing is applied twice; rain still works. To hear voices through the addon instead, press *Use ours* in the note on the *Walls* or *Effects* tab (or set `over_sound_physics=true` in the [client file](#client-file)). Then the addon takes Sound Physics Remastered's filters off voices and applies its own walls, echo and water; all other game sounds stay with Sound Physics Remastered. The choice is yours and is never locked by a server.
 - **[Doppler](https://github.com/imAETHER/Doppler) mod:** it also changes the pitch of voices. When it is installed, the *Effects* tab has a button that chooses whose effect voices get: *The mod's* (the default, as before), *Ours* (the mod keeps handling all other sounds) or *Both* (`doppler_mod` in the [client file](#client-file)). The choice is yours and is never locked by a server.
+- **[Simple Radio](https://modrinth.com/mod/simple-radio):** walkie-talkies, transceivers, radios and speakers from Simple Radio already have their own radio filter and range, so the addon leaves their sound alone and keeps them out of the HUD and monitor.
 - **Simple Voice Chat groups:** a group hears its members anywhere, so walls and range do not apply inside it. Game rules apply only where the server turns them on.
 - **Vanish plugins** (Paper): hidden players stay hidden in the monitor too.
 

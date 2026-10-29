@@ -109,4 +109,35 @@ public class SpeakerRegistryTest {
             assertTrue(now - s.getLastRoomNanos() >= 1_000_000_000L, "room at " + now);
         }
     }
+
+    @Test
+    @DisplayName("Simple Radio channels are recognized by category and left out of active()")
+    void simpleRadioCategories() {
+        for (String cat : new String[]{"radios", "speakers", "walkies", "transceivers"}) {
+            assertTrue(ModEnvironment.isSimpleRadioCategory(cat), cat);
+        }
+        for (String other : new String[]{null, "", "music_discs", "goat_horns", "voice"}) {
+            assertFalse(ModEnvironment.isSimpleRadioCategory(other), String.valueOf(other));
+        }
+
+        SpeakerRegistry registry = new SpeakerRegistry();
+        UUID walkieId = UUID.randomUUID();
+        UUID normalId = UUID.randomUUID();
+        SpeakerRegistry.Speaker walkie = registry.onLocationalFrame(walkieId, 1, 2, 3, 4F, new short[960]);
+        SpeakerRegistry.Speaker normal = registry.onLocationalFrame(normalId, 4, 5, 6, 32F, new short[960]);
+        assertFalse(walkie.isCategoryKnown());
+        assertFalse(walkie.isSimpleRadio());
+
+        walkie.setCategory("walkies");
+        normal.setCategory(null);
+        assertTrue(walkie.isCategoryKnown());
+        assertTrue(walkie.isSimpleRadio());
+        assertEquals("walkies", walkie.getCategory());
+        assertTrue(normal.isCategoryKnown());
+        assertFalse(normal.isSimpleRadio());
+
+        long now = System.nanoTime();
+        assertFalse(walkie.isActive(now), "Simple Radio channels must not show in the HUD, monitor or tracer");
+        assertEquals(java.util.List.of(normal), registry.active(now));
+    }
 }

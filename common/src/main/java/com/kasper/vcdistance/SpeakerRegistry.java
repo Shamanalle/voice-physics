@@ -87,6 +87,9 @@ public final class SpeakerRegistry {
         private final RoomGlide room = new RoomGlide(true);
         private volatile long lastRoomNanos = Long.MIN_VALUE / 2;
         private volatile String displayName;
+        private volatile String category;
+        private volatile boolean categoryKnown;
+        private volatile boolean simpleRadio;
         private volatile long lastTraceNanos;
         private volatile int cachedEntityNetworkId = Integer.MIN_VALUE;
         private volatile long lastEntitySearchNanos;
@@ -427,6 +430,25 @@ public final class SpeakerRegistry {
             this.displayName = displayName;
         }
 
+        public String getCategory() {
+            return category;
+        }
+
+        public boolean isCategoryKnown() {
+            return categoryKnown;
+        }
+
+        /** Simple Radio broadcast channel ({@link ModEnvironment#isSimpleRadioCategory}). */
+        public boolean isSimpleRadio() {
+            return simpleRadio;
+        }
+
+        public void setCategory(String category) {
+            this.category = category;
+            this.categoryKnown = true;
+            this.simpleRadio = ModEnvironment.isSimpleRadioCategory(category);
+        }
+
         public int getCachedEntityNetworkId() {
             return cachedEntityNetworkId;
         }
@@ -444,7 +466,7 @@ public final class SpeakerRegistry {
         }
 
         public boolean isActive(long nowNanos) {
-            return nowNanos - lastHeardNanos <= ACTIVE_WINDOW_NANOS;
+            return !simpleRadio && nowNanos - lastHeardNanos <= ACTIVE_WINDOW_NANOS;
         }
     }
 
@@ -461,6 +483,9 @@ public final class SpeakerRegistry {
         s.entityId = entityId;
         s.whispering = whispering;
         s.maxDistance = maxDistance;
+        s.category = null;
+        s.categoryKnown = false;
+        s.simpleRadio = false;
         long now = touch(s, pcm);
         VoiceLevel.Tracker level = s.level;
         if (level == null) {
@@ -518,7 +543,9 @@ public final class SpeakerRegistry {
     private long touch(Speaker s, short[] pcm) {
         long now = System.nanoTime();
         s.lastHeardNanos = now;
-        s.levelDb = rmsDb(pcm);
+        if (!s.simpleRadio) {
+            s.levelDb = rmsDb(pcm);
+        }
         // Builds without a client tick (Forge/NeoForge lite) rely on this to forget old speakers
         if (now - lastPruneNanos > PRUNE_INTERVAL_NANOS) {
             lastPruneNanos = now;
