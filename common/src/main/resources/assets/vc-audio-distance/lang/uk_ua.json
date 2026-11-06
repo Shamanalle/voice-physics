@@ -884,5 +884,12 @@
   "command.vc-audio-distance.btn.eavesdrop_off": "Підслуховування викл",
   "command.vc-audio-distance.extras.name.integrations": "Інтеграції (міста, землі, прапор, LuckPerms)",
   "command.vc-audio-distance.zones.town": "Місто",
-  "command.vc-audio-distance.zones.land": "Земля"
+  "command.vc-audio-distance.zones.land": "Земля",
+  "command.vc-audio-distance.effects.music": "Музика та програвачі (з профілю): %s",
+  "command.vc-audio-distance.effects.music_on": "До музики та програвачів тепер застосовуються стіни, луна та крива гучності. Збережено.",
+  "command.vc-audio-distance.effects.music_off": "Музика та програвачі тепер залишаються без змін. Збережено.",
+  "gui.vc-audio-distance.effects.music": "Музика та платівки: %s",
+  "gui.vc-audio-distance.effects.music.tooltip": "Стіни, луна, вода, погода та крива гучності для платівок, нотних блоків, козячих рогів і звуків AudioPlayer.\nВикл.: музика грає без змін, як у Simple Voice Chat.",
+  "gui.vc-audio-distance.server.music": "Музика та платівки: %s",
+  "gui.vc-audio-distance.server.music.tooltip": "Стіни, луна та крива гучності для платівок, нотних блоків, козячих рогів і звуків AudioPlayer — для всіх."
 }

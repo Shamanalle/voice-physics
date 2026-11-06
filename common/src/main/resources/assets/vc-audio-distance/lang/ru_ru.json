@@ -884,5 +884,12 @@
   "command.vc-audio-distance.btn.eavesdrop_off": "Подслушивание выкл",
   "command.vc-audio-distance.extras.name.integrations": "Интеграции (города, земли, флаг, LuckPerms)",
   "command.vc-audio-distance.zones.town": "Город",
-  "command.vc-audio-distance.zones.land": "Земля"
+  "command.vc-audio-distance.zones.land": "Земля",
+  "command.vc-audio-distance.effects.music": "Музыка и проигрыватели (из профиля): %s",
+  "command.vc-audio-distance.effects.music_on": "К музыке и проигрывателям теперь применяются стены, эхо и кривая громкости. Сохранено.",
+  "command.vc-audio-distance.effects.music_off": "Музыка и проигрыватели теперь остаются без изменений. Сохранено.",
+  "gui.vc-audio-distance.effects.music": "Музыка и пластинки: %s",
+  "gui.vc-audio-distance.effects.music.tooltip": "Стены, эхо, вода, погода и кривая громкости для пластинок, нотных блоков, козьих рогов и звуков AudioPlayer.\nВыкл.: музыка играет без изменений, как в Simple Voice Chat.",
+  "gui.vc-audio-distance.server.music": "Музыка и пластинки: %s",
+  "gui.vc-audio-distance.server.music.tooltip": "Стены, эхо и кривая громкости для пластинок, нотных блоков, козьих рогов и звуков AudioPlayer — для всех."
 }

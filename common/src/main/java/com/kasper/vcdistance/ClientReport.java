@@ -89,6 +89,7 @@ public final class ClientReport {
                 + ", doppler " + (c.isDopplerEnabled() ? AdminCommands.pct(c.getDopplerStrength()) : "off")
                 + ", facing " + (c.isDirectivityEnabled() ? AdminCommands.pct(c.getDirectivityStrength()) : "off")
                 + ", wind " + (c.isWindEnabled() ? AdminCommands.pct(c.getWindStrength()) : "off")
+                + ", music " + onOff(c.isMusicPhysics())
                 + ", block rules " + c.getBlockRules().rules().size();
     }
 

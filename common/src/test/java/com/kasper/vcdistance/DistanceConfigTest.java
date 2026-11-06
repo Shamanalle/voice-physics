@@ -69,6 +69,7 @@ public class DistanceConfigTest {
         a.setDirectivityStrength(1.35);
         a.setWindEnabled(false);
         a.setWindStrength(0.65);
+        a.setMusicPhysics(false);
         a.save();
 
         DistanceConfig b = new DistanceConfig(file);
@@ -86,6 +87,7 @@ public class DistanceConfigTest {
         assertEquals(1.35, b.getDirectivityStrength(), 1e-4);
         assertFalse(b.isWindEnabled());
         assertEquals(0.65, b.getWindStrength(), 1e-4);
+        assertFalse(b.isMusicPhysics());
         assertEquals(AcousticMaterial.STONE.getDefaultWeight(), b.getMaterialWeight(AcousticMaterial.STONE), 1e-4);
     }
 
@@ -123,8 +125,9 @@ public class DistanceConfigTest {
         c.load();
         assertEquals(AttenuationModel.REALISTIC_INVERSE, c.getModel());
         String text = Files.readString(file);
-        assertTrue(text.contains("config_version=14"));
+        assertTrue(text.contains("config_version=15"));
         assertTrue(text.contains("reverb_enabled=true"));
+        assertTrue(text.contains("music_physics=true"));
         assertTrue(text.contains("material.stone"));
         assertTrue(text.contains("hud_mode=talking"));
     }
@@ -181,7 +184,7 @@ public class DistanceConfigTest {
             assertEquals(m.getDefaultWeight(), c.getMaterialWeight(m), 1e-9, m.getId());
         }
         String text = Files.readString(file);
-        assertTrue(text.contains("config_version=14"));
+        assertTrue(text.contains("config_version=15"));
         assertTrue(text.contains("material.other="));
     }
 
@@ -306,6 +309,7 @@ public class DistanceConfigTest {
         c.setDirectivityStrength(0.5);
         c.setWindEnabled(false);
         c.setWindStrength(0.4);
+        c.setMusicPhysics(false);
         c.setHudScale(1.4);
 
         c.resetPart(DistanceConfig.Part.WALLS);
@@ -323,6 +327,7 @@ public class DistanceConfigTest {
 
         assertEquals(0.5, c.getDirectivityStrength(), 1e-9);
         assertEquals(0.4, c.getWindStrength(), 1e-9);
+        assertFalse(c.isMusicPhysics());
 
         c.resetPart(DistanceConfig.Part.EFFECTS);
         assertEquals(DistanceConfig.DEFAULT_REVERB_STRENGTH, c.getReverbStrength(), 1e-9);
@@ -330,6 +335,7 @@ public class DistanceConfigTest {
         assertEquals(DistanceConfig.DEFAULT_DIRECTIVITY_STRENGTH, c.getDirectivityStrength(), 1e-9);
         assertEquals(DistanceConfig.DEFAULT_WIND_ENABLED, c.isWindEnabled());
         assertEquals(DistanceConfig.DEFAULT_WIND_STRENGTH, c.getWindStrength(), 1e-9);
+        assertTrue(c.isMusicPhysics());
         assertEquals(1.4, c.getHudScale(), 1e-9);
 
         c.setHudCompact(true);

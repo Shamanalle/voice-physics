@@ -1012,15 +1012,20 @@ public abstract class SettingsScreen extends com.kasper.vcdistance.compat.BaseSc
                 DistanceConfig.EFFECT_STRENGTH_MIN, DistanceConfig.EFFECT_STRENGTH_MAX, 0.05,
                 () -> shown().getWindStrength(), config::setWindStrength, null, part);
         y += ROW;
-        edit(Btn.builder(onOff("effects.corners", shown().isDiffractionEnabled()), b -> {
+        List<AbstractWidget> placeToggles = new ArrayList<>();
+        placeToggles.add(Btn.builder(onOff("effects.corners", shown().isDiffractionEnabled()), b -> {
             config.setDiffractionEnabled(!config.isDiffractionEnabled());
             b.setMessage(onOff("effects.corners", config.isDiffractionEnabled()));
-        }).bounds(left, y, colW, 20).tooltip(tip("effects.corners.tooltip")).build(), part);
-        edit(Btn.builder(onOff("effects.place", shown().isPlaceTuning()), b -> {
+        }).bounds(left, 0, colW, 20).tooltip(tip("effects.corners.tooltip")).build());
+        placeToggles.add(Btn.builder(onOff("effects.place", shown().isPlaceTuning()), b -> {
             config.setPlaceTuning(!config.isPlaceTuning());
             b.setMessage(onOff("effects.place", config.isPlaceTuning()));
-        }).bounds(col2, y, colW, 20).tooltip(tip("effects.place.tooltip")).build(), part);
-        y += ROW + 4;
+        }).bounds(left, 0, colW, 20).tooltip(tip("effects.place.tooltip")).build());
+        placeToggles.add(Btn.builder(onOff("effects.music", shown().isMusicPhysics()), b -> {
+            config.setMusicPhysics(!config.isMusicPhysics());
+            b.setMessage(onOff("effects.music", config.isMusicPhysics()));
+        }).bounds(left, 0, colW, 20).tooltip(tip("effects.music.tooltip")).build());
+        y = flow(placeToggles, part, y, 3) + 4;
 
         // What the speaker's motion and facing do; facing is optional and gentle, so last
         y = heading("effects.section.motion", y);
@@ -1332,7 +1337,8 @@ public abstract class SettingsScreen extends com.kasper.vcdistance.compat.BaseSc
                     buttonCell(tr("server.locked", lockedName(locked)), "server.locked.tooltip",
                             "lock " + next(SERVER_LOCKS, locked)),
                     buttonCell(tr("server.require", tr("server.require." + require)), "server.require.tooltip",
-                            "require " + next(SERVER_REQUIRE, require))), y, 2);
+                            "require " + next(SERVER_REQUIRE, require)),
+                    toggleCell("server.music", st, "music_physics", "true", "effects music")), y, 2);
         }
         y += 4;
 

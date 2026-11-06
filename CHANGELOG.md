@@ -6,6 +6,30 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 *Все заметные изменения проекта описываются в этом файле. Каждая версия описана сначала на английском, затем на русском.*
 
+## [2.12.5] - 2026-11-06
+
+### English
+
+#### Added
+- **Music & jukeboxes setting (`music_physics`, `/vcd effects music on|off`).** Choose on the *Effects* tab (client) or the *Server* tab and `/vcd effects music on|off` (server) whether music discs, jukeboxes, note blocks, goat horns and roleplay ambient audio from Simple Voice Chat addons (*AudioPlayer*, *Audioplayer Roleplay*, *Noteblock Expansion*, *CDisc*, *Custom Discs*, *Etched*, *Immersive Melodies*) get walls, echo, water, weather and the distance curve (on by default) or play untouched as in Simple Voice Chat ([#77](https://github.com/Shamanalle/voice-physics/issues/77)).
+- **Wiretap compatibility.** Speaker broadcasts from the Wiretap addon are left untouched like Simple Radio's channels.
+
+#### Fixed
+- **Jukeboxes, note blocks and loudspeakers no longer muffle themselves.** Block sound sources emit from the centre of their own solid block, which previously counted as a stone wall in front of the sound and stopped doorway pathfinding from starting at the block.
+- **Music channels no longer get speech-only effects.** When music physics is on, music discs, goat horns and portable players no longer shift pitch with the Doppler effect, lose extra volume during quiet passages as if whispering behind a wall, or muffle when the player holding a horn or portable player turns around.
+- **Entity audio channels from addons keep their category.** Goat horns, portable jukeboxes and entity radio channels no longer lose their Simple Voice Chat volume category after the first frame or have their range overridden by the player's voice range on the server.
+
+### Русский
+
+#### Добавлено
+- **Настройка для пластинок и музыки (`music_physics`, `/vcd effects music on|off`).** На вкладке «Эффекты» (клиент) или «Сервер» и командой `/vcd effects music on|off` (сервер) можно выбрать, применяются ли стены, эхо, вода, погода и кривая громкости к пластинкам, проигрывателям, нотным блокам, козьим рогам и ролевому эмбиенту из аддонов Simple Voice Chat (*AudioPlayer*, *Audioplayer Roleplay*, *Noteblock Expansion*, *CDisc*, *Custom Discs*, *Etched*, *Immersive Melodies*) — по умолчанию включено, при выключении музыка играет без изменений, как в Simple Voice Chat ([#77](https://github.com/Shamanalle/voice-physics/issues/77)).
+- **Совместимость с Wiretap.** Динамики из аддона Wiretap не глушатся повторно, как и каналы Simple Radio.
+
+#### Исправлено
+- **Проигрыватели, нотные блоки и громкоговорители больше не глушат сами себя.** Блочные источники излучают звук из центра собственного твёрдого блока, из-за чего раньше сам блок считался каменной стеной перед звуком и мешал поиску обхода через дверные проёмы.
+- **К музыке больше не применяются чисто речевые эффекты.** Когда физика для музыки включена, пластинки, козьи рога и переносные плееры больше не меняют высоту тона от эффекта Доплера, не теряют громкость на тихих вступлениях как при шёпоте за стеной и не глушатся при повороте спиной игрока с рогом или переносным плеером.
+- **Аудиоканалы сущностей из аддонов сохраняют свою категорию.** Козьи рога, переносные проигрыватели и рации на игроках больше не теряют категорию громкости Simple Voice Chat после первого фрейма, а сервер не урезает их дальность до обычной дальности голоса игрока.
+
 ## [2.12.4] - 2026-10-30
 
 ### English

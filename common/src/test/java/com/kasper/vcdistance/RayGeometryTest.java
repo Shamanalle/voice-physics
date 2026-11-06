@@ -145,4 +145,22 @@ public class RayGeometryTest {
         assertEquals(0.0, VoxelRay.chord(-1, 1.5, 0.5, 2, 1.5, 0.5, 0, 0, 0, 1, 1, 1), 1e-9);
         assertEquals(0.0, RayBundle.chordWeight(0.0), 1e-9);
     }
+
+    @Test
+    @DisplayName("Ray bundle keeps its 4 side rays spread when the target is inside a solid jukebox block")
+    void solidEmitterBlockKeepsSideRaySpread() {
+        // Only the emitter cell (10, 64, 0) is solid (a jukebox); everything around it is open air
+        SoundPath.Grid open = (x, y, z) -> !(x == 10 && y == 64 && z == 0);
+        List<double[]> rays = new ArrayList<>();
+        RayBundle.trace((fx, fy, fz, tx, ty, tz) -> {
+            rays.add(new double[]{fx, fy, fz, tx, ty, tz});
+            return 0.0;
+        }, open, 0.5, 64.5, 0.5, 10.5, 64.5, 0.5);
+        assertEquals(5, rays.size());
+        for (int i = 1; i < 5; i++) {
+            double[] r = rays.get(i);
+            double offset = Math.hypot(r[1] - 64.5, r[2] - 0.5);
+            assertEquals(0.4, offset, 1e-9, "side ray " + i + " must not collapse inside the emitter block");
+        }
+    }
 }

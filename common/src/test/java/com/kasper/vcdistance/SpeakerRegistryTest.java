@@ -111,9 +111,9 @@ public class SpeakerRegistryTest {
     }
 
     @Test
-    @DisplayName("Simple Radio channels are recognized by category and left out of active()")
+    @DisplayName("Simple Radio and Wiretap channels are recognized by category and left out of active()")
     void simpleRadioCategories() {
-        for (String cat : new String[]{"radios", "speakers", "walkies", "transceivers"}) {
+        for (String cat : new String[]{"radios", "speakers", "walkies", "transceivers", "wiretap"}) {
             assertTrue(ModEnvironment.isSimpleRadioCategory(cat), cat);
         }
         for (String other : new String[]{null, "", "music_discs", "goat_horns", "voice"}) {
@@ -139,5 +139,43 @@ public class SpeakerRegistryTest {
         long now = System.nanoTime();
         assertFalse(walkie.isActive(now), "Simple Radio channels must not show in the HUD, monitor or tracer");
         assertEquals(java.util.List.of(normal), registry.active(now));
+    }
+
+    @Test
+    @DisplayName("Music and jukebox categories are recognized, kept across entity frames, and hidden when music_physics is off")
+    void musicCategoriesAndEntityPreservation() {
+        for (String cat : new String[]{"music_discs", "note_blocks", "goat_horns", "player_heads", "cdisc",
+                "audio_disc", "arp_regions", "arp_global", "custom_music", "etched_jukebox"}) {
+            assertTrue(ModEnvironment.isMusicCategory(cat), cat);
+        }
+        for (String nonMusic : new String[]{null, "", "radios", "walkies", "wiretap", "voices"}) {
+            assertFalse(ModEnvironment.isMusicCategory(nonMusic), String.valueOf(nonMusic));
+        }
+
+        SpeakerRegistry registry = new SpeakerRegistry();
+        UUID hornChannel = UUID.randomUUID();
+        UUID playerEntity = UUID.randomUUID();
+        SpeakerRegistry.Speaker horn = registry.onEntityFrame(hornChannel, playerEntity, false, 160F, new short[960]);
+        horn.setCategory("goat_horns");
+        assertTrue(horn.isCategoryKnown());
+        assertTrue(horn.isMusic());
+        assertEquals(0.0, horn.getEffortDb(), 1e-9);
+
+        // Next 20 ms frame on the same entity channel must not wipe out the category set by OpenALSoundEvent
+        registry.onEntityFrame(hornChannel, playerEntity, false, 160F, new short[960]);
+        assertTrue(horn.isCategoryKnown(), "entity frame must preserve known category");
+        assertTrue(horn.isMusic(), "entity frame must preserve music flag");
+        assertEquals("goat_horns", horn.getCategory());
+
+        boolean prev = AudioDistancePlugin.CONFIG.isMusicPhysics();
+        try {
+            long now = System.nanoTime();
+            AudioDistancePlugin.CONFIG.setMusicPhysics(true);
+            assertTrue(horn.isActive(now));
+            AudioDistancePlugin.CONFIG.setMusicPhysics(false);
+            assertFalse(horn.isActive(now), "music channels are hidden when music_physics is off");
+        } finally {
+            AudioDistancePlugin.CONFIG.setMusicPhysics(prev);
+        }
     }
 }

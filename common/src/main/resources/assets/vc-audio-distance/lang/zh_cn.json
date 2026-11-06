@@ -884,5 +884,12 @@
   "command.vc-audio-distance.btn.eavesdrop_off": "窃听关",
   "command.vc-audio-distance.extras.name.integrations": "联动（城镇、领地、旗标、LuckPerms）",
   "command.vc-audio-distance.zones.town": "城镇",
-  "command.vc-audio-distance.zones.land": "领地"
+  "command.vc-audio-distance.zones.land": "领地",
+  "command.vc-audio-distance.effects.music": "音乐与唱片机（来自配置）：%s",
+  "command.vc-audio-distance.effects.music_on": "音乐与唱片机现在会受到墙壁、回声和距离曲线影响。已保存。",
+  "command.vc-audio-distance.effects.music_off": "音乐与唱片机现在保持原样。已保存。",
+  "gui.vc-audio-distance.effects.music": "音乐与唱片：%s",
+  "gui.vc-audio-distance.effects.music.tooltip": "为音乐唱片、音符盒、山羊角和 AudioPlayer 声音应用墙壁、回声、水下、天气和距离曲线。\n关：音乐保持原样播放，与 Simple Voice Chat 一致。",
+  "gui.vc-audio-distance.server.music": "音乐与唱片：%s",
+  "gui.vc-audio-distance.server.music.tooltip": "为所有人对音乐唱片、音符盒、山羊角和 AudioPlayer 声音应用墙壁、回声和距离曲线。"
 }

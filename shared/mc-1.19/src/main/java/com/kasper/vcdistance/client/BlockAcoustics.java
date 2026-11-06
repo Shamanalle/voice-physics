@@ -95,9 +95,17 @@ public final class BlockAcoustics {
         if (isPanel(state, material)) {
             return AcousticMaterial.panelShare(state.hasProperty(BlockStateProperties.OPEN) && state.getValue(BlockStateProperties.OPEN));
         }
+        double minX = pos.getX() + box.minX;
+        double minY = pos.getY() + box.minY;
+        double minZ = pos.getZ() + box.minZ;
+        double maxX = pos.getX() + box.maxX;
+        double maxY = pos.getY() + box.maxY;
+        double maxZ = pos.getZ() + box.maxZ;
+        if (to.x >= minX && to.x <= maxX && to.y >= minY && to.y <= maxY && to.z >= minZ && to.z <= maxZ) {
+            return 0.0;
+        }
         return RayBundle.chordWeight(VoxelRay.chord(from.x, from.y, from.z, to.x, to.y, to.z,
-                pos.getX() + box.minX, pos.getY() + box.minY, pos.getZ() + box.minZ,
-                pos.getX() + box.maxX, pos.getY() + box.maxY, pos.getZ() + box.maxZ));
+                minX, minY, minZ, maxX, maxY, maxZ));
     }
 
     /** Doors, trapdoors (wooden or metal), fences and bars: thin by nature. */

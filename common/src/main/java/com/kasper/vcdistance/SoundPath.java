@@ -76,9 +76,11 @@ public final class SoundPath {
         int[] start = cell(lx, ly, lz);
         int[] goal = cell(sx, sy, sz);
         double direct = Math.sqrt(sq(sx - lx) + sq(sy - ly) + sq(sz - lz));
-        if (!grid.open(start[0], start[1], start[2]) || !grid.open(goal[0], goal[1], goal[2])) {
+        if (!grid.open(start[0], start[1], start[2])) {
             return null;
         }
+        // A block source (a jukebox, note block or speaker block) sits inside its own solid cell
+        Grid effectiveGrid = (x, y, z) -> (x == goal[0] && y == goal[1] && z == goal[2]) || grid.open(x, y, z);
 
         Map<Long, Node> seen = new HashMap<>();
         PriorityQueue<Node> open = new PriorityQueue<>((a, b) -> Double.compare(a.f, b.f));
@@ -93,7 +95,7 @@ public final class SoundPath {
             }
             n.closed = true;
             if (n.x == goal[0] && n.y == goal[1] && n.z == goal[2]) {
-                return result(grid, n, lx, ly, lz, sx, sy, sz, direct);
+                return result(effectiveGrid, n, lx, ly, lz, sx, sy, sz, direct);
             }
             if (++visited > maxNodes) {
                 return null;
@@ -102,11 +104,11 @@ public final class SoundPath {
                 int x = n.x + m[0];
                 int y = n.y + m[1];
                 int z = n.z + m[2];
-                if (!grid.open(x, y, z)) {
+                if (!effectiveGrid.open(x, y, z)) {
                     continue;
                 }
                 // An edge move needs one of the two faces it passes to be open
-                if (m[3] == 1 && !passable(grid, n, m)) {
+                if (m[3] == 1 && !passable(effectiveGrid, n, m)) {
                     continue;
                 }
                 double g = n.g + (m[3] == 1 ? Math.sqrt(2.0) : 1.0);

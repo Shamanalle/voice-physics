@@ -119,18 +119,28 @@ final class BlockAcoustics {
         int bz = block.getZ();
         if (type.isOccluding()) {
             // Full opaque cube
+            if (!thin && bx == (int) Math.floor(toX) && by == (int) Math.floor(toY) && bz == (int) Math.floor(toZ)) {
+                return 0.0;
+            }
             return thin ? panel : RayBundle.chordWeight(VoxelRay.chord(fromX, fromY, fromZ, toX, toY, toZ,
                     bx, by, bz, bx + 1.0, by + 1.0, bz + 1.0));
         }
         double best = 0.0;
         for (BoundingBox box : collisionBoxes(block)) {
             // Collision boxes are relative to the block
+            double minX = bx + box.getMinX();
+            double minY = by + box.getMinY();
+            double minZ = bz + box.getMinZ();
+            double maxX = bx + box.getMaxX();
+            double maxY = by + box.getMaxY();
+            double maxZ = bz + box.getMaxZ();
+            if (!thin && toX >= minX && toX <= maxX && toY >= minY && toY <= maxY && toZ >= minZ && toZ <= maxZ) {
+                continue;
+            }
             double chord = VoxelRay.chord(fromX, fromY, fromZ, toX, toY, toZ,
-                    bx + box.getMinX(), by + box.getMinY(), bz + box.getMinZ(),
-                    bx + box.getMaxX(), by + box.getMaxY(), bz + box.getMaxZ());
+                    minX, minY, minZ, maxX, maxY, maxZ);
             if (chord > 0.0 || VoxelRay.intersects(fromX, fromY, fromZ, toX, toY, toZ,
-                    bx + box.getMinX(), by + box.getMinY(), bz + box.getMinZ(),
-                    bx + box.getMaxX(), by + box.getMaxY(), bz + box.getMaxZ())) {
+                    minX, minY, minZ, maxX, maxY, maxZ)) {
                 if (thin) {
                     return panel;
                 }

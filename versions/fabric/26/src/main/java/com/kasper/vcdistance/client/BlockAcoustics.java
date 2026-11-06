@@ -107,6 +107,9 @@ public final class BlockAcoustics {
         if (isPanel(state, material)) {
             return AcousticMaterial.panelShare(state.hasProperty(BlockStateProperties.OPEN) && state.getValue(BlockStateProperties.OPEN));
         }
+        if (pos.getX() == (int) Math.floor(to.x) && pos.getY() == (int) Math.floor(to.y) && pos.getZ() == (int) Math.floor(to.z)) {
+            return 0.0;
+        }
         return RayBundle.chordWeight(VoxelRay.chord(from.x, from.y, from.z, to.x, to.y, to.z,
                 pos.getX(), pos.getY(), pos.getZ(), pos.getX() + 1.0, pos.getY() + 1.0, pos.getZ() + 1.0));
     }

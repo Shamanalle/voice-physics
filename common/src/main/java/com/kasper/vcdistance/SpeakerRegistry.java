@@ -90,6 +90,8 @@ public final class SpeakerRegistry {
         private volatile String category;
         private volatile boolean categoryKnown;
         private volatile boolean simpleRadio;
+        private volatile boolean music;
+        private volatile boolean rolloffZeroed;
         private volatile long lastTraceNanos;
         private volatile int cachedEntityNetworkId = Integer.MIN_VALUE;
         private volatile long lastEntitySearchNanos;
@@ -406,9 +408,12 @@ public final class SpeakerRegistry {
 
         /**
          * Decibels above (positive) or below the speaker's usual voice ({@link VoiceLevel.Tracker#effortDb});
-         * 0 for a sound from a place, which has no usual voice.
+         * 0 for a sound from a place or a music channel, which has no usual voice.
          */
         public double getEffortDb() {
+            if (music || simpleRadio) {
+                return 0.0;
+            }
             VoiceLevel.Tracker t = level;
             return t != null ? t.effortDb(whispering) : 0.0;
         }
@@ -443,10 +448,24 @@ public final class SpeakerRegistry {
             return simpleRadio;
         }
 
+        /** Music, jukebox, note block, goat horn or roleplay ambient channel ({@link ModEnvironment#isMusicCategory}). */
+        public boolean isMusic() {
+            return music;
+        }
+
         public void setCategory(String category) {
             this.category = category;
             this.categoryKnown = true;
             this.simpleRadio = ModEnvironment.isSimpleRadioCategory(category);
+            this.music = ModEnvironment.isMusicCategory(category);
+        }
+
+        public boolean isRolloffZeroed() {
+            return rolloffZeroed;
+        }
+
+        public void setRolloffZeroed(boolean zeroed) {
+            this.rolloffZeroed = zeroed;
         }
 
         public int getCachedEntityNetworkId() {
@@ -466,7 +485,10 @@ public final class SpeakerRegistry {
         }
 
         public boolean isActive(long nowNanos) {
-            return !simpleRadio && nowNanos - lastHeardNanos <= ACTIVE_WINDOW_NANOS;
+            if (simpleRadio || (music && !AudioDistancePlugin.config().isMusicPhysics())) {
+                return false;
+            }
+            return nowNanos - lastHeardNanos <= ACTIVE_WINDOW_NANOS;
         }
     }
 
@@ -479,21 +501,26 @@ public final class SpeakerRegistry {
 
     public Speaker onEntityFrame(UUID channelId, UUID entityId, boolean whispering, float maxDistance, short[] pcm) {
         Speaker s = speakers.computeIfAbsent(channelId, Speaker::new);
+        if (s.kind != Kind.ENTITY) {
+            s.category = null;
+            s.categoryKnown = false;
+            s.simpleRadio = false;
+            s.music = false;
+        }
         s.kind = Kind.ENTITY;
         s.entityId = entityId;
         s.whispering = whispering;
         s.maxDistance = maxDistance;
-        s.category = null;
-        s.categoryKnown = false;
-        s.simpleRadio = false;
         long now = touch(s, pcm);
-        VoiceLevel.Tracker level = s.level;
-        if (level == null) {
-            level = levels.of(channelId, now);
-            s.level = level;
+        if (!s.simpleRadio && !s.music) {
+            VoiceLevel.Tracker level = s.level;
+            if (level == null) {
+                level = levels.of(channelId, now);
+                s.level = level;
+            }
+            // The frame as it came, before any of the addon's own changes
+            level.update(s.levelDb, pcm == null ? 0.0 : pcm.length / VoiceLevel.SAMPLE_RATE, whispering, now);
         }
-        // The frame as it came, before any of the addon's own changes
-        level.update(s.levelDb, pcm == null ? 0.0 : pcm.length / VoiceLevel.SAMPLE_RATE, whispering, now);
         return s;
     }
 

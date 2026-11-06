@@ -113,8 +113,9 @@ public final class ModEnvironment {
     }
 
     /**
-     * Whether {@code category} is one of Simple Radio's four Simple Voice Chat volume categories
-     * ({@code radios}, {@code speakers}, {@code walkies}, {@code transceivers}).
+     * Whether {@code category} is a radio or wiretap broadcast volume category that already filters
+     * its own audio ({@code radios}, {@code speakers}, {@code walkies}, {@code transceivers},
+     * {@code wiretap}).
      */
     public static boolean isSimpleRadioCategory(String category) {
         if (category == null) {
@@ -125,9 +126,40 @@ public final class ModEnvironment {
             case "speakers":
             case "walkies":
             case "transceivers":
+            case "wiretap":
                 return true;
             default:
                 return false;
+        }
+    }
+
+    /**
+     * Whether {@code category} is a music, disc, jukebox, note block, goat horn or AudioPlayer /
+     * roleplay ambient volume category (AudioPlayer {@code music_discs}, {@code goat_horns},
+     * {@code note_blocks}, {@code player_heads}; Audioplayer Roleplay {@code arp_*}; CDisc
+     * {@code cdisc}; Custom Discs; Immersive Melodies; Etched; or custom music/disc categories).
+     */
+    public static boolean isMusicCategory(String category) {
+        if (category == null || category.isEmpty()) {
+            return false;
+        }
+        String s = category.toLowerCase(java.util.Locale.ROOT);
+        switch (s) {
+            case "music_discs":
+            case "note_blocks":
+            case "goat_horns":
+            case "player_heads":
+            case "cdisc":
+            case "audio_disc":
+                return true;
+            default:
+                return s.startsWith("arp_")
+                        || s.contains("music")
+                        || s.contains("disc")
+                        || s.contains("jukebox")
+                        || s.contains("noteblock")
+                        || s.contains("note_block")
+                        || s.contains("horn");
         }
     }
 

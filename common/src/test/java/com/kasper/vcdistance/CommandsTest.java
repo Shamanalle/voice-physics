@@ -651,7 +651,7 @@ public class CommandsTest {
         assertEquals(List.of("effects"), subs);
         assertTrue(AdminCommands.suggestions("eff", s, viewer).get(0).tooltip().contains("water, weather, echo, air, Doppler, wind and facing"));
 
-        assertEquals(List.of("on", "off", "air", "curve", "water", "weather", "echo", "doppler", "wind", "facing", "status"), AdminCommands.suggest("effects "));
+        assertEquals(List.of("on", "off", "air", "curve", "water", "weather", "echo", "doppler", "wind", "facing", "music", "status"), AdminCommands.suggest("effects "));
         assertEquals(List.of("off", "25", "50", "75", "100", "125", "150"), AdminCommands.suggest("effects facing "));
         assertEquals(List.of("off", "25", "50", "75", "100", "125", "150"), AdminCommands.suggest("effects wind "));
         assertEquals(List.of("on", "off"), AdminCommands.suggest("effects air "));
@@ -912,5 +912,34 @@ public class CommandsTest {
         java.util.Properties state = new java.util.Properties();
         s.writeState(state, "");
         assertEquals("true", state.getProperty("wall_loudness"));
+    }
+
+    @Test
+    @DisplayName("/vcd effects music toggles music and jukebox physics in the server profile")
+    void effectsMusic() throws IOException {
+        ServerSettings s = settings("");
+        AdminCommands.Context ctx = ctx();
+        assertTrue(s.profile().isMusicPhysics(), "on by default");
+
+        List<String> off = AdminCommands.run("effects music off", s, ctx);
+        assertTrue(off.get(0).startsWith("Music and jukeboxes are now left untouched"), off.toString());
+        assertFalse(s.profile().isMusicPhysics());
+        ServerSettings again = new ServerSettings(s.getPath());
+        again.load();
+        assertFalse(again.profile().isMusicPhysics(), "saved in profile");
+        assertTrue(String.join("\n", AdminCommands.run("effects", s, ctx)).contains("Music and jukeboxes (from the profile): off"));
+
+        AdminCommands.run("undo", s, ctx);
+        assertTrue(s.profile().isMusicPhysics(), "undone");
+        AdminCommands.run("effects music off", s, ctx);
+        AdminCommands.run("effects music on", s, ctx);
+        assertTrue(s.profile().isMusicPhysics());
+        assertTrue(AdminCommands.run("effects music maybe", s, ctx).get(0).contains("on|off"));
+        assertTrue(AdminCommands. suggest("effects ").contains("music"));
+        assertEquals(List.of("on", "off"), AdminCommands.suggest("effects music "));
+
+        java.util.Properties state = new java.util.Properties();
+        s.writeState(state, "");
+        assertEquals("true", state.getProperty("music_physics"));
     }
 }

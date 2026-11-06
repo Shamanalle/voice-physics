@@ -884,5 +884,12 @@
   "command.vc-audio-distance.btn.eavesdrop_off": "Lauschen aus",
   "command.vc-audio-distance.extras.name.integrations": "Integrationen (Städte, Lands, Flagge, LuckPerms)",
   "command.vc-audio-distance.zones.town": "Stadt",
-  "command.vc-audio-distance.zones.land": "Land"
+  "command.vc-audio-distance.zones.land": "Land",
+  "command.vc-audio-distance.effects.music": "Musik und Plattenspieler (aus dem Profil): %s",
+  "command.vc-audio-distance.effects.music_on": "Musik und Plattenspieler erhalten jetzt Wände, Echo und die Lautstärkekurve. Gespeichert.",
+  "command.vc-audio-distance.effects.music_off": "Musik und Plattenspieler bleiben jetzt unverändert. Gespeichert.",
+  "gui.vc-audio-distance.effects.music": "Musik & Schallplatten: %s",
+  "gui.vc-audio-distance.effects.music.tooltip": "Wände, Echo, Wasser, Wetter und die Lautstärkekurve für Schallplatten, Notenblöcke, Bockshörner und AudioPlayer-Klänge.\nAus: Musik spielt unverändert wie in Simple Voice Chat.",
+  "gui.vc-audio-distance.server.music": "Musik & Schallplatten: %s",
+  "gui.vc-audio-distance.server.music.tooltip": "Wände, Echo und die Lautstärkekurve für Schallplatten, Notenblöcke, Bockshörner und AudioPlayer-Klänge, für alle."
 }

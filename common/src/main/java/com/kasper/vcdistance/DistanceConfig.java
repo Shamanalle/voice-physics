@@ -19,8 +19,8 @@ public final class DistanceConfig {
     /** 3: the file is written with a comment for every key; 4: interface section; 5: echo, water, weather; 6: sound around corners;
      * 7: the HUD moves from the top left (under Simple Voice Chat's group list) to the top right;
      * 8: more materials (metal, earth, soft, ice, other); 9: HUD size, background, compact, colorblind colors;
-     * 10: over_sound_physics; 11: Doppler effect; 12: voice direction; 13: quiet voices behind walls. */
-    private static final int CONFIG_VERSION = 14;
+     * 10: over_sound_physics; 11: Doppler effect; 12: voice direction; 13: quiet voices behind walls; 15: music_physics. */
+    private static final int CONFIG_VERSION = 15;
     private static final String FILE_NAME = "vc-audio-distance.properties";
 
     // -------------------------------------------------------------------------
@@ -72,6 +72,8 @@ public final class DistanceConfig {
     /** Wind high up under the open sky and in fast flight blows far voices away: on by default. */
     public static final boolean DEFAULT_WIND_ENABLED = true;
     public static final double DEFAULT_WIND_STRENGTH = 1.0;
+    /** Whether music discs, jukeboxes, note blocks, goat horns and AudioPlayer sounds get walls, echo and the distance curve. */
+    public static final boolean DEFAULT_MUSIC_PHYSICS = true;
 
     private volatile AttenuationModel model = DEFAULT_MODEL;
     private volatile double attenuationFactor = DEFAULT_ATTENUATION_FACTOR;
@@ -95,6 +97,7 @@ public final class DistanceConfig {
     private volatile double directivityStrength = DEFAULT_DIRECTIVITY_STRENGTH;
     private volatile boolean windEnabled = DEFAULT_WIND_ENABLED;
     private volatile double windStrength = DEFAULT_WIND_STRENGTH;
+    private volatile boolean musicPhysics = DEFAULT_MUSIC_PHYSICS;
     private final double[] materialWeights = new double[AcousticMaterial.values().length];
     /** Blocks and block tags with a material of their own; replaced as a whole, never changed in place. */
     private volatile BlockRules blockRules = BlockRules.EMPTY;
@@ -354,6 +357,16 @@ public final class DistanceConfig {
         changed();
     }
 
+    /** Whether music discs, jukeboxes, note blocks, goat horns and AudioPlayer sounds get walls, echo and the distance curve. */
+    public boolean isMusicPhysics() {
+        return musicPhysics;
+    }
+
+    public void setMusicPhysics(boolean value) {
+        musicPhysics = value;
+        changed();
+    }
+
     public double getMaterialWeight(AcousticMaterial material) {
         synchronized (materialWeights) {
             return materialWeights[material.ordinal()];
@@ -608,6 +621,7 @@ public final class DistanceConfig {
         directivityStrength = DEFAULT_DIRECTIVITY_STRENGTH;
         windEnabled = DEFAULT_WIND_ENABLED;
         windStrength = DEFAULT_WIND_STRENGTH;
+        musicPhysics = DEFAULT_MUSIC_PHYSICS;
         resetMaterials();
     }
 
@@ -644,6 +658,7 @@ public final class DistanceConfig {
                 directivityStrength = DEFAULT_DIRECTIVITY_STRENGTH;
                 windEnabled = DEFAULT_WIND_ENABLED;
                 windStrength = DEFAULT_WIND_STRENGTH;
+                musicPhysics = DEFAULT_MUSIC_PHYSICS;
             }
         }
         changed();
@@ -693,6 +708,7 @@ public final class DistanceConfig {
         directivityStrength = other.directivityStrength;
         windEnabled = other.windEnabled;
         windStrength = other.windStrength;
+        musicPhysics = other.musicPhysics;
         for (AcousticMaterial m : AcousticMaterial.values()) {
             double w = other.getMaterialWeight(m);
             synchronized (materialWeights) {
@@ -824,6 +840,7 @@ public final class DistanceConfig {
                 directivityStrength = other.directivityStrength;
                 windEnabled = other.windEnabled;
                 windStrength = other.windStrength;
+                musicPhysics = other.musicPhysics;
             }
         }
         changed();
@@ -1065,7 +1082,10 @@ public final class DistanceConfig {
                 .value(prefix + "wind_enabled", windEnabled)
                 .comment("How strong it is, 0 - 1.5 (1 = up to about 6 dB quieter at the edge of the range in a full wind, gusts come and go). Default 1.",
                         "Насколько сильно, 0 - 1.5 (1 - в сильный ветер на краю дальности до примерно 6 дБ тише, порывы то сильнее, то слабее). По умолчанию 1.")
-                .value(prefix + "wind_strength", windStrength);
+                .value(prefix + "wind_strength", windStrength)
+                .comment("Music and jukeboxes: apply walls, echo, water, weather and the distance curve to music discs, note blocks, goat horns and AudioPlayer sounds; false leaves them untouched: true / false. Default true.",
+                        "Музыка и проигрыватели: применять стены, эхо, воду, погоду и кривую громкости к пластинкам, нотным блокам, козьим рогам и звукам AudioPlayer; false оставляет их без изменений: true / false. По умолчанию true.")
+                .value(prefix + "music_physics", musicPhysics);
     }
 
     /** Per-material weights with their explanations (shared by the client and server files). */
@@ -1115,6 +1135,7 @@ public final class DistanceConfig {
         props.setProperty(prefix + "directivity_strength", format(directivityStrength));
         props.setProperty(prefix + "wind_enabled", String.valueOf(windEnabled));
         props.setProperty(prefix + "wind_strength", format(windStrength));
+        props.setProperty(prefix + "music_physics", String.valueOf(musicPhysics));
         for (AcousticMaterial m : AcousticMaterial.values()) {
             props.setProperty(prefix + "material." + m.getId(), format(getMaterialWeight(m)));
         }
@@ -1150,6 +1171,7 @@ public final class DistanceConfig {
         windEnabled = parseBoolean(props, prefix + "wind_enabled", DEFAULT_WIND_ENABLED);
         windStrength = clamp(parseDouble(props, prefix + "wind_strength", DEFAULT_WIND_STRENGTH),
                 EFFECT_STRENGTH_MIN, EFFECT_STRENGTH_MAX);
+        musicPhysics = parseBoolean(props, prefix + "music_physics", DEFAULT_MUSIC_PHYSICS);
         synchronized (materialWeights) {
             for (AcousticMaterial m : AcousticMaterial.values()) {
                 materialWeights[m.ordinal()] = clamp(parseDouble(props, prefix + "material." + m.getId(), m.getDefaultWeight()), 0.0, AcousticMaterial.MAX_WEIGHT);

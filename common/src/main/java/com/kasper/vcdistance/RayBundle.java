@@ -88,8 +88,11 @@ public final class RayBundle {
                                  double toX, double toY, double toZ, double ox, double oy, double oz) {
         double spread = SPREAD;
         if (open != null) {
+            int tx = (int) Math.floor(toX);
+            int ty = (int) Math.floor(toY);
+            int tz = (int) Math.floor(toZ);
             while (spread > 0.0 && !(inAir(open, fromX + ox * spread, fromY + oy * spread, fromZ + oz * spread)
-                    && inAir(open, toX + ox * spread, toY + oy * spread, toZ + oz * spread))) {
+                    && inAirOrCell(open, toX + ox * spread, toY + oy * spread, toZ + oz * spread, tx, ty, tz))) {
                 spread = spread > SPREAD * 0.3 ? spread / 2.0 : 0.0;
             }
         }
@@ -99,5 +102,12 @@ public final class RayBundle {
 
     private static boolean inAir(SoundPath.Grid open, double x, double y, double z) {
         return open.open((int) Math.floor(x), (int) Math.floor(y), (int) Math.floor(z));
+    }
+
+    private static boolean inAirOrCell(SoundPath.Grid open, double x, double y, double z, int cx, int cy, int cz) {
+        int bx = (int) Math.floor(x);
+        int by = (int) Math.floor(y);
+        int bz = (int) Math.floor(z);
+        return (bx == cx && by == cy && bz == cz) || open.open(bx, by, bz);
     }
 }

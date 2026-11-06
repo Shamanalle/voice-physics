@@ -598,7 +598,16 @@ public class AudioDistancePlugin implements VoicechatPlugin {
         if (event.getPosition() == null) {
             return;
         }
+        SpeakerRegistry.Speaker speaker = SPEAKERS.get(event.getChannelId());
         if (noteCategoryAndSkipRadio(event)) {
+            if (speaker != null && speaker.isRolloffZeroed()) {
+                speaker.setRolloffZeroed(false);
+                try {
+                    AL11.alSourcef(event.getSource(), AL11.AL_ROLLOFF_FACTOR, 1.0F);
+                    AL11.alGetError();
+                } catch (Throwable ignored) {
+                }
+            }
             return;
         }
         CONFIG.ensureLoaded();
@@ -615,8 +624,11 @@ public class AudioDistancePlugin implements VoicechatPlugin {
 
             float volume = AL11.alGetSourcef(source, AL11.AL_GAIN);
             AL11.alSourcef(source, AL11.AL_ROLLOFF_FACTOR, 0.0F);
+            if (speaker != null) {
+                speaker.setRolloffZeroed(true);
+            }
             AL11.alSourcef(source, AL11.AL_GAIN, voiceGain(volume, curve));
-            if (overSoundPhysics() && SPEAKERS.get(event.getChannelId()) != null) {
+            if (overSoundPhysics() && speaker != null) {
                 clearSoundPhysics(source);
             }
             if (dopplerModOffVoices()) {
@@ -754,9 +766,12 @@ public class AudioDistancePlugin implements VoicechatPlugin {
     }
 
     private static boolean isWhispering(OpenALSoundEvent event, float maxDist) {
+        if (ModEnvironment.isMusicCategory(event.getCategory())) {
+            return false;
+        }
         SpeakerRegistry.Speaker speaker = SPEAKERS.get(event.getChannelId());
         if (speaker != null) {
-            return speaker.getKind() == SpeakerRegistry.Kind.ENTITY && speaker.isWhispering();
+            return !speaker.isMusic() && speaker.getKind() == SpeakerRegistry.Kind.ENTITY && speaker.isWhispering();
         }
         // Unknown channel (e.g. another addon's audio channel): SVC whispers at half the distance
         return maxDist > 0F && maxDist < getServerMaxDistance() * 0.75;
@@ -775,13 +790,16 @@ public class AudioDistancePlugin implements VoicechatPlugin {
         CONFIG.ensureLoaded();
         SpeakerRegistry.Speaker speaker = SPEAKERS.onEntityFrame(event.getId(), event.getEntityId(),
                 event.isWhispering(), event.getDistance(), raw);
+        if (speaker.isSimpleRadio() || (speaker.isMusic() && !config().isMusicPhysics())) {
+            return;
+        }
         muffle(event, speaker, raw);
     }
 
     /**
      * Records the channel's Simple Voice Chat volume category on its {@link SpeakerRegistry.Speaker}
-     * and tells whether the channel belongs to Simple Radio, whose own filter and range must be left
-     * alone.
+     * and tells whether the channel should be left untouched (Simple Radio, or music when
+     * {@link DistanceConfig#isMusicPhysics()} is off).
      */
     static boolean noteCategoryAndSkipRadio(OpenALSoundEvent event) {
         String category = event.getCategory();
@@ -789,7 +807,11 @@ public class AudioDistancePlugin implements VoicechatPlugin {
         if (speaker != null) {
             speaker.setCategory(category);
         }
-        return ModEnvironment.isSimpleRadioCategory(category) || (speaker != null && speaker.isSimpleRadio());
+        if (ModEnvironment.isSimpleRadioCategory(category) || (speaker != null && speaker.isSimpleRadio())) {
+            return true;
+        }
+        return (ModEnvironment.isMusicCategory(category) || (speaker != null && speaker.isMusic()))
+                && !config().isMusicPhysics();
     }
 
     private static void onLocationalSound(ClientReceiveSoundEvent.LocationalSound event) {
@@ -802,8 +824,10 @@ public class AudioDistancePlugin implements VoicechatPlugin {
         SpeakerRegistry.Speaker speaker = SPEAKERS.onLocationalFrame(event.getId(), pos.getX(), pos.getY(), pos.getZ(),
                 event.getDistance(), raw);
         // On a channel's first frame OpenALSoundEvent has not reported the category yet (and the
-        // client tick has not measured the source either); waiting for it keeps Simple Radio untouched
-        if (speaker.isSimpleRadio() || !speaker.isCategoryKnown()) {
+        // client tick has not measured the source either); waiting for it keeps Simple Radio and
+        // bypassed music untouched
+        if (speaker.isSimpleRadio() || !speaker.isCategoryKnown()
+                || (speaker.isMusic() && !config().isMusicPhysics())) {
             return;
         }
         muffle(event, speaker, raw);
@@ -832,8 +856,8 @@ public class AudioDistancePlugin implements VoicechatPlugin {
                         c.getOcclusionStrength(), d -> curveGain(d, range, whispering));
                 speaker.setBlend(blend);
                 effect = new EnvironmentEffects.Effect(blend.muffle(), blend.lossDb());
-                // A whisper is lost behind the wall, a shout carries: only a player's voice, a sound from a place has no usual level
-                if (c.isWallLoudnessEnabled() && speaker.getKind() == SpeakerRegistry.Kind.ENTITY) {
+                // A whisper is lost behind the wall, a shout carries: only a player's voice, a sound from a place or music has no usual level
+                if (c.isWallLoudnessEnabled() && speaker.getKind() == SpeakerRegistry.Kind.ENTITY && !speaker.isMusic()) {
                     quiet = VoiceLevel.extraLossDb(blend.lossDb(), speaker.getEffortDb());
                     effect = effect.plus(new EnvironmentEffects.Effect(0.0, quiet));
                 }
@@ -884,7 +908,7 @@ public class AudioDistancePlugin implements VoicechatPlugin {
             }
             // Turned away: quieter and duller, but only the straight way; round a wall the voice left towards the doorway
             EnvironmentEffects.Effect turned = EnvironmentEffects.Effect.NONE;
-            if (c.isDirectivityEnabled()) {
+            if (c.isDirectivityEnabled() && !speaker.isMusic()) {
                 double round = blend != null ? blend.pathShare() : 0.0;
                 double indirect = 1.0 - (1.0 - round) * (1.0 - wet);
                 turned = Directivity.effect(speaker.getFacing(), c.getDirectivityStrength(), indirect);
@@ -895,7 +919,7 @@ public class AudioDistancePlugin implements VoicechatPlugin {
             // All stages work on the frame in place; the pitch first, so the echo is of the shifted voice
             boolean changed = false;
             PitchShifter shifter = speaker.getShifter();
-            double pitch = ownDoppler(c) && speaker.getDistance() >= 0.0
+            double pitch = !speaker.isMusic() && ownDoppler(c) && speaker.getDistance() >= 0.0
                     ? Doppler.pitch(speaker.getClosingSpeed(), c.getDopplerStrength()) : 1.0;
             // At pitch 1 it only keeps the voice's recent past, for a smooth start
             changed |= shifter.process(raw, pitch, System.nanoTime());

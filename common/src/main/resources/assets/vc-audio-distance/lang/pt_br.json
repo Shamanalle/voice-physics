@@ -884,5 +884,12 @@
   "command.vc-audio-distance.btn.eavesdrop_off": "Espionar off",
   "command.vc-audio-distance.extras.name.integrations": "Integrações (cidades, lands, flag, LuckPerms)",
   "command.vc-audio-distance.zones.town": "Cidade",
-  "command.vc-audio-distance.zones.land": "Land"
+  "command.vc-audio-distance.zones.land": "Land",
+  "command.vc-audio-distance.effects.music": "Música e toca-discos (do perfil): %s",
+  "command.vc-audio-distance.effects.music_on": "Música e toca-discos agora recebem paredes, eco e a curva de distância. Salvo.",
+  "command.vc-audio-distance.effects.music_off": "Música e toca-discos agora ficam intocados. Salvo.",
+  "gui.vc-audio-distance.effects.music": "Música e discos: %s",
+  "gui.vc-audio-distance.effects.music.tooltip": "Paredes, eco, água, clima e a curva de distância para discos de música, blocos musicais, chifres de cabra e sons do AudioPlayer.\nOff: a música toca intocada, como no Simple Voice Chat.",
+  "gui.vc-audio-distance.server.music": "Música e discos: %s",
+  "gui.vc-audio-distance.server.music.tooltip": "Paredes, eco e a curva de distância para discos de música, blocos musicais, chifres de cabra e sons do AudioPlayer, para todos."
 }

@@ -236,11 +236,16 @@ public final class ServerWalls {
         if (p == null || groupSilenced(event, p.getEntityUuid())) {
             return;
         }
+        String category = categoryOf(p);
+        if (ModEnvironment.isSimpleRadioCategory(category)) {
+            return;
+        }
+        boolean music = ModEnvironment.isMusicCategory(category);
         long start = System.nanoTime();
         // The server's voice rules first: the voice may not reach this listener at all, or carry another range
         float distance = p.getDistance();
         boolean retarget = false;
-        if (!resending.get() && SoundPacketEvent.SOURCE_PROXIMITY.equals(event.getSource())) {
+        if (!resending.get() && !music && SoundPacketEvent.SOURCE_PROXIMITY.equals(event.getSource())) {
             ServerRange.Decision rule = voiceRule(p.getEntityUuid(), event.getReceiverConnection(), p.isWhispering());
             if (rule != null && !rule.hears()) {
                 perf.add(System.nanoTime() - start);
@@ -254,7 +259,7 @@ public final class ServerWalls {
         }
         double[] opening = new double[3];
         byte[] processed = process(event, p.getChannelId(), p.getSequenceNumber(), p.getOpusEncodedData(),
-                p.getEntityUuid(), null, opening, distance, p.isWhispering());
+                p.getEntityUuid(), null, opening, distance, p.isWhispering(), category);
         perf.add(System.nanoTime() - start);
         if (processed == null && !retarget) {
             return;
@@ -679,9 +684,13 @@ public final class ServerWalls {
         if (p == null || groupSilenced(event, senderOf(p)) || p.getPosition() == null) {
             return;
         }
+        String category = categoryOf(p);
+        if (ModEnvironment.isSimpleRadioCategory(category)) {
+            return;
+        }
         long start = System.nanoTime();
         byte[] processed = process(event, p.getChannelId(), p.getSequenceNumber(), p.getOpusEncodedData(),
-                null, p.getPosition(), null, rangeOf(p), false);
+                null, p.getPosition(), null, rangeOf(p), false, category);
         perf.add(System.nanoTime() - start);
         if (processed == null) {
             return;
@@ -690,6 +699,18 @@ public final class ServerWalls {
                 p.locationalSoundPacketBuilder()
                         .opusEncodedData(processed)
                         .build()));
+    }
+
+    /** Volume category of a sound packet, or {@code null} when it has none (a player's own voice). */
+    private static String categoryOf(SoundPacket p) {
+        if (p == null) {
+            return null;
+        }
+        try {
+            return p.getCategory();
+        } catch (Throwable ignored) {
+            return null;
+        }
     }
 
     /** The range a located sound fades over on the client, or NaN on Simple Voice Chat versions without it. */
@@ -704,17 +725,19 @@ public final class ServerWalls {
     /**
      * @param fadeRange  the range the client fades the voice over, in blocks (NaN: unknown, no curve)
      * @param whispering the voice is a whisper
+     * @param category   Simple Voice Chat volume category, or {@code null} for a player's voice
      * @return the re-encoded frame, or {@code null} to let the original packet through
      */
     private byte[] process(SoundPacketEvent<?> event, UUID channel, long sequence, byte[] opus,
-                           UUID speakerEntity, Position position, double[] opening, float fadeRange, boolean whispering) {
+                           UUID speakerEntity, Position position, double[] opening, float fadeRange,
+                           boolean whispering, String category) {
         if (opening != null) {
             opening[0] = Double.NaN;
         }
         if (resending.get() || !SoundPacketEvent.SOURCE_PROXIMITY.equals(event.getSource())) {
             return null;
         }
-        if (channel == null || opus == null || opus.length == 0) {
+        if (channel == null || opus == null || opus.length == 0 || ModEnvironment.isSimpleRadioCategory(category)) {
             return null;
         }
         VoicechatConnection receiver = event.getReceiverConnection();
@@ -729,10 +752,14 @@ public final class ServerWalls {
         // what water, weather, distance and rooms do to it
         PlayerPrefs prefs = AudioDistancePlugin.PLAYER_PREFS;
         DistanceConfig profile = settings.profile();
+        boolean music = ModEnvironment.isMusicCategory(category);
+        if (music && !profile.isMusicPhysics()) {
+            return null;
+        }
         Zone listenerZone = settings.zoneOf(players.get(listener));
         boolean walls = worldAvailable && settings.isServerWalls() && settings.wallsApply(listenerZone, prefs.wallsFor(listener));
         UUID speakerId = speakerEntity != null ? speakerEntity : channel;
-        double volumeLoss = prefs.lossDb(listener, speakerId);
+        double volumeLoss = music ? 0.0 : prefs.lossDb(listener, speakerId);
         boolean realism = settings.hasServerRealism();
         boolean curve = settings.isServerCurve() && fadeRange > 0.0F;
         if (!walls && volumeLoss <= 0.0 && !realism) {
@@ -744,19 +771,19 @@ public final class ServerWalls {
         EnvironmentEffects.Effect air = EnvironmentEffects.Effect.NONE;
         RoomEstimate room = null;
         double roomDistance = -1.0;
-        // Where the speaker looks, towards the listener: only a player's own voice, not a sound from a place
+        // Where the speaker looks, towards the listener: only a player's own voice, not a sound from a place or music
         double facing = Double.NaN;
         // High up and in fast flight the wind blows far voices away; also a player's voice only
         double wind = 0.0;
         if (realism) {
             ServerPlayers.Info from = players.get(speakerId);
             ServerPlayers.Info to = players.get(listener);
+            double range = fadeRange > 0.0F ? fadeRange : voiceRange();
             if (from != null && to != null && Zone.sameWorld(from.world(), to.world())) {
-                double range = voiceRange();
                 air = ServerEffects.atmosphere(settings, from, to, range);
                 room = ServerEffects.room(settings, AudioDistancePlugin.SERVER_ROOMS, from, to, now);
                 roomDistance = from.distanceTo(to);
-                if (position == null && settings.isServerEffects() && profile.isDirectivityEnabled()) {
+                if (!music && position == null && settings.isServerEffects() && profile.isDirectivityEnabled()) {
                     facing = from.facing(to);
                 }
                 if (position == null && settings.isServerEffects() && profile.isWindEnabled()) {
@@ -764,6 +791,12 @@ public final class ServerWalls {
                             roomDistance / range, profile.getWindStrength(),
                             Wind.gust(now, channel.getMostSignificantBits() ^ channel.getLeastSignificantBits()));
                 }
+            } else if (to != null && position != null) {
+                double dx = position.getX() - to.x();
+                double dy = position.getY() - to.y();
+                double dz = position.getZ() - to.z();
+                roomDistance = Math.sqrt(dx * dx + dy * dy + dz * dz);
+                room = ServerEffects.room(settings, AudioDistancePlugin.SERVER_ROOMS, null, to, now);
             }
         }
         // The profile's curve instead of Simple Voice Chat's straight fade: how far the client hears the voice from
@@ -836,7 +869,7 @@ public final class ServerWalls {
                 loss += wind;
             }
             double pitch = 1.0;
-            if (settings.isServerEffects() && profile.isDopplerEnabled()) {
+            if (!music && settings.isServerEffects() && profile.isDopplerEnabled()) {
                 pair.closing.speed(closingSpeed(speakerId, listener, position), now);
                 pitch = Doppler.pitch(pair.closing.get(), profile.getDopplerStrength());
             }
@@ -851,13 +884,13 @@ public final class ServerWalls {
             }
 
             try {
-                short[] pcm = decode(event.getVoicechat(), channel, sequence, opus, now, whispering);
+                short[] pcm = decode(event.getVoicechat(), channel, sequence, opus, now, whispering, !music && position == null);
                 if (pcm == null) {
                     stop(pair);
                     return null;
                 }
-                // A whisper is lost behind the wall, a shout carries: only a player's voice, a sound from a place has no usual level
-                if (wallLoss > 0.0 && position == null && profile.isWallLoudnessEnabled()) {
+                // A whisper is lost behind the wall, a shout carries: only a player's voice, a sound from a place or music has no usual level
+                if (!music && wallLoss > 0.0 && position == null && profile.isWallLoudnessEnabled()) {
                     VoiceLevel.Tracker level = voiceLevels.get(channel);
                     loss += VoiceLevel.extraLossDb(wallLoss, level != null ? level.effortDb(whispering) : 0.0);
                 }
@@ -924,8 +957,9 @@ public final class ServerWalls {
         return Doppler.closing(sx - to.x(), sy - to.y(), sz - to.z(), sv[0], sv[1], sv[2], lv[0], lv[1], lv[2]);
     }
 
-    /** The frame, decoded once for every listener; each new frame also tells how loud the speaker talks. */
-    private short[] decode(VoicechatServerApi api, UUID channel, long sequence, byte[] opus, long now, boolean whispering) {
+    /** The frame, decoded once for every listener; each new frame also tells how loud a talking player speaks. */
+    private short[] decode(VoicechatServerApi api, UUID channel, long sequence, byte[] opus, long now,
+                           boolean whispering, boolean trackVoiceLevel) {
         Stream stream = streams.computeIfAbsent(channel, c -> new Stream());
         synchronized (stream) {
             stream.lastSeenNanos = now;
@@ -940,7 +974,9 @@ public final class ServerWalls {
             }
             stream.pcm = stream.decoder.decode(opus);
             stream.lastSequence = sequence;
-            voiceLevels.of(channel, now).update(stream.pcm, whispering, now);
+            if (trackVoiceLevel) {
+                voiceLevels.of(channel, now).update(stream.pcm, whispering, now);
+            }
             return stream.pcm;
         }
     }

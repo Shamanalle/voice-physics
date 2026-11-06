@@ -178,4 +178,27 @@ public class SoundPathTest {
         }
         assertEquals(0.5, SoundBlend.of(10.0, 1.5, 10.0, 1.5, 0.6, CURVE).pathShare(), 1e-9);
     }
+
+    @Test
+    @DisplayName("Block sound source (jukebox, note block): doorway path is found when the block has an open face, not when entombed")
+    void solidBlockGoalFindsDoorwayUnlessEntombed() {
+        World w = new World();
+        w.wall(4, -5, 5, -10, 10);
+        w.hole(4, 0, 5);
+        w.hole(4, 1, 5);
+        // The jukebox itself at (8, 0, 0) is a solid block, emitting from (8.5, 0.5, 0.5)
+        w.solid.add(World.k(8, 0, 0));
+        SoundPath.Result r = SoundPath.find(w, 0.5, 0.5, 0.5, 8.5, 0.5, 0.5, 40, 5000);
+        assertNotNull(r, "a jukebox with open air around it must still diffract through a doorway");
+        assertTrue(r.openingZ() > 3.0);
+
+        // Entombed on all 6 faces around (8, 0, 0): no path
+        w.solid.add(World.k(9, 0, 0));
+        w.solid.add(World.k(7, 0, 0));
+        w.solid.add(World.k(8, 1, 0));
+        w.solid.add(World.k(8, -1, 0));
+        w.solid.add(World.k(8, 0, 1));
+        w.solid.add(World.k(8, 0, -1));
+        assertNull(SoundPath.find(w, 0.5, 0.5, 0.5, 8.5, 0.5, 0.5, 40, 5000));
+    }
 }

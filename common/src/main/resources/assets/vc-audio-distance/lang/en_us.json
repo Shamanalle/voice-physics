@@ -884,5 +884,12 @@
   "command.vc-audio-distance.btn.eavesdrop_off": "Eavesdrop off",
   "command.vc-audio-distance.extras.name.integrations": "Integrations (towns, lands, flag, LuckPerms)",
   "command.vc-audio-distance.zones.town": "Town",
-  "command.vc-audio-distance.zones.land": "Land"
+  "command.vc-audio-distance.zones.land": "Land",
+  "command.vc-audio-distance.effects.music": "Music and jukeboxes (from the profile): %s",
+  "command.vc-audio-distance.effects.music_on": "Music and jukeboxes now get walls, echo and the distance curve. Saved.",
+  "command.vc-audio-distance.effects.music_off": "Music and jukeboxes are now left untouched. Saved.",
+  "gui.vc-audio-distance.effects.music": "Music & jukeboxes: %s",
+  "gui.vc-audio-distance.effects.music.tooltip": "Walls, echo, water, weather and the distance curve for music discs, note blocks, goat horns and AudioPlayer sounds.\nOff: music plays untouched, as in Simple Voice Chat.",
+  "gui.vc-audio-distance.server.music": "Music & jukeboxes: %s",
+  "gui.vc-audio-distance.server.music.tooltip": "Walls, echo and the distance curve for music discs, note blocks, goat horns and AudioPlayer sounds, for everyone."
 }

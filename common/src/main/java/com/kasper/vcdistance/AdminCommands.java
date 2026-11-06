@@ -92,7 +92,7 @@ public final class AdminCommands {
     static final String[] REQUIRE = {"off", "suggest", "warn", "kick"};
     static final String[] ON_OFF = {"on", "off"};
     /** {@code /vcd effects <part> ...}: the server's own air and the strengths the profile has. */
-    static final String[] EFFECT_PARTS = {"on", "off", "air", "curve", "water", "weather", "echo", "doppler", "wind", "facing", "status"};
+    static final String[] EFFECT_PARTS = {"on", "off", "air", "curve", "water", "weather", "echo", "doppler", "wind", "facing", "music", "status"};
     static final String[] EFFECT_STEPS = {"off", "25", "50", "75", "100", "125", "150"};
     static final String[] ECHO_STEPS = {"off", "25", "50", "75", "100"};
     static final String[] DOPPLER_STEPS = {"off", "50", "100", "150", "200", "300"};
@@ -472,6 +472,16 @@ public final class AdminCommands {
                 settings.setServerCurve(on);
                 r.saved(on ? "effects.curve_on" : "effects.curve_off");
             }
+            case "music" -> {
+                Boolean on = r.args.length > 2 ? parseOnOff(r.args[2]) : null;
+                if (on == null) {
+                    r.badValue("effects music", r.arg(2), "on|off", "effects");
+                    return;
+                }
+                p.setMusicPhysics(on);
+                r.saved(on ? "effects.music_on" : "effects.music_off");
+                effectsNote(r);
+            }
             case "water", "weather", "echo", "doppler", "facing", "wind" -> {
                 boolean echo = part.equals("echo");
                 boolean doppler = part.equals("doppler");
@@ -803,6 +813,8 @@ public final class AdminCommands {
                 r.change(effectText(m, p.isDopplerEnabled(), p.getDopplerStrength()), "effects doppler"))));
         r.reply.add(CommandReply.line().addAll(m.spans("effects.facing", Style.PLAIN,
                 r.change(effectText(m, p.isDirectivityEnabled(), p.getDirectivityStrength()), "effects facing"))));
+        r.reply.add(CommandReply.line().addAll(m.spans("effects.music", Style.PLAIN,
+                r.change(onOff(m, p.isMusicPhysics()), "effects music"))));
         r.reply.add(CommandReply.line().addAll(m.spans("effects.air", Style.PLAIN,
                 r.change(onOff(m, settings.isServerAir()), "effects air"))));
         r.reply.add(CommandReply.line().addAll(m.spans("effects.curve", Style.PLAIN,
