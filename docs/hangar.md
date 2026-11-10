@@ -1,6 +1,6 @@
 A server plugin for [Simple Voice Chat](https://hangar.papermc.io/henkelmax/SimpleVoiceChat) on **Paper, Purpur, Folia and Spigot** (Minecraft 1.16.5 – 26.3) that makes proximity voice chat realistic: **voices are muffled behind walls for every player, sound zones change how far a voice carries, and game rules decide who hears whom.**
 
-Players **need nothing beyond Simple Voice Chat** — server-side wall occlusion, zones and game rules work for vanilla-with-SVC clients out of the box. Players who also install the [Voice Physics client mod](https://modrinth.com/mod/u8mD6TL9) get custom fade curves, presets, doorway corners, cave echo, a HUD and a voice radar.
+Players **need nothing beyond Simple Voice Chat** — server-side wall occlusion, zones and game rules work for vanilla-with-SVC clients out of the box. Players who also install the [Voice Physics client mod](https://www.curseforge.com/projects/1712556) get custom fade curves, presets, doorway corners, cave echo, a HUD and a voice radar.
 
 ## What players hear
 
