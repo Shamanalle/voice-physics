@@ -115,4 +115,58 @@ public class IntegrationsTest {
         assertTrue(tab.contains("town:") && tab.contains("land:"), tab.toString());
         assertTrue(tab.contains("town:springfield"), "existing zones are offered by their reference: " + tab);
     }
+
+    @Test
+    @DisplayName("External chat mutes silence voice only while server_integrations is on, never touch the settings file, and yield to /vcd mute")
+    void externalChatMutes() throws IOException {
+        ServerSettings s = settings("");
+        ServerPlayers players = new ServerPlayers();
+        ServerPlayers.Info steve = new ServerPlayers.Info(java.util.UUID.nameUUIDFromBytes("Steve".getBytes()), "Steve", "w", 5, 64, 0,
+                false, true, false, "", "", List.of(), "en_us");
+        ServerPlayers.Info alex = new ServerPlayers.Info(java.util.UUID.nameUUIDFromBytes("Alex".getBytes()), "Alex", "w", 8, 64, 0,
+                false, true, false, "", "", List.of(), "en_us");
+        players.update(steve);
+        players.update(alex);
+
+        long now = System.currentTimeMillis();
+        VoiceMute chatMute = new VoiceMute(steve.id(), "Steve", now + 600_000L, "LiteBans", "chat spam");
+        s.setExternalMutes(java.util.Map.of(steve.id(), chatMute));
+
+        // Off while server_integrations is false
+        assertNull(s.effectiveMuteOf(steve.id(), now));
+        assertFalse(s.hasVoiceRules());
+        assertTrue(ServerRange.decide(s, steve, alex, false, 48, 24).hears());
+        assertEquals("false", ServerPlaceholders.value("muted", steve.id(), s, System.nanoTime(), now));
+
+        // On once server_integrations is enabled
+        s.setServerIntegrations(true);
+        assertEquals(chatMute, s.effectiveMuteOf(steve.id(), now));
+        assertTrue(s.hasVoiceRules() && s.hasGroupRules());
+        assertEquals(ServerRange.Reason.MUTED, ServerRange.decide(s, steve, alex, false, 48, 24).reason());
+        assertEquals(ServerRange.Reason.MUTED, ServerRange.decideGroup(s, steve, alex).reason());
+        assertEquals("true", ServerPlaceholders.value("muted", steve.id(), s, System.nanoTime(), now));
+        assertEquals("chat spam", ServerPlaceholders.value("mute_reason", steve.id(), s, System.nanoTime(), now));
+
+        // Never written to disk, and /vcd debug shows the plugin name without a misleading /vcd unmute button
+        s.save();
+        assertFalse(Files.readString(s.getPath()).contains("chat spam"));
+        assertTrue(s.mutes(now).isEmpty());
+        AdminCommands.Context debugCtx = new AdminCommands.Context() {
+            public String platform() { return "Paper"; }
+            public int onlinePlayers() { return 2; }
+            public int addonPlayers() { return 0; }
+            public void resendProfiles() {}
+            public ServerPlayers players() { return players; }
+            public boolean allows(String permission) { return true; }
+        };
+        CommandReply debug = AdminCommands.execute("debug Steve", s, debugCtx);
+        String debugText = String.join("\n", debug.plain());
+        assertTrue(debugText.contains("by LiteBans - chat spam"), debugText);
+        assertFalse(debugText.contains("[Unmute]"), "external chat mute cannot be removed with /vcd unmute: " + debugText);
+
+        // Own /vcd mute takes precedence and CAN be unmuted with /vcd unmute
+        s.mute(new VoiceMute(steve.id(), "Steve", 0L, "Admin", "voice rule"));
+        assertEquals("Admin", s.effectiveMuteOf(steve.id(), now).by());
+        assertTrue(String.join("\n", AdminCommands.execute("debug Steve", s, debugCtx).plain()).contains("[Unmute]"));
+    }
 }

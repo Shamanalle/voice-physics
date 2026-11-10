@@ -2,6 +2,8 @@ An addon for [Simple Voice Chat](https://modrinth.com/plugin/simple-voice-chat) 
 
 Install it on your client, on the server, or on both. Each works on its own.
 
+> **Works alongside [Sound Physics Remastered](https://modrinth.com/mod/sound-physics-remastered):** Sound Physics handles game sounds while Voice Physics adds the distance curve, presets, doorway corners, whisper-vs-shout walls, HUD, radar, sound zones and server-side walls for voices — without doubling filters (one switch chooses whose walls and echo voices get).
+
 ![The Distance tab: the fade curve and presets](https://raw.githubusercontent.com/Shamanalle/voice-physics/main/docs/images/ui-distance.png)
 
 ## For players
@@ -33,7 +35,7 @@ Install it on your client, on the server, or on both. Each works on its own.
 - A monitor and radar with everyone in voice range. Colors for color blindness.
 - A bigger HUD, a high-contrast mode and subtitle-style arrows for voices off to the side.
 
-**🔗 Also:** share your settings with a friend as one code, send a bug report with one click (`/voicephysics report`). Seven languages.
+**🔗 Also:** works with [AudioPlayer](https://modrinth.com/mod/audioplayer) & custom music discs (with its own switch) and [Simple Radio](https://modrinth.com/mod/simple-radio); share your settings with a friend as one code, send a bug report with one click (`/voicephysics report`). Seven languages.
 
 ## For servers
 
@@ -46,7 +48,7 @@ Players **without the addon** also hear voices muffled through walls.
 - **Require the addon:** send a download link, remind on every join, or kick.
 - **Realism without the addon** (off by default): water, rain, echo, the speaker's facing, wind, the Doppler effect and the server profile's distance curve for players who only have voice chat.
 - **Mute** a player's voice for a time or for good, with `/vcd mute`.
-- **Paper extras** (off by default, not yet tried in a live game): a radio, loudspeakers, an eavesdrop item, a sculk reaction to shouts, doorway sound, and Towny, Lands, WorldGuard and LuckPerms integrations. `/vcd extras` lists the switches.
+- **Paper extras** (off by default): a radio, loudspeakers, an eavesdrop item, a sculk reaction to shouts, doorway sound, chat-mute sync (EssentialsX, LiteBans, LibertyBans, AdvancedBan), and Towny, Lands, WorldGuard and LuckPerms integrations. `/vcd extras` lists the switches.
 - **Paper:** `/voice` for every player (talk quietly or shout, walls off for yourself, per-player volume) and PlaceholderAPI placeholders for scoreboards and tab lists.
 - **In-game Server tab** for admins: the effects for players without the addon and the Paper extras are switches there, plus clickable `/vcd` commands with undo and a log of who changed what.
 
@@ -73,6 +75,8 @@ Before 1.20 the mod is made for 1.16.5, 1.17.1, 1.18.2, 1.19.2 and 1.19.4. Forge
 Аддон для [Simple Voice Chat](https://modrinth.com/plugin/simple-voice-chat), с которым голоса ведут себя как звук: затихают с расстоянием, глохнут за стенами, доносятся из-за угла через проёмы и отдаются эхом в пещерах.
 
 Ставится на клиент, на сервер или туда и туда. Каждый вариант работает сам по себе.
+
+> **Работает вместе с [Sound Physics Remastered](https://modrinth.com/mod/sound-physics-remastered):** Sound Physics отвечает за звуки мира, а Voice Physics добавляет к голосам кривую затухания, пресеты, обход через дверные проёмы, разницу шёпота и крика за стенами, HUD, радар, звуковые зоны и стены на сервере — без двойных фильтров (а одним переключателем можно выбрать, чьи стены и эхо получают голоса).
 
 ## Для игроков
 
@@ -103,7 +107,7 @@ Before 1.20 the mod is made for 1.16.5, 1.17.1, 1.18.2, 1.19.2 and 1.19.4. Forge
 - Монитор и радар со всеми в радиусе голоса. Цвета для дальтоников.
 - Крупнее HUD, режим высокого контраста и стрелки в духе субтитров для голосов сбоку.
 
-**🔗 Ещё:** поделитесь настройками с другом одним кодом, отправьте баг-репорт в один клик (`/voicephysics report`). Семь языков.
+**🔗 Ещё:** работает с [AudioPlayer](https://modrinth.com/mod/audioplayer) и модами на пластинки (со своим переключателем) и с [Simple Radio](https://modrinth.com/mod/simple-radio); поделитесь настройками с другом одним кодом, отправьте баг-репорт в один клик (`/voicephysics report`). Семь языков.
 
 ## Для серверов
 
@@ -116,7 +120,7 @@ Before 1.20 the mod is made for 1.16.5, 1.17.1, 1.18.2, 1.19.2 and 1.19.4. Forge
 - **Обязательный аддон:** ссылка на скачивание, напоминание при каждом входе или кик.
 - **Реализм без аддона** (по умолчанию выключен): вода, дождь, эхо, поворот головы говорящего, ветер, эффект Доплера и кривая расстояния из профиля сервера для игроков, у которых есть только голосовой чат.
 - **Заглушение** голоса игрока на время или насовсем командой `/vcd mute`.
-- **Дополнения Paper** (по умолчанию выключены, ещё не опробованы в живой игре): рация, громкоговорители, предмет для подслушивания, реакция скалка на крик, звук через дверной проём и интеграции с Towny, Lands, WorldGuard и LuckPerms. Переключатели — в `/vcd extras`.
+- **Дополнения Paper** (по умолчанию выключены): рация, громкоговорители, предмет для подслушивания, реакция скалка на крик, звук через дверной проём, синхронизация чат-мутов (EssentialsX, LiteBans, LibertyBans, AdvancedBan) и интеграции с Towny, Lands, WorldGuard и LuckPerms. Переключатели — в `/vcd extras`.
 - **Paper:** `/voice` для каждого игрока (говорить тише или кричать, свои стены выключить, громкость каждого) и плейсхолдеры PlaceholderAPI для скорбордов и таба.
 - **Вкладка «Сервер» в игре** для админов: эффекты для игроков без аддона и дополнения Paper включаются там переключателями, плюс кликабельные команды `/vcd` с отменой и журнал того, кто что менял.
 

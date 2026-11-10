@@ -176,7 +176,7 @@ public final class PlayerCommands {
         ServerSettings settings = AudioDistancePlugin.SERVER_SETTINGS;
         r.line(Style.TITLE, m.get("voice.status.title"));
         long now = System.currentTimeMillis();
-        VoiceMute mute = settings.muteOf(r.player, now);
+        VoiceMute mute = settings.effectiveMuteOf(r.player, now);
         if (mute != null) {
             LineBuilder muted = CommandReply.line().addAll(m.spans("voice.status.muted", Style.WARN, AdminCommands.muteTime(m, mute, now)));
             if (!mute.reason().isEmpty()) {

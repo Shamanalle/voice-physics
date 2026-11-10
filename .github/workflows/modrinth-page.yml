@@ -1,20 +1,22 @@
 name: Modrinth page
 
-# Uploads docs/modrinth.md as the Modrinth project page and the English summary from
-# docs/store-description.md as its short description, so the page is edited with a commit.
+# Uploads docs/modrinth.md as the Modrinth project page, the English summary from
+# docs/store-description.md as its short description, and docs/hangar.md as the PaperMC Hangar
+# project page (when "hangar" in .github/publish.json and HANGAR_TOKEN are set), so the store pages
+# are edited with a commit.
 # The gallery is docs/gallery.json (file, title, description, featured; the order is the list's order):
 # each picture is uploaded to the project gallery, replacing the one with the same title (a picture
 # Modrinth already holds, answered as a duplicate, is left as it is with a warning). Pictures
 # added on the site by hand keep their place. Modrinth accepts 5 MiB per picture.
 # Needs the MODRINTH_TOKEN secret with the "Write projects" scope; without it the upload is skipped
-# with a warning. Pull requests only check that the page, the summary and the gallery can be read.
+# with a warning. Pull requests only check that the pages, the summary and the gallery can be read.
 
 on:
   push:
     branches: [ "main" ]
-    paths: [ "docs/modrinth.md", "docs/store-description.md", "docs/gallery.json", "docs/images/**", ".github/workflows/modrinth-page.yml" ]
+    paths: [ "docs/modrinth.md", "docs/hangar.md", "docs/store-description.md", "docs/gallery.json", "docs/images/**", ".github/workflows/modrinth-page.yml" ]
   pull_request:
-    paths: [ "docs/modrinth.md", "docs/store-description.md", "docs/gallery.json", "docs/images/**", ".github/workflows/modrinth-page.yml" ]
+    paths: [ "docs/modrinth.md", "docs/hangar.md", "docs/store-description.md", "docs/gallery.json", "docs/images/**", ".github/workflows/modrinth-page.yml" ]
   workflow_dispatch:
 
 permissions:
@@ -45,9 +47,13 @@ jobs:
             echo "::error file=docs/modrinth.md::The page is empty"
             exit 1
           fi
+          if [ ! -s docs/hangar.md ]; then
+            echo "::error file=docs/hangar.md::The page is empty"
+            exit 1
+          fi
           jq -n --arg description "${summary}" --rawfile body docs/modrinth.md \
             '{description: $description, body: $body}' > request.json
-          echo "Summary: ${#summary} characters; page: $(wc -c < docs/modrinth.md) bytes"
+          echo "Summary: ${#summary} characters; Modrinth page: $(wc -c < docs/modrinth.md) bytes; Hangar page: $(wc -c < docs/hangar.md) bytes"
 
       - name: Check the gallery
         run: |
@@ -120,7 +126,7 @@ jobs:
             echo "The gallery list is empty: nothing to upload"
             exit 0
           fi
-          curl -sS -H "User-Agent: ${agent}" "${api}" > project.json
+          curl -sS -H "Authorization: ${MODRINTH_TOKEN}" -H "User-Agent: ${agent}" "${api}" > project.json
           n=0
           jq -c '.[]' docs/gallery.json | while read -r entry; do
             file=$(echo "${entry}" | jq -r '.file')
@@ -152,3 +158,44 @@ jobs:
             fi
             n=$((n + 1))
           done
+
+      - name: Upload to Hangar
+        if: github.event_name != 'pull_request'
+        env:
+          HANGAR_TOKEN: ${{ secrets.HANGAR_TOKEN }}
+        run: |
+          project=$(jq -r '.hangar // ""' .github/publish.json)
+          if [ -z "${project}" ] || [ -z "${HANGAR_TOKEN}" ]; then
+            echo "::notice::Hangar page skipped: set \"hangar\" in .github/publish.json and the HANGAR_TOKEN secret"
+            exit 0
+          fi
+          api="https://hangar.papermc.io/api/v1"
+          agent="Shamanalle/voice-physics (GitHub Actions)"
+          enc_key=$(jq -rn --arg v "${HANGAR_TOKEN}" '$v | @uri')
+          status=$(curl -sS -o auth.json -w '%{http_code}' -X POST -H "User-Agent: ${agent}" \
+            "${api}/authenticate?apiKey=${enc_key}")
+          if [ "${status}" != "200" ]; then
+            echo "::error::Hangar authentication answered ${status}"
+            cat auth.json
+            exit 1
+          fi
+          jwt=$(jq -r '.token // ""' auth.json)
+          rm -f auth.json
+          jq -n --rawfile content docs/hangar.md '{content: $content}' > hangar-page.json
+          status=$(curl -sS -o response.txt -w '%{http_code}' -X PATCH \
+            -H "Authorization: HangarAuth ${jwt}" \
+            -H "Content-Type: application/json" \
+            -H "User-Agent: ${agent}" \
+            --data @hangar-page.json \
+            "${api}/pages/editmain/${project}")
+          if [ "${status}" = "200" ] || [ "${status}" = "204" ]; then
+            echo "Hangar page updated"
+          elif [ "${status}" = "401" ] || [ "${status}" = "403" ]; then
+            echo "::error::Hangar refused the token (${status}): give HANGAR_TOKEN the \"edit_page\" permission"
+            cat response.txt
+            exit 1
+          else
+            echo "::error::Hangar answered ${status}"
+            cat response.txt
+            exit 1
+          fi

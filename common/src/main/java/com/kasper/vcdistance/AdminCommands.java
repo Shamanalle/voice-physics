@@ -1314,14 +1314,15 @@ public final class AdminCommands {
             r.reply.add(CommandReply.line().addAll(m.spans("debug.group", Style.PLAIN, group[0],
                     group[1].isEmpty() ? "-" : m.get("group.type." + group[1]))));
         }
-        VoiceMute mute = settings.muteOf(target.id(), System.currentTimeMillis());
+        long now = System.currentTimeMillis();
+        VoiceMute mute = settings.effectiveMuteOf(target.id(), now);
         if (mute != null) {
             LineBuilder line = CommandReply.line().addAll(m.spans("debug.muted", Style.WARN,
-                    muteTime(m, mute, System.currentTimeMillis()), mute.by().isEmpty() ? "-" : mute.by()));
+                    muteTime(m, mute, now), mute.by().isEmpty() ? "-" : mute.by()));
             if (!mute.reason().isEmpty()) {
                 line.text(" - " + mute.reason(), Style.MUTED);
             }
-            if (r.ctx.allows(PERM_MUTE)) {
+            if (r.ctx.allows(PERM_MUTE) && settings.muteOf(target.id(), now) != null) {
                 line.button(m.get("btn.unmute"), Click.RUN, "/vcd unmute " + mute.name(), m.get("hover.run", "/vcd unmute " + mute.name()));
             }
             r.reply.add(line);

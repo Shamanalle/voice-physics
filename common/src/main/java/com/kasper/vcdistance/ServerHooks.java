@@ -96,7 +96,7 @@ public final class ServerHooks {
      */
     private static boolean muteNotices(ServerSettings settings, ServerPlayers.Info info, long nowMillis, Platform platform) {
         UUID id = info.id();
-        VoiceMute mute = settings.muteOf(id, nowMillis);
+        VoiceMute mute = settings.effectiveMuteOf(id, nowMillis);
         Long told = muteTold.get(id);
         String language = settings.languageFor(info.language());
         if (mute == null) {

@@ -34,6 +34,8 @@ public class ModerationTest {
         for (VoiceMute m : AudioDistancePlugin.SERVER_SETTINGS.mutes(System.currentTimeMillis())) {
             AudioDistancePlugin.SERVER_SETTINGS.unmute(m.player());
         }
+        AudioDistancePlugin.SERVER_SETTINGS.setExternalMutes(Jv.mapOf());
+        AudioDistancePlugin.SERVER_SETTINGS.setServerIntegrations(false);
         AudioDistancePlugin.PLAYERS.clear();
         AudioDistancePlugin.MUTED_TALK.clear();
         ServerHooks.left(steve.id());

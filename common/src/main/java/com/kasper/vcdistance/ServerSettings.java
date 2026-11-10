@@ -158,6 +158,8 @@ public final class ServerSettings {
     private volatile Map<String, Zone> zones = Jv.mapOf();
     /** Players muted with /vcd mute, by UUID (ended ones stay until the next save). */
     private volatile Map<UUID, VoiceMute> mutes = Jv.mapOf();
+    /** Players muted by chat moderation plugins (Paper, while server_integrations is on); never written to disk. */
+    private volatile Map<UUID, VoiceMute> externalMutes = Jv.mapOf();
     private volatile String messagesLanguage = "auto";
 
     public ServerSettings() {
@@ -322,7 +324,7 @@ public final class ServerSettings {
         serverSculk = on;
     }
 
-    /** Towny towns, Lands lands, the WorldGuard {@code vcd-zone} flag and LuckPerms contexts (Paper). Off until play-tested. */
+    /** Towny towns, Lands lands, the WorldGuard {@code vcd-zone} flag, LuckPerms contexts and chat-mute sync (Paper). Off until play-tested. */
     public boolean isServerIntegrations() {
         return serverIntegrations;
     }
@@ -747,10 +749,12 @@ public final class ServerSettings {
                         "true: игрок без аддона слышит голос за стеной из дверного проёма, через который тот доходит.",
                         "При любой ошибке остаётся приглушённый прямой путь. По умолчанию false.")
                 .value("server_doorway", serverDoorway)
-                .comment("true: zone.town.<name> (Towny) and zone.land.<name> (Lands) zones, the WorldGuard region flag vcd-zone",
-                        "and the LuckPerms contexts vcd:mode, vcd:walls and vcd:zone work. Each needs its plugin. Default false.",
-                        "true: работают зоны zone.town.<имя> (Towny) и zone.land.<имя> (Lands), флаг региона WorldGuard vcd-zone",
-                        "и контексты LuckPerms vcd:mode, vcd:walls и vcd:zone. Каждому нужен свой плагин. По умолчанию false.")
+                .comment("true: zone.town.<name> (Towny) and zone.land.<name> (Lands) zones, the WorldGuard region flag vcd-zone,",
+                        "the LuckPerms contexts vcd:mode, vcd:walls and vcd:zone, and chat-mute sync (EssentialsX, LiteBans, LibertyBans,",
+                        "AdvancedBan) work. Each needs its plugin. Default false.",
+                        "true: работают зоны zone.town.<имя> (Towny) и zone.land.<имя> (Lands), флаг региона WorldGuard vcd-zone,",
+                        "контексты LuckPerms vcd:mode, vcd:walls и vcd:zone и синхронизация мутов чата (EssentialsX, LiteBans, LibertyBans,",
+                        "AdvancedBan). Каждому нужен свой плагин. По умолчанию false.")
                 .value("server_integrations", serverIntegrations)
                 .comment("Loudspeakers, made with /vcd speaker add <name> [radius] [pickup] where the admin stands:",
                         "  speaker.<name>=<world>|<x>|<y>|<z>|<pickup blocks>|<radius blocks>",
@@ -824,7 +828,7 @@ public final class ServerSettings {
 
     /** Whether any voice rule is on, so voice packets need looking at. */
     public boolean hasVoiceRules() {
-        if (sneakMultiplier < 1.0 || deadSilent || spectatorsOnly || !megaphoneItem.isEmpty()) {
+        if (sneakMultiplier < 1.0 || deadSilent || spectatorsOnly || !megaphoneItem.isEmpty() || hasAnyMutes()) {
             return true;
         }
         for (Zone z : zones.values()) {
@@ -889,7 +893,7 @@ public final class ServerSettings {
 
     /** Any rule that applies to voices inside a group. */
     public boolean hasGroupRules() {
-        if (groupDeadSilent || groupSpectatorsApart) {
+        if (groupDeadSilent || groupSpectatorsApart || hasAnyMutes()) {
             return true;
         }
         if (groupIsolatedZones) {
@@ -1154,10 +1158,32 @@ public final class ServerSettings {
         return Jv.copyOf(out);
     }
 
-    /** The mute on {@code player} at {@code nowMillis}, or {@code null} when they may talk. */
+    /** The mute on {@code player} from {@code /vcd mute} at {@code nowMillis}, or {@code null} when they have none. */
     public VoiceMute muteOf(UUID player, long nowMillis) {
         VoiceMute m = player == null || mutes.isEmpty() ? null : mutes.get(player);
         return m != null && m.activeAt(nowMillis) ? m : null;
+    }
+
+    /**
+     * The mute in effect on {@code player} at {@code nowMillis}: {@link #muteOf} first, then any chat-plugin mute
+     * reported through {@link #setExternalMutes} while {@link #isServerIntegrations()} is on.
+     */
+    public VoiceMute effectiveMuteOf(UUID player, long nowMillis) {
+        VoiceMute own = muteOf(player, nowMillis);
+        if (own != null || !serverIntegrations || player == null || externalMutes.isEmpty()) {
+            return own;
+        }
+        VoiceMute ext = externalMutes.get(player);
+        return ext != null && ext.activeAt(nowMillis) ? ext : null;
+    }
+
+    /** Updates the snapshot of online players muted by external chat plugins (never saved to the settings file). */
+    public void setExternalMutes(Map<UUID, VoiceMute> mutes) {
+        externalMutes = mutes == null || mutes.isEmpty() ? Jv.mapOf() : Jv.copyOf(mutes);
+    }
+
+    private boolean hasAnyMutes() {
+        return !mutes.isEmpty() || (serverIntegrations && !externalMutes.isEmpty());
     }
 
     /** The mutes that still hold, the ones ending soonest first and those without end last. */

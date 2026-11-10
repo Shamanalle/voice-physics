@@ -133,9 +133,11 @@ public final class AudioDistanceBukkit extends JavaPlugin implements Listener {
         } catch (NoClassDefFoundError e) {
             // LuckPerms is not installed
         }
+        ChatMuteSync.startIfPresent(this);
         VcdMetrics.start(this);
         scheduling.everyTick(this::tick);
         for (Player player : getServer().getOnlinePlayers()) {
+            ChatMuteSync.noteJoin(player);
             startPlayerTick(player);
         }
         if (scheduling.isRegionized()) {
@@ -157,6 +159,7 @@ public final class AudioDistanceBukkit extends JavaPlugin implements Listener {
 
     @Override
     public void onDisable() {
+        ChatMuteSync.stop();
         if (scheduling != null) {
             scheduling.cancelAll();
         }
@@ -535,11 +538,13 @@ public final class AudioDistanceBukkit extends JavaPlugin implements Listener {
     @EventHandler
     public void onJoin(PlayerJoinEvent event) {
         ServerHooks.joined(event.getPlayer().getUniqueId());
+        ChatMuteSync.noteJoin(event.getPlayer());
         startPlayerTick(event.getPlayer());
     }
 
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
+        ChatMuteSync.forget(event.getPlayer().getUniqueId());
         ServerHooks.left(event.getPlayer().getUniqueId());
         ServerSculk.forget(event.getPlayer().getUniqueId());
         zones.forget(event.getPlayer().getUniqueId());

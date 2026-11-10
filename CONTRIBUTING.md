@@ -73,16 +73,17 @@ The repository description and topics live in `.github/about.json`. The *Reposit
 3. *Actions → Publish Release → Run workflow* on `main`, or push the tag `vX.Y.Z`. The workflow builds every jar, creates the tag and the release, and takes the notes from `CHANGELOG.md`.
 4. The same run then uploads the files to Modrinth and CurseForge (see below). To upload an existing release again: *Actions → Publish to Modrinth & CurseForge → Run workflow* with its tag.
 
-### Modrinth and CurseForge
+### Modrinth, CurseForge and Hangar
 
 The workflow *Publish to Modrinth & CurseForge* (`.github/workflows/publish.yml`) takes the files of a GitHub release and uploads them:
-- **Modrinth:** the mod (one file per Minecraft version, marked for Fabric, Quilt, Forge and NeoForge) and the Paper / Purpur / Spigot plugin.
-- **CurseForge:** the mod only. A Bukkit plugin needs a separate project in CurseForge's Bukkit section.
+- **Modrinth:** the mod (Fabric / Quilt and Forge / NeoForge jars) and the Paper / Purpur / Folia / Spigot plugin.
+- **CurseForge:** the mod (`curseforge` in `.github/publish.json`) and, in a separate Bukkit Plugins project, the server plugin (`curseforge_plugin`).
+- **Hangar:** the Paper / Purpur / Folia / Spigot plugin (`hangar` in `.github/publish.json`).
 
-A store is skipped with a warning while its project id or token is missing. Setup, once:
-1. Create the projects by hand: Modrinth → *Create a project* (type *Mod*); CurseForge → *Minecraft → Mods → Create project*. Both sites review new projects; the first upload can go into the project while it waits. The Modrinth page is `docs/modrinth.md` and is uploaded by the *Modrinth page* workflow; the summary and categories are in `docs/store-description.md`.
-2. Put the project ids into `.github/publish.json`: on Modrinth the *Project ID* from the project's menu, on CurseForge the *Project ID* number on the project page.
-3. Tokens: Modrinth → *Settings → Personal access tokens*, scopes *Create versions*, *Read projects* and *Write versions* (the last one lets *Sync release notes* update the changelog of Modrinth versions when `CHANGELOG.md` changes); CurseForge → *Account → API tokens*. Add them as repository secrets `MODRINTH_TOKEN` and `CURSEFORGE_TOKEN` (*Settings → Secrets and variables → Actions*). Tokens never go into files or chats.
+A store is skipped while its project id or token is missing. Setup, once:
+1. Create the projects by hand: Modrinth → *Create a project* (type *Mod*); CurseForge → *Minecraft → Mods → Create project* (and *Bukkit Plugins → Create project* for the plugin); Hangar (`hangar.papermc.io`) → *New project* (category *Chat* or *Gameplay*). The Modrinth page is `docs/modrinth.md` and the Hangar page is `docs/hangar.md`, both uploaded by the *Modrinth page* workflow; the summaries and categories are in `docs/store-description.md`.
+2. Put the project ids into `.github/publish.json`: on Modrinth the *Project ID* from the project's menu, on CurseForge the *Project ID* numbers on the project pages, on Hangar the project slug (or `Owner/Slug`).
+3. Tokens: Modrinth → *Settings → Personal access tokens*, scopes *Create versions*, *Read projects*, *Write projects* and *Write versions* (the last one lets *Sync release notes* update the changelog of Modrinth versions when `CHANGELOG.md` changes); CurseForge → *Account → API tokens*; Hangar → *User settings → API keys*, permissions *create_version* and *edit_page*. Add them as repository secrets `MODRINTH_TOKEN`, `CURSEFORGE_TOKEN` and `HANGAR_TOKEN` (*Settings → Secrets and variables → Actions*). Tokens never go into files or chats.
 
 ### Pull requests
 
@@ -163,16 +164,17 @@ README — это два файла: `README.md` на английском и `R
 3. *Actions → Publish Release → Run workflow* на `main` или запушьте тег `vX.Y.Z`. Workflow соберёт все JAR, создаст тег и релиз, а описание возьмёт из `CHANGELOG.md`.
 4. Затем тот же запуск загрузит файлы на Modrinth и CurseForge (см. ниже). Чтобы загрузить уже вышедший релиз заново: *Actions → Publish to Modrinth & CurseForge → Run workflow* с его тегом.
 
-### Modrinth и CurseForge
+### Modrinth, CurseForge и Hangar
 
 Workflow *Publish to Modrinth & CurseForge* (`.github/workflows/publish.yml`) берёт файлы релиза на GitHub и загружает их:
-- **Modrinth:** мод (один файл на версию Minecraft, отмеченный для Fabric, Quilt, Forge и NeoForge) и плагин для Paper / Purpur / Spigot.
-- **CurseForge:** только мод. Для плагина Bukkit нужен отдельный проект в разделе Bukkit на CurseForge.
+- **Modrinth:** мод (JAR для Fabric / Quilt и для Forge / NeoForge) и плагин для Paper / Purpur / Folia / Spigot.
+- **CurseForge:** мод (`curseforge` в `.github/publish.json`) и — в отдельном проекте раздела Bukkit Plugins — серверный плагин (`curseforge_plugin`).
+- **Hangar:** плагин для Paper / Purpur / Folia / Spigot (`hangar` в `.github/publish.json`).
 
-Площадка пропускается с предупреждением, пока для неё нет ID проекта или токена. Настраивается один раз:
-1. Создайте проекты вручную: Modrinth → *Create a project* (тип *Mod*); CurseForge → *Minecraft → Mods → Create project*. Оба сайта проверяют новые проекты; первую загрузку можно сделать, пока проект ждёт проверки. Страница Modrinth — `docs/modrinth.md`, её выкладывает workflow *Modrinth page*; краткое описание и категории — в `docs/store-description.md`.
-2. Впишите ID проектов в `.github/publish.json`: на Modrinth — *Project ID* из меню проекта, на CurseForge — число *Project ID* на странице проекта.
-3. Токены: Modrinth → *Settings → Personal access tokens*, права *Create versions*, *Read projects* и *Write versions* (последнее позволяет *Sync release notes* обновлять описание версий на Modrinth, когда меняется `CHANGELOG.md`); CurseForge → *Account → API tokens*. Добавьте их как секреты репозитория `MODRINTH_TOKEN` и `CURSEFORGE_TOKEN` (*Settings → Secrets and variables → Actions*). Токены никогда не пишутся в файлы и чаты.
+Площадка пропускается, пока для неё нет ID проекта или токена. Настраивается один раз:
+1. Создайте проекты вручную: Modrinth → *Create a project* (тип *Mod*); CurseForge → *Minecraft → Mods → Create project* (и *Bukkit Plugins → Create project* для плагина); Hangar (`hangar.papermc.io`) → *New project* (категория *Chat* или *Gameplay*). Страница Modrinth — `docs/modrinth.md`, страница Hangar — `docs/hangar.md`, обе выкладывает workflow *Modrinth page*; краткие описания и категории — в `docs/store-description.md`.
+2. Впишите ID проектов в `.github/publish.json`: на Modrinth — *Project ID* из меню проекта, на CurseForge — числа *Project ID* на страницах проектов, на Hangar — слаг проекта (или `Владелец/Слаг`).
+3. Токены: Modrinth → *Settings → Personal access tokens*, права *Create versions*, *Read projects*, *Write projects* и *Write versions* (последнее позволяет *Sync release notes* обновлять описание версий на Modrinth, когда меняется `CHANGELOG.md`); CurseForge → *Account → API tokens*; Hangar → *User settings → API keys*, права *create_version* и *edit_page*. Добавьте их как секреты репозитория `MODRINTH_TOKEN`, `CURSEFORGE_TOKEN` и `HANGAR_TOKEN` (*Settings → Secrets and variables → Actions*). Токены никогда не пишутся в файлы и чаты.
 
 ### Pull request
 

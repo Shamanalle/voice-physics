@@ -41,6 +41,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
+          HANGAR_TOKEN: ${{ secrets.HANGAR_TOKEN }}
           TAG: ${{ inputs.tag }}
           WARN_ONLY: ${{ inputs.warn-only && '--warn-only' || '' }}
         run: |

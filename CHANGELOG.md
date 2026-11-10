@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 *Все заметные изменения проекта описываются в этом файле. Каждая версия описана сначала на английском, затем на русском.*
 
+## [Unreleased]
+
+### English
+
+#### Added
+- **Chat-mute sync on Paper (`server_integrations`, `/vcd extras integrations on`).** When server integrations are turned on, players muted in EssentialsX, LiteBans, LibertyBans or AdvancedBan are muted in proximity and group voice chat too (including `%vcd_muted%` and `/voice`).
+
+### Русский
+
+#### Добавлено
+- **Синхронизация чат-мутов на Paper (`server_integrations`, `/vcd extras integrations on`).** При включённых интеграциях игроки с чат-мутом в EssentialsX, LiteBans, LibertyBans или AdvancedBan автоматически заглушаются и в голосовом чате (включая группы, `%vcd_muted%` и `/voice`).
+
 ## [2.12.5] - 2026-11-06
 
 ### English

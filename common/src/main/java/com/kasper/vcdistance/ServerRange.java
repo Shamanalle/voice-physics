@@ -93,7 +93,7 @@ public final class ServerRange {
      * the admin chose for groups apply; a group has no range, so the distance is 0.
      */
     public static Decision decideGroup(ServerSettings s, ServerPlayers.Info speaker, ServerPlayers.Info listener) {
-        if (s.muteOf(speaker.id(), System.currentTimeMillis()) != null) {
+        if (s.effectiveMuteOf(speaker.id(), System.currentTimeMillis()) != null) {
             return new Decision(Reason.MUTED, 0.0);
         }
         if (s.isGroupDeadSilent() && !speaker.alive()) {
@@ -117,7 +117,7 @@ public final class ServerRange {
     public static Decision decide(ServerSettings s, ServerPlayers.Info speaker, ServerPlayers.Info listener,
                                   boolean whispering, double voice, double whisper) {
         double range = rangeTo(s, speaker, listener, whispering, voice, whisper);
-        if (s.muteOf(speaker.id(), System.currentTimeMillis()) != null) {
+        if (s.effectiveMuteOf(speaker.id(), System.currentTimeMillis()) != null) {
             return new Decision(Reason.MUTED, range);
         }
         if (s.isDeadSilent() && !speaker.alive()) {

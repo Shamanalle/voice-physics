@@ -43,13 +43,16 @@ for base in https://dev.bukkit.org https://minecraft.curseforge.com; do
   mapfile -t ids < <(printf '%s\n' "${ids[@]}" | sort -un)
   echo "Matched (id:type:name):" \
     "$(jq -r --argjson ids "$(printf '%s\n' "${ids[@]}" | jq -s .)" '[.[] | select(.id as $i | $ids | index($i)) | "\(.id):\(.gameVersionTypeID):\(.name)"] | join(" ")' versions.json)"
-  for attempt in $(seq 1 100); do
+  relations='{"projects":[{"slug":"simple-voice-chat","type":"requiredDependency"},{"slug":"worldguard","type":"optionalDependency"},{"slug":"placeholderapi","type":"optionalDependency"}]}'
+  relations_tier=0
+  for attempt in $(seq 1 105); do
     jq -n \
       --rawfile changelog "${notes}" \
       --arg name "${name}" \
       --arg type "${release_type}" \
       --argjson versions "$(printf '%s\n' "${ids[@]}" | jq -s .)" \
-      '{changelog: $changelog, changelogType: "markdown", displayName: $name, gameVersions: $versions, releaseType: $type}' \
+      --argjson relations "${relations}" \
+      '{changelog: $changelog, changelogType: "markdown", displayName: $name, gameVersions: $versions, releaseType: $type} + (if $relations == null then {} else {relations: $relations} end)' \
       > metadata.json
 
     status=$(curl -sS -o upload.json -w '%{http_code}' -H "X-Api-Token: ${CURSEFORGE_TOKEN}" \
@@ -63,6 +66,17 @@ for base in https://dev.bukkit.org https://minecraft.curseforge.com; do
     echo "Upload answered ${status}: $(head -c 600 upload.json 2>/dev/null)"
     # The body is not always a JSON object (an error page, a bare string): read it defensively
     rejected=$( (jq -r 'try (.errorMessage // "") catch ""' upload.json 2>/dev/null || true) | sed -n 's/^Invalid game version ID: \([0-9]*\).*/\1/p')
+    if [ "${status}" = "400" ] && [ -z "${rejected}" ]; then
+      if [ "${relations_tier}" -eq 0 ]; then
+        relations='{"projects":[{"slug":"simple-voice-chat","type":"requiredDependency"}]}'
+        relations_tier=1
+        continue
+      elif [ "${relations_tier}" -eq 1 ]; then
+        relations='null'
+        relations_tier=2
+        continue
+      fi
+    fi
     if [ "${status}" != "400" ] || [ -z "${rejected}" ]; then
       break
     fi

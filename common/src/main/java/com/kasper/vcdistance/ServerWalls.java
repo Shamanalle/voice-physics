@@ -396,8 +396,8 @@ public final class ServerWalls {
         VoicechatConnection sender = event.getSenderConnection();
         if (packet != null && sender != null && sender.getPlayer() != null) {
             UUID talking = sender.getPlayer().getUuid();
-            if (settings.muteOf(talking, System.currentTimeMillis()) != null) {
-                // Muted with /vcd mute: the voice goes nowhere, nearby or in a group
+            if (settings.effectiveMuteOf(talking, System.currentTimeMillis()) != null) {
+                // Muted with /vcd mute or a synced chat mute: the voice goes nowhere, nearby or in a group
                 AudioDistancePlugin.MUTED_TALK.spoke(talking, System.nanoTime());
                 event.cancel();
                 return;

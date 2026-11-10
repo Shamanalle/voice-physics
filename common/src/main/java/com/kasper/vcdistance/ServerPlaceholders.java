@@ -46,7 +46,7 @@ public final class ServerPlaceholders {
         }
         ServerPlayers.Info me = AudioDistancePlugin.PLAYERS.get(player);
         PlayerPrefs.Prefs prefs = AudioDistancePlugin.PLAYER_PREFS.get(player);
-        VoiceMute mute = settings.muteOf(player, nowMillis);
+        VoiceMute mute = settings.effectiveMuteOf(player, nowMillis);
         return switch (key) {
             case "mode" -> prefs.mode().name().toLowerCase(Locale.ROOT);
             case "mode_name" -> ServerText.get(language(settings, me), "voice.btn." + prefs.mode().name().toLowerCase(Locale.ROOT));

@@ -1,17 +1,25 @@
 {
-  "description": "Simple Voice Chat addon: voices fade with distance, echo in caves and are muffled by walls. HUD, monitor, presets; sound zones and game rules for servers. Fabric, NeoForge, Paper. / Аддон Simple Voice Chat: затухание голоса, эхо и стены, HUD, звуковые зоны для серверов.",
+  "description": "Simple Voice Chat addon: voices fade with distance, echo in caves and are muffled by walls. HUD, monitor, presets; sound zones and game rules for servers. Fabric, Forge, NeoForge, Paper, Folia. / Аддон Simple Voice Chat: затухание голоса, эхо и стены, HUD, звуковые зоны для серверов.",
   "topics": [
     "minecraft",
     "minecraft-mod",
     "simple-voice-chat",
+    "simple-voice-chat-addon",
     "voice-chat",
+    "proximity-voice-chat",
     "fabric-mod",
+    "quilt-mod",
+    "forge-mod",
+    "neoforge",
     "paper-plugin",
     "purpur",
+    "folia",
     "spigot-plugin",
     "bukkit-plugin",
     "audio",
     "occlusion",
-    "neoforge"
+    "reverb",
+    "sound-physics",
+    "worldguard"
   ]
 }
