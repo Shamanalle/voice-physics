@@ -14,6 +14,8 @@ The Modrinth project page is `docs/modrinth.md`: the whole page, in English, wit
 
 **Plugin summary:** Server plugin for Simple Voice Chat (Paper, Purpur, Folia, Spigot): muffles voices through walls for every player without client mods, adds sound zones, game rules, /voice, PlaceholderAPI, WorldGuard and chat-mute sync.
 
+**Hangar summary (≤ 120 chars):** Simple Voice Chat addon: server-side wall occlusion (no client mod needed), sound zones, game rules & chat-mute sync.
+
 **Categories:** Utility, Social, Game Mechanics (Hangar: Chat, Gameplay)
 
 **Icon:** `icon.png` in the repository root (512×512).
@@ -24,7 +26,7 @@ The Modrinth project page is `docs/modrinth.md`: the whole page, in English, wit
 
 **Краткое описание мода** (на площадках только на английском, как выше). Перевод: Реалистичный проксимити-чат для Simple Voice Chat: голоса затихают с расстоянием, глохнут за стенами (окклюзия), доносятся через двери и отдаются эхом в пещерах. HUD, пресеты и звуковые зоны; стены на сервере работают даже для игроков без мода.
 
-**Краткое описание плагина** (для CurseForge Bukkit, Hangar и SpigotMC — на английском выше). Перевод: Серверный плагин для Simple Voice Chat (Paper, Purpur, Folia, Spigot): глушит голоса за стенами для всех игроков без клиентских модов, добавляет звуковые зоны, правила игры, /voice, PlaceholderAPI, WorldGuard и синхронизацию чат-мутов.
+**Краткое описание плагина** (для CurseForge Bukkit и SpigotMC — на английском выше; для Hangar с лимитом 120 символов — строка `**Hangar summary**` выше). Перевод: Серверный плагин для Simple Voice Chat (Paper, Purpur, Folia, Spigot): глушит голоса за стенами для всех игроков без клиентских модов, добавляет звуковые зоны, правила игры, /voice, PlaceholderAPI, WorldGuard и синхронизацию чат-мутов.
 
 **Категории:** Utility, Social, Game Mechanics (Hangar: Chat, Gameplay)
 

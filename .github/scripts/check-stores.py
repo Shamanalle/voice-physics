@@ -105,9 +105,14 @@ def main():
 
     hangar = None
     if ids.get("hangar"):
+        hangar_public = is_public_project(f"https://hangar.papermc.io/api/v1/projects/{ids['hangar']}")
+        if not hangar_public:
+            print("::notice::Hangar project is not public yet (awaiting first version or moderation review)")
+            notes.append("_Note: the Hangar project is not public yet (awaiting first version or moderation review)._")
         jwt = hangar_jwt(os.environ.get("HANGAR_TOKEN"))
-        data = get_json(f"https://hangar.papermc.io/api/v1/projects/{ids['hangar']}/versions?limit=25", jwt)
-        hangar = {v["name"]: v for v in data.get("result", [])}
+        if jwt or hangar_public:
+            data = get_json(f"https://hangar.papermc.io/api/v1/projects/{ids['hangar']}/versions?limit=25", jwt)
+            hangar = {v["name"]: v for v in data.get("result", [])}
 
     lines = ["| File | Store | Result |", "| --- | --- | --- |"]
     gaps = []
@@ -176,6 +181,8 @@ def main():
                            and ".".join(v.split(".")[:2]) not in listed]
                 report(row, "Hangar",
                        (f"versions {' '.join(missing)} (listed: {', '.join(listed)})" if missing else ""))
+        elif row["target"] == "bukkit" and ids.get("hangar"):
+            lines.append(f"| {row['name']} | Hangar | awaiting review (set HANGAR_TOKEN to inspect) |")
 
     header = [f"### Store check for {tag}", ""] + ([n + "\n" for n in notes] if notes else [])
     table = "\n".join(header + lines) + "\n"
