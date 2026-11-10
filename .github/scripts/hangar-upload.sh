@@ -17,7 +17,8 @@ case "${raw_channel,,}" in
   *)     channel="Release" ;;
 esac
 
-enc_key=$(jq -rn --arg v "${HANGAR_TOKEN}" '$v | @uri')
+clean_key=$(printf '%s' "${HANGAR_TOKEN}" | tr -d '[:space:]')
+enc_key=$(jq -rn --arg v "${clean_key}" '$v | @uri')
 status=$(curl -sS -o auth.json -w '%{http_code}' -X POST -H "User-Agent: ${agent}" \
   "${api}/authenticate?apiKey=${enc_key}" || echo 000)
 if [ "${status}" != "200" ]; then

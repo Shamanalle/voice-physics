@@ -59,6 +59,7 @@ def is_public_project(url):
 
 def hangar_jwt(api_key):
     """Exchanges a Hangar API key for a short-lived JWT, or returns None when no key is set."""
+    api_key = (api_key or "").strip()
     if not api_key:
         return None
     query = urllib.parse.urlencode({"apiKey": api_key})
@@ -67,9 +68,13 @@ def hangar_jwt(api_key):
         method="POST",
         headers={"User-Agent": AGENT},
     )
-    with urllib.request.urlopen(request, timeout=20) as response:
-        token = json.load(response).get("token")
-        return f"HangarAuth {token}" if token else None
+    try:
+        with urllib.request.urlopen(request, timeout=20) as response:
+            token = json.load(response).get("token")
+            return f"HangarAuth {token}" if token else None
+    except urllib.error.HTTPError as error:
+        print(f"::warning::Hangar authentication answered HTTP {error.code} (check HANGAR_TOKEN format: <uuid>.<secret>)")
+        return None
 
 
 def main():
