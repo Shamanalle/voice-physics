@@ -83,15 +83,17 @@ tasks.named('jar') {
 }
 tasks.named('shadowJar') {
     archiveClassifier = ''
+    includeEmptyDirs = false
     configurations = [project.configurations.bundled]
     from(sourceSets.main.output)
     from(sourceSets.folia.output)
     from(project(':common-j8').sourceSets.main.output) {
         exclude 'assets/vc-audio-distance/icon.png'
+        exclude 'com/github/bsideup/jabel/**'
     }
     relocate 'org.bstats', 'com.kasper.vcdistance.libs.bstats'
-    // bStats brings its own licence file; keep the jar free of build metadata
-    exclude 'META-INF/maven/**', 'META-INF/versions/**/module-info.class', 'module-info.class'
+    // bStats brings its own licence file; keep the jar free of build metadata and compile-only Jabel stubs
+    exclude 'META-INF/maven/**', 'META-INF/versions/**/module-info.class', 'module-info.class', 'com/github/bsideup/jabel/**'
 }
 
 // Guards the jar against losing the texts again: without them every server message is a bare key
@@ -105,6 +107,14 @@ tasks.register('checkPluginJar') {
             if (!names.contains(required)) {
                 throw new GradleException("The plugin jar lacks " + required)
             }
+        }
+        names.findAll { it.endsWith('.class') }.each { String cls ->
+            if (!cls.startsWith('com/kasper/vcdistance/')) {
+                throw new GradleException("Unexpected foreign class in plugin jar: " + cls)
+            }
+        }
+        names.findAll { it.startsWith('com/github/') }.each { String bad ->
+            throw new GradleException("Unexpected Jabel entry in plugin jar: " + bad)
         }
     }
 }

@@ -32,11 +32,11 @@ jobs:
       - name: Make Gradle wrapper executable
         run: chmod +x gradlew
 
-      - name: Unit tests (audio core, server, config, translations)
-        run: ./gradlew :common:test --no-daemon
+      - name: Unit tests (audio core, server, config, translations, jar merging)
+        run: ./gradlew :common:test :packaging:test --no-daemon
 
       - name: Build every Minecraft target
-        run: ./gradlew build --no-daemon
+        run: ./gradlew build -x test --no-daemon
 
       - name: Upload jars
         uses: actions/upload-artifact@v4
@@ -50,7 +50,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: test-report
-          path: common/build/reports/tests/
+          path: |
+            common/build/reports/tests/
+            packaging/build/reports/tests/
 
   # Each Forge / NeoForge jar serves a band of Minecraft versions: it is built against the newest loader
   # of the band, and here also compiled against the oldest, so a call missing there fails the build

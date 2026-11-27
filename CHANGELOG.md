@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 *Все заметные изменения проекта описываются в этом файле. Каждая версия описана сначала на английском, затем на русском.*
 
+## [2.12.7] - 2026-11-27
+
+### English
+
+#### Fixed
+- **Forge & NeoForge modpack crash alongside *Mob Senses* and other mods.** Removed a compile-only annotation class (`com.github.bsideup.jabel.Desugar`) that was left inside the release jars and caused a duplicate-package crash at startup when installed together with *Mob Senses*, *Player Statuses* or other mods bundling the same package.
+
+### Русский
+
+#### Исправлено
+- **Вылет сборок на Forge и NeoForge вместе с *Mob Senses* и другими модами.** Из релизных jar-файлов убран служебный класс аннотации времени компиляции (`com.github.bsideup.jabel.Desugar`), из-за дублирования пакета которого игра падала при запуске вместе с *Mob Senses*, *Player Statuses* и другими модами с тем же пакетом.
+
 ## [2.12.6] - 2026-11-10
 
 ### English
